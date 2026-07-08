@@ -701,7 +701,9 @@ function fmtAmt(a){const parts=[];for(const u in a.units){const n=a.units[u];par
 function render(){
   const list=meal.map(eff);
   const out=document.getElementById("out");
-  if(!list.length){out.innerHTML=`<div class="panel" style="text-align:center;color:var(--muted)">No dishes fit. <b style="color:var(--cream)">Add an appliance</b> to compose a meal.</div>`;return;}
+  if(!list.length){out.innerHTML=DISHES.length
+    ? `<div class="panel" style="text-align:center;color:var(--muted)">No dishes fit. <b style="color:var(--cream)">Add an appliance</b> to compose a meal.</div>`
+    : `<div class="panel" style="text-align:center;color:var(--muted)">No recipes loaded \u2014 check that <code>data/dishes.json</code> is the file from this project.</div>`;return;}
   const sc=schedule(list);
   sc.items.forEach(it=>{if(meal[it.mi])meal[it.mi]._shownAp=it.ap;});
   const eatVal=(document.getElementById("eat").value)||"19:00";
@@ -868,6 +870,11 @@ async function boot(){
   try{
     const [ingData,methData,dishData,applData]=await Promise.all([
       grab("ingredients.json"),grab("methods.json"),grab("dishes.json"),grab("appliances.json")]);
+    const need=(cond,f,what)=>{if(!cond)throw new Error("data/"+f+" loaded, but it contains no "+what+". Is it the right file?");};
+    need(Array.isArray(dishData.dishes)&&dishData.dishes.length,"dishes.json","dishes");
+    need(Array.isArray(applData.appliances)&&applData.appliances.length,"appliances.json","appliances");
+    need(Array.isArray(ingData.ingredients)&&ingData.ingredients.length,"ingredients.json","ingredients");
+    need(methData.methods&&Object.keys(methData.methods).length,"methods.json","cooking methods");
     const R=buildReference(ingData);
     GROC_CAT=R.GROC_CAT; PREP_VERB=R.PREP_VERB;
     DISHES=hydrate(dishData.dishes,R,methData);
@@ -877,10 +884,11 @@ async function boot(){
     BURNER_DEFAULT=applData.burner_default||2; burners=BURNER_DEFAULT;
     loadKitchen(new Set(APPLIANCES.map(a=>a.id)));
     buildAppls(); syncKitchenUI();
+    console.log("[Dinner How?] loaded "+DISHES.length+" dishes, "+APPLIANCES.length+" appliances, "+ingData.ingredients.length+" ingredients, "+Object.keys(methData.methods).length+" methods.");
     compose();
   }catch(e){
     console.error(e);
-    out.innerHTML='<div class="panel" style="text-align:center;color:var(--muted);line-height:1.6">Could not load the recipe data \u2014 <b style="color:var(--cream)">'+e.message+'</b><br><br>This page reads its recipes from <code>data/*.json</code>, so it must be served over http.<br>Open it on GitHub Pages, or run <code>python3 -m http.server</code> in this folder.</div>';
+    out.innerHTML='<div class="panel" style="text-align:left;color:var(--muted);line-height:1.7"><b style="color:var(--cream);font-size:15px">Could not load the recipe data</b><br><br><code style="color:var(--ember)">'+e.message+'</code><br><br>The four data files must sit in a <code>data</code> folder beside <code>index.html</code>: <code>dishes.json</code>, <code>ingredients.json</code>, <code>methods.json</code>, <code>appliances.json</code>.<br><br>To check, open <code>data/dishes.json</code> in your address bar. A 404 means the file is not there.<br><br>This page must also be served over http \u2014 GitHub Pages does that, or run <code>python3 -m http.server</code> locally.</div>';
   }
 }
 boot();
