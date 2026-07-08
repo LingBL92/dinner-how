@@ -487,7 +487,7 @@ function analyzeRecipe(ingStrings,steps,appliance,R,M,nativeSteps){
   const prep=TM.prep.base_minutes+TM.prep.minutes_per_ingredient*nComp;
   let total=prep, beThere=prep, handsOff=0, makeahead=0;
   const mult=(TM.appliance_time_multiplier[appliance]!==undefined)?TM.appliance_time_multiplier[appliance]:1.0;
-  let hasLiquid=false, active=new Set();
+  let hasLiquid=false, noCookCharged=false, active=new Set();
   const allR=new Set(), stepRecs=[];
 
   stepsText.forEach(text=>{
@@ -505,6 +505,8 @@ function analyzeRecipe(ingStrings,steps,appliance,R,M,nativeSteps){
     const fired=mids.length?gate(mids,props,M):[];
     fired.forEach(r=>allR.add(r));
     mids.forEach(mid=>{
+      // Assembling a dish is one activity, however many sentences describe it.
+      if(mid==="no_cook"){ if(noCookCharged)return; noCookCharged=true; }
       const mt=M.methods[mid].timing;
       let att=mt.attention;
       const exp=explicitMinutes(text);
