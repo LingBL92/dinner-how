@@ -1,0 +1,570 @@
+{
+ "_meta": {
+  "purpose": "How cooking works. The engine reads this to detect a method from a step, decide which reactions fire, and work out how long the dish takes.",
+  "fields": {
+   "aliases": "matched against a recipe step to detect the method",
+   "heat_mode": "dry_air | dry_fat | radiant | moist | combination \u2014 dry modes can brown",
+   "candidate_reactions": "reactions this method could cause, if the ingredients allow",
+   "timing": "attention (active | semi_active | passive | waiting) and default minutes when the step states none",
+   "chip": "short phrase shown to the cook; reactions without one are silent"
+  },
+  "reaction_gate": "a reaction fires when its requires_all flags are all present, any requires_any flag is present, and the heat mode suits it",
+  "max_chips": 4,
+  "rescale_rule": "A stated duration is rescaled by the appliance multiplier only when the step was written for the conventional method. If a dish has steps_variants for an appliance, those times already belong to it."
+ },
+ "methods": {
+  "sear_pan_fry": {
+   "id": "sear_pan_fry",
+   "name": "Sear / pan-fry",
+   "aliases": [
+    "sear",
+    "pan-fry",
+    "pan fry",
+    "until brown",
+    "until browned",
+    "brown the",
+    "brown all over",
+    "browned all over"
+   ],
+   "heat_mode": "dry_fat",
+   "candidate_reactions": [
+    "maillard",
+    "crisping_dehydration",
+    "fat_rendering",
+    "protein_coagulation"
+   ],
+   "family": "dry_heat",
+   "timing": {
+    "attention": "active",
+    "minutes": 8
+   }
+  },
+  "saute": {
+   "id": "saute",
+   "name": "Saute",
+   "aliases": [
+    "saute",
+    "saut\u00e9",
+    "stir-fry",
+    "stir fry"
+   ],
+   "heat_mode": "dry_fat",
+   "candidate_reactions": [
+    "maillard",
+    "protein_coagulation"
+   ],
+   "family": "dry_heat",
+   "timing": {
+    "attention": "active",
+    "minutes": 6
+   }
+  },
+  "roast_bake": {
+   "id": "roast_bake",
+   "name": "Roast / bake",
+   "aliases": [
+    "roast",
+    "bake",
+    "oven"
+   ],
+   "heat_mode": "dry_air",
+   "candidate_reactions": [
+    "maillard",
+    "caramelization",
+    "crisping_dehydration",
+    "fat_rendering",
+    "protein_coagulation",
+    "starch_gelatinization"
+   ],
+   "family": "dry_heat",
+   "timing": {
+    "attention": "passive",
+    "minutes": 35
+   }
+  },
+  "air_fry": {
+   "id": "air_fry",
+   "name": "Air-fry",
+   "aliases": [
+    "air fry",
+    "air-fry",
+    "air fryer"
+   ],
+   "heat_mode": "dry_air",
+   "candidate_reactions": [
+    "maillard",
+    "crisping_dehydration",
+    "fat_rendering",
+    "protein_coagulation"
+   ],
+   "family": "dry_heat",
+   "timing": {
+    "attention": "passive",
+    "minutes": 18
+   }
+  },
+  "broil_grill": {
+   "id": "broil_grill",
+   "name": "Broil / grill",
+   "aliases": [
+    "broil",
+    "grill",
+    "char",
+    "barbecue",
+    "bbq"
+   ],
+   "heat_mode": "radiant",
+   "candidate_reactions": [
+    "maillard",
+    "caramelization",
+    "crisping_dehydration",
+    "protein_coagulation"
+   ],
+   "family": "dry_heat",
+   "timing": {
+    "attention": "active",
+    "minutes": 10
+   }
+  },
+  "deep_fry": {
+   "id": "deep_fry",
+   "name": "Deep-fry",
+   "aliases": [
+    "deep fry",
+    "deep-fry",
+    "fry in oil"
+   ],
+   "heat_mode": "dry_fat",
+   "candidate_reactions": [
+    "maillard",
+    "crisping_dehydration",
+    "fat_rendering",
+    "protein_coagulation"
+   ],
+   "family": "dry_heat",
+   "timing": {
+    "attention": "active",
+    "minutes": 12
+   }
+  },
+  "boil": {
+   "id": "boil",
+   "name": "Boil",
+   "aliases": [
+    "boil",
+    "boiling water",
+    "blanch"
+   ],
+   "heat_mode": "moist",
+   "candidate_reactions": [
+    "starch_gelatinization",
+    "protein_coagulation"
+   ],
+   "family": "moist_heat",
+   "timing": {
+    "attention": "active",
+    "minutes": 10
+   }
+  },
+  "steam": {
+   "id": "steam",
+   "name": "Steam",
+   "aliases": [
+    "steam",
+    "steamer"
+   ],
+   "heat_mode": "moist",
+   "candidate_reactions": [
+    "protein_coagulation",
+    "starch_gelatinization"
+   ],
+   "family": "moist_heat",
+   "timing": {
+    "attention": "passive",
+    "minutes": 15
+   }
+  },
+  "poach": {
+   "id": "poach",
+   "name": "Poach",
+   "aliases": [
+    "poach",
+    "poaching"
+   ],
+   "heat_mode": "moist",
+   "candidate_reactions": [
+    "protein_coagulation"
+   ],
+   "family": "moist_heat",
+   "timing": {
+    "attention": "semi_active",
+    "minutes": 10
+   }
+  },
+  "simmer_reduce": {
+   "id": "simmer_reduce",
+   "name": "Simmer / reduce",
+   "aliases": [
+    "simmer",
+    "cook down",
+    "reduce the",
+    "reduce until",
+    "reduce by",
+    "until reduced",
+    "until thickened",
+    "gently bubbling"
+   ],
+   "heat_mode": "moist",
+   "candidate_reactions": [
+    "reduction",
+    "protein_coagulation",
+    "collagen_breakdown",
+    "starch_gelatinization"
+   ],
+   "family": "moist_heat",
+   "timing": {
+    "attention": "semi_active",
+    "minutes": 8
+   }
+  },
+  "microwave": {
+   "id": "microwave",
+   "name": "Microwave",
+   "aliases": [
+    "microwave"
+   ],
+   "heat_mode": "moist",
+   "candidate_reactions": [
+    "protein_coagulation",
+    "starch_gelatinization"
+   ],
+   "family": "moist_heat",
+   "timing": {
+    "attention": "passive",
+    "minutes": 5
+   }
+  },
+  "braise": {
+   "id": "braise",
+   "name": "Braise",
+   "aliases": [
+    "braise",
+    "braising"
+   ],
+   "heat_mode": "combination",
+   "candidate_reactions": [
+    "maillard",
+    "collagen_breakdown",
+    "starch_gelatinization",
+    "protein_coagulation"
+   ],
+   "family": "combination",
+   "timing": {
+    "attention": "passive",
+    "minutes": 120
+   }
+  },
+  "stew": {
+   "id": "stew",
+   "name": "Stew",
+   "aliases": [
+    "stew",
+    "stewing",
+    "pressure-cook",
+    "pressure cook",
+    "cook on low",
+    "cook on high",
+    "slow-cook",
+    "slow cook"
+   ],
+   "heat_mode": "combination",
+   "candidate_reactions": [
+    "maillard",
+    "collagen_breakdown",
+    "starch_gelatinization",
+    "protein_coagulation"
+   ],
+   "family": "combination",
+   "timing": {
+    "attention": "passive",
+    "minutes": 90
+   }
+  },
+  "marinate": {
+   "id": "marinate",
+   "name": "Marinate / brine",
+   "aliases": [
+    "marinate",
+    "brine",
+    "soak",
+    "refrigerate for"
+   ],
+   "heat_mode": "none",
+   "candidate_reactions": [
+    "brining_marination"
+   ],
+   "family": "no_heat",
+   "timing": {
+    "attention": "waiting",
+    "minutes": 120
+   }
+  },
+  "no_cook": {
+   "id": "no_cook",
+   "name": "No-cook / assemble",
+   "aliases": [
+    "assemble",
+    "raw",
+    "mix",
+    "blend",
+    "toss",
+    "combine",
+    "whisk",
+    "dress",
+    "stir together",
+    "fold in"
+   ],
+   "heat_mode": "none",
+   "candidate_reactions": [
+    "emulsification"
+   ],
+   "family": "no_heat",
+   "timing": {
+    "attention": "active",
+    "minutes": 5
+   }
+  }
+ },
+ "reactions": {
+  "maillard": {
+   "id": "maillard",
+   "name": "Maillard browning",
+   "requires_any": [
+    "protein",
+    "sugar"
+   ],
+   "requires_all": [],
+   "heat_modes": [
+    "dry_air",
+    "dry_fat",
+    "radiant"
+   ],
+   "needs_dry_surface": true,
+   "result": "savory brown crust",
+   "fails_when": "wet surface or temp <=100C",
+   "chip": "golden crust",
+   "chip_order": 1
+  },
+  "caramelization": {
+   "id": "caramelization",
+   "name": "Sugar caramelization",
+   "requires_any": [],
+   "requires_all": [
+    "sugar"
+   ],
+   "heat_modes": [
+    "dry_air",
+    "dry_fat",
+    "radiant"
+   ],
+   "needs_dry_surface": true,
+   "result": "sweet browning",
+   "fails_when": "below ~160C or too wet",
+   "chip": "caramelized",
+   "chip_order": 2
+  },
+  "crisping_dehydration": {
+   "id": "crisping_dehydration",
+   "name": "Surface crisping",
+   "requires_any": [
+    "protein",
+    "starch",
+    "fat_solid"
+   ],
+   "requires_all": [],
+   "heat_modes": [
+    "dry_air",
+    "dry_fat",
+    "radiant"
+   ],
+   "needs_dry_surface": true,
+   "result": "crisp, dry exterior",
+   "fails_when": "moist or covered cooking",
+   "chip": "crisp",
+   "chip_order": 3
+  },
+  "starch_gelatinization": {
+   "id": "starch_gelatinization",
+   "name": "Starch gelatinization",
+   "requires_any": [],
+   "requires_all": [
+    "starch",
+    "water"
+   ],
+   "heat_modes": [
+    "moist",
+    "dry_air",
+    "combination"
+   ],
+   "needs_dry_surface": false,
+   "result": "thickens sauces, softens grains/pasta",
+   "fails_when": "no water present",
+   "chip": "thickens",
+   "chip_order": 5
+  },
+  "protein_coagulation": {
+   "id": "protein_coagulation",
+   "name": "Protein coagulation",
+   "requires_any": [],
+   "requires_all": [
+    "protein"
+   ],
+   "heat_modes": [
+    "moist",
+    "dry_air",
+    "dry_fat",
+    "radiant",
+    "combination"
+   ],
+   "needs_dry_surface": false,
+   "result": "protein firms and sets",
+   "fails_when": "under-heated",
+   "chip": "cooked through",
+   "chip_order": 9
+  },
+  "fat_rendering": {
+   "id": "fat_rendering",
+   "name": "Fat rendering",
+   "requires_any": [],
+   "requires_all": [
+    "fat_solid"
+   ],
+   "heat_modes": [
+    "dry_air",
+    "dry_fat",
+    "radiant"
+   ],
+   "needs_dry_surface": false,
+   "result": "fat melts out, aids crisping",
+   "fails_when": "too fast or too gentle"
+  },
+  "reduction": {
+   "id": "reduction",
+   "name": "Reduction",
+   "requires_any": [],
+   "requires_all": [
+    "water"
+   ],
+   "heat_modes": [
+    "moist"
+   ],
+   "needs_dry_surface": false,
+   "needs_uncovered": true,
+   "result": "liquid concentrates, sauce thickens",
+   "fails_when": "covered",
+   "chip": "rich sauce",
+   "chip_order": 6
+  },
+  "collagen_breakdown": {
+   "id": "collagen_breakdown",
+   "name": "Collagen breakdown",
+   "requires_any": [],
+   "requires_all": [
+    "collagen_rich"
+   ],
+   "heat_modes": [
+    "moist",
+    "combination"
+   ],
+   "needs_dry_surface": false,
+   "needs_long": true,
+   "result": "fall-apart tender",
+   "fails_when": "high heat + short time, or lean cut",
+   "chip": "fall-apart tender",
+   "chip_order": 4
+  },
+  "emulsification": {
+   "id": "emulsification",
+   "name": "Emulsification",
+   "requires_any": [],
+   "requires_all": [
+    "fat_liquid",
+    "water",
+    "emulsifier"
+   ],
+   "heat_modes": [
+    "none",
+    "moist"
+   ],
+   "needs_dry_surface": false,
+   "result": "stable creamy blend",
+   "fails_when": "no emulsifier or too little agitation",
+   "chip": "creamy dressing",
+   "chip_order": 7
+  },
+  "brining_marination": {
+   "id": "brining_marination",
+   "name": "Brining / marination",
+   "requires_any": [
+    "salt",
+    "acid"
+   ],
+   "requires_all": [
+    "protein"
+   ],
+   "heat_modes": [
+    "none"
+   ],
+   "needs_dry_surface": false,
+   "result": "seasons and tenderizes protein",
+   "fails_when": "no protein, or too brief",
+   "chip": "marinated",
+   "chip_order": 8
+  },
+  "leavening": {
+   "id": "leavening",
+   "name": "Leavening (rise)",
+   "requires_any": [],
+   "requires_all": [],
+   "heat_modes": [
+    "dry_air",
+    "combination"
+   ],
+   "needs_dry_surface": false,
+   "result": "rises \u2014 airy, light crumb",
+   "fails_when": "no leavener, or batter overmixed and deflated",
+   "chip": "light & fluffy",
+   "chip_order": 0
+  },
+  "gluten_development": {
+   "id": "gluten_development",
+   "name": "Gluten development",
+   "requires_any": [],
+   "requires_all": [],
+   "heat_modes": [],
+   "result": "elastic structure and chew",
+   "fails_when": "low-protein flour or barely mixed"
+  }
+ },
+ "time_model": {
+  "prep": {
+   "base_minutes": 3,
+   "minutes_per_ingredient": 2
+  },
+  "appliance_time_multiplier": {
+   "stovetop": 1.0,
+   "oven": 1.0,
+   "grill_outdoor": 1.0,
+   "microwave": 1.0,
+   "none": 1.0,
+   "air_fryer": 0.7,
+   "pressure_cooker": 0.35,
+   "slow_cooker": 4.0
+  },
+  "appliance_passive_cap_min": {
+   "slow_cooker": 480,
+   "pressure_cooker": 75,
+   "air_fryer": 60
+  }
+ }
+}

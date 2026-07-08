@@ -1,0 +1,887 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dinner How? — compose a meal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#e3d9d0;--panel:#fdfaf5;--panel2:#eee3d6;--line:#dccdba;--cream:#1b100b;--muted:#856445;--ember:#b61011;--cool:#327564;--gold:#a87218}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--cream);font-family:"Inter",system-ui,sans-serif;line-height:1.5}
+.wrap{max-width:920px;margin:0 auto;padding:0 20px}
+header{border-bottom:1px solid var(--line);padding:32px 0 24px;position:relative}
+.themebtn{position:absolute;top:32px;right:0;font-family:"Space Mono",monospace;font-size:12px;background:var(--panel2);border:1px solid var(--line);color:var(--cream);border-radius:999px;padding:7px 14px;cursor:pointer}
+.themebtn:hover{border-color:var(--ember)}
+.mark{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:38px;letter-spacing:-.02em;margin:0;display:flex;align-items:center;gap:11px;line-height:1}
+.mark .dot{width:12px;height:12px;border-radius:50%;background:var(--ember);box-shadow:0 0 15px var(--ember)}
+.tag{color:var(--muted);margin:11px 0 0;max-width:60ch;font-size:15px}.tag b{color:var(--cream);font-weight:600}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:22px 0}
+.ctl-lab{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 11px}
+.appls{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:18px}
+.shape{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+.step{display:flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:4px 6px 4px 13px}
+.steplab{font-family:"Space Mono",monospace;font-size:12px;color:var(--cream);min-width:58px}
+.stepbtn{width:23px;height:23px;border-radius:50%;border:1px solid var(--line);background:var(--ink);color:var(--ember);font-size:15px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
+.stepbtn:hover{border-color:var(--ember)}
+.stepn{font-family:"Space Mono",monospace;font-size:13px;color:var(--ember);min-width:12px;text-align:center;font-weight:700}
+.appl{font-family:"Space Mono",monospace;font-size:13px;color:var(--cream);background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.appl svg{width:16px;height:16px;flex:0 0 auto}
+.appl[aria-pressed="true"]{background:var(--ember);border-color:var(--ember);color:#fdf1ea;font-weight:700}
+.appl:focus-visible,.btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.btn{font-family:"Space Mono",monospace;font-size:13px;font-weight:700;background:var(--gold);color:#1a1109;border:none;border-radius:999px;padding:9px 18px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--cream);border:1px solid var(--line)}
+.slider-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:4px 0 16px}
+input[type=range]{flex:1;min-width:180px;accent-color:var(--ember);height:4px}
+input[type=time]{background:var(--panel2);border:1px solid var(--line);color:var(--cream);border-radius:8px;padding:7px 11px;font-family:"Space Mono",monospace;font-size:14px;color-scheme:light}
+.readout{font-family:"Space Mono",monospace;font-size:14px;color:var(--ember);white-space:nowrap}
+.budge{font-family:"Space Mono",monospace;font-size:11.5px;margin-left:8px;padding:2px 8px;border-radius:999px}
+.budge.under{color:var(--cool);background:rgba(85,166,143,.12)}.budge.over{color:var(--ember);background:rgba(210,58,42,.12)}
+.blk.prep{background:var(--gold)}
+.tip{position:fixed;display:none;z-index:100;background:var(--panel2);border:1px solid var(--ember);color:var(--cream);font-size:12.5px;line-height:1.4;padding:9px 12px;border-radius:8px;max-width:230px;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.tip strong{display:block;font-weight:700;color:var(--cream);margin-bottom:3px}
+.tip .tipbody{display:block;color:var(--muted);font-size:12px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.meal-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin:30px 0 4px}
+.meal-head h2{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:24px;letter-spacing:-.02em;margin:0}
+.meal-tot{font-family:"Space Mono",monospace;font-size:13px}.meal-tot .on{color:var(--ember)}.meal-tot .rd{color:var(--cool)}
+.dishes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.ptag{font-family:"Space Mono",monospace;font-size:11px;color:var(--muted);margin:3px 0 5px;letter-spacing:.02em}
+.dish{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;text-align:left;font:inherit;color:inherit;position:relative}
+.reroll{position:absolute;top:10px;right:10px;width:27px;height:27px;border-radius:50%;border:1px solid var(--line);background:var(--panel2);color:var(--ember);font-size:15px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
+.reroll:hover{border-color:var(--ember);transform:rotate(90deg);transition:transform .2s}
+.kitchen{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:6px}
+.station{flex:0 0 150px;overflow:hidden;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel)}
+.station[data-ap="stovetop"]{flex-basis:var(--sw,150px)}
+.station.active{border-color:rgba(210,58,42,.5)}
+.station.idle{opacity:.5;border-style:dashed}
+.st-head{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;font-family:"Space Mono",monospace;font-size:11.5px;font-weight:700;color:var(--cream);margin-bottom:11px}
+.station.active .st-head{color:var(--ember)}
+.st-head svg{width:28px;height:28px;flex-shrink:0}
+.st-dishes{display:flex;flex-direction:column;gap:5px}
+.st-dish{font-size:12.5px;color:var(--cream);background:var(--panel2);border-radius:6px;padding:5px 9px;cursor:grab;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.st-dish.dragging{opacity:.4}
+.station.drop{outline:2px dashed var(--ember);outline-offset:3px}
+.station.can{outline:2px solid var(--cool);outline-offset:2px}
+.station.cant{opacity:.3}
+.kmsg{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(18px);opacity:0;pointer-events:none;background:var(--panel2);border:1px solid var(--ember);color:var(--cream);font-size:13px;padding:12px 16px;border-radius:10px;box-shadow:0 8px 26px rgba(0,0,0,.28);transition:opacity .2s,transform .2s;z-index:120;max-width:360px;text-align:center}
+.kmsg.on{pointer-events:auto}
+.kswap{font-family:"Space Mono",monospace;font-size:12px;font-weight:700;background:var(--ember);color:#fdf1ea;border:none;border-radius:999px;padding:7px 13px;cursor:pointer}
+.kx{font-family:"Space Mono",monospace;font-size:12px;background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:7px 13px;cursor:pointer}
+.kmsg.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.kmsg strong{color:var(--ember)}
+.st-idle{font-family:"Space Mono",monospace;font-size:11px;color:var(--muted)}
+.burners{display:flex;flex-direction:row;gap:0;align-items:stretch}
+.burner{display:flex;flex-direction:column;gap:5px;flex:1 1 0;min-width:0;padding:0 11px}
+.burner:first-child{padding-left:0}
+.burners .burner:not(:first-child){border-left:1px solid var(--line)}
+.blab{font-family:"Space Mono",monospace;font-size:9.5px;color:var(--muted);margin-bottom:2px}
+.dish:hover{border-color:var(--ember)}
+.dish .role{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.dish .nm{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:17px;margin:3px 0 7px;line-height:1.1}
+.dish .chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-size:11px;padding:3px 8px;border-radius:999px;font-weight:600}
+.chip.warm{background:rgba(182,16,17,.12);color:var(--ember)}.chip.cool{background:rgba(50,117,100,.13);color:var(--cool)}
+.chip.none{background:var(--panel2);color:var(--muted)}
+.taste{font-family:"Space Mono",monospace;font-size:10px;color:var(--muted);margin-top:6px;letter-spacing:.3px}
+.flav{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:4px 0 18px}
+.radar{display:block;margin:2px auto 0;width:230px;height:200px;max-width:100%}
+.flav-row{display:flex;align-items:center;gap:9px}
+.flav-lab{font-family:"Space Mono",monospace;font-size:10.5px;color:var(--muted);width:56px;flex-shrink:0}
+.flav-track{flex:1;height:7px;background:var(--panel2);border-radius:4px;overflow:hidden}
+.flav-fill{height:100%;border-radius:4px;transition:width .3s}
+.flav-note{margin-top:12px;font-size:12.5px;color:var(--muted);font-style:italic}
+.section-lab{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ember);margin:26px 0 12px}
+.ahead{background:rgba(207,154,69,.1);border:1px solid rgba(207,154,69,.35);border-radius:10px;padding:11px 14px;font-size:13.5px;color:var(--gold);margin-bottom:14px}
+.startline{background:rgba(210,58,42,.12);border:1px solid rgba(210,58,42,.4);border-radius:10px;padding:13px 16px;font-size:15.5px;color:var(--cream);margin-bottom:12px}
+.startline b{color:var(--ember);font-weight:700}
+.gantt{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 16px 8px}
+.grow{display:grid;grid-template-columns:130px 1fr;gap:10px;align-items:center;margin-bottom:10px}
+.grow .gl{font-size:12.5px;color:var(--cream);text-align:right;line-height:1.15}
+.gsub{display:block;color:var(--muted);font-size:9.5px;font-family:"Space Mono",monospace}
+.swaps{background:rgba(85,166,143,.1);border:1px solid rgba(85,166,143,.35);border-radius:10px;padding:11px 14px;font-size:13px;color:var(--cool);margin:12px 0}
+.swaps b{color:var(--cool);font-weight:700}.swaps span{color:var(--cream)}
+.cutnote{font-size:12px;color:var(--muted);margin:6px 0 2px;line-height:1.4}
+.cutswap{align-items:flex-start;flex-direction:column;gap:7px}
+.cutgroups{display:flex;flex-direction:column;gap:8px;width:100%}
+.cutgroup{display:flex;flex-direction:column;gap:4px}
+.cutgrouplab{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.cutbtns{display:flex;flex-wrap:wrap;gap:6px}
+.cutinterch{font-size:11.5px;color:var(--cool);margin:2px 0 2px;line-height:1.4}
+.mism{display:block;margin-top:5px;color:var(--gold);font-size:12px}
+.cobake{background:rgba(207,154,69,.13);border:1px solid rgba(207,154,69,.4);border-radius:10px;padding:11px 14px;font-size:13px;color:var(--gold);margin:0 0 12px}
+.holding{background:rgba(207,154,69,.1);border:1px solid rgba(207,154,69,.35);border-radius:10px;padding:11px 14px;font-size:13px;color:var(--gold);margin:0 0 12px}.holding b{color:var(--gold);font-weight:700}
+.track{position:relative;height:22px;background:var(--panel2);border-radius:5px;overflow:hidden}
+.blk{position:absolute;top:0;height:100%}
+.rowswrap{position:relative;--lblw:140px}
+.lull{position:absolute;top:0;bottom:0;background:rgba(255,255,255,.5);border:2px dotted #9c9c9c;border-radius:6px;box-sizing:border-box;pointer-events:auto;z-index:3}
+.idlelab{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(180deg);writing-mode:vertical-rl;font-family:"Space Mono",monospace;font-size:8.5px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);white-space:nowrap;pointer-events:none;opacity:.75}
+.blk.on{background:var(--ember)}.blk.off{background:var(--cool);opacity:.75}
+.blk .t{position:absolute;left:6px;top:3px;font-family:"Space Mono",monospace;font-size:10px;color:#2a1608;font-weight:700}
+.blk.on .t{color:#fdf1ea}
+.axis{display:flex;justify-content:space-between;font-family:"Space Mono",monospace;font-size:10.5px;color:var(--muted);margin-top:4px;border-top:1px solid var(--line);padding-top:6px}
+.serve{font-family:"Space Mono",monospace;font-size:12px;color:var(--cool);margin-top:6px;text-align:right}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-family:"Space Mono",monospace;font-size:11.5px;font-weight:700}
+.lg{display:inline-flex;align-items:center;gap:5px}
+.lg svg{width:13px;height:13px;flex-shrink:0}
+.groc{columns:2;column-gap:26px;font-size:13.5px}
+.groc div{padding:5px 0;border-bottom:1px solid var(--line);break-inside:avoid}
+.groc .q{color:var(--muted);font-family:"Space Mono",monospace;font-size:11px;margin-left:6px}
+.groc2{columns:2;column-gap:24px}
+.gcat{break-inside:avoid;margin-bottom:16px}
+.gcat-lab{font-family:"Space Mono",monospace;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ember);margin:0 0 6px;border-bottom:1px solid var(--line);padding-bottom:4px}
+.gitem{font-size:13.5px;padding:3px 0;color:var(--cream)}
+.gitem-row{display:flex;justify-content:space-between;gap:10px}
+.gcut{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 2px}
+.gcutbtn{font-family:"Space Mono",monospace;font-size:10px;color:var(--muted);background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:2px 8px;cursor:pointer}
+.gcutbtn.on{background:var(--ember);border-color:var(--ember);color:#fdf1ea;font-weight:700}
+.gitem .q{color:var(--ember);font-family:"Space Mono",monospace;font-size:11.5px;white-space:nowrap;text-align:right}
+footer{border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);font-size:12px;margin-top:32px}
+.overlay{position:fixed;inset:0;background:rgba(10,7,5,.72);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;z-index:50}
+.overlay.on{display:flex}
+.sheet{background:var(--panel);border:1px solid var(--line);border-radius:16px;max-width:560px;width:100%;padding:24px}
+.close{position:absolute;top:14px;right:14px;background:var(--panel2);border:1px solid var(--line);color:var(--cream);border-radius:999px;width:32px;height:32px;font-size:17px;cursor:pointer}
+.sheet h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:23px;margin:0 40px 10px 0}
+.swap{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 2px}
+.swaplab{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.swapbtn{font-family:"Space Mono",monospace;font-size:12.5px;background:var(--panel2);border:1px solid var(--line);color:var(--cream);border-radius:999px;padding:6px 13px;cursor:pointer}
+.swapbtn.on{background:var(--ember);border-color:var(--ember);color:#fdf1ea;font-weight:700}
+.steps{list-style:none;padding:0;margin:12px 0 0;counter-reset:s}
+.steps li{counter-increment:s;position:relative;padding:0 0 12px 36px;font-size:14px}
+.steps li::before{content:counter(s);position:absolute;left:0;top:-1px;width:24px;height:24px;border-radius:50%;background:var(--panel2);border:1px solid var(--ember);color:var(--ember);font-family:"Space Mono",monospace;font-size:11px;display:flex;align-items:center;justify-content:center}
+.ing{font-size:13.5px;color:var(--muted);margin:4px 0}
+.st-dish.sel{outline:2px solid var(--ember);outline-offset:1px}
+@media (max-width:620px){.wrap{padding:0 14px}.dishes{grid-template-columns:1fr}.groc2{columns:1}.radar{width:210px;height:186px}.rowswrap{--lblw:106px}.mark{font-size:30px}.tag{font-size:14px}.appl{padding:9px 15px;font-size:13px}.stepbtn{width:30px;height:30px}.reroll{width:30px;height:30px}.btn,.swapbtn,.appl{min-height:40px}.station,.station[data-ap="stovetop"]{flex:1 1 100%}.gantt{overflow-x:auto;-webkit-overflow-scrolling:touch}.ganttscroll{min-width:470px}.groc2 .gcat{break-inside:auto}.kmsg{left:12px;right:12px;max-width:none;transform:translateY(18px)}.kmsg.on{transform:translateY(0)}.sheet{padding:20px 17px}.grow{grid-template-columns:96px 1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+<div class="wrap">
+ <header><h1 class="mark"><span class="dot"></span>DINNER HOW?</h1>
+ <p class="tag">Rice, a vegetable, a meat. Tell it what&rsquo;s in your kitchen &mdash; two burners, a rice cooker, maybe an air fryer &mdash; and it works out <b>when to start each dish</b>, so everything reaches the table <b>hot, together</b>.</p></header>
+ <section class="panel">
+   <p class="ctl-lab">What can you cook with?</p>
+   <div class="appls" id="appls"></div>
+   <p class="ctl-lab">Stove burners</p>
+   <div class="appls" id="burners"></div>
+   <p class="ctl-lab">Cuisine</p>
+   <div class="appls" id="cuisines"></div>
+   <p class="ctl-lab">Meal shape</p>
+   <div class="appls" id="preset"></div>
+   <div class="shape" id="shape"></div>
+   <p class="ctl-lab">Serving how many?</p>
+   <div class="shape" id="paxbox"></div>
+   <p class="ctl-lab">Hands-on time budget</p>
+   <div class="slider-row"><input type="range" id="budget" min="45" max="150" step="5" value="60"><span class="readout" id="budgetread"></span></div>
+   <p class="ctl-lab">When do you want to eat?</p>
+   <div class="slider-row"><input type="time" id="eat" value="19:00"><span class="readout" id="eatread"></span></div>
+   <p class="ctl-lab">Shortcuts</p>
+   <div class="appls"><button class="appl" id="packbtn" aria-pressed="false">Using ready pastes / packs</button></div>
+   <div class="row"><button class="btn" id="compose">Compose a meal</button><button class="btn ghost" id="shuffle">Shuffle</button></div>
+ </section>
+ <div id="out"></div>
+ <footer>Demo — original Singaporean recipes written for this app (fact-checked, not copied), temperatures in °C. Times are model estimates; the schedule assumes one cook.</footer>
+</div>
+<div class="overlay" id="overlay"><div class="sheet" id="sheet"></div></div>
+<div id="tip" class="tip"></div>
+<div id="kmsg" class="kmsg"></div>
+<script>
+let DISHES=[], GROC_CAT={}, PREP_VERB={}, APPLIANCES=[], APPL={}, APPLIANCE_ORDER=[], BURNER_DEFAULT=2;
+/* ============================================================
+   DERIVE — turns authored recipe data into everything the app needs.
+   Ported from the Python build so the browser can do it at load time.
+   Edit data/dishes.json and data/ingredients.json; this recomputes.
+   ============================================================ */
+const UNIT_SYN={tablespoon:"tbsp",tablespoons:"tbsp",tbsp:"tbsp",tbs:"tbsp",teaspoon:"tsp",teaspoons:"tsp",tsp:"tsp",cup:"cup",cups:"cup",gram:"g",grams:"g",g:"g",kilogram:"kg",kg:"kg",pound:"lb",pounds:"lb",lb:"lb",lbs:"lb",ounce:"oz",ounces:"oz",oz:"oz",can:"can",cans:"can",clove:"clove",cloves:"clove",slice:"slice",slices:"slice",bunch:"bunch",bunches:"bunch",stalk:"stalk",stalks:"stalk",block:"block",blocks:"block",cob:"cob",cobs:"cob",ml:"ml",l:"l",liter:"l",litre:"l",piece:"piece",pieces:"piece",pinch:"pinch",head:"head",heads:"head"};
+
+function esc(s){return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");}
+function wb(alias,text){return new RegExp("\\b"+esc(alias)+"\\b").test(text);}
+function frac(f){const [a,b]=f.split("/").map(Number);return a/b;}
+
+function parseQty(raw){
+  const s=raw.trim().toLowerCase();
+  const pats=[
+    [/^(\d+)\s+(\d+\/\d+)\s+(.*)$/, m=>[Number(m[1])+frac(m[2]), m[3]]],
+    [/^(\d+\/\d+)\s+(.*)$/,          m=>[frac(m[1]), m[2]]],
+    [/^(\d+(?:\.\d+)?)\s*(?:-|to)\s*(\d+(?:\.\d+)?)\s+(.*)$/, m=>[Number(m[2]), m[3]]],
+    [/^(\d+(?:\.\d+)?)\s+(.*)$/,     m=>[Number(m[1]), m[2]]],
+  ];
+  for(const [re,conv] of pats){
+    const m=s.match(re);
+    if(m){const [qty,rest]=conv(m);const parts=rest.split(/\s+/);
+      const unit=parts.length?(UNIT_SYN[parts[0].replace(/[.,]+$/,"")]||""):"";
+      return {qty:Math.round(qty*1000)/1000, unit};}
+  }
+  return {qty:null,unit:""};
+}
+
+/* ingredient matching: longest alias that appears on a word boundary */
+function makeMatcher(ingredients){
+  const pairs=[];
+  ingredients.forEach(ing=>(ing.aliases||[]).forEach(a=>pairs.push([a.toLowerCase(),ing.id])));
+  pairs.sort((x,y)=>y[0].length-x[0].length);   // longest first
+  return raw=>{const low=raw.toLowerCase();
+    for(const [a,id] of pairs){if(wb(a,low))return id;}
+    return null;};
+}
+
+/* recipe line may state its own cut: "3 cloves garlic, minced" -> "mince" */
+const CUT_NORM={sliced:"slice",chopped:"chop",minced:"mince",diced:"dice",cubed:"cube",grated:"grate",shredded:"shred",julienned:"julienne",trimmed:"trim",crushed:"crush",halved:"halve",quartered:"quarter",chunked:"cut into chunks",deveined:"devein",sifted:"sift"};
+function statedCut(raw){
+  const low=raw.toLowerCase();
+  const m=low.match(/cut into [a-z ]+/);
+  if(m)return m[0].trim();
+  for(const k of Object.keys(CUT_NORM)){if(low.includes(k))return CUT_NORM[k];}
+  return null;
+}
+
+function buildReference(ingData){
+  const list=ingData.ingredients;
+  const byId={}, GROC_CAT={}, PREP_VERB={}, hasChild=new Set();
+  list.forEach(i=>{byId[i.id]=i;GROC_CAT[i.name]=i.aisle;PREP_VERB[i.name]=i.prep_verb;if(i.parent)hasChild.add(i.parent);});
+  const anc={};
+  list.forEach(i=>{const s=new Set();let p=i.parent;while(p){s.add(p);p=byId[p]?byId[p].parent:null;}anc[i.id]=s;});
+  return {list,byId,anc,GROC_CAT,PREP_VERB,isLeaf:id=>!hasChild.has(id),
+          match:makeMatcher(list),taste:ingData.taste_rules};
+}
+
+/* ---- the derived layers ---- */
+function groceryItems(ings,R,misses){
+  const out=[];
+  ings.forEach(raw=>{const id=R.match(raw);
+    if(!id){if(misses)misses.push(raw);return;}
+    const q=parseQty(raw);
+    out.push({name:R.byId[id].name,id,qty:q.qty,unit:q.unit});});
+  return out;
+}
+function bucket(x){return x<=0?0:(x<1.5?1:(x<2.5?2:3));}
+function tasteOf(items,R){
+  const T=R.taste, S={sweet:0,sour:0,salty:0,umami:0,fat:0,heat:0};
+  items.forEach(it=>{const ing=R.byId[it.id];if(!ing)return;const pv=new Set(ing.provides||[]);
+    for(const axis in T.from_flags){if(T.from_flags[axis].some(f=>pv.has(f)))S[axis]+=1;}
+    if(pv.has("protein"))S.umami+=T.umami_from_protein;
+    if(T.umami_ingredients.includes(it.id))S.umami+=1;
+    S.heat+=(T.heat_weights[it.id]||0);});
+  const o={};for(const k in S)o[k]=bucket(S[k]);return o;
+}
+function proteinTagOf(items,R){
+  const SKIP=new Set(["dried_shrimp"]);
+  const prots=[];let egg=null;
+  items.forEach(it=>{const ing=R.byId[it.id];if(!ing||SKIP.has(it.id))return;
+    if(ing.category!=="proteins")return;
+    const nm=ing.name.toLowerCase();
+    if(it.id==="egg")egg=nm; else if(!prots.includes(nm))prots.push(nm);});
+  return prots.length?prots.slice(0,2).join(" & "):(egg||"");
+}
+function prepOverridesOf(ings,R){
+  const ov={};
+  ings.forEach(raw=>{const id=R.match(raw);if(!id)return;
+    const c=statedCut(raw);if(c)ov[R.byId[id].name]=c;});
+  return ov;
+}
+function cookStyleOf(d){
+  if(d.cuts){const r=d.cuts.options[d.cuts.default].cut_role;return r==="braise"?"slow":"quick";}
+  if(d.role!=="meat"&&d.role!=="fish")return undefined;
+  return (d.time&&d.time.hands_off_min>=30)?"slow":"quick";
+}
+
+/* hydrate a dish (and its cut/swap variants) with everything derived */
+function hydrateVariant(v,R,misses){
+  const gi=groceryItems(v.ingredients||[],R,misses);
+  v.grocery_items=gi;
+  v.grocery=gi.map(x=>x.name);
+  v.taste=tasteOf(gi,R);
+  v.protein_tag=proteinTagOf(gi,R);
+  v.prep_overrides=prepOverridesOf(v.ingredients||[],R);
+  if(v.cut_role)v.cook_style=v.cut_role==="braise"?"slow":"quick";
+  return v;
+}
+/* the time engine, applied to a dish: one analysis per appliance it can cook on */
+function timeDish(d,R,M,noMethod){
+  const appliances=d.appliances||[d.appliance];
+  d.appliance_options=appliances.map(ap=>{
+    const native=!!(d.steps_variants&&d.steps_variants[ap]);
+    const st=native?d.steps_variants[ap]:d.steps;
+    const a=analyzeRecipe(d.ingredients,st,ap,R,M,native);
+    if(noMethod&&!a.methodsUsed.length&&ap!=="none")noMethod.push(d.name+" ("+ap+")");
+    return {appliance:ap,time:d.time||a.time,_a:a};
+  });
+  const native=d.appliance_options.find(o=>o.appliance===d.appliance)||d.appliance_options[0];
+  if(!d.time)d.time=native.time;
+  if(!d.results)d.results=chipsFor(native._a.reactions,M);
+  d.appliance_options.forEach(o=>{delete o._a;});
+  return d;
+}
+function timeVariant(v,d,R,M){
+  const a=analyzeRecipe(v.ingredients,v.steps,d.appliance,R,M);
+  if(!v.time)v.time=a.time;
+  if(!v.results)v.results=chipsFor(a.reactions,M);
+  return v;
+}
+function hydrate(dishes,R,M){
+  const unknown=[], noMethod=[];
+  dishes.forEach(d=>{
+    const misses=[];
+    hydrateVariant(d,R,misses);
+    if(M)timeDish(d,R,M,noMethod);
+    const cs=cookStyleOf(d); if(cs)d.cook_style=cs;
+    ["cuts","swaps"].forEach(f=>{
+      if(d[f])Object.values(d[f].options).forEach(o=>{
+        hydrateVariant(o,R,misses);
+        if(M)timeVariant(o,d,R,M);
+      });
+    });
+    if(misses.length)unknown.push({dish:d.name,lines:[...new Set(misses)]});
+  });
+  if(unknown.length){
+    console.warn("[Dinner How?] "+unknown.length+" dish(es) name an ingredient that is not in data/ingredients.json. "+
+      "Those lines are missing from the grocery list, the taste profile and the prep steps. Add an alias, or reword the line.");
+    unknown.forEach(u=>console.warn("   "+u.dish+": "+u.lines.map(l=>JSON.stringify(l)).join(", ")));
+  }
+  if(noMethod.length){
+    console.warn("[Dinner How?] "+noMethod.length+" dish/appliance pair(s) have steps in which no cooking method was recognised, "+
+      "so their time is prep-only and probably wrong. Reword the step, or add an alias in data/methods.json.");
+    noMethod.forEach(n=>console.warn("   "+n));
+  }
+  hydrate.unknown=unknown; hydrate.noMethod=noMethod;
+  return dishes;
+}
+
+/* ============================================================
+   TIME ENGINE — ported from the Python build, line for line.
+   Reads a recipe's steps, works out what cooking happens,
+   which reactions fire, and how long it all takes.
+   ============================================================ */
+
+/* Python's round() is round-half-to-even. Math.round() is not. */
+function pyRound(x){
+  const f=Math.floor(x), d=x-f;
+  if(d>0.5)return f+1;
+  if(d<0.5)return f;
+  return (f%2===0)?f:f+1;
+}
+
+const WORDNUM={one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,fifteen:15,twenty:20,thirty:30,half:0.5,a:1,an:1};
+function explicitMinutes(text){
+  const low=text.toLowerCase();
+  let m=low.match(/(\d+)\s*(hours?|hrs?|minutes?|mins?)/);
+  if(m)return /^(hour|hr)/.test(m[2])?parseInt(m[1],10)*60:parseInt(m[1],10);
+  m=low.match(/\b(one|two|three|four|five|six|seven|eight|nine|ten|fifteen|twenty|thirty|half|a|an)\s+(?:more\s+|other\s+)?(hours?|hrs?|minutes?|mins?)/);
+  if(!m)return null;
+  const v=WORDNUM[m[1]];
+  if(v===undefined)return null;
+  return /^(hour|hr)/.test(m[2])?Math.trunc(v*60):Math.max(1,pyRound(v));
+}
+
+const NEG=["not ","don't","avoid","without"];
+function detectMethods(text,M){
+  const low=text.toLowerCase(), hits=[];
+  for(const mid in M.methods){
+    for(const a of M.methods[mid].aliases){
+      if(wb(a,low)){
+        const idx=low.indexOf(a);
+        const before=low.slice(Math.max(0,idx-12),idx);
+        if(!NEG.some(nw=>before.includes(nw)))hits.push(mid);
+        break;
+      }
+    }
+  }
+  if(/\bbrown(ed)?\b/.test(low)&&!/golden brown|brown sugar|brown rice|brown bread/.test(low))hits.push("sear_pan_fry");
+  return [...new Set(hits)];
+}
+
+/* which reactions fire: pure declaration, read off the reaction's own conditions */
+const DRY=new Set(["dry_air","dry_fat","radiant"]);
+function gate(mids,props,M){
+  const p=new Set(props);
+  if(mids.some(m=>M.methods[m].heat_mode==="moist"||M.methods[m].heat_mode==="combination"))p.add("water");
+  const fired=new Set();
+  mids.forEach(mid=>{
+    const m=M.methods[mid], dry=DRY.has(m.heat_mode);
+    (m.candidate_reactions||[]).forEach(rid=>{
+      const r=M.reactions[rid]; if(!r)return;
+      if((r.requires_all||[]).some(f=>!p.has(f)))return;
+      if(r.requires_any&&r.requires_any.length&&!r.requires_any.some(f=>p.has(f)))return;
+      if(r.needs_dry_surface&&!dry)return;
+      if(r.heat_modes&&r.heat_modes.length&&!r.heat_modes.includes(m.heat_mode))return;
+      fired.add(rid);
+    });
+  });
+  return [...fired].sort();
+}
+
+/* which of the recipe's ingredients this step is talking about,
+   including generic references ("add the meat" -> the declared pork) */
+function activeInStep(text,declared,R){
+  const low=text.toLowerCase(), active=new Set();
+  declared.forEach(nid=>{
+    const al=(R.byId[nid]||{}).aliases||[];
+    if(al.some(a=>wb(a,low)))active.add(nid);
+  });
+  R.list.forEach(ing=>{
+    if(R.isLeaf(ing.id))return;
+    if((ing.aliases||[]).some(a=>wb(a,low)))
+      declared.forEach(d=>{if(R.anc[d]&&R.anc[d].has(ing.id))active.add(d);});
+  });
+  return active;
+}
+
+const RESET=["meanwhile","separate","drain","remove","set aside","serve","garnish","transfer"];
+const VAGUE=["cook","heat"];
+const BRIEF=["until bubbly","until thick","until set","until coat","until combin","until glossy","until hot","until warmed","until fragrant","to coat","until wilted","until just","until the sauce"];
+const LIQ_OFF=["drain","remove from heat","transfer to","bake"];
+const SET_FORGET=new Set(["slow_cooker","pressure_cooker","oven","air_fryer"]);
+const RESCALE_STATED=new Set(["pressure_cooker","slow_cooker","air_fryer"]);
+const PREP_COMP_CATS=new Set(["proteins","vegetables","fruits"]);
+
+function analyzeRecipe(ingStrings,steps,appliance,R,M,nativeSteps){
+  const TM=M.time_model;
+  const ings=ingStrings.map(raw=>({raw,id:R.match(raw)}));
+  const declared=new Set(ings.filter(i=>i.id).map(i=>i.id));
+  const stepsText=steps.join(" ").replace(/([.!?])\s+/g,"$1\u0000").split("\u0000").map(s=>s.trim()).filter(Boolean);
+
+  let nComp=0;
+  ings.forEach(i=>{if(!i.id)return;
+    const a=new Set(R.anc[i.id]||[]); a.add(i.id);
+    for(const c of a){if(PREP_COMP_CATS.has(c)){nComp++;break;}}});
+
+  const prep=TM.prep.base_minutes+TM.prep.minutes_per_ingredient*nComp;
+  let total=prep, beThere=prep, handsOff=0, makeahead=0;
+  const mult=(TM.appliance_time_multiplier[appliance]!==undefined)?TM.appliance_time_multiplier[appliance]:1.0;
+  let hasLiquid=false, active=new Set();
+  const allR=new Set(), stepRecs=[];
+
+  stepsText.forEach(text=>{
+    const low=text.toLowerCase();
+    let mids=detectMethods(text,M);
+    let mentioned=activeInStep(text,declared,R);
+    if(low.includes("all ingredients")||low.includes("everything"))mentioned=new Set(declared);
+    active = RESET.some(c=>low.includes(c)) ? new Set(mentioned) : new Set([...active,...mentioned]);
+    const props=new Set();
+    active.forEach(a=>((R.byId[a]||{}).provides||[]).forEach(p=>props.add(p)));
+    if(appliance!=="none"&&props.has("water"))hasLiquid=true;
+    if(LIQ_OFF.some(c=>low.includes(c)))hasLiquid=false;
+    if(!mids.length&&VAGUE.some(v=>wb(v,low)))
+      mids = hasLiquid?["simmer_reduce"]:(props.has("fat_liquid")?["saute"]:[]);
+    const fired=mids.length?gate(mids,props,M):[];
+    fired.forEach(r=>allR.add(r));
+    mids.forEach(mid=>{
+      const mt=M.methods[mid].timing;
+      let att=mt.attention;
+      const exp=explicitMinutes(text);
+      let mins=exp||mt.minutes;
+      if(mid==="simmer_reduce"&&!exp&&BRIEF.some(b=>low.includes(b))){att="active";mins=2;}
+      if(att==="semi_active"&&SET_FORGET.has(appliance))att="passive";
+      const scale=(!exp||(RESCALE_STATED.has(appliance)&&!nativeSteps))?mult:1;
+      if(att==="waiting")makeahead+=mins;
+      else if(att==="active"){total+=mins;beThere+=mins;}
+      else if(att==="passive"){mins*=scale;total+=mins;handsOff+=mins;}
+      else {mins*=scale;const tend=pyRound(mins*0.2);total+=mins;beThere+=tend;handsOff+=mins-tend;}
+    });
+    stepRecs.push({text,methods:mids,reactions:fired});
+  });
+
+  const allp=new Set();
+  ings.forEach(i=>{if(i.id)((R.byId[i.id]||{}).provides||[]).forEach(p=>allp.add(p));});
+  let leavened=allp.has("leavening_chem")||allp.has("leavening_bio");
+  stepsText.forEach(t=>{const tl=t.toLowerCase();
+    if(/\b(beat|whip|whisk)\b/.test(tl)&&/\b(foam|foamy|stiff|peaks?)\b/.test(tl))leavened=true;});
+  const baked=stepRecs.some(s=>s.methods.includes("roast_bake"));
+  if(baked&&leavened)allR.add("leavening");
+  if(baked&&stepsText.some(t=>t.toLowerCase().includes("knead"))&&ings.some(i=>i.id==="flour"))allR.add("gluten_development");
+
+  const cap=TM.appliance_passive_cap_min[appliance];
+  if(cap!==undefined&&handsOff>cap){total-=(handsOff-cap);handsOff=cap;}
+
+  return {reactions:[...allR].sort(),
+    methodsUsed:[...new Set(stepRecs.flatMap(s=>s.methods))],
+    time:{ready_in_min:pyRound(total),be_there_min:pyRound(beThere),hands_off_min:pyRound(handsOff),
+      make_ahead_min:pyRound(makeahead),prep_min:pyRound(prep),active_cook_min:pyRound(beThere-prep)}};
+}
+
+function chipsFor(reactionIds,M){
+  return reactionIds.map(r=>M.reactions[r]).filter(r=>r&&r.chip)
+    .sort((a,b)=>a.chip_order-b.chip_order).map(r=>r.chip).slice(0,M._meta.max_chips||4);
+}
+
+function prepVerb(d,n){return (d&&d.prep_overrides&&d.prep_overrides[n])||PREP_VERB[n]||"prep";}
+;
+const APPL_ICON={stovetop:'<svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M2.5 4.5h19a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-19a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1zM8 6.2a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm8 0a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM2.8 15.4h18.4V18H2.8z"/><circle cx="8" cy="10.2" r="1.7"/><circle cx="16" cy="10.2" r="1.7"/><path d="M8 5.4v1.2M8 13.8v1.2M3.8 10.2h1.2M11 10.2h1.2M16 5.4v1.2M16 13.8v1.2M11.8 10.2h1.2M19 10.2h1.2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><circle cx="8" cy="16.7" r="1" fill="none" stroke="currentColor" stroke-width="1"/><path d="M8 15.9v1.6" stroke="currentColor" stroke-width="1" stroke-linecap="round"/><circle cx="16" cy="16.7" r="1" fill="none" stroke="currentColor" stroke-width="1"/><path d="M16 15.9v1.6" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>',oven:'<svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd"><path d="M3 4a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4zm3 2.2a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2zm12 0a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2zM6 10.5h12V18H6z"/></svg>',rice_cooker:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h18v2.5a3.5 3.5 0 0 1-3.5 3.5h-11A3.5 3.5 0 0 1 3 15.5z"/><path d="M4.5 13a7.5 7.5 0 0 1 15 0z"/><circle cx="12" cy="8.4" r="1"/><path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M9 3.5c-.9 1.3 .9 1.8 0 3M15 3.5c-.9 1.3 .9 1.8 0 3"/></svg>',pressure_cooker:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 12h16v4a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3z"/><rect x="3" y="10" width="18" height="2.3" rx="1.15"/><rect x="11" y="6.5" width="2" height="3.5" rx="1"/><circle cx="12" cy="6" r="1.5"/><path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M14.5 5.6c1.8-.2 2.2 1 3.6 .6"/></svg>',slow_cooker:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 13h14v2a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4z"/><path d="M4 12.5a8 8 0 0 1 16 0z"/><circle cx="12" cy="5.4" r="1.1"/><path d="M3 13.5c-1.1 0-1.8 .7-1.8 1.5s .7 1.5 1.8 1.3zM21 13.5c1.1 0 1.8 .7 1.8 1.5s-.7 1.5-1.8 1.3z"/></svg>',air_fryer:'<svg viewBox=\"0 0 24 24\" fill=\"currentColor\" fill-rule=\"evenodd\"><path d=\"M6 2h12a2 2 0 0 1 2 2v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V4a2 2 0 0 1 2-2zm8 3.4a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4zM6.5 6a.9 .9 0 1 0 0 1.8 .9 .9 0 0 0 0-1.8z\"/><path d=\"M6 18h12a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1zm3.5 1.4a.7 .7 0 1 0 0 1.4h5a.7 .7 0 1 0 0-1.4z\"/></svg>'};
+const WARM=new Set(["golden crust","caramelized","crisp","light & fluffy","marinated"]);
+const ROLES=["base","veg","meat","fish","soup","dessert"];
+const owned=new Set(["oven","stovetop"]);
+const KITCHEN_KEY="dinnerhow.kitchen";
+function saveKitchen(){try{localStorage.setItem(KITCHEN_KEY,JSON.stringify({owned:[...owned],burners:burners,pax:pax}));}catch(e){}}
+function loadKitchen(valid){try{
+  const k=JSON.parse(localStorage.getItem(KITCHEN_KEY)||"null"); if(!k)return;
+  if(Array.isArray(k.owned)){const keep=k.owned.filter(a=>valid.has(a)); if(keep.length){owned.clear();keep.forEach(a=>owned.add(a));}}
+  if(Number.isInteger(k.burners)&&k.burners>=1&&k.burners<=4)burners=k.burners;
+  if(Number.isInteger(k.pax)&&k.pax>=1&&k.pax<=12)pax=k.pax;
+}catch(e){}}
+function syncKitchenUI(){
+  const bb=document.getElementById("burners");
+  if(bb)[...bb.children].forEach((x,i)=>x.setAttribute("aria-pressed",i+1===burners));
+  const pn=document.getElementById("paxn"); if(pn)pn.textContent=pax;
+}
+let meal=[]; let cuisine="asian"; let budget=60; let burners=2; const count={base:1,veg:1,meat:1,fish:0,soup:0,dessert:0}/*weeknight*/; let packsOn=false; let pax=4; const ROLELAB={base:"Rice",veg:"Vegetable",meat:"Meat",fish:"Fish",soup:"Soup",dessert:"Dessert"};
+
+const applBox=document.getElementById("appls");
+function buildAppls(){applBox.innerHTML="";
+  APPLIANCE_ORDER.forEach(a=>{const b=document.createElement("button");b.className="appl";b.innerHTML=(APPL_ICON[a]||"")+"<span>"+APPL[a]+"</span>";
+   b.setAttribute("aria-pressed",owned.has(a));b.onclick=()=>{owned.has(a)?owned.delete(a):owned.add(a);b.setAttribute("aria-pressed",owned.has(a));saveKitchen();compose();};applBox.appendChild(b);});}
+const burnBox=document.getElementById("burners");
+[1,2,3,4].forEach(n=>{const b=document.createElement("button");b.className="appl";b.textContent=n+(n===1?" burner":" burners");b.setAttribute("aria-pressed",burners===n);b.onclick=()=>{burners=n;[...burnBox.children].forEach((x,i)=>x.setAttribute("aria-pressed",i+1===n));saveKitchen();compose();};burnBox.appendChild(b);});
+const cuiBox=document.getElementById("cuisines");
+[["asian","Asian"],["western","Western"],["any","Anything"]].forEach(([v,l])=>{const b=document.createElement("button");b.className="appl";b.textContent=l;b.dataset.v=v;b.setAttribute("aria-pressed",cuisine===v);b.onclick=()=>{cuisine=v;[...cuiBox.children].forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===cuisine));compose();};cuiBox.appendChild(b);});
+const shapeBox=document.getElementById("shape");
+ROLES.forEach(r=>{const wrap=document.createElement("div");wrap.className="step";wrap.innerHTML='<span class="steplab">'+ROLELAB[r]+'</span><button class="stepbtn" data-d="-1">\u2212</button><span class="stepn" id="c-'+r+'">'+count[r]+'</span><button class="stepbtn" data-d="1">+</button>';wrap.querySelectorAll(".stepbtn").forEach(b=>b.onclick=()=>{const mx=(r==="base"||r==="soup"||r==="dessert")?1:2;count[r]=Math.max(0,Math.min(mx,count[r]+ +b.dataset.d));document.getElementById("c-"+r).textContent=count[r];markPreset("");compose();});shapeBox.appendChild(wrap);});
+const PRESETS={Weeknight:{count:{base:1,veg:1,meat:1,fish:0,soup:0,dessert:0},budget:60},
+               Weekend:{count:{base:1,veg:1,meat:1,fish:1,soup:1,dessert:0},budget:120}};
+const presetBox=document.getElementById("preset");
+function markPreset(name){[...presetBox.children].forEach(x=>x.setAttribute("aria-pressed",x.textContent===name));}
+Object.keys(PRESETS).forEach(k=>{const b=document.createElement("button");b.className="appl";b.textContent=k;
+  b.onclick=()=>{const P=PRESETS[k];Object.assign(count,P.count);
+    ROLES.forEach(r=>{const e=document.getElementById("c-"+r);if(e)e.textContent=count[r];});
+    budget=P.budget;const sl=document.getElementById("budget"),rd=document.getElementById("budgetread");
+    if(sl)sl.value=budget; if(rd)rd.textContent="up to "+budget+"m hands-on";
+    markPreset(k);compose();};
+  presetBox.appendChild(b);});
+markPreset("Weeknight");
+const paxWrap=document.createElement("div");paxWrap.className="step";paxWrap.innerHTML='<span class="steplab">People</span><button class="stepbtn" data-d="-1">\u2212</button><span class="stepn" id="paxn">'+pax+'</span><button class="stepbtn" data-d="1">+</button>';paxWrap.querySelectorAll(".stepbtn").forEach(b=>b.onclick=()=>{pax=Math.max(1,Math.min(12,pax+ +b.dataset.d));document.getElementById("paxn").textContent=pax;saveKitchen();render();});document.getElementById("paxbox").appendChild(paxWrap);
+document.getElementById("compose").onclick=compose;
+document.getElementById("shuffle").onclick=()=>compose(true);
+const bslider=document.getElementById("budget"),bread=document.getElementById("budgetread");
+bread.textContent="up to "+budget+"m hands-on";
+bslider.oninput=()=>{budget=+bslider.value;bread.textContent="up to "+budget+"m hands-on";compose();};
+document.getElementById("eat").oninput=render;document.getElementById("eat").onchange=render;
+document.getElementById("packbtn").onclick=function(){packsOn=!packsOn;this.setAttribute("aria-pressed",packsOn);render();};
+
+function ownedOptions(d){return (d.appliance_options||[{appliance:d.appliance,time:d.time}]).filter(o=>owned.has(o.appliance)||o.appliance==="none");}
+function bestOption(d){const o=ownedOptions(d);if(d&&d._forceAppliance){const fo=o.find(x=>x.appliance===d._forceAppliance);if(fo)return fo;}return o.slice().sort((a,b)=>(a.time.ready_in_min-b.time.ready_in_min)||(a.time.be_there_min-b.time.be_there_min)||((a.appliance==="stovetop")-(b.appliance==="stovetop")))[0]||{appliance:d.appliance,time:d.time};}
+function eff(d){return (packsOn&&d.pack)?{...d,ingredients:d.pack.ingredients,steps:d.pack.steps,time:d.pack.time,grocery:d.pack.grocery,grocery_items:d.pack.grocery_items,appliance_options:d.pack.appliance_options,_packed:true,_packlabel:d.pack.label}:d;}
+function candidates(role){let c=DISHES.filter(d=>d.role===role && ownedOptions(d).length>0);if(cuisine!=="any"){const f=c.filter(d=>d.cuisine===cuisine);c=f.length?f:c;}return c;}
+const COMP_CATS=["Meat & protein","Vegetables","Fruit"];
+const isComp=n=>COMP_CATS.includes(GROC_CAT[n]||"");
+function prepPlan(list){
+  const compDishes={};
+  list.forEach(d=>d.grocery.forEach(g=>{if(isComp(g)){(compDishes[g]=compDishes[g]||new Set()).add(d.name);}}));
+  const shared=Object.keys(compDishes).filter(g=>compDishes[g].size>=2);
+  const sharedPrep=shared.length?3+3*shared.length:0;
+  const finishing={},finishingList={}; list.forEach(d=>{const only=d.grocery.filter(g=>isComp(g)&&compDishes[g].size<2);finishing[d.name]=only.length*3;finishingList[d.name]=only;});
+  return {sharedPrep,finishing,finishingList,shared,compDishes};
+}
+function mealHandsOn(list0){const list=list0.map(eff);const pp=prepPlan(list);
+  return pp.sharedPrep+Object.values(pp.finishing).reduce((a,b)=>a+b,0)+list.reduce((s,d)=>s+bestOption(d).time.active_cook_min,0);}
+function rerollOne(i,e){e.stopPropagation();const d=meal[i];const used=new Set(meal.map(x=>x.name));const c=candidates(d.role).filter(x=>!used.has(x.name));if(c.length){meal[i]=c[Math.floor(Math.random()*c.length)];render();}}
+function pickMeal(){const chosen=[];ROLES.forEach(r=>{const c=candidates(r).slice();for(let i=c.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[c[i],c[j]]=[c[j],c[i]];}for(let k=0;k<count[r]&&k<c.length;k++)chosen.push(c[k]);});return chosen;}
+function compose(){
+  let best=null,bestHO=1e9;
+  for(let t=0;t<80;t++){
+    const list=pickMeal();
+    if(!list.length){meal=[];render();return;}
+    const ho=mealHandsOn(list);
+    if(ho<=budget){meal=list;render();return;}
+    if(ho<bestHO){bestHO=ho;best=list;}
+  }
+  meal=best||[]; render();
+}
+function chips(d){if(!d.results.length)return `<span class="chip none">quick-cooked</span>`;
+  return d.results.map(c=>`<span class="chip ${WARM.has(c)?'warm':'cool'}">${c}</span>`).join("");}
+const TASTE_ORDER=["sweet","sour","salty","umami","fat","heat"];
+const TASTE_LAB={sweet:"Sweet",sour:"Sour",salty:"Salty",umami:"Savoury",fat:"Rich",heat:"Spicy"};
+const TASTE_COLOR={sweet:"var(--gold)",sour:"var(--cool)",salty:"var(--muted)",umami:"var(--ember)",fat:"var(--gold)",heat:"var(--ember)"};
+function tasteSig(d){const t=d.taste||{};const r=TASTE_ORDER.slice().sort((a,b)=>(t[b]||0)-(t[a]||0));let top=r.filter(k=>(t[k]||0)>=2).slice(0,3);if(!top.length&&(t[r[0]]||0)>0)top=[r[0]];return top.length?top.map(k=>TASTE_LAB[k].toLowerCase()).join(" \u00b7 "):"mild";}
+function mealTaste(ds){const a={sweet:0,sour:0,salty:0,umami:0,fat:0,heat:0};ds.forEach(d=>{const t=d.taste||{};TASTE_ORDER.forEach(k=>a[k]=Math.max(a[k],t[k]||0));});return a;}
+function flavourPanel(ds){
+  if(!ds.length)return "";
+  const a=mealTaste(ds);
+  const axes=[["sweet","Sweet"],["sour","Sour"],["salty","Salty"],["umami","Savoury"],["fat","Rich"],["heat","Spicy"]];
+  const cx=115,cy=112,R=76,N=6,seg=2*Math.PI/N,gap=0.20;
+  const P=(ang,r)=>[cx+r*Math.cos(ang),cy+r*Math.sin(ang)];
+  const wedge=(mid,r,span)=>{const a0=mid-span/2,a1=mid+span/2;const [x0,y0]=P(a0,r),[x1,y1]=P(a1,r);return `M${cx} ${cy} L${x0.toFixed(1)} ${y0.toFixed(1)} A${r.toFixed(1)} ${r.toFixed(1)} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)} Z`;};
+  let hits="",wedges="",labels="";
+  axes.forEach(([k,lab],i)=>{
+    const mid=-Math.PI/2+i*seg, v=a[k]||0, r=R*v/3;
+    const drivers=ds.filter(d=>((d.taste&&d.taste[k])||0)>=2).map(d=>d.name);
+    const lvlw=["none","mild","moderate","strong"][v];
+    const body=v===0?"not present in this meal":(drivers.length?(lvlw+" \\u2014 mostly from "+drivers.slice(0,3).join(", ")):(lvlw+" across the meal \\u2014 "+v+"/3"));
+    hits+=`<path d="${wedge(mid,R,seg)}" fill="transparent" data-tip-title="${lab}" data-tip="${body}"/>`;
+    if(v>0)wedges+=`<path d="${wedge(mid,r,seg*(1-gap))}" fill="${TASTE_COLOR[k]}" fill-opacity="0.9" stroke="none" pointer-events="none"/>`;
+    const [lx,ly]=P(mid,R+15);
+    const anchor=Math.abs(lx-cx)<6?"middle":(lx>cx?"start":"end");
+    labels+=`<text x="${lx.toFixed(1)}" y="${(ly+3).toFixed(1)}" text-anchor="${anchor}" font-size="10.5" fill="var(--cream)" font-weight="700" font-family="Space Mono,monospace" opacity="0.85" pointer-events="none">${lab}</text>`;
+  });
+  // concentric white rings (scale levels), drawn OVER the wedges
+  let rings="";
+  for(let lvl=1;lvl<=3;lvl++){rings+=`<circle cx="${cx}" cy="${cy}" r="${(R*lvl/3).toFixed(1)}" fill="none" stroke="#fff" stroke-width="1.4" opacity="0.85" pointer-events="none"/>`;}
+  rings+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="var(--line)" stroke-width="1.5" pointer-events="none"/>`;
+  let note;
+  if(a.heat>=2&&a.sour<=1&&a.sweet<=1)note="Leans spicy and rich \u2014 a tangy or fresh dish would balance it.";
+  else if((a.fat>=2||a.umami>=3)&&a.sour<=1&&a.sweet<=1)note="Rich and savoury \u2014 something sour or fresh would brighten the meal.";
+  else if(a.sweet>=2&&a.umami<=1&&a.fat<=1&&ds.length>1)note="On the sweet side \u2014 a savoury dish would round it out.";
+  else note="Nicely balanced across the tastes.";
+  return `<svg viewBox="0 0 230 210" class="radar">${hits}${wedges}${rings}${labels}</svg><div class="flav-note">${note}</div>`;
+}
+
+// scheduler: hands-on blocks are sequential (one cook); passive overlaps. Longest passive starts first.
+function schedule(list){
+  const pp=prepPlan(list);
+  const f=pax/4, pf=f<=1?Math.max(0.6,f):1+0.4*(f-1);
+  const sharedPrep=Math.round(pp.sharedPrep*pf);
+  const CAP=(()=>{const c={none:99};APPLIANCES.forEach(a=>c[a.id]=(a.capacity==null?burners:a.capacity));return c;})();
+  const VCAP=(()=>{const v={none:99};APPLIANCES.forEach(a=>v[a.id]=a.volume_litres);return v;})();
+  const assignAppliances=(L)=>{
+    const CAPv={stovetop:burners,oven:2,rice_cooker:1,pressure_cooker:1,slow_cooker:1,air_fryer:1,none:99};
+    const loadv={};const chosen={};
+    const order=L.map((d,i)=>({d,i})).sort((a,b)=>{
+      const fa=a.d._forceAppliance?0:1,fb=b.d._forceAppliance?0:1;if(fa!==fb)return fa-fb;
+      const oa=ownedOptions(a.d).length,ob=ownedOptions(b.d).length;if(oa!==ob)return oa-ob;
+      return b.d.time.ready_in_min-a.d.time.ready_in_min;});
+    order.forEach(({d,i})=>{
+      const opts=ownedOptions(d);let pick;
+      if(d._forceAppliance){pick=opts.find(o=>o.appliance===d._forceAppliance)||opts[0];}
+      else{let best=opts[0],bc=Infinity;opts.forEach(o=>{const ap=o.appliance;const proj=(loadv[ap]||0)+o.time.ready_in_min+(ap==="stovetop"?0.4:0);if(proj<bc){bc=proj;best=o;}});pick=best;}
+      chosen[i]=pick;const ap=pick.appliance;loadv[ap]=(loadv[ap]||0)+pick.time.ready_in_min/(CAPv[ap]||1);});
+    return chosen;};
+  const placeWith=(assignMap)=>{
+    const items=list.map((d,mi)=>{const o=assignMap[mi];const ap=o.appliance;
+      let ac=Math.round(o.time.active_cook_min),off=Math.round(o.time.hands_off_min);
+      const vol=(d.base_volume||1.5)*f,cap=VCAP[ap]||99,batches=Math.max(1,Math.ceil(vol/cap-1e-9));
+      if(batches>1){if(d.fresh)ac=ac*batches; else if(ap==="rice_cooker"||ap==="pressure_cooker"||ap==="air_fryer")off=off*batches;}
+      return {d,mi,ap,temp:ap==="oven"?(d.oven_temp_c||190):null,fp:Math.round((pp.finishing[d.name]||0)*pf),ac,off,batches,fresh:!!d.fresh,start:null};});
+    const rebuild=exclude=>{const cook=[[0,sharedPrep]],appl={};items.forEach(it=>{if(it===exclude||it.start==null)return;cook.push([it.start,it.start+it.fp+it.ac]);(appl[it.ap]=appl[it.ap]||[]).push([it.cookStart,it.done,it.temp]);});return {cook,appl};};
+    const cf=(S,t,on)=>!S.cook.some(iv=>t<iv[1]&&t+on>iv[0]);
+    const af=(S,t,dur,ap,temp)=>{const over=(S.appl[ap]||[]).filter(iv=>t<iv[1]&&t+dur>iv[0]);if(ap==="oven"){if(over.some(iv=>Math.abs(iv[2]-temp)>10))return false;return over.length<2;}return over.length<(CAP[ap]||1);};
+    const fit=(S,it,t)=>cf(S,t,it.fp+it.ac)&&af(S,t+it.fp,it.ac+it.off,it.ap,it.temp);
+    const setPos=(it,t)=>{it.start=t;it.cookStart=t+it.fp;it.done=t+it.fp+it.ac+it.off;};
+    const ord=items.slice().sort((a,b)=>(b.fp+b.ac+b.off)-(a.fp+a.ac+a.off));
+    ord.forEach(it=>{const S=rebuild(it);let t=sharedPrep,g=0;while(!fit(S,it,t)&&g++<9000)t++;setPos(it,t);});
+    const W=Math.max(sharedPrep,...items.map(i=>i.done));
+    const pull=i=>i.fresh||i.d.role==="base"||i.ac<=3;
+    items.filter(pull).sort((a,b)=>a.off-b.off).forEach(it=>{const S=rebuild(it);let best=it.start;
+      for(let t=Math.max(sharedPrep,W-(it.fp+it.ac+it.off));t>=it.start;t--){if(fit(S,it,t)){best=t;break;}}
+      setPos(it,best);});
+    const minStart=items.length?Math.min(...items.map(i=>i.start)):sharedPrep;
+    const origin=minStart-sharedPrep;
+    if(origin>0)items.forEach(it=>{it.start-=origin;it.cookStart-=origin;it.done-=origin;});
+    const wall=Math.max(sharedPrep,...items.map(i=>i.done));
+    const handsOn=sharedPrep+items.reduce((s,i)=>s+i.fp+i.ac,0);
+    const ev=[];
+    pp.shared.forEach(g=>{const users=items.filter(it=>it.d.grocery.includes(g));const first=Math.min(...users.map(it=>it.cookStart));ev.push([sharedPrep,1]);ev.push([first,-1]);});
+    items.forEach(it=>{const only=it.d.grocery.filter(g=>isComp(g)&&!pp.shared.includes(g)).length;if(only>0){ev.push([it.start,only]);ev.push([it.cookStart,-only]);}});
+    ev.sort((a,b)=>a[0]-b[0]||a[1]-b[1]); let cur=0,peak=0; ev.forEach(e=>{cur+=e[1];peak=Math.max(peak,cur);});
+    return {items,wall,handsOn,sharedPrep,nShared:pp.shared.length,holdingPeak:peak,sharedList:pp.shared,finishingList:pp.finishingList};
+  };
+  const baseAssign=assignAppliances(list);
+  const baseResult=placeWith(baseAssign);
+  let best=baseResult; const baseWall=baseResult.wall;
+  // co-bake search: rearrange dry-heat dishes across oven/air-fryer, keep the fastest (no scoring — strict time)
+  const dryIdx=[]; list.forEach((d,i)=>{if(d._forceAppliance)return;const aps=ownedOptions(d).map(o=>o.appliance);if((aps.includes("oven")||aps.includes("air_fryer"))&&(baseAssign[i].appliance==="oven"||baseAssign[i].appliance==="air_fryer"))dryIdx.push(i);});
+  if(dryIdx.length>=2&&dryIdx.length<=4){
+    const dryOpts=dryIdx.map(i=>ownedOptions(list[i]).filter(o=>o.appliance==="oven"||o.appliance==="air_fryer"));
+    let combos=[[]]; dryOpts.forEach(opts=>{const r=[];combos.forEach(prev=>opts.forEach(o=>r.push(prev.concat([o]))));combos=r;});
+    combos.forEach(combo=>{
+      const ovenD=[]; dryIdx.forEach((i,k)=>{if(combo[k].appliance==="oven")ovenD.push(list[i]);});
+      if(ovenD.length>2)return;
+      if(ovenD.length===2&&Math.abs((ovenD[0].oven_temp_c||190)-(ovenD[1].oven_temp_c||190))>10)return;
+      const alt=Object.assign({},baseAssign); dryIdx.forEach((i,k)=>alt[i]=combo[k]);
+      const res=placeWith(alt);
+      if(res.wall<best.wall)best=res;
+    });
+  }
+  // co-bake note (decision if it beat the greedy, else incidental)
+  const ov=best.items.filter(x=>x.ap==="oven"); let pair=null;
+  for(let a=0;a<ov.length;a++)for(let b=a+1;b<ov.length;b++){if(ov[a].cookStart<ov[b].done&&ov[b].cookStart<ov[a].done)pair=[ov[a],ov[b]];}
+  best.cobake=pair?{names:[pair[0].d.name,pair[1].d.name],temp:Math.round((pair[0].temp+pair[1].temp)/2),saved:Math.max(0,baseWall-best.wall)}:null;
+  return best;
+}
+function fmt(m){return m>=60?(Math.floor(m/60)+"h"+(m%60?" "+(m%60)+"m":"")):m+"m";}
+function aggGrocery(list){const f=pax/4;const agg={};list.forEach((d,i)=>(d.grocery_items||[]).forEach((it,j)=>{const key=it.id||it.name;const a=agg[key]||(agg[key]={name:it.name,units:{},some:false});if(it.qty==null)a.some=true;else a.units[it.unit]=(a.units[it.unit]||0)+it.qty*f;if(d.cuts&&j===0&&a.cutDish==null){a.cutDish=i;a.cutKey=d._cut||d.cuts.default;a.cutOpts=Object.keys(d.cuts.options).map(k=>({k,label:d.cuts.options[k].label}));}}));return agg;}
+const PL={cup:"cups",clove:"cloves",slice:"slices",can:"cans",stalk:"stalks",bunch:"bunches",block:"blocks",cob:"cobs",head:"heads",piece:"pieces"};
+function fmtNum(n){n=Math.round(n*100)/100;const w=Math.floor(n),f=Math.round((n-w)*100)/100;const fr={0.25:"\u00bc",0.33:"\u2153",0.5:"\u00bd",0.67:"\u2154",0.75:"\u00be"}[f];if(fr)return (w||"")+fr;return String(n);}
+function plural(u,n){return n>1&&PL[u]?PL[u]:u;}
+function fmtAmt(a){const parts=[];for(const u in a.units){const n=a.units[u];parts.push(fmtNum(n)+(u?" "+plural(u,n):""));}if(a.some)parts.push(parts.length?"+ more":"to taste");return parts.join(" + ");}
+
+function render(){
+  const list=meal.map(eff);
+  const out=document.getElementById("out");
+  if(!list.length){out.innerHTML=`<div class="panel" style="text-align:center;color:var(--muted)">No dishes fit. <b style="color:var(--cream)">Add an appliance</b> to compose a meal.</div>`;return;}
+  const sc=schedule(list);
+  sc.items.forEach(it=>{if(meal[it.mi])meal[it.mi]._shownAp=it.ap;});
+  const eatVal=(document.getElementById("eat").value)||"19:00";
+  const ep=eatVal.split(":").map(Number); const serveMin=ep[0]*60+ep[1]; const startMin=serveMin-sc.wall;
+  const clock=m=>{m=((m%1440)+1440)%1440;let h=Math.floor(m/60),mm=m%60;const ap=h<12?"AM":"PM";h=h%12||12;return h+":"+String(mm).padStart(2,"0")+" "+ap;};
+  document.getElementById("eatread").textContent="dinner at "+clock(serveMin);
+  // make-ahead notes
+  const ahead=list.filter(d=>d.time.make_ahead_min>0).map(d=>d.name);
+  // combined grocery (dedupe by name)
+  const agg=aggGrocery(list); const grocKeys=Object.keys(agg);
+    const CATORDER=["Meat & protein","Fish & seafood","Vegetables","Fruit","Rice, grains & bread","Dairy","Oils","Herbs & spices","Condiments & sauces","Baking","Other"];
+  const groups={}; grocKeys.forEach(k=>{const a=agg[k];const c=GROC_CAT[a.name]||"Other";(groups[c]=groups[c]||[]).push(a);});
+  const grocHtml=CATORDER.filter(c=>groups[c]).map(c=>`<div class="gcat"><p class="gcat-lab">${c} \u00b7 ${groups[c].length}</p>${groups[c].sort((x,y)=>x.name.localeCompare(y.name)).map(a=>`<div class="gitem"><div class="gitem-row"><span>${a.name}</span><span class="q">${fmtAmt(a)}</span></div>${a.cutOpts?`<div class="gcut">${a.cutOpts.map(o=>`<button class="gcutbtn ${o.k===a.cutKey?"on":""}" onclick="swapCut(${a.cutDish},'${o.k}')">${o.label}</button>`).join("")}</div>`:""}</div>`).join("")}</div>`).join("");
+  // dish cards
+  const cards=list.map((d,i)=>`<div class="dish" onclick="openD(${i})"><button class="reroll" onclick="rerollOne(${i},event)" aria-label="Swap this dish" title="Swap this dish">\u21bb</button><span class="role">${d.role}${d._packed?" \u00b7 pack":""}</span>
+     <div class="nm">${d.name}</div>${d.protein_tag?`<div class="ptag">${d.protein_tag}</div>`:""}<div class="chips">${chips(d)}</div><div class="taste">${tasteSig(d)}</div></div>`).join("");
+  const stations={}; sc.items.forEach(it=>{(stations[it.ap]=stations[it.ap]||[]).push(it);});
+  const KORDER=APPLIANCE_ORDER;
+  const box=ap=>{const its=stations[ap]||[];const active=its.length>0;
+    if(ap==="stovetop"){const sorted=its.slice().sort((a,b)=>a.cookStart-b.cookStart);const lanes=Array.from({length:burners},()=>[]),endt=Array(burners).fill(-1);
+      sorted.forEach(it=>{let p=false;for(let L=0;L<burners;L++){if(endt[L]<=it.cookStart){lanes[L].push({it});endt[L]=it.done;p=true;break;}}if(!p)lanes[burners-1].push({it,wait:true});});
+      const lh=lanes.map((L,ix)=>`<div class="burner"><span class="blab">Burner ${ix+1}</span>${L.length?L.map(o=>`<span class="st-dish" draggable="true" data-mi="${o.it.mi}">${o.it.d.name}${o.wait?" (waits)":""}</span>`).join(""):'<span class="st-idle">free</span>'}</div>`).join("");
+      return `<div class="station ${active?'active':'idle'}" data-ap="stovetop" style="--sw:${150*burners}px"><div class="st-head">${APPL_ICON.stovetop}Stovetop · ${burners} burner${burners>1?'s':''}</div><div class="burners">${lh}</div></div>`;}
+    return `<div class="station ${active?'active':'idle'}" data-ap="${ap}"><div class="st-head">${APPL_ICON[ap]||''}${APPL[ap]}</div>${active?`<div class="st-dishes">${its.map(it=>`<span class="st-dish" draggable="true" data-mi="${it.mi}">${it.d.name}</span>`).join('')}</div>`:`<div class="st-idle">idle</div>`}</div>`;};
+  let kitchenHtml=KORDER.filter(ap=>owned.has(ap)).map(box).join('');
+  if(stations['none'])kitchenHtml+=`<div class="station active" data-ap="none"><div class="st-head">Counter</div><div class="st-dishes">${stations['none'].map(it=>`<span class="st-dish" draggable="true" data-mi="${it.mi}">${it.d.name}</span>`).join('')}</div></div>`;
+  // gantt
+  const w=sc.wall;const WV={oven:"baking",pressure_cooker:"pressure-cooking",slow_cooker:"slow-cooking",rice_cooker:"cooking",stovetop:"simmering",none:"resting"};
+  const _busy=[[0,sc.sharedPrep]];sc.items.forEach(it=>_busy.push([it.start,it.cookStart+it.ac]));
+  _busy.sort((x,y)=>x[0]-y[0]);
+  const _mg=[];_busy.forEach(iv=>{if(_mg.length&&iv[0]<=_mg[_mg.length-1][1])_mg[_mg.length-1][1]=Math.max(_mg[_mg.length-1][1],iv[1]);else _mg.push([iv[0],iv[1]]);});
+  const _gaps=[];for(let i=0;i<_mg.length-1;i++){if(_mg[i+1][0]-_mg[i][1]>=6)_gaps.push([_mg[i][1],_mg[i+1][0]]);}
+  const _le=_mg.length?_mg[_mg.length-1][1]:sc.sharedPrep;if(w-_le>=6)_gaps.push([_le,w]);
+  const _M=10;const _gaps2=[];_gaps.forEach(g=>{if(_gaps2.length&&g[0]-_gaps2[_gaps2.length-1][1]<=_M)_gaps2[_gaps2.length-1][1]=g[1];else _gaps2.push([g[0],g[1]]);});const idleBands=_gaps2.map(g=>{const dur=Math.round(g[1]-g[0]);const ck=sc.items.filter(it=>(it.cookStart+it.ac)<=g[0]+0.5&&it.done>g[0]+0.5).map(it=>it.d.name);const body=ck.length?(dur+" min mostly free \u2014 "+ck.slice(0,3).join(", ")+(ck.length>3?" and more":"")+" cooking on their own. A good window to start a dessert or take a break."):(dur+" min gap \u2014 waiting on an appliance to free up.");return `<div class="lull" data-tip-title="Downtime" data-tip="${body}" style="left:calc(var(--lblw) + (100% - var(--lblw))*${(g[0]/w).toFixed(4)});width:calc((100% - var(--lblw))*${((g[1]-g[0])/w).toFixed(4)})"><span class="idlelab">downtime</span></div>`;}).join("");
+  const prepRow=sc.sharedPrep>0?`<div class="grow"><div class="gl">Shared prep<span class="gsub">${clock(startMin)} · ${sc.nShared} aromatics</span></div><div class="track"><div class="blk prep" data-tip-title="Shared prep" data-tip="${(sc.sharedList||[]).map(n=>n+' \u2014 '+prepVerb(null,n)).join(' || ')||'nothing shared'}" style="left:0%;width:${sc.sharedPrep/w*100}%">${sc.sharedPrep>=8?'<span class="t">'+sc.sharedPrep+'m</span>':''}</div></div></div>`:"";
+  const rows=sc.items.slice().sort((a,b)=>a.start-b.start).map(it=>{const pL=it.start/w*100,pW=it.fp/w*100,aL=it.cookStart/w*100,aW=it.ac/w*100,oL=(it.cookStart+it.ac)/w*100,oW=it.off/w*100;
+    return `<div class="grow"><div class="gl">${it.d.name}<span class="gsub">${clock(startMin+it.start)} · ${APPL[it.ap]}</span></div>
+      <div class="track">${it.fp>0?`<div class="blk prep" data-tip-title="${it.d.name}" data-tip="${(((sc.finishingList||{})[it.d.name])||[]).map(n=>n+' \u2014 '+prepVerb(it.d,n)).join(' || ')||'quick prep'}" style="left:${pL}%;width:${pW}%"></div>`:""}<div class="blk on" data-tip-title="${it.d.name}" data-tip="Hands-on \u00b7 ${it.ac} min || ${it.d.handson_action||'actively cooking'}" style="left:${aL}%;width:${aW}%">${it.ac>=8?'<span class="t">'+it.ac+'m</span>':''}</div>${it.off>0?`<div class="blk off" data-tip-title="${it.d.name}" data-tip="Walk-away \u00b7 ${it.off} min || ${WV[it.ap]||"cooking"}${it.ap==="oven"&&it.d.oven_temp_c?" at "+it.d.oven_temp_c+"\u00b0C":""} on its own \u2014 you\u2019re free" style="left:${oL}%;width:${oW}%"></div>`:""}</div></div>`;}).join("");
+  const ticks=[0,.25,.5,.75,1].map(f=>`<span>${clock(startMin+sc.wall*f)}</span>`).join("");
+  const swaps=sc.items.filter(it=>it.ap!==it.d.appliance).map(it=>{const o=it.d.appliance_options||[];const nat=o.find(x=>x.appliance===it.d.appliance),ch=o.find(x=>x.appliance===it.ap);return {name:it.d.name,ap:it.ap,saved:(nat?nat.time.ready_in_min:it.d.time.ready_in_min)-(ch?ch.time.ready_in_min:0)};}).filter(x=>x.saved>0);
+  const swapsHtml=swaps.length?`<div class="swaps">${swaps.map(x=>`<b>${APPL[x.ap]}</b> on ${x.name} <span>-${x.saved}m</span>`).join(" \u00b7 ")} — cooking off the stove, in parallel.</div>`:"";
+  out.innerHTML=`
+   <div class="meal-head"><h2>Tonight's meal \u00b7 for ${pax}</h2>
+     <div class="meal-tot"><span class="on">${sc.handsOn}m hands-on</span> · <span class="rd">ready in ${fmt(sc.wall)}</span>
+       <span class="budge ${sc.handsOn<=budget?'under':'over'}">${sc.handsOn<=budget?'✓ fits '+budget+'m':'over by '+(sc.handsOn-budget)+'m'}</span></div></div>
+   <div class="dishes">${cards}</div>
+   <p class="section-lab">Flavour balance</p>
+   <div class="flav">${flavourPanel(meal)}</div>
+   <p class="section-lab">Your kitchen \u00b7 drag or tap a dish to move it</p>
+   <div class="kitchen">${kitchenHtml}</div>
+   <p class="section-lab">Cooking timeline · one cook, back to front</p>
+   <div class="startline">Begin prep at <b>${clock(startMin)}</b>${startMin<0?" (the day before)":""} to eat at <b>${clock(serveMin)}</b> — ${fmt(sc.wall)} start to finish.</div>
+   ${ahead.length?`<div class="ahead">The night before: marinate the ${ahead.join(" and ")}.</div>`:""}
+   <div class="gantt"><div class="ganttscroll">${prepRow}<div class="rowswrap">${rows}${_gaps2.length?idleBands:""}</div><div class="axis">${ticks}</div></div>
+     <div class="legend"><span class="lg" style="color:var(--gold)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 4 20 6 9 17 7 15Z"/><path d="M7 15 3 19"/></svg> Prep</span><span class="lg" style="color:var(--ember)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c0 4-4 5-4 10a4 4 0 0 0 8 0c0-2-1-3-1-3 3 1 4 4 4 6a7 7 0 0 1-14 0C5 9 10 7 12 2Z"/></svg> Hands-on</span><span class="lg" style="color:var(--cool)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Walk-away</span></div>
+     <div class="serve">ready to serve at ${clock(serveMin)}</div></div>
+   ${swapsHtml}
+   ${(()=>{const b=sc.items.filter(it=>it.batches>1).map(it=>it.d.name+": "+(it.fresh?"sear in "+it.batches+" batches":(it.ap==="rice_cooker"||it.ap==="pressure_cooker"?it.batches+" "+APPL[it.ap]+" loads":"use a bigger pot ("+it.batches+"\u00d7)")));return b.length?`<div class="holding" style="color:var(--cool);background:rgba(85,166,143,.1);border-color:rgba(85,166,143,.4)">For ${pax}: ${b.join(" \u00b7 ")}</div>`:"";})()}
+   ${sc.cobake?`<div class="cobake">${sc.cobake.names.join(" and ")} share ~${sc.cobake.temp}\u00b0C \u2014 ${sc.cobake.saved>0?`baked together to save ${sc.cobake.saved} min and free another appliance`:`baked together in the oven, sharing the racks`}.</div>`:""}
+   <div class="holding">At its busiest, <b>${sc.holdingPeak}</b> prepped ingredient${sc.holdingPeak===1?"":"s"} wait for space \u2014 check you have the bowls and counter.</div>
+   <p class="section-lab">Combined grocery list · ${grocKeys.length} items</p>
+   <div class="groc2">${grocHtml}</div>`;
+}
+const overlay=document.getElementById("overlay"),sheet=document.getElementById("sheet");
+function swapProtein(i,key){const d=meal[i];const o=d.swaps.options[key];
+  meal[i]={...d,name:o.name,ingredients:o.ingredients,steps:o.steps,time:o.time,grocery:o.grocery,grocery_items:o.grocery_items,protein_tag:o.protein_tag,appliance_options:[{appliance:d.appliance,time:o.time}],_protein:key};
+  render();openD(i);}
+function swapCut(i,key){const d=meal[i];const o=d.cuts.options[key];
+  meal[i]={...d,name:o.name,ingredients:o.ingredients,steps:o.steps,time:o.time,grocery:o.grocery,grocery_items:o.grocery_items,results:o.results,handson_action:o.handson_action,protein_tag:o.protein_tag,cook_style:o.cook_style,appliance_options:[{appliance:d.appliance,time:o.time}],_cut:key};
+  render();openD(i);}
+function openD(i){const d=eff(meal[i]);const ap=bestOption(d).appliance;
+  const variant=d.steps_variants&&d.steps_variants[ap];const steps=variant||d.steps;
+  sheet.innerHTML=`<button class="close" onclick="closeD()">×</button><span class="role" style="font-family:'Space Mono';font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)">${d.role} · ${APPL[ap]}</span>
+   <h3>${d.name}</h3>${d.protein_tag?`<div class="ptag">${d.protein_tag}</div>`:""}<div class="chips">${chips(d)}</div>
+   ${d._packed?`<div class="swaps">Using the <b>${d._packlabel}</b> \u2014 the from-scratch paste prep is skipped.</div>`:""}
+   ${d.swaps?`<div class="swap"><span class="swaplab">Protein</span>${Object.keys(d.swaps.options).map(k=>`<button class="swapbtn ${(d._protein||d.swaps.default)===k?"on":""}" onclick="swapProtein(${i},'${k}')">${d.swaps.options[k].label}</button>`).join("")}</div>`:""}
+   ${d.cuts?(()=>{const opts=d.cuts.options,cur=d._cut||d.cuts.default;const byRole={};Object.keys(opts).forEach(k=>{const r=opts[k].cut_role||"other";(byRole[r]=byRole[r]||[]).push(k);});const RL={braise:"Braise \u2014 low & slow",quick:"Quick \u2014 sear or fry",mince:"Minced",other:"Other"};const order=["braise","quick","mince","other"].filter(r=>byRole[r]);const groups=order.map(r=>`<div class="cutgroup"><span class="cutgrouplab">${RL[r]}</span><div class="cutbtns">${byRole[r].map(k=>`<button class="swapbtn ${cur===k?"on":""}" onclick="swapCut(${i},'${k}')">${opts[k].label}</button>`).join("")}</div></div>`).join("");const o=opts[cur];const note=(o.note||(o.cut_role==="braise"?"A collagen-rich cut, braised low and slow":o.cut_role==="quick"?"A lean cut, cooked quick":"Minced"))+" \u2014 about "+o.time.ready_in_min+" min.";const interch=byRole[o.cut_role]&&byRole[o.cut_role].length>1?`<div class="cutinterch">${byRole[o.cut_role].map(k=>opts[k].label).join(", ")} are interchangeable here \u2014 they ${o.cut_role==="braise"?"braise":"cook"} alike.</div>`:"";return `<div class="swap cutswap"><span class="swaplab">Cut</span><div class="cutgroups">${groups}</div></div><div class="cutnote">${note}</div>${interch}`;})():""}
+   <p class="section-lab">Ingredients</p>${d.ingredients.map(x=>`<div class="ing">${x}</div>`).join("")}
+   <p class="section-lab">Method${variant?` · for your ${APPL[ap]}`:""}</p><ol class="steps">${steps.map(s=>`<li>${s}</li>`).join("")}</ol>`;
+  overlay.classList.add("on");document.body.style.overflow="hidden";}
+function closeD(){overlay.classList.remove("on");document.body.style.overflow="";}
+overlay.onclick=e=>{if(e.target===overlay)closeD();};
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeD();});
+const tip=document.getElementById("tip");
+document.addEventListener("mouseover",e=>{const el=e.target.closest("[data-tip]");if(el){tip.innerHTML="<strong>"+(el.getAttribute("data-tip-title")||"")+"</strong><span class=\"tipbody\">"+el.getAttribute("data-tip").split(" || ").join("<br>")+"</span>";tip.style.display="block";}});
+document.addEventListener("mousemove",e=>{if(tip.style.display==="block"){tip.style.left=Math.min(e.clientX+14,window.innerWidth-252)+"px";tip.style.top=(e.clientY+16)+"px";}});
+document.addEventListener("mouseout",e=>{if(e.target.closest("[data-tip]"))tip.style.display="none";});
+const kmsg=document.getElementById("kmsg");let kmsgT;
+function flashK(html){kmsg.innerHTML=html;kmsg.classList.add("on");clearTimeout(kmsgT);kmsgT=setTimeout(()=>kmsg.classList.remove("on"),4200);}
+function comps(x){return (x.grocery||[]).filter(isComp);}
+const AROMA=new Set(["Garlic","Ginger","Onion","Chilli","Lemongrass","Galangal","Scallion","Curry Leaves"]);
+const KEYCAT={meat:"Meat & protein",fish:"Meat & protein",soup:"Meat & protein",veg:"Vegetables",base:"Rice, grains & bread",dessert:"Rice, grains & bread"};
+function keyOf(d){const cat=KEYCAT[d.role];const cs=(d.grocery||[]).filter(g=>!AROMA.has(g));let k=cs.find(g=>GROC_CAT[g]===cat);if(!k&&d.role==="dessert")k=cs.find(g=>["Rice, grains & bread","Baking"].includes(GROC_CAT[g]));if(!k&&d.role==="base")k=cs.find(g=>GROC_CAT[g]==="Rice, grains & bread");return k||null;}
+function pickSub(pool,key,d,exactOnly){let best=null,bs=0;pool.forEach(c=>{const ck=keyOf(c);let s=0;if(ck&&ck===key)s=20;else if(!exactOnly&&ck&&(GROC_CAT[ck]||"")===(GROC_CAT[key]||""))s=8;if(s>0){s+=(c.cuisine===d.cuisine?2:0);if(s>bs){bs=s;best=c;}}});return best;}
+function protLabel(n){return n.split(" ")[0];}
+function findSubstitute(d,ap){
+  const key=keyOf(d);if(!key)return null;if(!(owned.has(ap)||ap==="none"))return null;
+  const inMeal=new Set(meal.map(m=>m.name));
+  const cands=DISHES.filter(c=>c.name!==d.name&&!inMeal.has(c.name)&&(c.appliance_options||[]).some(o=>o.appliance===ap));
+  if(d.role==="dessert"){const s=pickSub(cands.filter(c=>c.role==="dessert"),key,d,false);return s?{sub:s,mode:"dessert"}:null;}
+  if(d.role==="meat"||d.role==="fish"||d.role==="soup"){
+    const scope=d.role==="soup"?cands.filter(c=>c.role!=="dessert"):cands;
+    const kl=protLabel(key);
+    let best=null,bs=0;const ds=d.cook_style;
+    scope.forEach(c=>{const ck=keyOf(c);if(ck&&GROC_CAT[ck]==="Meat & protein"&&protLabel(ck)===kl){const s=10+(c.cuisine===d.cuisine?2:0)+(c.role===d.role?3:0)+(ds&&c.cook_style===ds?6:0);if(s>bs){bs=s;best=c;}}});
+    if(best){const mism=ds&&best.cook_style&&best.cook_style!==ds?{want:ds,got:best.cook_style}:null;return {sub:best,mode:d.role==="soup"?"soup":"protein",sameRole:best.role===d.role,styleMismatch:mism};}
+    const alts={};
+    scope.forEach(c=>{const ck=keyOf(c);if(ck&&GROC_CAT[ck]==="Meat & protein"){const lab=protLabel(ck);if(lab!==kl&&(!alts[lab]||(c.role===d.role&&alts[lab].role!==d.role)))alts[lab]=c;}});
+    const ps=Object.keys(alts);
+    return ps.length?{mode:"protein-choice",alts,ps}:null;
+  }
+  let s=pickSub(cands.filter(c=>c.role===d.role),key,d,false);if(s)return {sub:s,mode:"normal",sameRole:true};
+  s=pickSub(cands,key,d,false);return s?{sub:s,mode:"normal",sameRole:false}:null;
+}
+function doSwap(mi,sub,ap){const nd=JSON.parse(JSON.stringify(sub));nd._forceAppliance=ap;meal[mi]=nd;kmsg.classList.remove("on");render();}
+function suggestSwap(d,ap,mi){
+  const r=findSubstitute(d,ap);
+  const head="<strong>"+d.name+"</strong> can\u2019t cook in the "+APPL[ap]+".";
+  if(!r){flashK(head+" Nothing in your catalogue reuses its main ingredient there.");return;}
+  const key=(keyOf(d)||"its main ingredient");
+  if(r.mode==="protein-choice"){
+    const btns=r.ps.map(p=>`<button class="kswap" data-prot="${p}">${protLabel(p)}</button>`).join(" ");
+    kmsg.innerHTML="<div>"+head+"</div><div style=\"margin:7px 0 9px\">No "+protLabel(key).toLowerCase()+" dish works there. Cook with another protein?</div>"+btns+" <button class=\"kx\" id=\"kx\">Keep "+d.name+"</button>";
+    kmsg.classList.add("on");clearTimeout(kmsgT);
+    kmsg.querySelectorAll("[data-prot]").forEach(b=>b.onclick=()=>doSwap(mi,r.alts[b.dataset.prot],ap));
+    document.getElementById("kx").onclick=()=>kmsg.classList.remove("on");
+    return;
+  }
+  const sub=r.sub;let body;
+  if(r.mode==="soup") body="You\u2019ve got the "+protLabel(key).toLowerCase()+" \u2014 make <strong>"+sub.name+"</strong> instead?"+(r.styleMismatch?" <span class=\"mism\">Note: it\u2019s "+r.styleMismatch.got+"-cooked, not "+r.styleMismatch.want+" like your dish.</span>":"");
+  else if(r.mode==="dessert") body="<strong>"+sub.name+"</strong> uses the same "+key.toLowerCase()+" \u2014 make that instead?";
+  else if(r.mode==="protein") body="Make <strong>"+sub.name+"</strong> instead \u2014 same "+protLabel(key).toLowerCase()+"."+(r.styleMismatch?" <span class=\"mism\">Note: it\u2019s "+r.styleMismatch.got+"-cooked, not "+r.styleMismatch.want+" like your dish \u2014 a different cut behaviour.</span>":"");
+  else if(r.sameRole) body="Make <strong>"+sub.name+"</strong> instead \u2014 it uses your "+key.toLowerCase()+".";
+  else body="No "+(ROLELAB[d.role]||d.role).toLowerCase()+" dish suits it, but <strong>"+sub.name+"</strong> would \u2014 using your "+key.toLowerCase()+".";
+  kmsg.innerHTML="<div>"+head+"</div><div style=\"margin:7px 0 9px\">"+body+"</div><button class=\"kswap\" id=\"kswap\">Use "+sub.name+"</button> <button class=\"kx\" id=\"kx\">Keep "+d.name+"</button>";
+  kmsg.classList.add("on");clearTimeout(kmsgT);
+  document.getElementById("kswap").onclick=()=>doSwap(mi,sub,ap);
+  document.getElementById("kx").onclick=()=>kmsg.classList.remove("on");
+}
+document.addEventListener("dragstart",e=>{const el=e.target.closest(".st-dish[data-mi]");if(el){e.dataTransfer.setData("text/plain",el.dataset.mi);e.dataTransfer.effectAllowed="move";el.classList.add("dragging");markTargets(+el.dataset.mi);}});
+document.addEventListener("dragend",e=>{const el=e.target.closest(".st-dish");if(el)el.classList.remove("dragging");clearTargets();});
+document.addEventListener("dragover",e=>{const st=e.target.closest(".station[data-ap]");if(st){e.preventDefault();if(!st.classList.contains("cant"))st.classList.add("drop");}});
+document.addEventListener("dragleave",e=>{const st=e.target.closest(".station[data-ap]");if(st&&!st.contains(e.relatedTarget))st.classList.remove("drop");});
+function flashKeep(html){kmsg.innerHTML=html;kmsg.classList.add("on");clearTimeout(kmsgT);}
+function moveDish(mi,ap){const d=meal[mi];if(!d)return;if((d._shownAp||bestOption(d).appliance)===ap){kmsg.classList.remove("on");return;}
+  const opt=(d.appliance_options||[]).find(o=>o.appliance===ap);
+  if(opt&&(owned.has(ap)||ap==="none")){meal.forEach(m=>{if(m&&m!==d&&m._shownAp===ap)m._forceAppliance=ap;});d._forceAppliance=ap;render();flashK("Added <strong>"+d.name+"</strong> to the "+APPL[ap]+".");}
+  else{suggestSwap(d,ap,mi);}}
+document.addEventListener("drop",e=>{const st=e.target.closest(".station[data-ap]");if(!st)return;e.preventDefault();st.classList.remove("drop");
+  moveDish(+e.dataTransfer.getData("text/plain"),st.dataset.ap);});
+let selMi=null;
+function clearSel(){document.querySelectorAll(".st-dish.sel").forEach(x=>x.classList.remove("sel"));}
+function markTargets(mi){const d=meal[mi];if(!d)return;const valid=new Set((d.appliance_options||[]).map(o=>o.appliance).filter(a=>owned.has(a)));document.querySelectorAll(".station[data-ap]").forEach(st=>{st.classList.remove("can","cant");st.classList.add(valid.has(st.dataset.ap)?"can":"cant");});}
+function clearTargets(){document.querySelectorAll(".station[data-ap]").forEach(st=>st.classList.remove("can","cant","drop"));}
+document.addEventListener("click",e=>{
+  const dishEl=e.target.closest(".st-dish[data-mi]"),st=e.target.closest(".station[data-ap]");
+  if(dishEl){const mi=+dishEl.dataset.mi;if(selMi===mi){selMi=null;clearSel();clearTargets();kmsg.classList.remove("on");}else{clearSel();selMi=mi;dishEl.classList.add("sel");flashKeep("Moving <strong>"+meal[mi].name+"</strong> \u2014 tap an appliance to place it.");markTargets(mi);}return;}
+  if(st&&selMi!=null){const ap=st.dataset.ap,mi=selMi;selMi=null;moveDish(mi,ap);return;}
+  if(!dishEl&&!st&&selMi!=null&&!e.target.closest(".kmsg")){selMi=null;clearSel();clearTargets();kmsg.classList.remove("on");}
+});
+async function boot(){
+  const out=document.getElementById("out");
+  const grab=(f)=>fetch("data/"+f).then(r=>{if(!r.ok)throw new Error(f+" \u2014 "+r.status);return r.json();});
+  try{
+    const [ingData,methData,dishData,applData]=await Promise.all([
+      grab("ingredients.json"),grab("methods.json"),grab("dishes.json"),grab("appliances.json")]);
+    const R=buildReference(ingData);
+    GROC_CAT=R.GROC_CAT; PREP_VERB=R.PREP_VERB;
+    DISHES=hydrate(dishData.dishes,R,methData);
+    APPLIANCES=applData.appliances;
+    APPLIANCE_ORDER=APPLIANCES.slice().sort((a,b)=>a.order-b.order).map(a=>a.id);
+    APPL={none:"No-cook"}; APPLIANCES.forEach(a=>APPL[a.id]=a.name);
+    BURNER_DEFAULT=applData.burner_default||2; burners=BURNER_DEFAULT;
+    loadKitchen(new Set(APPLIANCES.map(a=>a.id)));
+    buildAppls(); syncKitchenUI();
+    compose();
+  }catch(e){
+    console.error(e);
+    out.innerHTML='<div class="panel" style="text-align:center;color:var(--muted);line-height:1.6">Could not load the recipe data \u2014 <b style="color:var(--cream)">'+e.message+'</b><br><br>This page reads its recipes from <code>data/*.json</code>, so it must be served over http.<br>Open it on GitHub Pages, or run <code>python3 -m http.server</code> in this folder.</div>';
+  }
+}
+boot();
+</script></body></html>

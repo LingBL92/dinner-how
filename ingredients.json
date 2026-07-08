@@ -1,0 +1,2776 @@
+{
+ "_meta": {
+  "purpose": "Ingredient knowledge. Teaches the app what an ingredient IS. Add an entry here and recipes can use it.",
+  "fields": {
+   "aliases": "matched against recipe ingredient lines; the longest match wins",
+   "provides": "property flags inherited from parent categories (protein, collagen_rich, sugar, salt, acid, fat_solid, fat_liquid, water, starch, aromatic...)",
+   "aisle": "shopping-list section",
+   "prep_verb": "how it is prepped, shown in the timeline",
+   "cut_role": "braise | quick | mince \u2014 only on meat cuts; drives cut-aware reasoning",
+   "parent": "the broader ingredient this is a kind of; 'pork ribs' has parent 'pork'"
+  }
+ },
+ "taste_rules": {
+  "_comment": "How the six-axis flavour profile is derived from an ingredient's flags.",
+  "from_flags": {
+   "sweet": [
+    "sugar"
+   ],
+   "sour": [
+    "acid"
+   ],
+   "salty": [
+    "salt"
+   ],
+   "fat": [
+    "fat_solid",
+    "fat_liquid"
+   ]
+  },
+  "umami_from_protein": 0.7,
+  "umami_ingredients": [
+   "fish_sauce",
+   "soy_sauce",
+   "belacan",
+   "oyster_sauce",
+   "dried_shrimp",
+   "salted_egg",
+   "mushroom",
+   "tomato",
+   "cheese",
+   "prawn",
+   "oyster",
+   "squid",
+   "kecap_manis",
+   "ketchup",
+   "dashi",
+   "miso",
+   "teriyaki",
+   "tonkatsu_sauce",
+   "nori",
+   "wakame",
+   "stock"
+  ],
+  "heat_weights": {
+   "chilli": 2,
+   "sambal": 2,
+   "curry_paste_pack": 2,
+   "white_pepper": 1,
+   "pepper": 1,
+   "ginger": 1,
+   "galangal": 1,
+   "curry_leaves": 0.5
+  }
+ },
+ "ingredients": [
+  {
+   "id": "proteins",
+   "name": "Proteins",
+   "aliases": [
+    "meat"
+   ],
+   "provides": [
+    "protein"
+   ],
+   "aisle": "Other",
+   "prep_verb": "prep",
+   "parent": "root"
+  },
+  {
+   "id": "beef",
+   "name": "Beef",
+   "aliases": [
+    "beef"
+   ],
+   "provides": [
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "cut into pieces",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "beef_chuck",
+   "name": "Beef chuck",
+   "aliases": [
+    "beef chuck",
+    "stewing beef",
+    "braising steak",
+    "chuck roast"
+   ],
+   "provides": [
+    "collagen_rich",
+    "fat_solid",
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "cut into chunks",
+   "parent": "beef",
+   "category": "proteins",
+   "cut_role": "braise",
+   "cut": "Chuck"
+  },
+  {
+   "id": "beef_brisket",
+   "name": "Beef brisket",
+   "aliases": [
+    "beef brisket",
+    "brisket"
+   ],
+   "provides": [
+    "collagen_rich",
+    "fat_solid",
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "cut into pieces",
+   "parent": "beef",
+   "category": "proteins",
+   "cut_role": "braise",
+   "cut": "Brisket"
+  },
+  {
+   "id": "beef_short_rib",
+   "name": "Beef short rib",
+   "aliases": [
+    "beef short rib",
+    "short ribs",
+    "short rib",
+    "beef ribs"
+   ],
+   "provides": [
+    "collagen_rich",
+    "fat_solid",
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "cut into pieces",
+   "parent": "beef",
+   "category": "proteins",
+   "cut_role": "braise",
+   "cut": "Short rib"
+  },
+  {
+   "id": "beef_steak",
+   "name": "Beef steak",
+   "aliases": [
+    "beef steak",
+    "steak",
+    "ribeye",
+    "sirloin",
+    "beef fillet"
+   ],
+   "provides": [
+    "fat_solid",
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "cut into pieces",
+   "parent": "beef",
+   "category": "proteins",
+   "cut_role": "quick",
+   "cut": "Steak/Sirloin"
+  },
+  {
+   "id": "beef_mince",
+   "name": "Minced beef",
+   "aliases": [
+    "minced beef",
+    "beef mince",
+    "ground beef"
+   ],
+   "provides": [
+    "fat_solid",
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "cut into pieces",
+   "parent": "beef",
+   "category": "proteins",
+   "cut_role": "mince",
+   "cut": "Minced"
+  },
+  {
+   "id": "chicken",
+   "name": "Chicken",
+   "aliases": [
+    "chicken"
+   ],
+   "provides": [
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "cut into pieces",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "chicken_breast",
+   "name": "Chicken breast",
+   "aliases": [
+    "chicken breast",
+    "chicken breasts"
+   ],
+   "provides": [
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "cut into pieces",
+   "parent": "chicken",
+   "category": "proteins",
+   "cut_role": "quick",
+   "cut": "Breast"
+  },
+  {
+   "id": "chicken_thigh",
+   "name": "Chicken thigh",
+   "aliases": [
+    "chicken thigh",
+    "chicken thighs",
+    "drumstick",
+    "chicken pieces"
+   ],
+   "provides": [
+    "fat_solid",
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "cut into pieces",
+   "parent": "chicken",
+   "category": "proteins",
+   "cut_role": "quick",
+   "cut": "Thigh"
+  },
+  {
+   "id": "pork",
+   "name": "Pork",
+   "aliases": [
+    "pork"
+   ],
+   "provides": [
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "cut into pieces",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "pork_shoulder",
+   "name": "Pork shoulder",
+   "aliases": [
+    "pork shoulder",
+    "pork butt"
+   ],
+   "provides": [
+    "collagen_rich",
+    "fat_solid",
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "cut into chunks",
+   "parent": "pork",
+   "category": "proteins",
+   "cut_role": "braise",
+   "cut": "Shoulder"
+  },
+  {
+   "id": "pork_ribs",
+   "name": "Pork ribs",
+   "aliases": [
+    "pork ribs",
+    "pork rib",
+    "spare ribs",
+    "pork bones"
+   ],
+   "provides": [
+    "collagen_rich",
+    "fat_solid",
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "blanch",
+   "parent": "pork",
+   "category": "proteins",
+   "cut_role": "braise",
+   "cut": "Ribs"
+  },
+  {
+   "id": "pork_belly",
+   "name": "Pork belly",
+   "aliases": [
+    "pork belly",
+    "belly pork"
+   ],
+   "provides": [
+    "collagen_rich",
+    "fat_solid",
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "cut into pieces",
+   "parent": "pork",
+   "category": "proteins",
+   "cut_role": "braise",
+   "cut": "Belly"
+  },
+  {
+   "id": "pork_loin",
+   "name": "Pork loin",
+   "aliases": [
+    "pork loin",
+    "pork chop",
+    "pork chops",
+    "pork steak",
+    "pork cutlet",
+    "pork fillet"
+   ],
+   "provides": [
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "cut into pieces",
+   "parent": "pork",
+   "category": "proteins",
+   "cut_role": "quick",
+   "cut": "Loin/Chop"
+  },
+  {
+   "id": "pork_mince",
+   "name": "Minced pork",
+   "aliases": [
+    "minced pork",
+    "pork mince",
+    "ground pork"
+   ],
+   "provides": [
+    "fat_solid",
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "cut into pieces",
+   "parent": "pork",
+   "category": "proteins",
+   "cut_role": "mince",
+   "cut": "Minced"
+  },
+  {
+   "id": "fish",
+   "name": "Fish",
+   "aliases": [
+    "fish",
+    "cod",
+    "salmon"
+   ],
+   "provides": [
+    "protein"
+   ],
+   "aisle": "Fish & seafood",
+   "prep_verb": "clean and cut",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "egg",
+   "name": "Egg",
+   "aliases": [
+    "egg",
+    "eggs",
+    "egg yolk"
+   ],
+   "provides": [
+    "emulsifier",
+    "protein",
+    "water"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "beat",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "turkey",
+   "name": "Turkey",
+   "aliases": [
+    "turkey"
+   ],
+   "provides": [
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "cut into pieces",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "tofu",
+   "name": "Tofu",
+   "aliases": [
+    "tofu"
+   ],
+   "provides": [
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "cube",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "beans",
+   "name": "Beans",
+   "aliases": [
+    "black bean",
+    "black beans",
+    "kidney bean",
+    "pinto bean",
+    "lentil",
+    "lentils",
+    "dry lentils",
+    "beans",
+    "bean"
+   ],
+   "provides": [
+    "protein",
+    "starch"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "cut into pieces",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "chickpea",
+   "name": "Chickpea",
+   "aliases": [
+    "chickpea",
+    "chickpeas",
+    "garbanzo"
+   ],
+   "provides": [
+    "protein",
+    "starch"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "cut into pieces",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "dried_shrimp",
+   "name": "Dried Shrimp",
+   "aliases": [
+    "dried shrimp",
+    "dried prawns",
+    "hae bee"
+   ],
+   "provides": [
+    "protein",
+    "salt"
+   ],
+   "aisle": "Fish & seafood",
+   "prep_verb": "cut into pieces",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "mutton",
+   "name": "Mutton",
+   "aliases": [
+    "mutton",
+    "goat",
+    "lamb"
+   ],
+   "provides": [
+    "collagen_rich",
+    "fat_solid",
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "cut into chunks",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "prawn",
+   "name": "Prawn",
+   "aliases": [
+    "prawns",
+    "prawn",
+    "shrimp"
+   ],
+   "provides": [
+    "protein"
+   ],
+   "aisle": "Fish & seafood",
+   "prep_verb": "peel and devein",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "oyster",
+   "name": "Oyster",
+   "aliases": [
+    "oysters",
+    "oyster"
+   ],
+   "provides": [
+    "protein"
+   ],
+   "aisle": "Fish & seafood",
+   "prep_verb": "cut into pieces",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "squid",
+   "name": "Squid",
+   "aliases": [
+    "squid",
+    "sotong",
+    "calamari"
+   ],
+   "provides": [
+    "protein"
+   ],
+   "aisle": "Fish & seafood",
+   "prep_verb": "cut into pieces",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "salmon",
+   "name": "Salmon",
+   "aliases": [
+    "salmon fillet",
+    "salmon"
+   ],
+   "provides": [
+    "protein"
+   ],
+   "aisle": "Fish & seafood",
+   "prep_verb": "cut into pieces",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "dairy",
+   "name": "Dairy",
+   "aliases": [],
+   "provides": [],
+   "aisle": "Other",
+   "prep_verb": "prep",
+   "parent": "root"
+  },
+  {
+   "id": "milk",
+   "name": "Milk",
+   "aliases": [
+    "milk",
+    "skim milk",
+    "non-fat milk",
+    "skim"
+   ],
+   "provides": [
+    "protein",
+    "water"
+   ],
+   "aisle": "Dairy",
+   "prep_verb": "measure",
+   "parent": "dairy",
+   "category": "dairy"
+  },
+  {
+   "id": "buttermilk",
+   "name": "Buttermilk",
+   "aliases": [
+    "buttermilk"
+   ],
+   "provides": [
+    "acid",
+    "protein",
+    "water"
+   ],
+   "aisle": "Dairy",
+   "prep_verb": "measure",
+   "parent": "dairy",
+   "category": "dairy"
+  },
+  {
+   "id": "butter",
+   "name": "Butter",
+   "aliases": [
+    "butter"
+   ],
+   "provides": [
+    "fat_solid",
+    "water"
+   ],
+   "aisle": "Dairy",
+   "prep_verb": "measure",
+   "parent": "dairy",
+   "category": "dairy"
+  },
+  {
+   "id": "cheese_hard",
+   "name": "Hard cheese",
+   "aliases": [
+    "parmesan",
+    "parmigiano",
+    "pecorino"
+   ],
+   "provides": [
+    "fat_solid",
+    "protein",
+    "salt"
+   ],
+   "aisle": "Dairy",
+   "prep_verb": "measure",
+   "parent": "dairy",
+   "category": "dairy"
+  },
+  {
+   "id": "yogurt",
+   "name": "Yogurt",
+   "aliases": [
+    "yogurt",
+    "yoghurt"
+   ],
+   "provides": [
+    "acid",
+    "protein",
+    "water"
+   ],
+   "aisle": "Dairy",
+   "prep_verb": "measure",
+   "parent": "dairy",
+   "category": "dairy"
+  },
+  {
+   "id": "mayonnaise",
+   "name": "Mayonnaise",
+   "aliases": [
+    "mayonnaise",
+    "mayo"
+   ],
+   "provides": [
+    "emulsifier",
+    "fat_liquid",
+    "water"
+   ],
+   "aisle": "Dairy",
+   "prep_verb": "measure",
+   "parent": "dairy",
+   "category": "dairy"
+  },
+  {
+   "id": "cream",
+   "name": "Cream",
+   "aliases": [
+    "cream",
+    "heavy cream"
+   ],
+   "provides": [
+    "fat_liquid",
+    "water"
+   ],
+   "aisle": "Dairy",
+   "prep_verb": "measure",
+   "parent": "dairy",
+   "category": "dairy"
+  },
+  {
+   "id": "evaporated_milk",
+   "name": "Evaporated Milk",
+   "aliases": [
+    "evaporated milk"
+   ],
+   "provides": [
+    "fat_liquid",
+    "water"
+   ],
+   "aisle": "Dairy",
+   "prep_verb": "measure",
+   "parent": "dairy",
+   "category": "dairy"
+  },
+  {
+   "id": "cheese",
+   "name": "Cheese",
+   "aliases": [
+    "grated cheese",
+    "mozzarella",
+    "cheddar",
+    "cheese"
+   ],
+   "provides": [
+    "fat_solid"
+   ],
+   "aisle": "Dairy",
+   "prep_verb": "measure",
+   "parent": "dairy",
+   "category": "dairy"
+  },
+  {
+   "id": "fats_oils",
+   "name": "Fats and oils",
+   "aliases": [],
+   "provides": [
+    "fat_liquid"
+   ],
+   "aisle": "Other",
+   "prep_verb": "prep",
+   "parent": "root"
+  },
+  {
+   "id": "olive_oil",
+   "name": "Olive oil",
+   "aliases": [
+    "olive oil"
+   ],
+   "provides": [
+    "fat_liquid"
+   ],
+   "aisle": "Oils",
+   "prep_verb": "measure",
+   "parent": "fats_oils",
+   "category": "fats_oils"
+  },
+  {
+   "id": "vegetable_oil",
+   "name": "Vegetable oil",
+   "aliases": [
+    "vegetable oil",
+    "peanut oil",
+    "canola oil",
+    "frying oil",
+    "oil",
+    "cooking oil"
+   ],
+   "provides": [
+    "fat_liquid"
+   ],
+   "aisle": "Oils",
+   "prep_verb": "measure",
+   "parent": "fats_oils",
+   "category": "fats_oils"
+  },
+  {
+   "id": "starches",
+   "name": "Starches",
+   "aliases": [],
+   "provides": [
+    "starch"
+   ],
+   "aisle": "Other",
+   "prep_verb": "prep",
+   "parent": "root"
+  },
+  {
+   "id": "flour",
+   "name": "Flour",
+   "aliases": [
+    "flour",
+    "plain flour",
+    "all-purpose flour"
+   ],
+   "provides": [
+    "protein",
+    "starch"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "measure",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
+   "id": "cornstarch",
+   "name": "Cornstarch",
+   "aliases": [
+    "cornstarch",
+    "corn starch",
+    "cornflour"
+   ],
+   "provides": [
+    "starch"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "measure",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
+   "id": "pasta",
+   "name": "Pasta",
+   "aliases": [
+    "pasta",
+    "penne",
+    "spaghetti",
+    "rigatoni",
+    "macaroni",
+    "noodles",
+    "elbow"
+   ],
+   "provides": [
+    "starch"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "measure",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
+   "id": "rice",
+   "name": "Rice",
+   "aliases": [
+    "jasmine rice",
+    "white rice",
+    "rice"
+   ],
+   "provides": [
+    "starch"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "measure",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
+   "id": "potato",
+   "name": "Potato",
+   "aliases": [
+    "potato",
+    "potatoes"
+   ],
+   "provides": [
+    "starch",
+    "water"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "peel and cube",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
+   "id": "couscous",
+   "name": "Couscous",
+   "aliases": [
+    "couscous"
+   ],
+   "provides": [
+    "starch"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "measure",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
+   "id": "bulgur",
+   "name": "Bulgur",
+   "aliases": [
+    "bulgur wheat",
+    "bulgur"
+   ],
+   "provides": [
+    "starch"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "measure",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
+   "id": "bread",
+   "name": "Bread",
+   "aliases": [
+    "bread",
+    "pita",
+    "tortilla",
+    "bun"
+   ],
+   "provides": [
+    "starch"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "measure",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
+   "id": "oats",
+   "name": "Oats",
+   "aliases": [
+    "quick-cooking oats",
+    "rolled oats",
+    "oatmeal",
+    "oats"
+   ],
+   "provides": [
+    "starch"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "measure",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
+   "id": "cornflakes",
+   "name": "Cornflakes",
+   "aliases": [
+    "cornflake crumbs",
+    "corn flake crumbs",
+    "cornflakes",
+    "corn flakes"
+   ],
+   "provides": [
+    "starch"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "measure",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
+   "id": "sweet_potato",
+   "name": "Sweet Potato",
+   "aliases": [
+    "sweet potato",
+    "sweet potatoes",
+    "yam"
+   ],
+   "provides": [
+    "starch"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "measure",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
+   "id": "sago",
+   "name": "Sago",
+   "aliases": [
+    "sago",
+    "tapioca pearls"
+   ],
+   "provides": [
+    "starch"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "measure",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
+   "id": "mung_bean",
+   "name": "Mung Bean",
+   "aliases": [
+    "mung beans",
+    "split mung beans",
+    "green beans dried"
+   ],
+   "provides": [
+    "starch"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "measure",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
+   "id": "glutinous_rice",
+   "name": "Glutinous Rice",
+   "aliases": [
+    "glutinous rice",
+    "glutinous rice flour"
+   ],
+   "provides": [
+    "starch"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "measure",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
+   "id": "panko",
+   "name": "Panko",
+   "aliases": [
+    "panko",
+    "breadcrumbs",
+    "bread crumbs"
+   ],
+   "provides": [
+    "starch"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "measure",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
+   "id": "udon",
+   "name": "Udon",
+   "aliases": [
+    "udon noodles",
+    "udon"
+   ],
+   "provides": [
+    "starch"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "measure",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
+   "id": "soba",
+   "name": "Soba",
+   "aliases": [
+    "soba noodles",
+    "soba",
+    "buckwheat noodles"
+   ],
+   "provides": [
+    "starch"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "measure",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
+   "id": "vegetables",
+   "name": "Vegetables",
+   "aliases": [],
+   "provides": [],
+   "aisle": "Other",
+   "prep_verb": "prep",
+   "parent": "root"
+  },
+  {
+   "id": "onion",
+   "name": "Onion",
+   "aliases": [
+    "onion",
+    "onions",
+    "shallot",
+    "shallots"
+   ],
+   "provides": [
+    "aromatic",
+    "sugar"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "peel and dice",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "garlic",
+   "name": "Garlic",
+   "aliases": [
+    "garlic"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "peel and mince",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "ginger",
+   "name": "Ginger",
+   "aliases": [
+    "ginger"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "peel and slice",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "tomato",
+   "name": "Tomato",
+   "aliases": [
+    "tomato",
+    "tomatoes",
+    "crushed tomatoes",
+    "chopped tomatoes",
+    "tomato paste"
+   ],
+   "provides": [
+    "acid",
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "chop",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "broccoli",
+   "name": "Broccoli",
+   "aliases": [
+    "broccoli"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "wash and chop",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "carrot",
+   "name": "Carrot",
+   "aliases": [
+    "carrot",
+    "carrots"
+   ],
+   "provides": [
+    "sugar",
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "peel and slice",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "mushroom",
+   "name": "Mushroom",
+   "aliases": [
+    "shiitake",
+    "dried mushroom",
+    "chinese mushroom",
+    "mushroom",
+    "mushrooms"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "slice",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "cabbage",
+   "name": "Cabbage",
+   "aliases": [
+    "cabbage"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "shred",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "celery",
+   "name": "Celery",
+   "aliases": [
+    "celery"
+   ],
+   "provides": [
+    "aromatic",
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "slice",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "bell_pepper",
+   "name": "Bell Pepper",
+   "aliases": [
+    "bell pepper",
+    "red pepper",
+    "green pepper",
+    "yellow pepper",
+    "sweet pepper",
+    "capsicum",
+    "green peppers",
+    "red peppers",
+    "bell peppers",
+    "capsicums"
+   ],
+   "provides": [
+    "sugar",
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "deseed and slice",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "spinach",
+   "name": "Spinach",
+   "aliases": [
+    "spinach"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "wash",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "zucchini",
+   "name": "Zucchini",
+   "aliases": [
+    "zucchini",
+    "courgette",
+    "summer squash",
+    "squash"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "wash and chop",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "eggplant",
+   "name": "Eggplant",
+   "aliases": [
+    "eggplant",
+    "aubergine"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "wash and chop",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "green_bean",
+   "name": "Green Bean",
+   "aliases": [
+    "green bean",
+    "green beans",
+    "string bean"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "wash and chop",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "peas",
+   "name": "Peas",
+   "aliases": [
+    "peas"
+   ],
+   "provides": [
+    "starch",
+    "sugar",
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "rinse",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "corn",
+   "name": "Corn",
+   "aliases": [
+    "corn"
+   ],
+   "provides": [
+    "starch",
+    "sugar"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "cut from the cob",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "lettuce",
+   "name": "Lettuce",
+   "aliases": [
+    "romaine lettuce",
+    "romaine",
+    "lettuce"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "wash and tear",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "cauliflower",
+   "name": "Cauliflower",
+   "aliases": [
+    "cauliflower"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "wash and chop",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "cucumber",
+   "name": "Cucumber",
+   "aliases": [
+    "cucumber"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "slice",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "kailan",
+   "name": "Kailan",
+   "aliases": [
+    "chinese broccoli",
+    "chinese kale",
+    "kailan",
+    "kai lan"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "wash and cut",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "bok_choy",
+   "name": "Bok Choy",
+   "aliases": [
+    "bok choy",
+    "pak choi",
+    "pak choy",
+    "bok choi"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "wash and cut",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "long_beans",
+   "name": "Long Beans",
+   "aliases": [
+    "long beans",
+    "long bean",
+    "snake beans",
+    "yardlong beans"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "trim and cut",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "watercress",
+   "name": "Watercress",
+   "aliases": [
+    "watercress"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "wash and trim",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "lemongrass",
+   "name": "Lemongrass",
+   "aliases": [
+    "lemongrass",
+    "lemon grass"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "bruise and slice",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "galangal",
+   "name": "Galangal",
+   "aliases": [
+    "galangal"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "slice",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "okra",
+   "name": "Okra",
+   "aliases": [
+    "okra",
+    "lady finger",
+    "ladies finger"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "trim and halve",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "kangkong",
+   "name": "Kangkong",
+   "aliases": [
+    "water spinach",
+    "morning glory",
+    "kangkong",
+    "kangkung"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "wash and cut",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "beansprouts",
+   "name": "Beansprouts",
+   "aliases": [
+    "bean sprouts",
+    "beansprouts",
+    "bean sprout",
+    "taugeh"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "rinse",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "nori",
+   "name": "Nori",
+   "aliases": [
+    "nori",
+    "seaweed sheet",
+    "seaweed sheets"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "wash and chop",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "wakame",
+   "name": "Wakame",
+   "aliases": [
+    "wakame",
+    "dried seaweed"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "wash and chop",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "daikon",
+   "name": "Daikon",
+   "aliases": [
+    "daikon",
+    "japanese radish"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "wash and chop",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "sweeteners",
+   "name": "Sweeteners",
+   "aliases": [],
+   "provides": [
+    "sugar"
+   ],
+   "aisle": "Other",
+   "prep_verb": "prep",
+   "parent": "root"
+  },
+  {
+   "id": "white_sugar",
+   "name": "White sugar",
+   "aliases": [
+    "sugar",
+    "caster sugar",
+    "granulated sugar"
+   ],
+   "provides": [
+    "sugar"
+   ],
+   "aisle": "Baking",
+   "prep_verb": "measure",
+   "parent": "sweeteners",
+   "category": "sweeteners"
+  },
+  {
+   "id": "brown_sugar",
+   "name": "Brown sugar",
+   "aliases": [
+    "brown sugar"
+   ],
+   "provides": [
+    "sugar"
+   ],
+   "aisle": "Baking",
+   "prep_verb": "measure",
+   "parent": "sweeteners",
+   "category": "sweeteners"
+  },
+  {
+   "id": "honey",
+   "name": "Honey",
+   "aliases": [
+    "honey"
+   ],
+   "provides": [
+    "sugar"
+   ],
+   "aisle": "Baking",
+   "prep_verb": "measure",
+   "parent": "sweeteners",
+   "category": "sweeteners"
+  },
+  {
+   "id": "palm_sugar",
+   "name": "Palm Sugar",
+   "aliases": [
+    "gula melaka",
+    "palm sugar"
+   ],
+   "provides": [
+    "sugar"
+   ],
+   "aisle": "Baking",
+   "prep_verb": "measure",
+   "parent": "sweeteners",
+   "category": "sweeteners"
+  },
+  {
+   "id": "red_bean",
+   "name": "Red Bean",
+   "aliases": [
+    "red beans",
+    "adzuki beans",
+    "red bean paste"
+   ],
+   "provides": [
+    "starch",
+    "sugar"
+   ],
+   "aisle": "Baking",
+   "prep_verb": "measure",
+   "parent": "sweeteners",
+   "category": "sweeteners"
+  },
+  {
+   "id": "acids",
+   "name": "Acids",
+   "aliases": [],
+   "provides": [
+    "acid",
+    "water"
+   ],
+   "aisle": "Other",
+   "prep_verb": "prep",
+   "parent": "root"
+  },
+  {
+   "id": "vinegar",
+   "name": "Vinegar",
+   "aliases": [
+    "vinegar",
+    "apple cider vinegar",
+    "cider vinegar"
+   ],
+   "provides": [
+    "acid",
+    "water"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "squeeze",
+   "parent": "acids",
+   "category": "acids"
+  },
+  {
+   "id": "lemon",
+   "name": "Lemon",
+   "aliases": [
+    "lemon",
+    "lemon juice"
+   ],
+   "provides": [
+    "acid",
+    "water"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "squeeze",
+   "parent": "acids",
+   "category": "acids"
+  },
+  {
+   "id": "hot_sauce",
+   "name": "Hot sauce",
+   "aliases": [
+    "hot sauce",
+    "cayenne pepper sauce"
+   ],
+   "provides": [
+    "acid",
+    "water"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "squeeze",
+   "parent": "acids",
+   "category": "acids"
+  },
+  {
+   "id": "lime",
+   "name": "Lime",
+   "aliases": [
+    "lime",
+    "lime juice"
+   ],
+   "provides": [
+    "acid",
+    "water"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "squeeze",
+   "parent": "acids",
+   "category": "acids"
+  },
+  {
+   "id": "seasonings",
+   "name": "Seasonings and aromatics",
+   "aliases": [],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Other",
+   "prep_verb": "prep",
+   "parent": "root"
+  },
+  {
+   "id": "salt",
+   "name": "Salt",
+   "aliases": [
+    "salt",
+    "kosher salt",
+    "sea salt"
+   ],
+   "provides": [
+    "aromatic",
+    "salt"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "pepper",
+   "name": "Pepper",
+   "aliases": [
+    "black pepper",
+    "pepper"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "paprika",
+   "name": "Paprika",
+   "aliases": [
+    "paprika"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "chili_flakes",
+   "name": "Chili flakes",
+   "aliases": [
+    "chili flakes",
+    "chilli flakes",
+    "red pepper flakes"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "parsley",
+   "name": "Parsley",
+   "aliases": [
+    "parsley",
+    "basil"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "thyme",
+   "name": "Thyme",
+   "aliases": [
+    "thyme"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "dill",
+   "name": "Dill",
+   "aliases": [
+    "dill"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "rosemary",
+   "name": "Rosemary",
+   "aliases": [
+    "rosemary"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "oregano",
+   "name": "Oregano",
+   "aliases": [
+    "oregano"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "cilantro",
+   "name": "Cilantro",
+   "aliases": [
+    "cilantro",
+    "coriander"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "cumin",
+   "name": "Cumin",
+   "aliases": [
+    "cumin"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "bay_leaf",
+   "name": "Bay Leaf",
+   "aliases": [
+    "bay leaf",
+    "bay leaves"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "vanilla",
+   "name": "Vanilla",
+   "aliases": [
+    "vanilla extract",
+    "vanilla"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "cinnamon",
+   "name": "Cinnamon",
+   "aliases": [
+    "cinnamon"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "chili_powder",
+   "name": "Chili Powder",
+   "aliases": [
+    "chili powder",
+    "chilli powder"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "poultry_seasoning",
+   "name": "Poultry Seasoning",
+   "aliases": [
+    "poultry seasoning"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "lemon_pepper",
+   "name": "Lemon Pepper",
+   "aliases": [
+    "lemon pepper seasoning",
+    "lemon pepper"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "pepper_flakes",
+   "name": "Pepper Flakes",
+   "aliases": [
+    "crushed pepper flakes",
+    "pepper flakes"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "five_spice",
+   "name": "Five Spice",
+   "aliases": [
+    "five spice",
+    "five-spice",
+    "5 spice"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "scallion",
+   "name": "Scallion",
+   "aliases": [
+    "spring onion",
+    "scallions",
+    "scallion",
+    "green onion"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "slice",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "chilli",
+   "name": "Chilli",
+   "aliases": [
+    "dried chillies",
+    "dried chilli",
+    "birds eye chilli",
+    "red chilli",
+    "chilli",
+    "chili",
+    "chillies",
+    "chilies",
+    "chillis"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "slice",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "turmeric",
+   "name": "Turmeric",
+   "aliases": [
+    "turmeric"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "coriander_seed",
+   "name": "Coriander Seed",
+   "aliases": [
+    "coriander seed",
+    "ground coriander",
+    "coriander powder"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "fennel",
+   "name": "Fennel",
+   "aliases": [
+    "fennel seed",
+    "fennel"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "cardamom",
+   "name": "Cardamom",
+   "aliases": [
+    "cardamom"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "star_anise",
+   "name": "Star Anise",
+   "aliases": [
+    "star anise"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "cloves_spice",
+   "name": "Cloves Spice",
+   "aliases": [
+    "ground cloves",
+    "whole cloves"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "dang_gui",
+   "name": "Dang Gui",
+   "aliases": [
+    "dang gui",
+    "danggui",
+    "angelica"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "white_pepper",
+   "name": "White Pepper",
+   "aliases": [
+    "white peppercorns",
+    "white pepper"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "curry_leaves",
+   "name": "Curry Leaves",
+   "aliases": [
+    "curry leaves",
+    "curry leaf"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "dried_orange_peel",
+   "name": "Dried orange peel",
+   "aliases": [
+    "dried orange peel",
+    "orange peel",
+    "chenpi"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "condiments",
+   "name": "Condiments",
+   "aliases": [],
+   "provides": [],
+   "aisle": "Other",
+   "prep_verb": "prep",
+   "parent": "root"
+  },
+  {
+   "id": "soy_sauce",
+   "name": "Soy sauce",
+   "aliases": [
+    "soy sauce"
+   ],
+   "provides": [
+    "salt",
+    "water"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "mustard",
+   "name": "Mustard",
+   "aliases": [
+    "mustard",
+    "dijon"
+   ],
+   "provides": [
+    "acid",
+    "emulsifier"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "water",
+   "name": "Water",
+   "aliases": [
+    "water"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "broth",
+   "name": "Broth",
+   "aliases": [
+    "chicken broth",
+    "chicken stock",
+    "beef broth",
+    "beef stock",
+    "vegetable broth",
+    "vegetable stock",
+    "beef bouillon",
+    "bouillon cube",
+    "bouillon",
+    "broth",
+    "stock"
+   ],
+   "provides": [
+    "salt",
+    "water"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "oyster_sauce",
+   "name": "Oyster Sauce",
+   "aliases": [
+    "oyster sauce"
+   ],
+   "provides": [
+    "salt"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "sesame_oil",
+   "name": "Sesame Oil",
+   "aliases": [
+    "sesame oil"
+   ],
+   "provides": [
+    "fat_liquid"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "hoisin",
+   "name": "Hoisin",
+   "aliases": [
+    "hoisin sauce",
+    "hoisin"
+   ],
+   "provides": [
+    "salt",
+    "sugar"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "fish_sauce",
+   "name": "Fish Sauce",
+   "aliases": [
+    "fish sauce"
+   ],
+   "provides": [
+    "salt"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "sambal",
+   "name": "Sambal",
+   "aliases": [
+    "sambal",
+    "chilli paste",
+    "chili paste"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "coconut_milk",
+   "name": "Coconut Milk",
+   "aliases": [
+    "coconut milk",
+    "coconut cream"
+   ],
+   "provides": [
+    "fat_liquid",
+    "water"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "tamarind",
+   "name": "Tamarind",
+   "aliases": [
+    "tamarind paste",
+    "tamarind",
+    "assam"
+   ],
+   "provides": [
+    "acid"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "belacan",
+   "name": "Belacan",
+   "aliases": [
+    "belacan",
+    "shrimp paste"
+   ],
+   "provides": [
+    "salt"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "curry_paste_pack",
+   "name": "Curry Paste Pack",
+   "aliases": [
+    "chicken curry paste",
+    "fish curry paste",
+    "meat curry paste",
+    "rendang paste",
+    "curry paste"
+   ],
+   "provides": [
+    "salt"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "bkt_pack",
+   "name": "Bkt Pack",
+   "aliases": [
+    "bak kut teh spice pack",
+    "bak kut teh pack",
+    "bkt pack"
+   ],
+   "provides": [],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "salted_egg",
+   "name": "Salted Egg",
+   "aliases": [
+    "salted egg yolks",
+    "salted egg yolk",
+    "salted egg",
+    "salted duck egg"
+   ],
+   "provides": [
+    "fat_solid",
+    "salt"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "kecap_manis",
+   "name": "Kecap Manis",
+   "aliases": [
+    "kecap manis",
+    "sweet soy sauce",
+    "sweet soy"
+   ],
+   "provides": [
+    "salt",
+    "sugar"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "pandan",
+   "name": "Pandan",
+   "aliases": [
+    "pandan leaves",
+    "pandan leaf",
+    "pandan"
+   ],
+   "provides": [],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "ketchup",
+   "name": "Ketchup",
+   "aliases": [
+    "tomato ketchup",
+    "ketchup"
+   ],
+   "provides": [
+    "acid",
+    "sugar"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "mirin",
+   "name": "Mirin",
+   "aliases": [
+    "mirin"
+   ],
+   "provides": [
+    "sugar"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "sake",
+   "name": "Sake",
+   "aliases": [
+    "sake",
+    "cooking rice wine"
+   ],
+   "provides": [],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "dashi",
+   "name": "Dashi",
+   "aliases": [
+    "dashi stock",
+    "dashi",
+    "japanese stock"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "miso",
+   "name": "Miso",
+   "aliases": [
+    "miso paste",
+    "miso"
+   ],
+   "provides": [
+    "salt"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "teriyaki",
+   "name": "Teriyaki",
+   "aliases": [
+    "teriyaki sauce",
+    "teriyaki"
+   ],
+   "provides": [
+    "salt",
+    "sugar"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "tonkatsu_sauce",
+   "name": "Tonkatsu Sauce",
+   "aliases": [
+    "tonkatsu sauce",
+    "katsu sauce"
+   ],
+   "provides": [
+    "acid",
+    "salt",
+    "sugar"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "stock",
+   "name": "Stock",
+   "aliases": [
+    "chicken stock",
+    "pork stock",
+    "beef stock",
+    "stock"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "japanese_curry_roux",
+   "name": "Japanese Curry Roux",
+   "aliases": [
+    "japanese curry roux",
+    "curry roux",
+    "curry sauce mix"
+   ],
+   "provides": [
+    "fat_solid",
+    "salt",
+    "sugar"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "leaveners",
+   "name": "Leaveners",
+   "aliases": [],
+   "provides": [],
+   "aisle": "Other",
+   "prep_verb": "prep",
+   "parent": "root"
+  },
+  {
+   "id": "baking_powder",
+   "name": "Baking powder",
+   "aliases": [
+    "baking powder"
+   ],
+   "provides": [
+    "leavening_chem"
+   ],
+   "aisle": "Baking",
+   "prep_verb": "measure",
+   "parent": "leaveners",
+   "category": "leaveners"
+  },
+  {
+   "id": "baking_soda",
+   "name": "Baking soda",
+   "aliases": [
+    "baking soda",
+    "bicarbonate of soda",
+    "bicarbonate"
+   ],
+   "provides": [
+    "leavening_chem"
+   ],
+   "aisle": "Baking",
+   "prep_verb": "measure",
+   "parent": "leaveners",
+   "category": "leaveners"
+  },
+  {
+   "id": "yeast",
+   "name": "Yeast",
+   "aliases": [
+    "active dry yeast",
+    "yeast"
+   ],
+   "provides": [
+    "leavening_bio"
+   ],
+   "aisle": "Baking",
+   "prep_verb": "measure",
+   "parent": "leaveners",
+   "category": "leaveners"
+  },
+  {
+   "id": "cream_of_tartar",
+   "name": "Cream of tartar",
+   "aliases": [
+    "cream of tartar"
+   ],
+   "provides": [
+    "acid"
+   ],
+   "aisle": "Baking",
+   "prep_verb": "measure",
+   "parent": "leaveners",
+   "category": "leaveners"
+  },
+  {
+   "id": "fruits",
+   "name": "Fruits",
+   "aliases": [],
+   "provides": [],
+   "aisle": "Other",
+   "prep_verb": "prep",
+   "parent": "root"
+  },
+  {
+   "id": "apple",
+   "name": "Apple",
+   "aliases": [
+    "apple",
+    "apples"
+   ],
+   "provides": [
+    "sugar",
+    "water"
+   ],
+   "aisle": "Fruit",
+   "prep_verb": "core and chop",
+   "parent": "fruits",
+   "category": "fruits"
+  },
+  {
+   "id": "applesauce",
+   "name": "Applesauce",
+   "aliases": [
+    "applesauce",
+    "apple sauce"
+   ],
+   "provides": [
+    "sugar",
+    "water"
+   ],
+   "aisle": "Fruit",
+   "prep_verb": "peel and chop",
+   "parent": "fruits",
+   "category": "fruits"
+  },
+  {
+   "id": "banana",
+   "name": "Banana",
+   "aliases": [
+    "banana",
+    "bananas"
+   ],
+   "provides": [
+    "sugar",
+    "water"
+   ],
+   "aisle": "Fruit",
+   "prep_verb": "peel and chop",
+   "parent": "fruits",
+   "category": "fruits"
+  },
+  {
+   "id": "berries",
+   "name": "Berries",
+   "aliases": [
+    "blueberries",
+    "blueberry",
+    "strawberries",
+    "strawberry",
+    "berries",
+    "raisins"
+   ],
+   "provides": [
+    "sugar",
+    "water"
+   ],
+   "aisle": "Fruit",
+   "prep_verb": "peel and chop",
+   "parent": "fruits",
+   "category": "fruits"
+  },
+  {
+   "id": "pineapple",
+   "name": "Pineapple",
+   "aliases": [
+    "pineapple"
+   ],
+   "provides": [
+    "acid",
+    "sugar",
+    "water"
+   ],
+   "aisle": "Fruit",
+   "prep_verb": "peel and chunk",
+   "parent": "fruits",
+   "category": "fruits"
+  }
+ ]
+}

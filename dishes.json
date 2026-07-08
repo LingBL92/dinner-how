@@ -1,0 +1,2957 @@
+{
+ "_meta": {
+  "purpose": "The menu. Add, remove or edit dishes here. Nothing else needs changing.",
+  "you_write": {
+   "name": "the dish name",
+   "role": "base | veg | meat | fish | soup | dessert — which slot of the meal it fills",
+   "cuisine": "asian | western",
+   "appliance": "the default appliance",
+   "appliances": "every appliance this dish can be cooked on, e.g. ['stovetop','pressure_cooker']",
+   "ingredients": "plain strings, e.g. '800 g pork ribs'",
+   "steps": "the method, in order. Say how long things cook — 'simmer for 1 hour'.",
+   "steps_variants": "optional. Different steps for a given appliance. Times stated here belong to that appliance.",
+   "handson_action": "how the active cooking reads in the timeline, e.g. 'stir-frying over high heat'",
+   "serves": "how many the stated quantities feed",
+   "base_volume": "litres in the pot at serves-size; drives batching on small appliances",
+   "fresh": "true if it must be served straight away",
+   "oven_temp_c": "baking temperature; two oven dishes may share the oven if within 10C",
+   "cuts": "optional cut choices, each with its own ingredients and steps",
+   "swaps": "optional protein swaps, same shape as cuts",
+   "pack": "optional shortcut using a ready-made paste"
+  },
+  "derived_automatically": "cooking time for every appliance, what the cooking produces, the shopping list and its quantities, shopping aisles, the taste profile, the protein tag, slow-versus-quick cooking, and how each ingredient is prepped. Never write these by hand.",
+  "overrides": "If you disagree with the engine, add an explicit 'time' or 'results' to a dish and it wins.",
+  "count": 57
+ },
+ "dishes": [
+  {
+   "name": "Baked Chicken",
+   "role": "meat",
+   "cuisine": "western",
+   "appliance": "oven",
+   "appliances": [
+    "oven",
+    "air_fryer"
+   ],
+   "ingredients": [
+    "1 pound chicken, boneless, skinless",
+    "1 teaspoon garlic powder",
+    "1 teaspoon ground black pepper",
+    "salt to taste"
+   ],
+   "steps": [
+    "Preheat the oven to 350 F.",
+    "Put the chicken in a baking pan or casserole dish.",
+    "Sprinkle with garlic powder and pepper to taste.",
+    "Bake for 1 hour."
+   ],
+   "steps_variants": {
+    "air_fryer": [
+     "Season the chicken.",
+     "Air-fry at 180 C for 18 minutes, flipping halfway, until golden and cooked through."
+    ]
+   },
+   "handson_action": "seasoning, then into the oven",
+   "serves": 4,
+   "base_volume": 1.8,
+   "fresh": false,
+   "oven_temp_c": 177
+  },
+  {
+   "name": "Baked Lemon Chicken",
+   "role": "meat",
+   "cuisine": "western",
+   "appliance": "oven",
+   "appliances": [
+    "oven",
+    "air_fryer"
+   ],
+   "ingredients": [
+    "3 1/2 pounds whole chicken, skinned and cut into 10 pieces",
+    "1/4 teaspoon salt",
+    "1/4 teaspoon ground black pepper",
+    "1 1/2 cloves garlic, sliced",
+    "4 teaspoons fresh thyme",
+    "3 cups onion, sliced",
+    "1 1/2 cups chicken broth",
+    "1/4 cup lemon juice",
+    "1 lemon, sliced"
+   ],
+   "steps": [
+    "Combine salt, pepper, garlic, and thyme.",
+    "Lay chicken pieces into a baking pan.",
+    "Sprinkle seasonings over chicken.",
+    "Combine onions, stock, and lemon juice in a sauce pan.",
+    "Heat to a boil.",
+    "Pour hot lemon mixture around chicken.",
+    "Top each piece with a lemon slice.",
+    "Bake for 30 minutes at 400 F until golden brown."
+   ],
+   "steps_variants": {
+    "air_fryer": [
+     "Season the chicken and squeeze over the lemon.",
+     "Air-fry at 200 C for 18 minutes, flipping halfway, until golden and cooked through."
+    ]
+   },
+   "handson_action": "seasoning, then into the oven",
+   "serves": 4,
+   "base_volume": 1.8,
+   "fresh": false,
+   "oven_temp_c": 204
+  },
+  {
+   "name": "Stir Fry Vegetables and Beef",
+   "role": "meat",
+   "cuisine": "western",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "1/2 teaspoon ground ginger",
+    "1/8 teaspoon garlic powder",
+    "1 teaspoon low-sodium soy sauce",
+    "1/3 cup water",
+    "1 cup carrots, grated",
+    "2 cups mushrooms, sliced",
+    "2 cups broccoli, chopped",
+    "1 bell pepper, sliced",
+    "1 onion, chopped",
+    "2 tablespoons vegetable oil",
+    "8 ounces beef chuck roast, sliced"
+   ],
+   "steps": [
+    "Mix spices, soy sauce, and water; set aside.",
+    "Chop broccoli, peppers, and onions.",
+    "Heat oil in a large frying pan and add meat when oil is hot; stir until brown.",
+    "Add carrots, onions, and peppers.",
+    "Cook for one minute.",
+    "Add mushrooms and broccoli.",
+    "Add liquid mixture and cook until bubbly.",
+    "Reduce heat, cover pan, and cook two more minutes.",
+    "Serve over brown rice."
+   ],
+   "steps_variants": {},
+   "handson_action": "browning, then it simmers",
+   "serves": 4,
+   "base_volume": 1.8,
+   "fresh": true
+  },
+  {
+   "name": "Crispy Oven-Fried Chicken",
+   "role": "meat",
+   "cuisine": "western",
+   "appliance": "oven",
+   "appliances": [
+    "oven",
+    "air_fryer"
+   ],
+   "ingredients": [
+    "1/2 cup skim milk",
+    "1 teaspoon poultry seasoning",
+    "1 cup cornflake crumbs",
+    "1 1/2 tablespoons onion powder",
+    "1 1/2 tablespoons garlic powder",
+    "2 teaspoons black pepper",
+    "2 teaspoons crushed pepper flakes",
+    "1 teaspoon ground ginger",
+    "4 chicken breasts, skinless",
+    "4 chicken drumsticks, skinless",
+    "1/4 teaspoon paprika",
+    "1 teaspoon vegetable oil"
+   ],
+   "steps": [
+    "Preheat oven to 350 F.",
+    "Add poultry seasoning to milk.",
+    "Combine remaining spices with cornflake crumbs in a plastic bag.",
+    "Dip chicken into milk, then shake in the bag with the crumbs.",
+    "Refrigerate for 1 hour.",
+    "Sprinkle lightly with paprika.",
+    "Space chicken on a greased baking pan.",
+    "Cover with foil and bake for 40 minutes.",
+    "Remove foil and bake for another 30 to 40 minutes until crispy."
+   ],
+   "steps_variants": {
+    "air_fryer": [
+     "Coat the chicken in the seasoned crumb.",
+     "Air-fry at 190 C for 18 minutes, flipping halfway, until crisp and golden."
+    ]
+   },
+   "handson_action": "seasoning, then into the oven",
+   "serves": 4,
+   "base_volume": 1.8,
+   "fresh": true,
+   "oven_temp_c": 177
+  },
+  {
+   "name": "Baked Fish",
+   "role": "fish",
+   "cuisine": "western",
+   "appliance": "oven",
+   "appliances": [
+    "oven",
+    "air_fryer"
+   ],
+   "ingredients": [
+    "1 pound fish fillets",
+    "1 onion, sliced",
+    "1/4 teaspoon salt",
+    "1/4 teaspoon black pepper",
+    "2 teaspoons vegetable oil",
+    "1/4 teaspoon lemon pepper seasoning"
+   ],
+   "steps": [
+    "Preheat oven to 350 F.",
+    "Place the fillets on a piece of foil.",
+    "Spread the onions, salt, pepper, and oil on top.",
+    "Fold the foil over the fish to wrap it.",
+    "Place on a baking sheet and bake for 15 to 20 minutes until the fish is flaky."
+   ],
+   "steps_variants": {
+    "air_fryer": [
+     "Season the fish.",
+     "Air-fry at 180 C for 10 minutes until just flaky."
+    ]
+   },
+   "handson_action": "seasoning, then into the oven",
+   "serves": 4,
+   "base_volume": 1.3,
+   "fresh": false,
+   "oven_temp_c": 177
+  },
+  {
+   "name": "Beef & Vegetable Soup",
+   "role": "soup",
+   "cuisine": "western",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop",
+    "pressure_cooker",
+    "slow_cooker"
+   ],
+   "ingredients": [
+    "1 pound ground beef",
+    "1 1/2 cans corn",
+    "1 can carrots",
+    "1 can potatoes, sliced",
+    "1 can diced tomatoes",
+    "1 small onion, diced",
+    "1/2 cup macaroni",
+    "1 teaspoon garlic powder",
+    "1 teaspoon onion powder"
+   ],
+   "steps": [
+    "In a large pan, brown ground beef over medium heat for 8 to 10 minutes.",
+    "Drain off fat.",
+    "Add corn, carrots, potatoes, tomatoes, and onions to pot.",
+    "Cook for 25 minutes over medium heat.",
+    "Add macaroni.",
+    "Cook for 20 minutes over medium heat."
+   ],
+   "steps_variants": {
+    "pressure_cooker": [
+     "Using the saute setting, brown the ground beef for 8 to 10 minutes, then drain off the fat.",
+     "Add the corn, carrots, potatoes, tomatoes, and onions with the water.",
+     "Seal and pressure-cook on high for 10 minutes, then quick-release.",
+     "Stir in the macaroni and pressure-cook for another 4 minutes, then quick-release."
+    ],
+    "slow_cooker": [
+     "Brown the ground beef in a pan for 8 to 10 minutes, then drain and transfer to the slow cooker.",
+     "Add the corn, carrots, potatoes, tomatoes, and onions with the water.",
+     "Cover and cook on low for 6 hours.",
+     "Stir in the macaroni for the last 30 minutes."
+    ]
+   },
+   "handson_action": "browning, then it simmers",
+   "serves": 4,
+   "base_volume": 2.6,
+   "fresh": false
+  },
+  {
+   "name": "Chicken Stew",
+   "role": "soup",
+   "cuisine": "western",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop",
+    "pressure_cooker",
+    "slow_cooker"
+   ],
+   "ingredients": [
+    "8 boneless chicken breasts",
+    "1 cup water",
+    "2 garlic cloves, minced",
+    "1 onion, chopped",
+    "1 1/2 teaspoons salt",
+    "1/2 teaspoon black pepper",
+    "3 tomatoes, chopped",
+    "1 teaspoon parsley",
+    "1/4 cup celery",
+    "2 potatoes, chopped",
+    "2 carrots, chopped",
+    "2 bay leaves"
+   ],
+   "steps": [
+    "Remove the skin from the chicken.",
+    "Combine chicken, water, garlic, onion, salt, pepper, tomatoes, and parsley in a large pot.",
+    "Tightly cover and cook over low heat for 25 minutes.",
+    "Add celery, potatoes, carrots, and bay leaves and continue to cook for 15 minutes.",
+    "Remove bay leaves before serving."
+   ],
+   "steps_variants": {
+    "pressure_cooker": [
+     "Remove the skin from the chicken.",
+     "Combine the chicken, water, garlic, onion, salt, pepper, tomatoes, celery, potatoes, carrots, and bay leaves in the pressure cooker.",
+     "Seal and pressure-cook on high for 15 minutes, then quick-release.",
+     "Remove the bay leaves before serving."
+    ],
+    "slow_cooker": [
+     "Remove the skin from the chicken.",
+     "Combine all the ingredients in the slow cooker.",
+     "Cover and cook on low for 5 to 6 hours until tender.",
+     "Remove the bay leaves before serving."
+    ]
+   },
+   "handson_action": "getting it to a simmer",
+   "serves": 4,
+   "base_volume": 2.6,
+   "fresh": false
+  },
+  {
+   "name": "3-Can Chili",
+   "role": "soup",
+   "cuisine": "western",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop",
+    "pressure_cooker",
+    "slow_cooker"
+   ],
+   "ingredients": [
+    "1 can low-sodium black beans, undrained",
+    "1 can reduced-sodium corn, drained",
+    "1 can low-sodium crushed tomatoes",
+    "1 teaspoon chili powder"
+   ],
+   "steps": [
+    "Place the contents of all 3 cans into a pan.",
+    "Add chili powder to taste.",
+    "Stir to mix.",
+    "Continue to stir over medium heat until heated thoroughly."
+   ],
+   "steps_variants": {
+    "pressure_cooker": [
+     "Add the contents of all 3 cans to the pressure cooker with the chili powder.",
+     "Seal and pressure-cook on high for 5 minutes, then quick-release.",
+     "Stir before serving."
+    ],
+    "slow_cooker": [
+     "Add the contents of all 3 cans to the slow cooker with the chili powder.",
+     "Cover and cook on low for 3 to 4 hours.",
+     "Stir before serving."
+    ]
+   },
+   "handson_action": "actively cooking",
+   "serves": 4,
+   "base_volume": 2.6,
+   "fresh": false
+  },
+  {
+   "name": "Slow Cooker Lentil Soup",
+   "role": "soup",
+   "cuisine": "western",
+   "appliance": "slow_cooker",
+   "appliances": [
+    "slow_cooker",
+    "pressure_cooker"
+   ],
+   "ingredients": [
+    "6 cups water",
+    "1/4 cup fresh parsley",
+    "2 teaspoons beef bouillon",
+    "1 1/2 cups dry lentils",
+    "2 carrots, sliced",
+    "1 onion, chopped",
+    "2 celery stalks, sliced"
+   ],
+   "steps": [
+    "Mix all ingredients together in slow cooker.",
+    "Cook on low for 8 to 10 hours.",
+    "Serve hot with crackers or bread."
+   ],
+   "steps_variants": {
+    "pressure_cooker": [
+     "Add all the ingredients to the pressure cooker.",
+     "Seal and pressure-cook on high for 18 minutes.",
+     "Let the pressure release naturally for 10 minutes.",
+     "Serve hot with crackers or bread."
+    ]
+   },
+   "handson_action": "getting it to a simmer",
+   "serves": 4,
+   "base_volume": 2.6,
+   "fresh": false
+  },
+  {
+   "name": "Cabbage Salad",
+   "role": "veg",
+   "cuisine": "western",
+   "appliance": "none",
+   "appliances": [
+    "none"
+   ],
+   "ingredients": [
+    "4 cups cabbage, shredded",
+    "1/4 cup carrot, grated",
+    "1/4 cup celery, sliced",
+    "1/4 cup green pepper, chopped",
+    "1 teaspoon onion, chopped",
+    "1/2 teaspoon dried dill",
+    "1/2 cup mayonnaise, light",
+    "1/2 cup plain yogurt, non-fat",
+    "1 teaspoon mustard",
+    "1/2 teaspoon lemon juice",
+    "1/2 teaspoon sugar"
+   ],
+   "steps": [
+    "Slice all vegetables thinly and put in a large bowl.",
+    "Add dill to taste.",
+    "Mix mayonnaise, yogurt, mustard, lemon juice, and sugar in a small bowl.",
+    "Blend well.",
+    "Add to vegetables and mix well.",
+    "Keep refrigerated until ready to eat."
+   ],
+   "steps_variants": {},
+   "handson_action": "assembling — no cooking",
+   "serves": 4,
+   "base_volume": 1.2,
+   "fresh": false
+  },
+  {
+   "name": "Black Bean & Couscous Salad",
+   "role": "veg",
+   "cuisine": "western",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "1/2 cup chicken broth",
+    "1/2 cup couscous, uncooked",
+    "1 1/2 teaspoons apple cider vinegar",
+    "1/2 teaspoon ground cumin",
+    "1 tablespoon lime juice",
+    "1 can black beans, rinsed",
+    "1/2 onion, minced",
+    "1/2 red or green pepper, minced",
+    "1 cup corn",
+    "2 tablespoons cilantro"
+   ],
+   "steps": [
+    "Bring broth to a boil in a small pot, and stir in couscous.",
+    "Cover the pot and remove from the heat.",
+    "Let stand for 5 minutes.",
+    "In a large bowl, whisk together oil, vinegar, cumin, and lime juice.",
+    "Add beans, onion, pepper, and corn, and toss.",
+    "Fluff the couscous with a fork.",
+    "Add to the beans and vegetables and mix well."
+   ],
+   "steps_variants": {},
+   "handson_action": "getting it to a simmer",
+   "serves": 4,
+   "base_volume": 1.2,
+   "fresh": false
+  },
+  {
+   "name": "5 A Day Salad",
+   "role": "veg",
+   "cuisine": "western",
+   "appliance": "none",
+   "appliances": [
+    "none"
+   ],
+   "ingredients": [
+    "4 cups fresh spinach",
+    "4 cups romaine lettuce",
+    "2 cups green peppers, chopped",
+    "2 cups cherry tomatoes",
+    "1 cup broccoli, chopped",
+    "1 cup cauliflower, chopped",
+    "1 cup yellow squash, sliced",
+    "1 cup cucumber, sliced",
+    "2 cups carrot, chopped",
+    "1 cup zucchini, sliced"
+   ],
+   "steps": [
+    "Wash all of the vegetables and mix them together in a large bowl.",
+    "Top with the low-fat dressing of your choice."
+   ],
+   "steps_variants": {},
+   "handson_action": "assembling — no cooking",
+   "serves": 4,
+   "base_volume": 1.2,
+   "fresh": false
+  },
+  {
+   "name": "Apple Oatmeal Muffins",
+   "role": "dessert",
+   "cuisine": "western",
+   "appliance": "oven",
+   "appliances": [
+    "oven"
+   ],
+   "ingredients": [
+    "1/2 cup non-fat milk",
+    "1/3 cup applesauce, unsweetened",
+    "1/2 cup all-purpose flour",
+    "1/2 cup quick-cooking oats",
+    "1 cup sugar",
+    "1/2 tablespoon baking powder",
+    "1/2 teaspoon ground cinnamon",
+    "1 tart apple, chopped"
+   ],
+   "steps": [
+    "Preheat oven to 400 F.",
+    "In a mixing bowl, add milk and applesauce.",
+    "Stir until blended.",
+    "Stir in flour, oats, sugar, baking powder, and cinnamon.",
+    "Mix until moistened, do not over mix.",
+    "Gently stir in the chopped apples.",
+    "Spoon into cupcake holders.",
+    "Bake for 15 to 20 minutes."
+   ],
+   "steps_variants": {},
+   "handson_action": "seasoning, then into the oven",
+   "serves": 4,
+   "base_volume": 1.0,
+   "fresh": false,
+   "oven_temp_c": 204
+  },
+  {
+   "name": "Angel Food Cake",
+   "role": "dessert",
+   "cuisine": "western",
+   "appliance": "oven",
+   "appliances": [
+    "oven"
+   ],
+   "ingredients": [
+    "12 large egg whites",
+    "1 teaspoon cream of tartar",
+    "1 1/2 cups sugar",
+    "1 teaspoon vanilla extract",
+    "1/4 teaspoon salt",
+    "1 cup flour, sifted"
+   ],
+   "steps": [
+    "Preheat the oven to 325 F.",
+    "In a large mixing bowl, beat the egg whites until foamy.",
+    "Add the cream of tartar and beat until stiff.",
+    "Gradually beat in the sugar.",
+    "Add the vanilla and salt and gently fold in the flour.",
+    "Pour into an angel food pan and bake for 1 hour and 15 minutes, until the top is nicely browned."
+   ],
+   "steps_variants": {},
+   "handson_action": "seasoning, then into the oven",
+   "serves": 4,
+   "base_volume": 1.0,
+   "fresh": false,
+   "oven_temp_c": 163
+  },
+  {
+   "name": "Steamed Jasmine Rice",
+   "role": "base",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop",
+    "rice_cooker",
+    "oven"
+   ],
+   "ingredients": [
+    "2 cups jasmine rice",
+    "3 cups water"
+   ],
+   "steps": [
+    "Rinse the rice until the water runs clear.",
+    "Add the rice and water to a pot.",
+    "Bring to a boil, then cover and cook on low heat for 15 minutes.",
+    "Turn off the heat and let it steam, covered, for 10 minutes.",
+    "Fluff with a fork."
+   ],
+   "steps_variants": {
+    "rice_cooker": [
+     "Rinse the rice until the water runs clear.",
+     "Add the rice and water to the rice cooker and close the lid.",
+     "Press the cook button and leave it.",
+     "When it switches to keep-warm, let it steam for 10 minutes, then fluff with a fork."
+    ],
+    "oven": [
+     "Rinse the rice and put it in an oven dish with the water.",
+     "Cover tightly with foil.",
+     "Bake at 180 C for 25 minutes.",
+     "Rest, covered, for 5 minutes, then fluff with a fork."
+    ]
+   },
+   "handson_action": "steaming — barely any hands-on",
+   "serves": 4,
+   "base_volume": 0.9,
+   "fresh": false,
+   "oven_temp_c": 180
+  },
+  {
+   "name": "Garlic Stir-Fried Kailan",
+   "role": "veg",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "1 bunch kailan",
+    "3 cloves garlic, minced",
+    "1 tablespoon oyster sauce",
+    "1 tablespoon vegetable oil",
+    "2 tablespoons water"
+   ],
+   "steps": [
+    "Blanch the kailan in boiling water for 1 minute and drain.",
+    "Heat oil in a wok and stir-fry the garlic until fragrant.",
+    "Add the kailan and oyster sauce with a splash of water.",
+    "Stir-fry over high heat for 2 minutes until tender-crisp."
+   ],
+   "steps_variants": {},
+   "handson_action": "stir-frying over high heat",
+   "serves": 4,
+   "base_volume": 1.2,
+   "fresh": true
+  },
+  {
+   "name": "Sambal Long Beans",
+   "role": "veg",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "300 g long beans, cut into lengths",
+    "2 tablespoons sambal",
+    "2 shallots, sliced",
+    "2 cloves garlic",
+    "1 tablespoon dried shrimp",
+    "1 tablespoon vegetable oil",
+    "1 teaspoon sugar"
+   ],
+   "steps": [
+    "Heat oil and stir-fry the shallots, garlic, and dried shrimp until fragrant.",
+    "Add the sambal and fry for one minute.",
+    "Add the long beans and sugar.",
+    "Stir-fry over medium heat for 6 to 8 minutes until the beans are tender."
+   ],
+   "steps_variants": {},
+   "handson_action": "stir-frying over high heat",
+   "serves": 4,
+   "base_volume": 1.2,
+   "fresh": true
+  },
+  {
+   "name": "Stir-Fried Bok Choy with Mushroom",
+   "role": "veg",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "2 bunches bok choy",
+    "6 shiitake mushrooms, sliced",
+    "2 cloves garlic",
+    "1 tablespoon oyster sauce",
+    "1 teaspoon sesame oil",
+    "1 tablespoon vegetable oil"
+   ],
+   "steps": [
+    "Heat oil and stir-fry the garlic and mushrooms until softened.",
+    "Add the bok choy and oyster sauce.",
+    "Stir-fry over high heat for 3 minutes until the greens wilt.",
+    "Finish with sesame oil."
+   ],
+   "steps_variants": {},
+   "handson_action": "stir-frying over high heat",
+   "serves": 4,
+   "base_volume": 1.2,
+   "fresh": true
+  },
+  {
+   "name": "Hainanese Poached Chicken",
+   "role": "meat",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "1 whole chicken",
+    "4 slices ginger",
+    "3 spring onions",
+    "1 tablespoon salt",
+    "1 teaspoon sesame oil"
+   ],
+   "steps": [
+    "Blanch the whole chicken in boiling water for 30 seconds, then lift out.",
+    "Place the chicken in a pot with ginger, spring onion, and salt, and add water to just cover.",
+    "Poach on the lowest heat for 45 minutes, keeping the water barely trembling.",
+    "Turn off the heat and let the chicken rest in the broth for 10 minutes.",
+    "Brush with sesame oil before slicing."
+   ],
+   "steps_variants": {},
+   "handson_action": "gently poaching",
+   "serves": 4,
+   "base_volume": 1.8,
+   "fresh": false
+  },
+  {
+   "name": "Char Siu Oven Pork",
+   "role": "meat",
+   "cuisine": "asian",
+   "appliance": "oven",
+   "appliances": [
+    "oven",
+    "air_fryer"
+   ],
+   "ingredients": [
+    "600 g pork shoulder",
+    "3 tablespoons hoisin sauce",
+    "2 tablespoons soy sauce",
+    "3 tablespoons honey",
+    "1 teaspoon five spice",
+    "2 cloves garlic",
+    "1 tablespoon sugar"
+   ],
+   "steps": [
+    "Mix the hoisin, soy sauce, half the honey, five spice, garlic, and sugar into a marinade.",
+    "Coat the pork and marinate overnight in the fridge.",
+    "Roast at 200 C for 25 minutes.",
+    "Brush with the remaining honey and roast for another 15 minutes until caramelised and sticky.",
+    "Rest for 10 minutes before slicing."
+   ],
+   "steps_variants": {
+    "air_fryer": [
+     "Mix the hoisin, soy sauce, half the honey, five spice, garlic, and sugar into a marinade.",
+     "Coat the pork and marinate overnight in the fridge.",
+     "Air-fry at 200 C for 20 minutes, brushing with the remaining honey and flipping halfway, until caramelised and sticky.",
+     "Rest for 10 minutes before slicing."
+    ]
+   },
+   "handson_action": "seasoning, then into the oven",
+   "serves": 4,
+   "base_volume": 1.8,
+   "fresh": false,
+   "oven_temp_c": 200
+  },
+  {
+   "name": "Minced Pork with Tofu",
+   "role": "meat",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "300 g minced pork",
+    "1 block soft tofu, cubed",
+    "3 cloves garlic",
+    "1 slice ginger",
+    "2 tablespoons soy sauce",
+    "1 tablespoon oyster sauce",
+    "1 teaspoon cornstarch",
+    "2 spring onions",
+    "1/2 cup water"
+   ],
+   "steps": [
+    "Brown the minced pork in a hot pan until it changes colour.",
+    "Add the garlic and ginger and fry until fragrant.",
+    "Add soy sauce, oyster sauce, and water, and bring to a simmer.",
+    "Gently add the tofu and simmer for 5 minutes.",
+    "Stir in the cornstarch slurry to thicken, and scatter with spring onion."
+   ],
+   "steps_variants": {},
+   "handson_action": "browning, then it simmers",
+   "serves": 4,
+   "base_volume": 1.8,
+   "fresh": false
+  },
+  {
+   "name": "Steamed Fish with Ginger and Scallion",
+   "role": "fish",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "1 whole fish or 2 fillets",
+    "4 slices ginger",
+    "3 spring onions",
+    "2 tablespoons soy sauce",
+    "2 tablespoons vegetable oil",
+    "1 teaspoon sesame oil"
+   ],
+   "steps": [
+    "Lay half the ginger under the fish on a plate and the rest on top.",
+    "Steam over high heat for 8 to 10 minutes until the fish is just flaky.",
+    "Scatter the spring onion over the fish.",
+    "Heat the oil until smoking and pour it over the fish, then drizzle with soy sauce and sesame oil."
+   ],
+   "steps_variants": {},
+   "handson_action": "steaming — barely any hands-on",
+   "serves": 4,
+   "base_volume": 1.3,
+   "fresh": true
+  },
+  {
+   "name": "Sweet & Sour Fish",
+   "role": "fish",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "2 fish fillets, cubed",
+    "3 tablespoons cornstarch",
+    "2 cups vegetable oil",
+    "3 tablespoons tomato ketchup",
+    "2 tablespoons sugar",
+    "2 tablespoons vinegar",
+    "1 bell pepper, chunked",
+    "1/2 onion, chunked",
+    "1/2 cup pineapple chunks"
+   ],
+   "steps": [
+    "Coat the fish in cornstarch.",
+    "Deep-fry for 3 minutes until golden and crisp, then drain.",
+    "In another pan, simmer the ketchup, sugar, and vinegar into a sauce.",
+    "Add the pepper, onion, and pineapple and cook for 2 minutes.",
+    "Toss the fried fish in the sauce to coat."
+   ],
+   "steps_variants": {},
+   "handson_action": "deep-frying until crisp",
+   "serves": 4,
+   "base_volume": 1.3,
+   "fresh": true,
+   "swaps": {
+    "default": "fish",
+    "options": {
+     "fish": {
+      "key": "fish",
+      "label": "Fish",
+      "name": "Sweet & Sour Fish",
+      "ingredients": [
+       "2 fish fillets, cubed",
+       "3 tablespoons cornstarch",
+       "2 cups vegetable oil",
+       "3 tablespoons tomato ketchup",
+       "2 tablespoons sugar",
+       "2 tablespoons vinegar",
+       "1 bell pepper, chunked",
+       "1/2 onion, chunked",
+       "1/2 cup pineapple chunks"
+      ],
+      "steps": [
+       "Coat the fish in cornstarch.",
+       "Deep-fry for 3 minutes until golden and crisp, then drain.",
+       "In another pan, simmer the ketchup, sugar, and vinegar into a sauce.",
+       "Add the pepper, onion, and pineapple and cook for 2 minutes.",
+       "Toss the fried fish in the sauce to coat."
+      ]
+     },
+     "chicken": {
+      "key": "chicken",
+      "label": "Chicken",
+      "name": "Sweet & Sour Chicken",
+      "ingredients": [
+       "2 chicken breasts, cubed",
+       "3 tablespoons cornstarch",
+       "2 cups vegetable oil",
+       "3 tablespoons tomato ketchup",
+       "2 tablespoons sugar",
+       "2 tablespoons vinegar",
+       "1 bell pepper, chunked",
+       "1/2 onion, chunked",
+       "1/2 cup pineapple chunks"
+      ],
+      "steps": [
+       "Coat the chicken in cornstarch.",
+       "Deep-fry for 6 minutes until golden and cooked through, then drain.",
+       "In another pan, simmer the ketchup, sugar, and vinegar into a sauce.",
+       "Add the pepper, onion, and pineapple and cook for 2 minutes.",
+       "Toss the fried chicken in the sauce to coat."
+      ]
+     },
+     "pork": {
+      "key": "pork",
+      "label": "Pork",
+      "name": "Sweet & Sour Pork",
+      "ingredients": [
+       "300 g pork, cubed",
+       "3 tablespoons cornstarch",
+       "2 cups vegetable oil",
+       "3 tablespoons tomato ketchup",
+       "2 tablespoons sugar",
+       "2 tablespoons vinegar",
+       "1 bell pepper, chunked",
+       "1/2 onion, chunked",
+       "1/2 cup pineapple chunks"
+      ],
+      "steps": [
+       "Coat the pork in cornstarch.",
+       "Deep-fry for 7 minutes until golden and cooked through, then drain.",
+       "In another pan, simmer the ketchup, sugar, and vinegar into a sauce.",
+       "Add the pepper, onion, and pineapple and cook for 2 minutes.",
+       "Toss the fried pork in the sauce to coat."
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "ABC Soup",
+   "role": "soup",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop",
+    "pressure_cooker",
+    "slow_cooker"
+   ],
+   "ingredients": [
+    "400 g pork ribs",
+    "2 carrots, chunked",
+    "2 potatoes, chunked",
+    "2 tomatoes, quartered",
+    "1 onion, chunked",
+    "1 corn cob, cut",
+    "8 cups water",
+    "1 teaspoon salt"
+   ],
+   "steps": [
+    "Blanch the pork ribs in boiling water for 2 minutes, then drain and rinse.",
+    "Add the ribs, carrots, potatoes, tomatoes, onion, and corn to a pot with the water.",
+    "Bring to a boil.",
+    "Reduce the heat and simmer gently for 90 minutes until the meat is tender and the broth is sweet.",
+    "Season with salt."
+   ],
+   "steps_variants": {
+    "pressure_cooker": [
+     "Blanch the pork ribs in boiling water for 2 minutes, then drain and rinse.",
+     "Add the ribs, carrots, potatoes, tomatoes, onion, and corn to the pressure cooker with the water.",
+     "Seal the lid and pressure-cook on high for 30 minutes.",
+     "Let the pressure release naturally for 10 minutes, then quick-release the rest.",
+     "Season with salt."
+    ],
+    "slow_cooker": [
+     "Blanch the pork ribs in boiling water for 2 minutes, then drain and rinse.",
+     "Add the ribs, carrots, potatoes, tomatoes, onion, corn, and water to the slow cooker.",
+     "Cover and cook on low for 6 to 8 hours until the meat is tender.",
+     "Season with salt."
+    ]
+   },
+   "handson_action": "getting it to a simmer",
+   "serves": 4,
+   "base_volume": 2.6,
+   "fresh": false
+  },
+  {
+   "name": "Watercress Soup",
+   "role": "soup",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop",
+    "pressure_cooker",
+    "slow_cooker"
+   ],
+   "ingredients": [
+    "400 g pork ribs",
+    "300 g watercress",
+    "3 slices ginger",
+    "8 cups water",
+    "1 teaspoon salt"
+   ],
+   "steps": [
+    "Blanch the pork ribs in boiling water for 2 minutes, then drain.",
+    "Add the ribs, ginger, and water to a pot and bring to a boil.",
+    "Simmer gently for 60 minutes.",
+    "Add the watercress and simmer for another 30 minutes.",
+    "Season with salt."
+   ],
+   "steps_variants": {
+    "pressure_cooker": [
+     "Blanch the pork ribs in boiling water for 2 minutes, then drain.",
+     "Add the ribs, ginger, watercress, and water to the pressure cooker.",
+     "Seal and pressure-cook on high for 25 minutes, then let the pressure release naturally.",
+     "Season with salt."
+    ],
+    "slow_cooker": [
+     "Blanch the pork ribs in boiling water for 2 minutes, then drain.",
+     "Add the ribs, ginger, watercress, and water to the slow cooker.",
+     "Cover and cook on low for 5 to 6 hours.",
+     "Season with salt."
+    ]
+   },
+   "handson_action": "getting it to a simmer",
+   "serves": 4,
+   "base_volume": 2.6,
+   "fresh": false
+  },
+  {
+   "name": "Bak Kut Teh",
+   "role": "soup",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop",
+    "pressure_cooker",
+    "slow_cooker"
+   ],
+   "ingredients": [
+    "600 g pork ribs",
+    "1 bulb garlic",
+    "1 teaspoon white peppercorns",
+    "2 star anise",
+    "1 cinnamon stick",
+    "1/4 teaspoon ground cloves",
+    "10 g dang gui",
+    "8 cups water",
+    "2 tablespoons soy sauce",
+    "1 teaspoon salt"
+   ],
+   "steps": [
+    "Blanch the pork ribs in boiling water for 2 minutes, then drain.",
+    "Lightly crush the garlic and toast the white peppercorns, star anise, cinnamon, cloves, and dang gui to release their aroma.",
+    "Add the ribs, garlic, and toasted spices to a pot with the water and soy sauce.",
+    "Bring to a boil.",
+    "Reduce the heat and simmer gently for 90 minutes until the pork is tender.",
+    "Season with salt."
+   ],
+   "handson_action": "getting it to a simmer",
+   "serves": 4,
+   "base_volume": 2.6,
+   "fresh": false,
+   "pack": {
+    "label": "Bak kut teh spice pack",
+    "ingredients": [
+     "600 g pork ribs",
+     "1 bulb garlic",
+     "1 bak kut teh spice pack",
+     "8 cups water",
+     "2 tablespoons soy sauce",
+     "1 teaspoon salt"
+    ],
+    "steps": [
+     "Blanch the pork ribs in boiling water for 2 minutes, then drain.",
+     "Add the ribs, crushed garlic, and the bak kut teh spice pack to a pot with the water and soy sauce.",
+     "Bring to a boil.",
+     "Reduce the heat and simmer gently for 90 minutes until the pork is tender.",
+     "Season with salt."
+    ],
+    "time": {
+     "ready_in_min": 117,
+     "be_there_min": 45,
+     "hands_off_min": 72,
+     "make_ahead_min": 0,
+     "prep_min": 15,
+     "active_cook_min": 30
+    },
+    "grocery": [
+     "Pork Ribs",
+     "Garlic",
+     "Bkt Pack",
+     "Water",
+     "Soy sauce",
+     "Salt"
+    ],
+    "grocery_items": [
+     {
+      "name": "Pork Ribs",
+      "id": "pork_ribs",
+      "qty": 600.0,
+      "unit": "g"
+     },
+     {
+      "name": "Garlic",
+      "id": "garlic",
+      "qty": 1.0,
+      "unit": ""
+     },
+     {
+      "name": "Bkt Pack",
+      "id": "bkt_pack",
+      "qty": 1.0,
+      "unit": ""
+     },
+     {
+      "name": "Water",
+      "id": "water",
+      "qty": 8.0,
+      "unit": "cup"
+     },
+     {
+      "name": "Soy sauce",
+      "id": "soy_sauce",
+      "qty": 2.0,
+      "unit": "tbsp"
+     },
+     {
+      "name": "Salt",
+      "id": "salt",
+      "qty": 1.0,
+      "unit": "tsp"
+     }
+    ],
+    "appliance_options": [
+     {
+      "appliance": "stovetop",
+      "time": {
+       "ready_in_min": 117,
+       "be_there_min": 45,
+       "hands_off_min": 72,
+       "make_ahead_min": 0,
+       "prep_min": 15,
+       "active_cook_min": 30
+      }
+     },
+     {
+      "appliance": "pressure_cooker",
+      "time": {
+       "ready_in_min": 52,
+       "be_there_min": 27,
+       "hands_off_min": 25,
+       "make_ahead_min": 0,
+       "prep_min": 15,
+       "active_cook_min": 12
+      }
+     },
+     {
+      "appliance": "slow_cooker",
+      "time": {
+       "ready_in_min": 318,
+       "be_there_min": 30,
+       "hands_off_min": 288,
+       "make_ahead_min": 0,
+       "prep_min": 15,
+       "active_cook_min": 15
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "Chicken Curry",
+   "role": "meat",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop",
+    "pressure_cooker",
+    "slow_cooker"
+   ],
+   "ingredients": [
+    "1 kg chicken",
+    "6 shallots",
+    "4 cloves garlic",
+    "2 cm ginger",
+    "2 stalks lemongrass",
+    "6 dried chillies",
+    "1 teaspoon turmeric",
+    "1 tablespoon coriander seed",
+    "1 teaspoon cumin",
+    "400 ml coconut milk",
+    "2 potatoes",
+    "2 sprigs curry leaves",
+    "3 tablespoons oil",
+    "1 teaspoon salt"
+   ],
+   "steps": [
+    "Blend the shallots, garlic, ginger, lemongrass, dried chillies, turmeric, coriander, and cumin into a paste.",
+    "Heat oil and fry the paste with the curry leaves until fragrant and the oil splits.",
+    "Add the chicken and brown for 5 minutes.",
+    "Pour in the coconut milk and add the potatoes.",
+    "Simmer for 30 minutes until the chicken is tender.",
+    "Season with salt."
+   ],
+   "handson_action": "browning, then it simmers",
+   "serves": 4,
+   "base_volume": 1.8,
+   "fresh": false,
+   "pack": {
+    "label": "Chicken curry paste",
+    "ingredients": [
+     "1 kg chicken",
+     "400 ml coconut milk",
+     "2 potatoes",
+     "2 sprigs curry leaves",
+     "1 packet chicken curry paste",
+     "3 tablespoons oil",
+     "1 teaspoon salt"
+    ],
+    "steps": [
+     "Heat oil and fry the chicken curry paste with the curry leaves until fragrant.",
+     "Add the chicken and brown for 5 minutes.",
+     "Pour in the coconut milk and add the potatoes.",
+     "Simmer for 30 minutes until the chicken is tender.",
+     "Season with salt."
+    ],
+    "time": {
+     "ready_in_min": 52,
+     "be_there_min": 28,
+     "hands_off_min": 24,
+     "make_ahead_min": 0,
+     "prep_min": 17,
+     "active_cook_min": 11
+    },
+    "grocery": [
+     "Chicken",
+     "Coconut Milk",
+     "Potato",
+     "Curry Leaves",
+     "Curry Paste Pack",
+     "Salt"
+    ],
+    "grocery_items": [
+     {
+      "name": "Chicken",
+      "id": "chicken",
+      "qty": 1.0,
+      "unit": "kg"
+     },
+     {
+      "name": "Coconut Milk",
+      "id": "coconut_milk",
+      "qty": 400.0,
+      "unit": "ml"
+     },
+     {
+      "name": "Potato",
+      "id": "potato",
+      "qty": 2.0,
+      "unit": ""
+     },
+     {
+      "name": "Curry Leaves",
+      "id": "curry_leaves",
+      "qty": 2.0,
+      "unit": ""
+     },
+     {
+      "name": "Curry Paste Pack",
+      "id": "curry_paste_pack",
+      "qty": 1.0,
+      "unit": ""
+     },
+     {
+      "name": "Salt",
+      "id": "salt",
+      "qty": 1.0,
+      "unit": "tsp"
+     }
+    ],
+    "appliance_options": [
+     {
+      "appliance": "stovetop",
+      "time": {
+       "ready_in_min": 52,
+       "be_there_min": 28,
+       "hands_off_min": 24,
+       "make_ahead_min": 0,
+       "prep_min": 17,
+       "active_cook_min": 11
+      }
+     },
+     {
+      "appliance": "pressure_cooker",
+      "time": {
+       "ready_in_min": 30,
+       "be_there_min": 21,
+       "hands_off_min": 8,
+       "make_ahead_min": 0,
+       "prep_min": 17,
+       "active_cook_min": 4
+      }
+     },
+     {
+      "appliance": "slow_cooker",
+      "time": {
+       "ready_in_min": 118,
+       "be_there_min": 22,
+       "hands_off_min": 96,
+       "make_ahead_min": 0,
+       "prep_min": 17,
+       "active_cook_min": 6
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "Fish Curry",
+   "role": "fish",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop",
+    "pressure_cooker",
+    "slow_cooker"
+   ],
+   "ingredients": [
+    "600 g fish",
+    "5 shallots",
+    "3 cloves garlic",
+    "6 dried chillies",
+    "1 teaspoon turmeric",
+    "1 tablespoon belacan",
+    "2 tablespoons tamarind",
+    "200 ml coconut milk",
+    "4 okra",
+    "2 tomatoes",
+    "2 sprigs curry leaves",
+    "3 tablespoons oil",
+    "1 teaspoon salt"
+   ],
+   "steps": [
+    "Blend the shallots, garlic, dried chillies, turmeric, and belacan into a paste.",
+    "Heat oil and fry the paste with the curry leaves until fragrant.",
+    "Add the tamarind, coconut milk, okra, and tomatoes, and simmer into a gravy for 10 minutes.",
+    "Slide in the fish and simmer gently for 8 minutes until just cooked.",
+    "Season with salt."
+   ],
+   "handson_action": "getting it to a simmer",
+   "serves": 4,
+   "base_volume": 1.3,
+   "fresh": false,
+   "pack": {
+    "label": "Fish curry paste",
+    "ingredients": [
+     "600 g fish",
+     "2 tablespoons tamarind",
+     "200 ml coconut milk",
+     "4 okra",
+     "2 tomatoes",
+     "2 sprigs curry leaves",
+     "1 packet fish curry paste",
+     "3 tablespoons oil",
+     "1 teaspoon salt"
+    ],
+    "steps": [
+     "Heat oil and fry the fish curry paste with the curry leaves until fragrant.",
+     "Add the tamarind, coconut milk, okra, and tomatoes, and simmer into a gravy for 10 minutes.",
+     "Slide in the fish and simmer gently for 8 minutes until just cooked.",
+     "Season with salt."
+    ],
+    "time": {
+     "ready_in_min": 39,
+     "be_there_min": 25,
+     "hands_off_min": 14,
+     "make_ahead_min": 0,
+     "prep_min": 21,
+     "active_cook_min": 4
+    },
+    "grocery": [
+     "Fish",
+     "Tamarind",
+     "Coconut Milk",
+     "Okra",
+     "Tomato",
+     "Curry Leaves",
+     "Curry Paste Pack",
+     "Salt"
+    ],
+    "grocery_items": [
+     {
+      "name": "Fish",
+      "id": "fish",
+      "qty": 600.0,
+      "unit": "g"
+     },
+     {
+      "name": "Tamarind",
+      "id": "tamarind",
+      "qty": 2.0,
+      "unit": "tbsp"
+     },
+     {
+      "name": "Coconut Milk",
+      "id": "coconut_milk",
+      "qty": 200.0,
+      "unit": "ml"
+     },
+     {
+      "name": "Okra",
+      "id": "okra",
+      "qty": 4.0,
+      "unit": ""
+     },
+     {
+      "name": "Tomato",
+      "id": "tomato",
+      "qty": 2.0,
+      "unit": ""
+     },
+     {
+      "name": "Curry Leaves",
+      "id": "curry_leaves",
+      "qty": 2.0,
+      "unit": ""
+     },
+     {
+      "name": "Curry Paste Pack",
+      "id": "curry_paste_pack",
+      "qty": 1.0,
+      "unit": ""
+     },
+     {
+      "name": "Salt",
+      "id": "salt",
+      "qty": 1.0,
+      "unit": "tsp"
+     }
+    ],
+    "appliance_options": [
+     {
+      "appliance": "stovetop",
+      "time": {
+       "ready_in_min": 39,
+       "be_there_min": 25,
+       "hands_off_min": 14,
+       "make_ahead_min": 0,
+       "prep_min": 21,
+       "active_cook_min": 4
+      }
+     },
+     {
+      "appliance": "pressure_cooker",
+      "time": {
+       "ready_in_min": 28,
+       "be_there_min": 23,
+       "hands_off_min": 5,
+       "make_ahead_min": 0,
+       "prep_min": 21,
+       "active_cook_min": 2
+      }
+     },
+     {
+      "appliance": "slow_cooker",
+      "time": {
+       "ready_in_min": 79,
+       "be_there_min": 23,
+       "hands_off_min": 56,
+       "make_ahead_min": 0,
+       "prep_min": 21,
+       "active_cook_min": 2
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "Mutton Curry",
+   "role": "meat",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop",
+    "pressure_cooker",
+    "slow_cooker"
+   ],
+   "ingredients": [
+    "1 kg mutton",
+    "6 shallots",
+    "5 cloves garlic",
+    "3 cm ginger",
+    "6 dried chillies",
+    "1 tablespoon coriander seed",
+    "1 teaspoon cumin",
+    "1 teaspoon fennel",
+    "1 cinnamon stick",
+    "3 cardamom",
+    "400 ml coconut milk",
+    "2 potatoes",
+    "3 tablespoons oil",
+    "1 teaspoon salt"
+   ],
+   "steps": [
+    "Blend the shallots, garlic, ginger, dried chillies, coriander, cumin, and fennel into a paste.",
+    "Heat oil and fry the paste with the cinnamon and cardamom until fragrant.",
+    "Add the mutton and brown for 8 minutes.",
+    "Pour in the coconut milk and add the potatoes.",
+    "Braise for 90 minutes until the mutton is fall-apart tender.",
+    "Season with salt."
+   ],
+   "handson_action": "searing, then setting it to braise",
+   "serves": 4,
+   "base_volume": 1.8,
+   "fresh": false,
+   "pack": {
+    "label": "Meat curry paste",
+    "ingredients": [
+     "1 kg mutton",
+     "400 ml coconut milk",
+     "2 potatoes",
+     "1 packet meat curry paste",
+     "3 tablespoons oil",
+     "1 teaspoon salt"
+    ],
+    "steps": [
+     "Heat oil and fry the meat curry paste until fragrant.",
+     "Add the mutton and brown for 8 minutes.",
+     "Pour in the coconut milk and add the potatoes.",
+     "Braise for 90 minutes until the mutton is fall-apart tender.",
+     "Season with salt."
+    ],
+    "time": {
+     "ready_in_min": 113,
+     "be_there_min": 23,
+     "hands_off_min": 90,
+     "make_ahead_min": 0,
+     "prep_min": 15,
+     "active_cook_min": 8
+    },
+    "grocery": [
+     "Mutton",
+     "Coconut Milk",
+     "Potato",
+     "Curry Paste Pack",
+     "Salt"
+    ],
+    "grocery_items": [
+     {
+      "name": "Mutton",
+      "id": "mutton",
+      "qty": 1.0,
+      "unit": "kg"
+     },
+     {
+      "name": "Coconut Milk",
+      "id": "coconut_milk",
+      "qty": 400.0,
+      "unit": "ml"
+     },
+     {
+      "name": "Potato",
+      "id": "potato",
+      "qty": 2.0,
+      "unit": ""
+     },
+     {
+      "name": "Curry Paste Pack",
+      "id": "curry_paste_pack",
+      "qty": 1.0,
+      "unit": ""
+     },
+     {
+      "name": "Salt",
+      "id": "salt",
+      "qty": 1.0,
+      "unit": "tsp"
+     }
+    ],
+    "appliance_options": [
+     {
+      "appliance": "stovetop",
+      "time": {
+       "ready_in_min": 113,
+       "be_there_min": 23,
+       "hands_off_min": 90,
+       "make_ahead_min": 0,
+       "prep_min": 15,
+       "active_cook_min": 8
+      }
+     },
+     {
+      "appliance": "pressure_cooker",
+      "time": {
+       "ready_in_min": 50,
+       "be_there_min": 18,
+       "hands_off_min": 31,
+       "make_ahead_min": 0,
+       "prep_min": 15,
+       "active_cook_min": 3
+      }
+     },
+     {
+      "appliance": "slow_cooker",
+      "time": {
+       "ready_in_min": 379,
+       "be_there_min": 19,
+       "hands_off_min": 360,
+       "make_ahead_min": 0,
+       "prep_min": 15,
+       "active_cook_min": 4
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "Beef Curry",
+   "role": "meat",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop",
+    "pressure_cooker",
+    "slow_cooker"
+   ],
+   "ingredients": [
+    "800 g stewing beef",
+    "6 shallots",
+    "5 cloves garlic",
+    "3 cm ginger",
+    "2 stalks lemongrass",
+    "2 cm galangal",
+    "8 dried chillies",
+    "1 tablespoon coriander seed",
+    "400 ml coconut milk",
+    "3 tablespoons oil",
+    "1 teaspoon salt"
+   ],
+   "steps": [
+    "Blend the shallots, garlic, ginger, lemongrass, galangal, dried chillies, and coriander into a paste.",
+    "Heat oil and fry the paste until fragrant and the oil splits.",
+    "Add the beef and brown for 8 minutes.",
+    "Pour in the coconut milk.",
+    "Braise for 90 minutes until the beef is tender and the gravy thickens.",
+    "Season with salt."
+   ],
+   "handson_action": "searing, then setting it to braise",
+   "serves": 4,
+   "base_volume": 1.8,
+   "fresh": false,
+   "pack": {
+    "label": "Rendang paste",
+    "ingredients": [
+     "800 g stewing beef",
+     "400 ml coconut milk",
+     "1 packet rendang paste",
+     "3 tablespoons oil",
+     "1 teaspoon salt"
+    ],
+    "steps": [
+     "Heat oil and fry the rendang paste until fragrant.",
+     "Add the beef and brown for 8 minutes.",
+     "Pour in the coconut milk.",
+     "Braise for 90 minutes until the beef is tender and the gravy thickens.",
+     "Season with salt."
+    ],
+    "time": {
+     "ready_in_min": 111,
+     "be_there_min": 21,
+     "hands_off_min": 90,
+     "make_ahead_min": 0,
+     "prep_min": 13,
+     "active_cook_min": 8
+    },
+    "grocery": [
+     "Beef chuck",
+     "Coconut Milk",
+     "Curry Paste Pack",
+     "Salt"
+    ],
+    "grocery_items": [
+     {
+      "name": "Beef chuck",
+      "id": "beef_chuck",
+      "qty": 800.0,
+      "unit": "g"
+     },
+     {
+      "name": "Coconut Milk",
+      "id": "coconut_milk",
+      "qty": 400.0,
+      "unit": "ml"
+     },
+     {
+      "name": "Curry Paste Pack",
+      "id": "curry_paste_pack",
+      "qty": 1.0,
+      "unit": ""
+     },
+     {
+      "name": "Salt",
+      "id": "salt",
+      "qty": 1.0,
+      "unit": "tsp"
+     }
+    ],
+    "appliance_options": [
+     {
+      "appliance": "stovetop",
+      "time": {
+       "ready_in_min": 111,
+       "be_there_min": 21,
+       "hands_off_min": 90,
+       "make_ahead_min": 0,
+       "prep_min": 13,
+       "active_cook_min": 8
+      }
+     },
+     {
+      "appliance": "pressure_cooker",
+      "time": {
+       "ready_in_min": 48,
+       "be_there_min": 16,
+       "hands_off_min": 31,
+       "make_ahead_min": 0,
+       "prep_min": 13,
+       "active_cook_min": 3
+      }
+     },
+     {
+      "appliance": "slow_cooker",
+      "time": {
+       "ready_in_min": 377,
+       "be_there_min": 17,
+       "hands_off_min": 360,
+       "make_ahead_min": 0,
+       "prep_min": 13,
+       "active_cook_min": 4
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "Fried Rice",
+   "role": "base",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "3 cups cooked rice",
+    "2 eggs",
+    "3 cloves garlic",
+    "1 onion",
+    "1 carrot",
+    "1/2 cup peas",
+    "2 spring onions",
+    "2 tablespoons soy sauce",
+    "2 tablespoons oil",
+    "1/2 teaspoon white pepper"
+   ],
+   "steps": [
+    "Heat oil and scramble the eggs, then set aside.",
+    "Fry the garlic, onion, and carrot until fragrant.",
+    "Add the cold rice and break up the clumps.",
+    "Stir-fry over high heat, tossing, for 4 minutes.",
+    "Add the peas, soy sauce, white pepper, and the eggs.",
+    "Toss until everything is coated and hot.",
+    "Scatter with spring onion."
+   ],
+   "handson_action": "stir-frying over high heat",
+   "serves": 4,
+   "base_volume": 1.2,
+   "fresh": true
+  },
+  {
+   "name": "Mee Goreng",
+   "role": "base",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "400 g yellow noodles",
+    "2 eggs",
+    "200 g prawns",
+    "3 cloves garlic",
+    "2 shallots",
+    "100 g bean sprouts",
+    "1 tomato",
+    "2 tablespoons kecap manis",
+    "1 tablespoon sambal",
+    "2 tablespoons oil",
+    "1 potato"
+   ],
+   "steps": [
+    "Heat oil and fry the garlic and shallots until fragrant.",
+    "Add the prawns and cook until pink.",
+    "Push aside and scramble the eggs.",
+    "Add the noodles, kecap manis, and sambal, and toss over high heat.",
+    "Add the bean sprouts, tomato, and potato.",
+    "Stir-fry for 3 minutes until everything is coated and hot."
+   ],
+   "handson_action": "stir-frying over high heat",
+   "serves": 4,
+   "base_volume": 1.4,
+   "fresh": true
+  },
+  {
+   "name": "Sambal Kangkong",
+   "role": "veg",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "1 bunch kangkong",
+    "2 tablespoons sambal",
+    "1 tablespoon dried shrimp",
+    "3 cloves garlic",
+    "2 shallots",
+    "1 tablespoon belacan",
+    "1 tablespoon oil"
+   ],
+   "steps": [
+    "Heat oil and fry the garlic, shallots, dried shrimp, and belacan until fragrant.",
+    "Add the sambal and fry for one minute.",
+    "Add the kangkong and stir-fry over high heat for 2 minutes until just wilted."
+   ],
+   "handson_action": "stir-frying over high heat",
+   "serves": 4,
+   "base_volume": 1.2,
+   "fresh": true
+  },
+  {
+   "name": "Black Pepper Beef",
+   "role": "meat",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "400 g beef, sliced",
+    "2 tablespoons black pepper, crushed",
+    "2 tablespoons oyster sauce",
+    "1 tablespoon soy sauce",
+    "1 tablespoon butter",
+    "1 onion, sliced",
+    "1 bell pepper, sliced",
+    "3 cloves garlic",
+    "2 tablespoons oil"
+   ],
+   "steps": [
+    "Sear the beef in hot oil for 5 minutes until browned, then set aside.",
+    "Fry the garlic, onion, and bell pepper until fragrant.",
+    "Add the crushed black pepper, oyster sauce, and soy sauce, and sizzle.",
+    "Return the beef, add the butter, and toss until glossy and coated."
+   ],
+   "handson_action": "searing over high heat",
+   "serves": 4,
+   "base_volume": 1.6,
+   "fresh": true,
+   "swaps": {
+    "default": "beef",
+    "options": {
+     "beef": {
+      "key": "beef",
+      "label": "Beef",
+      "name": "Black Pepper Beef",
+      "ingredients": [
+       "400 g beef, sliced",
+       "2 tablespoons black pepper, crushed",
+       "2 tablespoons oyster sauce",
+       "1 tablespoon soy sauce",
+       "1 tablespoon butter",
+       "1 onion, sliced",
+       "1 bell pepper, sliced",
+       "3 cloves garlic",
+       "2 tablespoons oil"
+      ],
+      "steps": [
+       "Sear the beef in hot oil for 5 minutes until browned, then set aside.",
+       "Fry the garlic, onion, and bell pepper until fragrant.",
+       "Add the crushed black pepper, oyster sauce, and soy sauce, and sizzle.",
+       "Return the beef, add the butter, and toss until glossy and coated."
+      ]
+     },
+     "chicken": {
+      "key": "chicken",
+      "label": "Chicken",
+      "name": "Black Pepper Chicken",
+      "ingredients": [
+       "400 g chicken, sliced",
+       "2 tablespoons black pepper, crushed",
+       "2 tablespoons oyster sauce",
+       "1 tablespoon soy sauce",
+       "1 tablespoon butter",
+       "1 onion, sliced",
+       "1 bell pepper, sliced",
+       "3 cloves garlic",
+       "2 tablespoons oil"
+      ],
+      "steps": [
+       "Sear the chicken in hot oil for 6 minutes until browned and cooked through, then set aside.",
+       "Fry the garlic, onion, and bell pepper until fragrant.",
+       "Add the crushed black pepper, oyster sauce, and soy sauce, and sizzle.",
+       "Return the chicken, add the butter, and toss until glossy and coated."
+      ]
+     },
+     "pork": {
+      "key": "pork",
+      "label": "Pork",
+      "name": "Black Pepper Pork",
+      "ingredients": [
+       "400 g pork, sliced",
+       "2 tablespoons black pepper, crushed",
+       "2 tablespoons oyster sauce",
+       "1 tablespoon soy sauce",
+       "1 tablespoon butter",
+       "1 onion, sliced",
+       "1 bell pepper, sliced",
+       "3 cloves garlic",
+       "2 tablespoons oil"
+      ],
+      "steps": [
+       "Sear the pork in hot oil for 6 minutes until browned and cooked through, then set aside.",
+       "Fry the garlic, onion, and bell pepper until fragrant.",
+       "Add the crushed black pepper, oyster sauce, and soy sauce, and sizzle.",
+       "Return the pork, add the butter, and toss until glossy and coated."
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "Salted Egg Chicken",
+   "role": "meat",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "500 g chicken, cubed",
+    "3 salted egg yolks, mashed",
+    "2 tablespoons butter",
+    "2 sprigs curry leaves",
+    "2 chillies, sliced",
+    "3 tablespoons cornstarch",
+    "2 cups oil",
+    "1/4 cup evaporated milk"
+   ],
+   "steps": [
+    "Coat the chicken in cornstarch.",
+    "Deep-fry the chicken for 6 minutes until golden and crisp, then drain.",
+    "Melt the butter and fry the curry leaves and chilli until fragrant.",
+    "Add the mashed salted egg yolks and stir until foamy.",
+    "Pour in the evaporated milk to make a creamy sauce.",
+    "Toss the fried chicken in the sauce to coat."
+   ],
+   "handson_action": "deep-frying until crisp",
+   "serves": 4,
+   "base_volume": 1.6,
+   "fresh": true,
+   "swaps": {
+    "default": "chicken",
+    "options": {
+     "chicken": {
+      "key": "chicken",
+      "label": "Chicken",
+      "name": "Salted Egg Chicken",
+      "ingredients": [
+       "500 g chicken, cubed",
+       "3 salted egg yolks, mashed",
+       "2 tablespoons butter",
+       "2 sprigs curry leaves",
+       "2 chillies, sliced",
+       "3 tablespoons cornstarch",
+       "2 cups oil",
+       "1/4 cup evaporated milk"
+      ],
+      "steps": [
+       "Coat the chicken in cornstarch.",
+       "Deep-fry the chicken for 6 minutes until golden and crisp, then drain.",
+       "Melt the butter and fry the curry leaves and chilli until fragrant.",
+       "Add the mashed salted egg yolks and stir until foamy.",
+       "Pour in the evaporated milk to make a creamy sauce.",
+       "Toss the fried chicken in the sauce to coat."
+      ]
+     },
+     "prawn": {
+      "key": "prawn",
+      "label": "Prawn",
+      "name": "Salted Egg Prawns",
+      "ingredients": [
+       "500 g prawns",
+       "3 salted egg yolks, mashed",
+       "2 tablespoons butter",
+       "2 sprigs curry leaves",
+       "2 chillies, sliced",
+       "3 tablespoons cornstarch",
+       "2 cups oil",
+       "1/4 cup evaporated milk"
+      ],
+      "steps": [
+       "Coat the prawn in cornstarch.",
+       "Deep-fry the prawn for 3 minutes until golden and crisp, then drain.",
+       "Melt the butter and fry the curry leaves and chilli until fragrant.",
+       "Add the mashed salted egg yolks and stir until foamy.",
+       "Pour in the evaporated milk to make a creamy sauce.",
+       "Toss the fried prawn in the sauce to coat."
+      ]
+     },
+     "fish": {
+      "key": "fish",
+      "label": "Fish",
+      "name": "Salted Egg Fish",
+      "ingredients": [
+       "500 g fish, cubed",
+       "3 salted egg yolks, mashed",
+       "2 tablespoons butter",
+       "2 sprigs curry leaves",
+       "2 chillies, sliced",
+       "3 tablespoons cornstarch",
+       "2 cups oil",
+       "1/4 cup evaporated milk"
+      ],
+      "steps": [
+       "Coat the fish in cornstarch.",
+       "Deep-fry the fish for 3 minutes until golden and crisp, then drain.",
+       "Melt the butter and fry the curry leaves and chilli until fragrant.",
+       "Add the mashed salted egg yolks and stir until foamy.",
+       "Pour in the evaporated milk to make a creamy sauce.",
+       "Toss the fried fish in the sauce to coat."
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "Tomato and Egg Stir-Fry",
+   "role": "meat",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "4 eggs",
+    "3 tomatoes, chopped",
+    "2 spring onions",
+    "2 cloves garlic",
+    "1 tablespoon soy sauce",
+    "1 teaspoon sugar",
+    "2 tablespoons oil",
+    "1/2 teaspoon salt"
+   ],
+   "steps": [
+    "Beat the eggs with a pinch of salt.",
+    "Heat oil and scramble the eggs until just set, then set aside.",
+    "Stir-fry the garlic and tomatoes over high heat until softened and juicy.",
+    "Add the soy sauce and sugar.",
+    "Return the eggs and toss gently to combine.",
+    "Scatter with spring onion."
+   ],
+   "handson_action": "stir-frying over high heat",
+   "serves": 4,
+   "base_volume": 1.2,
+   "fresh": true
+  },
+  {
+   "name": "Chinese Steamed Egg",
+   "role": "meat",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "4 eggs",
+    "1.5 cups water",
+    "1 teaspoon soy sauce",
+    "1 teaspoon sesame oil",
+    "1 spring onion",
+    "1/2 teaspoon salt"
+   ],
+   "steps": [
+    "Beat the eggs with the water and salt until smooth, then strain.",
+    "Pour into a shallow dish.",
+    "Steam over low heat for 12 minutes until just set and silky.",
+    "Drizzle with soy sauce and sesame oil, and scatter with spring onion."
+   ],
+   "handson_action": "steaming — barely any hands-on",
+   "serves": 4,
+   "base_volume": 1.0,
+   "fresh": false
+  },
+  {
+   "name": "Oyster Omelette",
+   "role": "meat",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "4 eggs",
+    "150 g oysters",
+    "3 tablespoons cornstarch",
+    "1/4 cup water",
+    "2 cloves garlic",
+    "2 spring onions",
+    "1 tablespoon fish sauce",
+    "2 tablespoons oil",
+    "1 red chilli"
+   ],
+   "steps": [
+    "Mix the cornstarch with the water into a batter.",
+    "Heat oil and pan-fry the batter into a crispy pancake.",
+    "Crack the eggs over the top and let them set.",
+    "Add the oysters and garlic, and pan-fry until the oysters are just cooked and the edges are crisp.",
+    "Season with fish sauce.",
+    "Scatter with spring onion and chilli."
+   ],
+   "handson_action": "pan-frying over medium heat",
+   "serves": 4,
+   "base_volume": 1.3,
+   "fresh": true
+  },
+  {
+   "name": "Egg Foo Young",
+   "role": "meat",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "4 eggs",
+    "150 g prawns",
+    "1 cup bean sprouts",
+    "2 spring onions",
+    "2 cloves garlic",
+    "1 tablespoon soy sauce",
+    "2 tablespoons oil",
+    "1/2 teaspoon salt"
+   ],
+   "steps": [
+    "Beat the eggs with salt.",
+    "Stir in the prawns, bean sprouts, garlic, and spring onion.",
+    "Heat oil and pour in the egg mixture.",
+    "Pan-fry until golden and set on both sides.",
+    "Serve with soy sauce."
+   ],
+   "handson_action": "browning, then it simmers",
+   "serves": 4,
+   "base_volume": 1.3,
+   "fresh": true
+  },
+  {
+   "name": "Bubur Cha Cha",
+   "role": "dessert",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "1 sweet potato, cubed",
+    "1 yam, cubed",
+    "400 ml coconut milk",
+    "3 tablespoons gula melaka",
+    "1/4 cup sago",
+    "2 pandan leaves",
+    "1/2 teaspoon salt",
+    "2 cups water"
+   ],
+   "steps": [
+    "Steam the sweet potato and yam cubes until tender.",
+    "Boil the sago until translucent, then rinse.",
+    "Simmer the coconut milk with the gula melaka, pandan, and salt until the sugar dissolves.",
+    "Add the sweet potato, yam, and sago, and simmer gently for 5 minutes.",
+    "Serve warm or chilled."
+   ],
+   "handson_action": "steaming — barely any hands-on",
+   "serves": 4,
+   "base_volume": 1.8,
+   "fresh": false
+  },
+  {
+   "name": "Tau Suan",
+   "role": "dessert",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "1 cup split mung beans",
+    "4 tablespoons sugar",
+    "3 tablespoons sweet potato starch",
+    "2 pandan leaves",
+    "4 cups water"
+   ],
+   "steps": [
+    "Soak and steam the mung beans until just tender but still whole.",
+    "Bring the water to a boil with the pandan and sugar.",
+    "Stir in the sweet potato starch slurry until the soup thickens to a gel.",
+    "Add the mung beans and simmer gently for 2 minutes.",
+    "Serve warm."
+   ],
+   "handson_action": "steaming — barely any hands-on",
+   "serves": 4,
+   "base_volume": 1.6,
+   "fresh": false
+  },
+  {
+   "name": "Red Bean Soup",
+   "role": "dessert",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "1 cup red beans",
+    "5 tablespoons sugar",
+    "2 pandan leaves",
+    "1 piece dried orange peel",
+    "6 cups water"
+   ],
+   "steps": [
+    "Rinse the red beans.",
+    "Bring the beans, pandan, orange peel, and water to a boil.",
+    "Reduce the heat and simmer for 60 minutes until the beans are soft and breaking down.",
+    "Add the sugar and simmer for another 10 minutes until sweet and slightly thickened.",
+    "Serve warm."
+   ],
+   "handson_action": "stirring as it simmers and thickens",
+   "serves": 4,
+   "base_volume": 2.2,
+   "fresh": false
+  },
+  {
+   "name": "Pulut Hitam",
+   "role": "dessert",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "1 cup black glutinous rice",
+    "400 ml coconut milk",
+    "4 tablespoons gula melaka",
+    "2 pandan leaves",
+    "1/2 teaspoon salt",
+    "5 cups water"
+   ],
+   "steps": [
+    "Soak the black glutinous rice overnight.",
+    "Bring the rice, pandan, and water to a boil, then simmer for 45 minutes until the grains burst and thicken.",
+    "Stir in the gula melaka and salt until dissolved.",
+    "Serve warm, drizzled with coconut milk."
+   ],
+   "handson_action": "stirring as it simmers and thickens",
+   "serves": 4,
+   "base_volume": 2.0,
+   "fresh": false
+  },
+  {
+   "name": "Chicken Baked Rice",
+   "role": "base",
+   "cuisine": "asian",
+   "appliance": "oven",
+   "appliances": [
+    "oven",
+    "air_fryer"
+   ],
+   "ingredients": [
+    "3 cups cooked rice",
+    "300 g chicken, cubed",
+    "1 onion",
+    "3 cloves garlic",
+    "4 tablespoons tomato ketchup",
+    "1 tomato",
+    "1 cup grated cheese",
+    "2 tablespoons oil",
+    "1/2 teaspoon salt"
+   ],
+   "steps": [
+    "Heat oil and stir-fry the garlic, onion, and chicken until the chicken is cooked.",
+    "Add the ketchup and tomato and simmer into a sauce.",
+    "Spread the rice in a baking dish and pour the chicken sauce over.",
+    "Top with the grated cheese.",
+    "Bake at 200 C for 15 minutes until the cheese is golden and bubbling."
+   ],
+   "steps_variants": {
+    "air_fryer": [
+     "Stir-fry the garlic, onion, and chicken until cooked, then simmer with the ketchup and tomato into a sauce.",
+     "Spread the rice in an air-fryer dish, pour over the sauce, and top with cheese.",
+     "Air-fry at 200 C for 10 minutes until the cheese is golden and bubbling."
+    ]
+   },
+   "handson_action": "stir-frying, then baking",
+   "serves": 4,
+   "base_volume": 1.6,
+   "fresh": true,
+   "oven_temp_c": 200
+  },
+  {
+   "name": "Seafood Baked Rice",
+   "role": "base",
+   "cuisine": "asian",
+   "appliance": "oven",
+   "appliances": [
+    "oven",
+    "air_fryer"
+   ],
+   "ingredients": [
+    "3 cups cooked rice",
+    "200 g prawns",
+    "150 g squid",
+    "1 onion",
+    "3 cloves garlic",
+    "1 cup cream",
+    "1 cup grated cheese",
+    "2 tablespoons butter",
+    "1/2 teaspoon salt"
+   ],
+   "steps": [
+    "Melt the butter and stir-fry the garlic, onion, prawns, and squid until just cooked.",
+    "Stir in the cream to make a sauce.",
+    "Spread the rice in a baking dish and pour the seafood sauce over.",
+    "Top with the grated cheese.",
+    "Bake at 200 C for 15 minutes until golden and bubbling."
+   ],
+   "steps_variants": {
+    "air_fryer": [
+     "Stir-fry the garlic, onion, prawns, and squid in butter, then stir in the cream to make a sauce.",
+     "Spread the rice in an air-fryer dish, pour over the sauce, and top with cheese.",
+     "Air-fry at 200 C for 10 minutes until golden and bubbling."
+    ]
+   },
+   "handson_action": "stir-frying, then baking",
+   "serves": 4,
+   "base_volume": 1.6,
+   "fresh": true,
+   "oven_temp_c": 200
+  },
+  {
+   "name": "Chicken Katsu",
+   "role": "meat",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop",
+    "air_fryer"
+   ],
+   "ingredients": [
+    "500 g chicken thighs",
+    "1 cup panko",
+    "2 eggs",
+    "1/2 cup flour",
+    "2 cups oil",
+    "1/4 cabbage, shredded",
+    "3 tablespoons tonkatsu sauce",
+    "1/2 teaspoon salt"
+   ],
+   "steps": [
+    "Season the chicken and dredge each piece in flour, then egg, then panko.",
+    "Deep-fry the chicken for 6 minutes until golden and crisp, then drain and rest.",
+    "Slice and serve over shredded cabbage with tonkatsu sauce."
+   ],
+   "steps_variants": {
+    "air_fryer": [
+     "Coat the chicken in flour, egg, and panko.",
+     "Air-fry the chicken at 200 C for 12 minutes, flipping halfway, until golden and crisp.",
+     "Slice and serve over shredded cabbage with tonkatsu sauce."
+    ]
+   },
+   "handson_action": "deep-frying until crisp",
+   "serves": 4,
+   "base_volume": 1.4,
+   "fresh": true,
+   "oven_temp_c": 200
+  },
+  {
+   "name": "Salmon Teriyaki",
+   "role": "fish",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "4 salmon fillets",
+    "3 tablespoons soy sauce",
+    "3 tablespoons mirin",
+    "2 tablespoons sake",
+    "1 tablespoon sugar",
+    "1 tablespoon oil",
+    "1 scallion"
+   ],
+   "steps": [
+    "Mix the soy sauce, mirin, sake, and sugar into a teriyaki sauce.",
+    "Pan-fry the salmon skin-side down until crisp, then flip and cook through, about 6 minutes.",
+    "Pour in the teriyaki sauce and cook until glossy and thickened, coating the salmon.",
+    "Scatter with scallion."
+   ],
+   "handson_action": "pan-frying, then glazing the sauce",
+   "serves": 4,
+   "base_volume": 1.3,
+   "fresh": true
+  },
+  {
+   "name": "Gyudon",
+   "role": "base",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "3 cups cooked rice",
+    "400 g beef, thinly sliced",
+    "1 onion",
+    "1 cup dashi",
+    "3 tablespoons soy sauce",
+    "2 tablespoons mirin",
+    "1 tablespoon sugar",
+    "1 scallion"
+   ],
+   "steps": [
+    "Simmer the dashi, soy sauce, mirin, and sugar with the sliced onion for 5 minutes until the onion softens.",
+    "Add the thinly sliced beef and simmer for 3 minutes until just cooked.",
+    "Spoon the beef and onion over bowls of rice and drizzle with the broth.",
+    "Top with scallion."
+   ],
+   "handson_action": "simmering in the broth",
+   "serves": 4,
+   "base_volume": 1.3,
+   "fresh": true
+  },
+  {
+   "name": "Miso Soup",
+   "role": "soup",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "4 cups dashi",
+    "3 tablespoons miso paste",
+    "1 block tofu, cubed",
+    "2 tablespoons wakame",
+    "1 scallion"
+   ],
+   "steps": [
+    "Heat the dashi until warm, about 5 minutes.",
+    "Whisk in the miso paste until dissolved.",
+    "Add the cubed tofu and wakame and heat through gently without boiling.",
+    "Scatter with scallion."
+   ],
+   "handson_action": "simmering in the broth",
+   "serves": 4,
+   "base_volume": 1.6,
+   "fresh": true
+  },
+  {
+   "name": "Agedashi Tofu",
+   "role": "meat",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "1 block firm tofu",
+    "1/2 cup cornstarch",
+    "2 cups oil",
+    "1 cup dashi",
+    "2 tablespoons soy sauce",
+    "1 tablespoon mirin",
+    "1 scallion",
+    "grated daikon"
+   ],
+   "steps": [
+    "Cut the tofu into cubes and coat in cornstarch.",
+    "Deep-fry the tofu for 4 minutes until golden and crisp, then drain.",
+    "Simmer the dashi, soy sauce, and mirin into a light broth for 3 minutes.",
+    "Place the fried tofu in bowls, pour over the broth, and top with grated daikon and scallion."
+   ],
+   "handson_action": "deep-frying until crisp",
+   "serves": 4,
+   "base_volume": 1.3,
+   "fresh": true
+  },
+  {
+   "name": "Yakisoba",
+   "role": "base",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "400 g yakisoba noodles",
+    "200 g pork, sliced",
+    "1/4 cabbage",
+    "1 carrot",
+    "1 onion",
+    "1 cup bean sprouts",
+    "4 tablespoons tonkatsu sauce",
+    "2 tablespoons oil",
+    "1 sheet nori",
+    "1 scallion"
+   ],
+   "steps": [
+    "Heat oil and stir-fry the pork until browned.",
+    "Add the onion, carrot, and cabbage and stir-fry until softened.",
+    "Add the noodles and bean sprouts.",
+    "Pour in the tonkatsu sauce and toss over high heat until everything is coated and glossy.",
+    "Top with nori and scallion."
+   ],
+   "handson_action": "stir-frying over high heat",
+   "serves": 4,
+   "base_volume": 1.4,
+   "fresh": true
+  },
+  {
+   "name": "Ramen",
+   "role": "base",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "400 g ramen noodles",
+    "300 g pork belly",
+    "4 cups pork stock",
+    "2 tablespoons miso paste",
+    "2 tablespoons soy sauce",
+    "4 eggs",
+    "2 scallions",
+    "1 sheet nori",
+    "1 cup bean sprouts",
+    "1 tablespoon sesame oil"
+   ],
+   "steps": [
+    "Simmer the stock with the miso and soy sauce for 15 minutes to build the broth.",
+    "Boil the eggs for 7 minutes, then peel and halve.",
+    "Cook the ramen noodles until just tender, then drain.",
+    "Slice the pork belly.",
+    "Divide the noodles into bowls, pour over the hot broth, and top with pork, egg, bean sprouts, nori, and scallion."
+   ],
+   "handson_action": "simmering in the broth",
+   "serves": 4,
+   "base_volume": 1.7,
+   "fresh": true
+  },
+  {
+   "name": "Katsudon",
+   "role": "base",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "3 cups cooked rice",
+    "400 g pork",
+    "1 cup panko",
+    "1 egg",
+    "4 eggs",
+    "1/2 cup flour",
+    "1 onion",
+    "1 cup dashi",
+    "3 tablespoons soy sauce",
+    "2 tablespoons mirin",
+    "1 tablespoon sugar",
+    "2 cups oil",
+    "1 scallion"
+   ],
+   "steps": [
+    "Bread the pork in flour, egg, and panko.",
+    "Deep-fry the pork for 6 minutes until golden and crisp, then slice.",
+    "Simmer the dashi, soy sauce, mirin, and sugar with the sliced onion for 5 minutes.",
+    "Lay the sliced cutlet in the broth, pour the beaten eggs over the top, and cook until just set.",
+    "Slide over bowls of rice and top with scallion."
+   ],
+   "handson_action": "deep-frying until crisp",
+   "serves": 4,
+   "base_volume": 1.4,
+   "fresh": true
+  },
+  {
+   "name": "Japanese Curry Rice",
+   "role": "base",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "3 cups cooked rice",
+    "400 g beef",
+    "2 potatoes",
+    "2 carrots",
+    "1 onion",
+    "4 cups water",
+    "1 pack japanese curry roux",
+    "1 tablespoon oil"
+   ],
+   "steps": [
+    "Brown the beef, onion, carrot, and potato in oil.",
+    "Add the water and simmer for 20 minutes until the vegetables are tender.",
+    "Stir in the curry roux until dissolved and the sauce thickens.",
+    "Simmer for 5 more minutes, then serve over rice."
+   ],
+   "handson_action": "browning, then simmering",
+   "serves": 4,
+   "base_volume": 1.5,
+   "fresh": false
+  },
+  {
+   "name": "Soy-Braised Pork Ribs",
+   "role": "meat",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "800 g pork ribs",
+    "3 tablespoons soy sauce",
+    "2 tablespoons dark soy sauce",
+    "2 tablespoons sugar",
+    "3 cloves garlic",
+    "2 slices ginger",
+    "1 star anise",
+    "2 cups water",
+    "1 tablespoon oil"
+   ],
+   "steps": [
+    "Sear the pork ribs in oil until browned on all sides.",
+    "Stir in the soy sauce, dark soy sauce, sugar, garlic, ginger, star anise, and water.",
+    "Cover and braise gently for 50 minutes until the meat is fall-apart tender.",
+    "Spoon the glossy sauce over the pork to serve."
+   ],
+   "handson_action": "searing, then setting it to braise",
+   "serves": 4,
+   "base_volume": 1.5,
+   "fresh": false,
+   "cuts": {
+    "default": "ribs",
+    "options": {
+     "ribs": {
+      "key": "ribs",
+      "label": "Ribs",
+      "cut_role": "braise",
+      "name": "Soy-Braised Pork Ribs",
+      "ingredients": [
+       "800 g pork ribs",
+       "3 tablespoons soy sauce",
+       "2 tablespoons dark soy sauce",
+       "2 tablespoons sugar",
+       "3 cloves garlic",
+       "2 slices ginger",
+       "1 star anise",
+       "2 cups water",
+       "1 tablespoon oil"
+      ],
+      "steps": [
+       "Sear the pork ribs in oil until browned on all sides.",
+       "Stir in the soy sauce, dark soy sauce, sugar, garlic, ginger, star anise, and water.",
+       "Cover and braise gently for 50 minutes until the meat is fall-apart tender.",
+       "Spoon the glossy sauce over the pork to serve."
+      ],
+      "handson_action": "searing, then setting it to braise",
+      "note": "A collagen-rich cut — braised low and slow until fall-apart tender."
+     },
+     "belly": {
+      "key": "belly",
+      "label": "Belly",
+      "cut_role": "braise",
+      "name": "Soy-Braised Pork Belly",
+      "ingredients": [
+       "800 g pork belly",
+       "3 tablespoons soy sauce",
+       "2 tablespoons dark soy sauce",
+       "2 tablespoons sugar",
+       "3 cloves garlic",
+       "2 slices ginger",
+       "1 star anise",
+       "2 cups water",
+       "1 tablespoon oil"
+      ],
+      "steps": [
+       "Sear the pork belly in oil until browned on all sides.",
+       "Stir in the soy sauce, dark soy sauce, sugar, garlic, ginger, star anise, and water.",
+       "Cover and braise gently for 50 minutes until the meat is fall-apart tender.",
+       "Spoon the glossy sauce over the pork to serve."
+      ],
+      "handson_action": "searing, then setting it to braise",
+      "note": "A fatty, collagen-rich cut — braised until meltingly tender."
+     },
+     "shoulder": {
+      "key": "shoulder",
+      "label": "Shoulder",
+      "cut_role": "braise",
+      "name": "Soy-Braised Pork Shoulder",
+      "ingredients": [
+       "800 g pork shoulder",
+       "3 tablespoons soy sauce",
+       "2 tablespoons dark soy sauce",
+       "2 tablespoons sugar",
+       "3 cloves garlic",
+       "2 slices ginger",
+       "1 star anise",
+       "2 cups water",
+       "1 tablespoon oil"
+      ],
+      "steps": [
+       "Sear the pork shoulder in oil until browned on all sides.",
+       "Stir in the soy sauce, dark soy sauce, sugar, garlic, ginger, star anise, and water.",
+       "Cover and braise gently for 50 minutes until the meat is fall-apart tender.",
+       "Spoon the glossy sauce over the pork to serve."
+      ],
+      "handson_action": "searing, then setting it to braise",
+      "note": "A collagen-rich cut — braised low and slow until it shreds."
+     },
+     "loin": {
+      "key": "loin",
+      "label": "Loin (lean)",
+      "cut_role": "quick",
+      "name": "Soy-Braised Pork Loin",
+      "ingredients": [
+       "500 g pork loin",
+       "3 tablespoons soy sauce",
+       "2 tablespoons sugar",
+       "3 cloves garlic",
+       "2 slices ginger",
+       "1 tablespoon oil"
+      ],
+      "steps": [
+       "Sear the pork loin in oil for three minutes each side until browned.",
+       "Stir in the soy sauce, sugar, garlic, and ginger and cook until glossy, about two minutes.",
+       "Rest briefly, then slice — a lean cut, seared quickly rather than braised so it stays juicy."
+      ],
+      "handson_action": "pan-frying, then glazing the sauce",
+      "note": "A lean cut — seared quickly so it stays juicy, not braised."
+     }
+    }
+   }
+  },
+  {
+   "name": "Soy-Braised Beef Chuck",
+   "role": "meat",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "800 g beef chuck",
+    "3 tablespoons soy sauce",
+    "2 tablespoons dark soy sauce",
+    "2 tablespoons sugar",
+    "3 cloves garlic",
+    "2 slices ginger",
+    "1 star anise",
+    "2 cups water",
+    "1 tablespoon oil"
+   ],
+   "steps": [
+    "Sear the beef chuck in oil until browned on all sides.",
+    "Stir in the soy sauce, dark soy sauce, sugar, garlic, ginger, star anise, and water.",
+    "Cover and braise gently for 50 minutes until the meat is fall-apart tender.",
+    "Spoon the glossy sauce over to serve."
+   ],
+   "handson_action": "searing, then setting it to braise",
+   "serves": 4,
+   "base_volume": 1.5,
+   "fresh": false,
+   "cuts": {
+    "default": "chuck",
+    "options": {
+     "chuck": {
+      "key": "chuck",
+      "label": "Chuck",
+      "cut_role": "braise",
+      "note": "A collagen-rich cut — braised low and slow until it pulls apart.",
+      "name": "Soy-Braised Beef Chuck",
+      "ingredients": [
+       "800 g beef chuck",
+       "3 tablespoons soy sauce",
+       "2 tablespoons dark soy sauce",
+       "2 tablespoons sugar",
+       "3 cloves garlic",
+       "2 slices ginger",
+       "1 star anise",
+       "2 cups water",
+       "1 tablespoon oil"
+      ],
+      "steps": [
+       "Sear the beef chuck in oil until browned on all sides.",
+       "Stir in the soy sauce, dark soy sauce, sugar, garlic, ginger, star anise, and water.",
+       "Cover and braise gently for 50 minutes until the meat is fall-apart tender.",
+       "Spoon the glossy sauce over to serve."
+      ],
+      "handson_action": "searing, then setting it to braise"
+     },
+     "brisket": {
+      "key": "brisket",
+      "label": "Brisket",
+      "cut_role": "braise",
+      "note": "A collagen-rich cut — braised low and slow until it pulls apart.",
+      "name": "Soy-Braised Beef Brisket",
+      "ingredients": [
+       "800 g beef brisket",
+       "3 tablespoons soy sauce",
+       "2 tablespoons dark soy sauce",
+       "2 tablespoons sugar",
+       "3 cloves garlic",
+       "2 slices ginger",
+       "1 star anise",
+       "2 cups water",
+       "1 tablespoon oil"
+      ],
+      "steps": [
+       "Sear the beef brisket in oil until browned on all sides.",
+       "Stir in the soy sauce, dark soy sauce, sugar, garlic, ginger, star anise, and water.",
+       "Cover and braise gently for 50 minutes until the meat is fall-apart tender.",
+       "Spoon the glossy sauce over to serve."
+      ],
+      "handson_action": "searing, then setting it to braise"
+     },
+     "short_rib": {
+      "key": "short_rib",
+      "label": "Short rib",
+      "cut_role": "braise",
+      "note": "A collagen-rich cut — braised low and slow until it pulls apart.",
+      "name": "Soy-Braised Beef Short Rib",
+      "ingredients": [
+       "800 g beef short rib",
+       "3 tablespoons soy sauce",
+       "2 tablespoons dark soy sauce",
+       "2 tablespoons sugar",
+       "3 cloves garlic",
+       "2 slices ginger",
+       "1 star anise",
+       "2 cups water",
+       "1 tablespoon oil"
+      ],
+      "steps": [
+       "Sear the beef short rib in oil until browned on all sides.",
+       "Stir in the soy sauce, dark soy sauce, sugar, garlic, ginger, star anise, and water.",
+       "Cover and braise gently for 50 minutes until the meat is fall-apart tender.",
+       "Spoon the glossy sauce over to serve."
+      ],
+      "handson_action": "searing, then setting it to braise"
+     },
+     "sirloin": {
+      "key": "sirloin",
+      "label": "Sirloin (lean)",
+      "cut_role": "quick",
+      "note": "A lean cut — seared fast and rested; braising it would turn it grey and dry.",
+      "name": "Soy-Seared Beef Sirloin",
+      "ingredients": [
+       "500 g beef sirloin",
+       "3 tablespoons soy sauce",
+       "2 tablespoons sugar",
+       "3 cloves garlic",
+       "2 slices ginger",
+       "1 tablespoon oil"
+      ],
+      "steps": [
+       "Sear the beef sirloin in oil for two minutes each side for medium-rare, browning the surface.",
+       "Stir in the soy sauce, sugar, garlic, and ginger and glaze for one minute.",
+       "Rest, then slice against the grain — a lean cut, seared fast so it stays tender."
+      ],
+      "handson_action": "searing fast over high heat"
+     }
+    }
+   }
+  },
+  {
+   "name": "Soy-Braised Chicken Thigh",
+   "role": "meat",
+   "cuisine": "asian",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "800 g chicken thigh",
+    "3 tablespoons soy sauce",
+    "2 tablespoons dark soy sauce",
+    "2 tablespoons sugar",
+    "3 cloves garlic",
+    "2 slices ginger",
+    "1 cup water",
+    "1 tablespoon oil"
+   ],
+   "steps": [
+    "Sear the chicken thigh skin-side down until golden.",
+    "Stir in the soy sauce, dark soy sauce, sugar, garlic, ginger, and water.",
+    "Cover and braise gently for 25 minutes until tender and glossy.",
+    "Spoon the sauce over to serve."
+   ],
+   "handson_action": "searing, then setting it to braise",
+   "serves": 4,
+   "base_volume": 1.5,
+   "fresh": false,
+   "cuts": {
+    "default": "thigh",
+    "options": {
+     "thigh": {
+      "key": "thigh",
+      "label": "Thigh",
+      "cut_role": "braise",
+      "note": "The fattier, forgiving cut — stays moist through a braise or a fry.",
+      "name": "Soy-Braised Chicken Thigh",
+      "ingredients": [
+       "800 g chicken thigh",
+       "3 tablespoons soy sauce",
+       "2 tablespoons dark soy sauce",
+       "2 tablespoons sugar",
+       "3 cloves garlic",
+       "2 slices ginger",
+       "1 cup water",
+       "1 tablespoon oil"
+      ],
+      "steps": [
+       "Sear the chicken thigh skin-side down until golden.",
+       "Stir in the soy sauce, dark soy sauce, sugar, garlic, ginger, and water.",
+       "Cover and braise gently for 25 minutes until tender and glossy.",
+       "Spoon the sauce over to serve."
+      ],
+      "handson_action": "searing, then setting it to braise"
+     },
+     "breast": {
+      "key": "breast",
+      "label": "Breast (lean)",
+      "cut_role": "quick",
+      "note": "Lean and quick to dry — cooked briefly and gently, never braised hard.",
+      "name": "Soy-Glazed Chicken Breast",
+      "ingredients": [
+       "600 g chicken breast",
+       "3 tablespoons soy sauce",
+       "2 tablespoons sugar",
+       "3 cloves garlic",
+       "2 slices ginger",
+       "1 tablespoon oil"
+      ],
+      "steps": [
+       "Sear the chicken breast briefly on each side.",
+       "Stir in the soy sauce, sugar, garlic, and ginger.",
+       "Cook gently for eight minutes, just until cooked through — a lean cut, cooked quick and gentle so it stays juicy, not braised.",
+       "Rest, then slice."
+      ],
+      "handson_action": "pan-frying gently"
+     }
+    }
+   }
+  }
+ ]
+}

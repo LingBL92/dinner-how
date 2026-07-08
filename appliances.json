@@ -1,0 +1,108 @@
+{
+ "_meta": {
+  "purpose": "Appliance properties. capacity=dishes at once (null means it equals the hob's burner count). volume_litres drives batching. passive_multiplier scales unattended cooking time; passive_cap_min is its realistic ceiling.",
+  "burner_default": 2
+ },
+ "appliances": [
+  {
+   "id": "stovetop",
+   "name": "Stovetop",
+   "order": 1,
+   "capacity": null,
+   "volume_litres": 4.5,
+   "passive_multiplier": 1.0,
+   "heat_families": [
+    "dry_heat",
+    "moist_heat",
+    "combination"
+   ],
+   "methods": [
+    "sear_pan_fry",
+    "saute",
+    "deep_fry",
+    "boil",
+    "steam",
+    "poach",
+    "simmer_reduce",
+    "braise",
+    "stew"
+   ]
+  },
+  {
+   "id": "oven",
+   "name": "Oven",
+   "order": 2,
+   "capacity": 2,
+   "volume_litres": 99,
+   "passive_multiplier": 1.0,
+   "heat_families": [
+    "dry_heat",
+    "combination"
+   ],
+   "methods": [
+    "roast_bake",
+    "broil_grill",
+    "braise",
+    "stew"
+   ]
+  },
+  {
+   "id": "rice_cooker",
+   "name": "Rice cooker",
+   "order": 3,
+   "capacity": 1,
+   "volume_litres": 1.8,
+   "passive_multiplier": 1.0
+  },
+  {
+   "id": "pressure_cooker",
+   "name": "Pressure cooker",
+   "order": 4,
+   "capacity": 1,
+   "volume_litres": 4,
+   "passive_multiplier": 0.35,
+   "passive_cap_min": 75,
+   "heat_families": [
+    "moist_heat"
+   ],
+   "methods": [
+    "stew",
+    "braise",
+    "steam",
+    "boil"
+   ]
+  },
+  {
+   "id": "slow_cooker",
+   "name": "Slow cooker",
+   "order": 5,
+   "capacity": 1,
+   "volume_litres": 4,
+   "passive_multiplier": 4.0,
+   "passive_cap_min": 480,
+   "heat_families": [
+    "moist_heat"
+   ],
+   "methods": [
+    "stew",
+    "simmer_reduce"
+   ]
+  },
+  {
+   "id": "air_fryer",
+   "name": "Air fryer",
+   "order": 6,
+   "capacity": 1,
+   "volume_litres": 1.8,
+   "passive_multiplier": 0.7,
+   "passive_cap_min": 60,
+   "heat_families": [
+    "dry_heat"
+   ],
+   "methods": [
+    "air_fry",
+    "roast_bake"
+   ]
+  }
+ ]
+}
