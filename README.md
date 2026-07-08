@@ -7,7 +7,7 @@ pick a meal shape, tell it what appliances you own, and it composes a meal,
 schedules every dish across your hob, oven, pressure cooker and air fryer, and
 tells you when to start cooking so everything lands on the table at once.
 
-**Live demo:** https://YOUR-USERNAME.github.io/YOUR-REPO/
+**Live demo:** https://LingBL92.github.io/dinner-how/
 
 ## What it does
 
