@@ -413,8 +413,10 @@ function explicitMinutes(text){
 }
 
 const NEG=["not ","don't","avoid","without"];
+/* "Preheat the oven to 350 F" heats the box, it does not cook the dish. */
+const PREHEAT=/\bpreheat\s+(?:the\s+)?(?:oven|air[- ]?fryer|grill|broiler)(?:\s+to\s+\d+\s*\u00b0?\s*[cf]\b)?/gi;
 function detectMethods(text,M){
-  const low=text.toLowerCase(), hits=[];
+  const low=text.toLowerCase().replace(PREHEAT," "), hits=[];
   for(const mid in M.methods){
     for(const a of M.methods[mid].aliases){
       if(wb(a,low)){
@@ -425,7 +427,8 @@ function detectMethods(text,M){
       }
     }
   }
-  if(/\bbrown(ed)?\b/.test(low)&&!/golden brown|brown sugar|brown rice|brown bread/.test(low))hits.push("sear_pan_fry");
+  /* 'brown' as a verb, only if nothing else fired: "nicely browned" describes a bake's result. */
+  if(!hits.length&&/\bbrown(ed)?\b/.test(low)&&!/golden brown|brown sugar|brown rice|brown bread/.test(low))hits.push("sear_pan_fry");
   return [...new Set(hits)];
 }
 
@@ -467,8 +470,15 @@ function activeInStep(text,declared,R){
 
 const RESET=["meanwhile","separate","drain","remove","set aside","serve","garnish","transfer"];
 const VAGUE=["cook","heat"];
-const BRIEF=["until bubbly","until thick","until set","until coat","until combin","until glossy","until hot","until warmed","until fragrant","to coat","until wilted","until just","until the sauce"];
-const LIQ_OFF=["drain","remove from heat","transfer to","bake"];
+const BRIEF=["until bubbly","until thick","until set","until coat","until combin","until glossy","until hot","until warmed","until fragrant","to coat","until wilted","until just","until the sauce","heat through","warm through","warmed through"];
+const LIQ_OFF=["drain","remove from","off the heat","transfer to","bake"];
+/* "Heat the oil" cooks. "Remove from the heat" does not. */
+const HEAT_NOUN=/\b(the|off|low|medium|high|gentle|residual)\s+$/;
+function heatIsVerb(low){
+  const re=/\bheat\b/g; let m;
+  while((m=re.exec(low))){ if(!HEAT_NOUN.test(low.slice(Math.max(0,m.index-9),m.index))) return true; }
+  return false;
+}
 const SET_FORGET=new Set(["slow_cooker","pressure_cooker","oven","air_fryer"]);
 const RESCALE_STATED=new Set(["pressure_cooker","slow_cooker","air_fryer"]);
 const PREP_COMP_CATS=new Set(["proteins","vegetables","fruits"]);
@@ -500,8 +510,13 @@ function analyzeRecipe(ingStrings,steps,appliance,R,M,nativeSteps){
     active.forEach(a=>((R.byId[a]||{}).provides||[]).forEach(p=>props.add(p)));
     if(appliance!=="none"&&props.has("water"))hasLiquid=true;
     if(LIQ_OFF.some(c=>low.includes(c)))hasLiquid=false;
-    if(!mids.length&&VAGUE.some(v=>wb(v,low)))
-      mids = hasLiquid?["simmer_reduce"]:(props.has("fat_liquid")?["saute"]:[]);
+    if(!mids.length&&(wb("cook",low)||heatIsVerb(low))){
+      // A step that names the fat is frying, whatever else is in the pot.
+      if(/\b(oil|butter|ghee|lard|margarine)\b/.test(low)) mids=["saute"];
+      else if(hasLiquid) mids=["simmer_reduce"];
+      else if(props.has("fat_liquid")) mids=["saute"];
+      else mids=[];
+    }
     const fired=mids.length?gate(mids,props,M):[];
     fired.forEach(r=>allR.add(r));
     mids.forEach(mid=>{
