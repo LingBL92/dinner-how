@@ -13,11 +13,15 @@ header{border-bottom:1px solid var(--line);padding:32px 0 24px;position:relative
 .themebtn:hover{border-color:var(--ember)}
 .mark{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:38px;letter-spacing:-.02em;margin:0;display:flex;align-items:center;gap:11px;line-height:1}
 .mark .dot{width:12px;height:12px;border-radius:50%;background:var(--ember);box-shadow:0 0 15px var(--ember)}
-.tag{color:var(--muted);margin:11px 0 0;max-width:60ch;font-size:15px}.tag b{color:var(--cream);font-weight:600}
+.tag{color:var(--muted);margin:11px 0 0;font-size:15px}.tag b{color:var(--cream);font-weight:600}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:22px 0}
 .ctl-lab{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 11px}
-.appls{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:18px}
-.shape{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+.appls{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:9px;margin-bottom:18px}
+#appls{grid-template-columns:repeat(auto-fit,minmax(104px,1fr))}
+#preset{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+#shortcuts{display:flex;flex-wrap:wrap}
+.shape{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:10px;margin-bottom:18px}
+#paxbox{display:flex;flex-wrap:wrap}
 .step{display:flex;flex-direction:column;align-items:center;gap:5px;background:var(--panel2);border:1px solid var(--line);border-radius:16px;padding:12px 12px 10px;min-width:104px;transition:border-color .15s,background .15s}
 .step.on{border-color:rgba(182,16,17,.35);background:rgba(182,16,17,.05)}
 .stepicon{display:flex;align-items:center;justify-content:center;height:52px;color:var(--muted);transition:color .15s}
@@ -33,11 +37,15 @@ header{border-bottom:1px solid var(--line);padding:32px 0 24px;position:relative
 .applcard[aria-pressed="true"]:hover{opacity:1}
 .applcard[aria-pressed="true"] .ai{color:var(--ember)}
 .applcard[aria-pressed="true"] .al{font-weight:700}
+.applcard.hob{cursor:default}
+.applcard.hob .stepctl{margin-top:2px}
+.applcard .unit{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.applcard[aria-pressed="true"] .unit{color:var(--ember)}
 .steplab{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.02em;color:var(--cream);text-align:center;white-space:nowrap}
 .stepbtn{width:23px;height:23px;border-radius:50%;border:1px solid var(--line);background:var(--ink);color:var(--ember);font-size:15px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
 .stepbtn:hover{border-color:var(--ember)}
 .stepn{font-family:"Space Mono",monospace;font-size:13px;color:var(--ember);min-width:12px;text-align:center;font-weight:700}
-.appl{font-family:"Space Mono",monospace;font-size:13px;color:var(--cream);background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.appl{font-family:"Space Mono",monospace;font-size:13px;color:var(--cream);background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}
 .appl svg{width:16px;height:16px;flex:0 0 auto}
 .appl[aria-pressed="true"]{background:var(--ember);border-color:var(--ember);color:#fdf1ea;font-weight:700}
 .appl:focus-visible,.btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
@@ -63,7 +71,7 @@ input[type=time]{background:var(--panel2);border:1px solid var(--line);color:var
 .reroll{position:absolute;top:10px;right:10px;width:27px;height:27px;border-radius:50%;border:1px solid var(--line);background:var(--panel2);color:var(--ember);font-size:15px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
 .reroll:hover{border-color:var(--ember);transform:rotate(90deg);transition:transform .2s}
 .kitchen{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:6px}
-.station{flex:0 0 150px;overflow:hidden;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel)}
+.station{flex:1 1 150px;overflow:hidden;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel)}
 .station[data-ap="stovetop"]{flex-basis:var(--sw,150px)}
 .station.active{border-color:rgba(210,58,42,.5)}
 .station.idle{opacity:.5;border-style:dashed}
@@ -165,7 +173,7 @@ footer{border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);f
 .steps li::before{content:counter(s);position:absolute;left:0;top:-1px;width:24px;height:24px;border-radius:50%;background:var(--panel2);border:1px solid var(--ember);color:var(--ember);font-family:"Space Mono",monospace;font-size:11px;display:flex;align-items:center;justify-content:center}
 .ing{font-size:13.5px;color:var(--muted);margin:4px 0}
 .st-dish.sel{outline:2px solid var(--ember);outline-offset:1px}
-@media (max-width:620px){.wrap{padding:0 14px}.dishes{grid-template-columns:1fr}.groc2{columns:1}.radar{width:210px;height:186px}.rowswrap{--lblw:106px}.mark{font-size:30px}.tag{font-size:14px}.appl{padding:9px 15px;font-size:13px}.stepbtn{width:30px;height:30px}.reroll{width:30px;height:30px}.btn,.swapbtn,.appl{min-height:40px}.station,.station[data-ap="stovetop"]{flex:1 1 100%}.gantt{overflow-x:auto;-webkit-overflow-scrolling:touch}.ganttscroll{min-width:470px}.groc2 .gcat{break-inside:auto}.kmsg{left:12px;right:12px;max-width:none;transform:translateY(18px)}.kmsg.on{transform:translateY(0)}.sheet{padding:20px 17px}.grow{grid-template-columns:96px 1fr}}
+@media (max-width:620px){.wrap{padding:0 14px}.appls,#appls,.shape{grid-template-columns:repeat(auto-fit,minmax(92px,1fr))}#preset{grid-template-columns:repeat(auto-fit,minmax(132px,1fr))}.dishes{grid-template-columns:1fr}.groc2{columns:1}.radar{width:210px;height:186px}.rowswrap{--lblw:106px}.mark{font-size:30px}.tag{font-size:14px}.appl{padding:9px 15px;font-size:13px}.stepbtn{width:30px;height:30px}.reroll{width:30px;height:30px}.btn,.swapbtn,.appl{min-height:40px}.station,.station[data-ap="stovetop"]{flex:1 1 100%}.gantt{overflow-x:auto;-webkit-overflow-scrolling:touch}.ganttscroll{min-width:470px}.groc2 .gcat{break-inside:auto}.kmsg{left:12px;right:12px;max-width:none;transform:translateY(18px)}.kmsg.on{transform:translateY(0)}.sheet{padding:20px 17px}.grow{grid-template-columns:96px 1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style></head><body>
 <div class="wrap">
@@ -174,8 +182,6 @@ footer{border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);f
  <section class="panel">
    <p class="ctl-lab">What can you cook with?</p>
    <div class="appls" id="appls"></div>
-   <p class="ctl-lab">Stove burners</p>
-   <div class="appls" id="burners"></div>
    <p class="ctl-lab">Cuisine</p>
    <div class="appls" id="cuisines"></div>
    <p class="ctl-lab">Meal shape</p>
@@ -188,7 +194,7 @@ footer{border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);f
    <p class="ctl-lab">When do you want to eat?</p>
    <div class="slider-row"><input type="time" id="eat" value="19:00"><span class="readout" id="eatread"></span></div>
    <p class="ctl-lab">Shortcuts</p>
-   <div class="appls"><button class="appl" id="packbtn" aria-pressed="false">Using ready pastes / packs</button></div>
+   <div class="appls" id="shortcuts"><button class="appl" id="packbtn" aria-pressed="false">Using ready pastes / packs</button></div>
    <div class="row"><button class="btn" id="compose">Compose a meal</button><button class="btn ghost" id="shuffle">Shuffle</button></div>
  </section>
  <div id="out"></div>
@@ -536,25 +542,42 @@ function saveKitchen(){try{localStorage.setItem(KITCHEN_KEY,JSON.stringify({owne
 function loadKitchen(valid){try{
   const k=JSON.parse(localStorage.getItem(KITCHEN_KEY)||"null"); if(!k)return;
   if(Array.isArray(k.owned)){const keep=k.owned.filter(a=>valid.has(a)); if(keep.length){owned.clear();keep.forEach(a=>owned.add(a));}}
-  if(Number.isInteger(k.burners)&&k.burners>=1&&k.burners<=4)burners=k.burners;
+  if(Number.isInteger(k.burners)&&k.burners>=0&&k.burners<=4)burners=k.burners;
   if(Number.isInteger(k.pax)&&k.pax>=1&&k.pax<=12)pax=k.pax;
 }catch(e){}}
+function syncHob(){
+  const n=document.getElementById("burnn"),u=document.getElementById("burnu"),w=document.getElementById("appl-stovetop");
+  if(n)n.textContent=burners;
+  if(u)u.textContent=burners===0?"off":(burners===1?"burner":"burners");
+  if(w)w.setAttribute("aria-pressed",burners>0);
+}
 function syncKitchenUI(){
-  const bb=document.getElementById("burners");
-  if(bb)[...bb.children].forEach((x,i)=>x.setAttribute("aria-pressed",i+1===burners));
+  syncHob();
   const pn=document.getElementById("paxn"); if(pn)pn.textContent=pax;
 }
 let meal=[]; let cuisines=new Set(["singaporean","japanese","western"]); let budget=60; let burners=2; const count={base:1,veg:1,meat:1,fish:0,soup:0,dessert:0}/*weeknight*/; let packsOn=false; let pax=4; const ROLELAB={base:"Rice",veg:"Vegetable",meat:"Meat",fish:"Fish",soup:"Soup",dessert:"Dessert"};
 
 const applBox=document.getElementById("appls");
 function buildAppls(){applBox.innerHTML="";
-  APPLIANCE_ORDER.forEach(a=>{const b=document.createElement("button");b.className="applcard";
-   b.innerHTML='<span class="ai">'+(APPL_ICON[a]||"")+'</span><span class="al">'+APPL[a]+'</span>';
-   b.setAttribute("aria-pressed",owned.has(a));
-   b.onclick=()=>{owned.has(a)?owned.delete(a):owned.add(a);b.setAttribute("aria-pressed",owned.has(a));saveKitchen();compose();};
-   applBox.appendChild(b);});}
-const burnBox=document.getElementById("burners");
-[1,2,3,4].forEach(n=>{const b=document.createElement("button");b.className="appl";b.textContent=n+(n===1?" burner":" burners");b.setAttribute("aria-pressed",burners===n);b.onclick=()=>{burners=n;[...burnBox.children].forEach((x,i)=>x.setAttribute("aria-pressed",i+1===n));saveKitchen();compose();};burnBox.appendChild(b);});
+  APPLIANCE_ORDER.forEach(a=>{
+    if(a==="stovetop"){
+      const w=document.createElement("div");w.className="applcard hob";w.id="appl-stovetop";
+      w.innerHTML='<span class="ai">'+(APPL_ICON.stovetop||"")+'</span><span class="al">'+APPL.stovetop+'</span>'
+        +'<span class="stepctl"><button class="stepbtn" data-d="-1">−</button><span class="stepn" id="burnn"></span><button class="stepbtn" data-d="1">+</button></span>'
+        +'<span class="unit" id="burnu"></span>';
+      w.querySelectorAll(".stepbtn").forEach(btn=>btn.onclick=()=>{
+        burners=Math.max(0,Math.min(4,burners+ +btn.dataset.d));
+        if(burners===0)owned.delete("stovetop"); else owned.add("stovetop");
+        syncHob();saveKitchen();compose();});
+      applBox.appendChild(w);
+      return;
+    }
+    const b=document.createElement("button");b.className="applcard";
+    b.innerHTML='<span class="ai">'+(APPL_ICON[a]||"")+'</span><span class="al">'+APPL[a]+'</span>';
+    b.setAttribute("aria-pressed",owned.has(a));
+    b.onclick=()=>{owned.has(a)?owned.delete(a):owned.add(a);b.setAttribute("aria-pressed",owned.has(a));saveKitchen();compose();};
+    applBox.appendChild(b);});
+  syncHob();}
 const cuiBox=document.getElementById("cuisines");
 const CUISINES=[["singaporean","Singaporean"],["japanese","Japanese"],["western","Western"]];
 function syncCui(){[...cuiBox.children].forEach(x=>{
@@ -676,7 +699,7 @@ function schedule(list){
   const pp=prepPlan(list);
   const f=pax/4, pf=f<=1?Math.max(0.6,f):1+0.4*(f-1);
   const sharedPrep=Math.round(pp.sharedPrep*pf);
-  const CAP=(()=>{const c={none:99};APPLIANCES.forEach(a=>c[a.id]=(a.capacity==null?burners:a.capacity));return c;})();
+  const CAP=(()=>{const c={none:99};APPLIANCES.forEach(a=>c[a.id]=(a.capacity==null?Math.max(1,burners):a.capacity));return c;})();
   const VCAP=(()=>{const v={none:99};APPLIANCES.forEach(a=>v[a.id]=a.volume_litres);return v;})();
   const assignAppliances=(L)=>{
     const CAPv={stovetop:burners,oven:2,rice_cooker:1,pressure_cooker:1,slow_cooker:1,air_fryer:1,none:99};
@@ -942,6 +965,7 @@ async function boot(){
     APPL={none:"No-cook"}; APPLIANCES.forEach(a=>APPL[a.id]=a.name);
     BURNER_DEFAULT=applData.burner_default||2; burners=BURNER_DEFAULT;
     loadKitchen(new Set(APPLIANCES.map(a=>a.id)));
+    if(!owned.has("stovetop"))burners=0; else if(burners<1)burners=BURNER_DEFAULT;
     buildAppls(); syncKitchenUI();
     console.log("[Dinner How?] loaded "+DISHES.length+" dishes, "+APPLIANCES.length+" appliances, "+ingData.ingredients.length+" ingredients, "+Object.keys(methData.methods).length+" methods.");
     compose();
