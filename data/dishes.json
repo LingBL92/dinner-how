@@ -4,7 +4,7 @@
   "you_write": {
    "name": "the dish name",
    "role": "base | veg | meat | fish | soup | dessert — which slot of the meal it fills",
-   "cuisine": "asian | western",
+   "cuisine": "singaporean | japanese | western — used by the cuisine filter",
    "appliance": "the default appliance",
    "appliances": "every appliance this dish can be cooked on, e.g. ['stovetop','pressure_cooker']",
    "ingredients": "plain strings, e.g. '800 g pork ribs'",
@@ -21,7 +21,7 @@
   },
   "derived_automatically": "cooking time for every appliance, what the cooking produces, the shopping list and its quantities, shopping aisles, the taste profile, the protein tag, slow-versus-quick cooking, and how each ingredient is prepped. Never write these by hand.",
   "overrides": "If you disagree with the engine, add an explicit 'time' or 'results' to a dish and it wins.",
-  "count": 57
+  "count": 63
  },
  "dishes": [
   {
@@ -457,7 +457,7 @@
     "Add to the beans and vegetables and mix well."
    ],
    "steps_variants": {},
-   "handson_action": "getting it to a simmer",
+   "handson_action": "boiling the broth, then tossing it together",
    "serves": 4,
    "base_volume": 1.2,
    "fresh": false
@@ -561,7 +561,7 @@
   {
    "name": "Steamed Jasmine Rice",
    "role": "base",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop",
@@ -602,7 +602,7 @@
   {
    "name": "Garlic Stir-Fried Kailan",
    "role": "veg",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -629,7 +629,7 @@
   {
    "name": "Sambal Long Beans",
    "role": "veg",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -658,7 +658,7 @@
   {
    "name": "Stir-Fried Bok Choy with Mushroom",
    "role": "veg",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -686,7 +686,7 @@
   {
    "name": "Hainanese Poached Chicken",
    "role": "meat",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -714,7 +714,7 @@
   {
    "name": "Char Siu Oven Pork",
    "role": "meat",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "oven",
    "appliances": [
     "oven",
@@ -753,7 +753,7 @@
   {
    "name": "Minced Pork with Tofu",
    "role": "meat",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -785,7 +785,7 @@
   {
    "name": "Steamed Fish with Ginger and Scallion",
    "role": "fish",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -813,7 +813,7 @@
   {
    "name": "Sweet & Sour Fish",
    "role": "fish",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -919,7 +919,7 @@
   {
    "name": "ABC Soup",
    "role": "soup",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop",
@@ -966,7 +966,7 @@
   {
    "name": "Watercress Soup",
    "role": "soup",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop",
@@ -1009,7 +1009,7 @@
   {
    "name": "Bak Kut Teh",
    "role": "soup",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop",
@@ -1151,7 +1151,7 @@
   {
    "name": "Chicken Curry",
    "role": "meat",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop",
@@ -1298,7 +1298,7 @@
   {
    "name": "Fish Curry",
    "role": "fish",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop",
@@ -1458,7 +1458,7 @@
   {
    "name": "Mutton Curry",
    "role": "meat",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop",
@@ -1597,7 +1597,7 @@
   {
    "name": "Beef Curry",
    "role": "meat",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop",
@@ -1725,7 +1725,7 @@
   {
    "name": "Fried Rice",
    "role": "base",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -1759,7 +1759,7 @@
   {
    "name": "Mee Goreng",
    "role": "base",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -1793,7 +1793,7 @@
   {
    "name": "Sambal Kangkong",
    "role": "veg",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -1820,7 +1820,7 @@
   {
    "name": "Black Pepper Beef",
    "role": "meat",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -1921,7 +1921,7 @@
   {
    "name": "Salted Egg Chicken",
    "role": "meat",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -2026,7 +2026,7 @@
   {
    "name": "Tomato and Egg Stir-Fry",
    "role": "meat",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -2057,7 +2057,7 @@
   {
    "name": "Chinese Steamed Egg",
    "role": "meat",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -2084,7 +2084,7 @@
   {
    "name": "Oyster Omelette",
    "role": "meat",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -2116,7 +2116,7 @@
   {
    "name": "Egg Foo Young",
    "role": "meat",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -2138,7 +2138,7 @@
     "Pan-fry until golden and set on both sides.",
     "Serve with soy sauce."
    ],
-   "handson_action": "browning, then it simmers",
+   "handson_action": "frying, then browning both sides",
    "serves": 4,
    "base_volume": 1.3,
    "fresh": true
@@ -2146,7 +2146,7 @@
   {
    "name": "Bubur Cha Cha",
    "role": "dessert",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -2176,7 +2176,7 @@
   {
    "name": "Tau Suan",
    "role": "dessert",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -2203,7 +2203,7 @@
   {
    "name": "Red Bean Soup",
    "role": "dessert",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -2230,7 +2230,7 @@
   {
    "name": "Pulut Hitam",
    "role": "dessert",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -2257,7 +2257,7 @@
   {
    "name": "Chicken Baked Rice",
    "role": "base",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "oven",
    "appliances": [
     "oven",
@@ -2297,7 +2297,7 @@
   {
    "name": "Seafood Baked Rice",
    "role": "base",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "oven",
    "appliances": [
     "oven",
@@ -2337,7 +2337,7 @@
   {
    "name": "Chicken Katsu",
    "role": "meat",
-   "cuisine": "asian",
+   "cuisine": "japanese",
    "appliance": "stovetop",
    "appliances": [
     "stovetop",
@@ -2374,7 +2374,7 @@
   {
    "name": "Salmon Teriyaki",
    "role": "fish",
-   "cuisine": "asian",
+   "cuisine": "japanese",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -2402,7 +2402,7 @@
   {
    "name": "Gyudon",
    "role": "base",
-   "cuisine": "asian",
+   "cuisine": "japanese",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -2431,7 +2431,7 @@
   {
    "name": "Miso Soup",
    "role": "soup",
-   "cuisine": "asian",
+   "cuisine": "japanese",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -2457,7 +2457,7 @@
   {
    "name": "Agedashi Tofu",
    "role": "meat",
-   "cuisine": "asian",
+   "cuisine": "japanese",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -2486,7 +2486,7 @@
   {
    "name": "Yakisoba",
    "role": "base",
-   "cuisine": "asian",
+   "cuisine": "japanese",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -2518,7 +2518,7 @@
   {
    "name": "Ramen",
    "role": "base",
-   "cuisine": "asian",
+   "cuisine": "japanese",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -2550,7 +2550,7 @@
   {
    "name": "Katsudon",
    "role": "base",
-   "cuisine": "asian",
+   "cuisine": "japanese",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -2585,7 +2585,7 @@
   {
    "name": "Japanese Curry Rice",
    "role": "base",
-   "cuisine": "asian",
+   "cuisine": "japanese",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -2614,7 +2614,7 @@
   {
    "name": "Soy-Braised Pork Ribs",
    "role": "meat",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -2745,7 +2745,7 @@
   {
    "name": "Soy-Braised Beef Chuck",
    "role": "meat",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -2876,7 +2876,7 @@
   {
    "name": "Soy-Braised Chicken Thigh",
    "role": "meat",
-   "cuisine": "asian",
+   "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
     "stovetop"
@@ -2952,6 +2952,188 @@
      }
     }
    }
+  },
+  {
+   "name": "Spinach Goma-ae",
+   "role": "veg",
+   "cuisine": "japanese",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "400 g spinach",
+    "4 tablespoons sesame seeds",
+    "1 tablespoon soy sauce",
+    "1 tablespoon mirin",
+    "1 teaspoon white sugar"
+   ],
+   "steps": [
+    "Blanch the spinach in boiling water for one minute, then drain and squeeze out the water.",
+    "Pan-fry the sesame seeds in a dry pan for two minutes until fragrant, then grind them to a coarse paste.",
+    "Whisk the soy sauce, mirin, and sugar into the ground sesame, then toss the spinach through the dressing."
+   ],
+   "handson_action": "blanching, then grinding the sesame",
+   "serves": 4,
+   "base_volume": 0.8,
+   "fresh": false
+  },
+  {
+   "name": "Cucumber Sunomono",
+   "role": "veg",
+   "cuisine": "japanese",
+   "appliance": "none",
+   "appliances": [
+    "none"
+   ],
+   "ingredients": [
+    "2 cucumbers",
+    "2 tablespoons wakame",
+    "3 tablespoons rice vinegar",
+    "1 tablespoon white sugar",
+    "1/2 teaspoon salt",
+    "1 teaspoon sesame seeds"
+   ],
+   "steps": [
+    "Slice the cucumbers paper-thin, salt them lightly, and squeeze out the water.",
+    "Rehydrate the wakame in cold water, then drain.",
+    "Whisk the rice vinegar, sugar, and salt together, then toss with the cucumber and wakame and scatter with sesame seeds."
+   ],
+   "handson_action": "slicing and dressing — no cooking",
+   "serves": 4,
+   "base_volume": 0.7,
+   "fresh": false,
+   "results": [
+    "crisp & fresh"
+   ]
+  },
+  {
+   "name": "Purin",
+   "role": "dessert",
+   "cuisine": "japanese",
+   "appliance": "oven",
+   "appliances": [
+    "oven"
+   ],
+   "oven_temp_c": 160,
+   "ingredients": [
+    "4 eggs",
+    "2 cups milk",
+    "1/2 cup white sugar",
+    "1 teaspoon vanilla",
+    "2 tablespoons water"
+   ],
+   "steps": [
+    "Simmer half the sugar with a splash of water until it turns amber, then pour the caramel into four ramekins.",
+    "Whisk the eggs, milk, remaining sugar, and vanilla into a smooth custard, then strain it.",
+    "Bake the custards in a water bath at 160 C for 40 minutes, until just set.",
+    "Refrigerate for 2 hours before turning out."
+   ],
+   "handson_action": "making caramel, then into the oven",
+   "serves": 4,
+   "base_volume": 1.0,
+   "fresh": false,
+   "results": [
+    "caramelized",
+    "cooked through"
+   ]
+  },
+  {
+   "name": "Matcha Warabi Mochi",
+   "role": "dessert",
+   "cuisine": "japanese",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "1/2 cup cornstarch",
+    "1/2 cup white sugar",
+    "2 cups water",
+    "2 teaspoons matcha"
+   ],
+   "steps": [
+    "Whisk the cornstarch, sugar, matcha, and water together in a pan until smooth.",
+    "Cook over low heat, stirring constantly, until thickened and glossy, about 8 minutes.",
+    "Pour into a tray, refrigerate for 1 hour, then cut into cubes and dust with matcha."
+   ],
+   "handson_action": "stirring until it thickens",
+   "serves": 4,
+   "base_volume": 1.0,
+   "fresh": false,
+   "results": [
+    "thickens"
+   ]
+  },
+  {
+   "name": "Herb Rice Pilaf",
+   "role": "base",
+   "cuisine": "western",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop",
+    "rice_cooker"
+   ],
+   "ingredients": [
+    "2 cups rice",
+    "3 cups chicken stock",
+    "1 onion",
+    "2 tablespoons butter",
+    "1 teaspoon thyme",
+    "2 tablespoons parsley",
+    "1/2 teaspoon salt"
+   ],
+   "steps": [
+    "Saute the onion in butter over medium heat until soft.",
+    "Add the rice and stir until the grains are coated and glossy.",
+    "Pour in the stock and bring to a boil, about 2 minutes.",
+    "Cover and simmer for 18 minutes, until the liquid is absorbed.",
+    "Fluff with a fork and fold in the parsley."
+   ],
+   "steps_variants": {
+    "rice_cooker": [
+     "Saute the onion in butter over medium heat until soft.",
+     "Tip the onion, rice, stock, thyme, and salt into the rice cooker and cook until it clicks off, about 25 minutes.",
+     "Fluff with a fork and fold in the parsley."
+    ]
+   },
+   "handson_action": "sautéing, then simmering the rice",
+   "serves": 4,
+   "base_volume": 1.6,
+   "fresh": false
+  },
+  {
+   "name": "Roasted Potatoes",
+   "role": "base",
+   "cuisine": "western",
+   "appliance": "oven",
+   "appliances": [
+    "oven",
+    "air_fryer"
+   ],
+   "oven_temp_c": 200,
+   "ingredients": [
+    "800 g potatoes",
+    "2 tablespoons olive oil",
+    "3 cloves garlic",
+    "1 teaspoon rosemary",
+    "1/2 teaspoon salt",
+    "1/4 teaspoon pepper"
+   ],
+   "steps": [
+    "Cut the potatoes into chunks and toss with olive oil, garlic, rosemary, salt, and pepper.",
+    "Roast at 200 C for 35 minutes, turning once, until golden and crisp."
+   ],
+   "steps_variants": {
+    "air_fryer": [
+     "Cut the potatoes into chunks and toss with olive oil, garlic, rosemary, salt, and pepper.",
+     "Air-fry at 200 C for 20 minutes, shaking the basket halfway, until golden and crisp."
+    ]
+   },
+   "handson_action": "tossing, then into the oven",
+   "serves": 4,
+   "base_volume": 1.5,
+   "fresh": true
   }
  ]
 }
