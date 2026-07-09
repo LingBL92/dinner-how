@@ -99,7 +99,7 @@ input[type=time]{background:var(--panel2);border:1px solid var(--line);color:var
 .pchip.staple.added{opacity:1}
 .pantry-have{display:flex;flex-wrap:wrap;gap:8px;min-height:20px}
 .shelf{margin-bottom:12px}
-.shelf-lab{font-family:"Space Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 5px}
+.shelf-lab{font-family:"Space Grotesk",sans-serif;font-size:13.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--cream);margin:0 0 6px}
 .shelf-tray{display:flex;flex-wrap:wrap;gap:8px;max-height:118px;overflow-y:auto;padding:8px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px}
 .shelf-empty{color:var(--muted);font-size:13px;padding:4px 2px}
 .shelf{margin-bottom:12px}
@@ -108,6 +108,8 @@ input[type=time]{background:var(--panel2);border:1px solid var(--line);color:var
 .shelf-empty{color:var(--muted);font-size:13px;padding:4px 2px}
 .haveitem{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:5px 6px 5px 11px}
 .haveitem .hn{font-size:13px;color:var(--cream)}
+.haveitem .hicon{display:inline-flex;width:15px;height:15px;color:var(--cool);opacity:.8}
+.haveitem .hicon svg{width:15px;height:15px}
 .qstep{display:flex;align-items:center;gap:2px}
 .qbtn{width:22px;height:22px;border:1px solid var(--line);background:transparent;color:var(--cream);border-radius:6px;cursor:pointer;font-size:14px;line-height:1}
 .qval{min-width:30px;text-align:center;font-family:"Space Mono",monospace;font-size:12px;color:var(--cream)}
@@ -115,7 +117,7 @@ input[type=time]{background:var(--panel2);border:1px solid var(--line);color:var
 .hx{border:none;background:none;color:var(--muted);cursor:pointer;font-size:15px;padding:0 3px}
 .hx:hover{color:var(--coral)}
 .exp-empty{text-align:center;color:var(--muted);padding:20px;line-height:1.6}
-.exp-card{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:13px 15px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--card);transition:.15s}
+.exp-card{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:13px 15px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--card);transition:.15s;cursor:pointer}
 .exp-card:hover{border-color:var(--celadon)}
 .exp-left{min-width:0}
 .exp-name{font-size:15.5px;font-weight:600;color:var(--cream);line-height:1.25}
@@ -1314,10 +1316,12 @@ function buildPantryPicker(){
   });
 }
 const SHELVES=[["proteins","Proteins"],["vegetables","Vegetables"],["else","Grains, dairy & more"]];
+const SHELF_ICON={proteins:(ROLE_ICON.meat||''),vegetables:(ROLE_ICON.veg||''),else:(ROLE_ICON.base||'')};
 function shelfOf(id){const c=(REF.byId[id]||{}).category; return c==="proteins"?"proteins":c==="vegetables"?"vegetables":"else";}
 function makeHaveItem(id){
   const it=document.createElement("div"); it.className="haveitem"; const unit=pantryUnit(id);
-  it.innerHTML='<span class="hn">'+(REF.byId[id]?REF.byId[id].name:id)+'</span>'+
+  const ic=SHELF_ICON[shelfOf(id)]||'';
+  it.innerHTML='<span class="hicon">'+ic+'</span><span class="hn">'+(REF.byId[id]?REF.byId[id].name:id)+'</span>'+
     '<span class="qstep"><button class="qbtn" data-d="-1">−</button>'+
     '<span class="qval">'+pantry[id].qty+(unit?'<span class="qunit"> '+unit+'</span>':'')+'</span>'+
     '<button class="qbtn" data-d="1">+</button></span><button class="hx" title="remove">×</button>';
@@ -1362,7 +1366,7 @@ function renderExplore(){
   if(!res.length){out.innerHTML='<div class="panel exp-empty">Nothing matches yet with what is in your kitchen and your appliances.<br>Try One shop away, or add another ingredient.</div>';return;}
   const byName={}; DISHES.forEach(d=>byName[d.name]=d);
   let html='<div class="panel">';
-  res.slice(0,12).forEach(r=>{
+  const shown=res.slice(0,12); window.__expShown=shown; shown.forEach((r,idx)=>{
     const d=byName[r.dish]||{};
     const opt=(d.appliance_options||[]).find(o=>owned.has(o.appliance))||(d.appliance_options||[])[0];
     const mins=opt&&opt.time?opt.time.ready_in_min:null;
@@ -1374,9 +1378,30 @@ function renderExplore(){
     const right = rankMode==="have" ? '<span class="exp-cov">'+r.covered+'/'+r.total+'</span>'
       : (r.buy.length? '<span class="exp-buy">buy '+r.buy.map(b=>b.item).join(", ")+'</span>' : '<span class="exp-cov">have it all</span>');
     const sub = r.subs.length? '<div class="exp-sub">using '+r.subs.map(x=>x.use+" for "+x.need).join(", ")+'</div>':'';
-    html+='<div class="exp-card"><div class="exp-left"><div class="exp-name">'+r.dish+'</div>'+metaLine+sub+'</div><div class="exp-right">'+right+'</div></div>';
+    html+='<div class="exp-card" onclick="openExplore('+idx+')"><div class="exp-left"><div class="exp-name">'+r.dish+'</div>'+metaLine+sub+'</div><div class="exp-right">'+right+'</div></div>';
   });
   out.innerHTML=html+'</div>';
+}
+function openExplore(idx){
+  const row=(window.__expShown||[])[idx]; if(!row)return;
+  const d=DISHES.find(x=>x.name===row.dish); if(!d)return;
+  const opt=(d.appliance_options||[]).find(o=>owned.has(o.appliance))||(d.appliance_options||[])[0];
+  const ap=opt?opt.appliance:d.appliance;
+  const t=opt&&opt.time?opt.time:d.time;
+  const steps=(d.steps_variants&&d.steps_variants[ap])||d.steps;
+  const chipsHtml=(d.results||[]).map(c=>'<span class="chip">'+c+'</span>').join("");
+  const ings=(d.grocery_items||[]).map(g=>'<li>'+(g.qty?g.qty+(g.unit?g.unit:"")+" ":"")+g.name+'</li>').join("");
+  const sheet=document.getElementById("sheet");
+  sheet.innerHTML='<button class="close" onclick="closeD()">×</button>'+
+    '<span class="role">'+d.role+' · '+APPL[ap]+'</span>'+
+    '<h3>'+d.name+'</h3>'+
+    (d.protein_tag?'<div class="ptag">'+d.protein_tag+'</div>':'')+
+    (d.needs?'<div class="needs">needs '+d.needs+'</div>':'')+
+    '<div class="chips">'+chipsHtml+'</div>'+
+    (t?'<p class="section-lab">Time</p><p style="color:var(--cream)">Ready in about '+t.ready_in_min+' min — '+t.be_there_min+' min hands-on, '+t.hands_off_min+' min walk-away.</p>':'')+
+    '<p class="section-lab">You will need</p><ul class="steps">'+ings+'</ul>'+
+    '<p class="section-lab">Method · for your '+APPL[ap]+'</p><ol class="steps">'+steps.map(x=>'<li>'+x+'</li>').join("")+'</ol>';
+  document.getElementById("overlay").classList.add("on"); document.body.style.overflow="hidden";
 }
 function setMode(m){
   appMode=m;
