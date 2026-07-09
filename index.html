@@ -85,9 +85,9 @@ input[type=time]{background:var(--panel2);border:1px solid var(--line);color:var
 .modebar.sub{margin:14px 0 0;background:none;border:none;padding:0}
 .modebtn{flex:1;padding:12px 14px;border:1px solid transparent;background:transparent;color:var(--muted);border-radius:12px;font-family:"Space Grotesk",sans-serif;font-size:14.5px;font-weight:600;cursor:pointer;transition:.18s;opacity:.55}
 .modebtn:hover{opacity:.85;color:var(--cream)}
-.modebtn.on{background:var(--celadon);color:var(--ink);border-color:var(--celadon);opacity:1;box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.modebtn.on{background:var(--cream);color:#fff;font-weight:800;border-color:var(--cream);opacity:1;box-shadow:0 2px 10px rgba(0,0,0,.22)}
 .modebar.sub .modebtn{border:1px solid var(--line)}
-.modebar.sub .modebtn.on{border-color:var(--celadon)}
+.modebar.sub .modebtn.on{border-color:var(--cream)}
 .pantry-pick{max-height:240px;overflow-y:auto;padding:8px 10px;border:1px solid var(--line);border-radius:12px}
 .pcat{font-family:"Space Mono",monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:10px 0 5px}
 .pcat:first-child{margin-top:0}
@@ -95,6 +95,8 @@ input[type=time]{background:var(--panel2);border:1px solid var(--line);color:var
 .pchip{padding:6px 11px;border:1px solid var(--line);background:transparent;color:var(--cream);border-radius:999px;font-size:12.5px;cursor:pointer;font-family:"Space Grotesk",sans-serif}
 .pchip:hover{border-color:var(--celadon);color:var(--celadon)}
 .pchip.added{background:var(--celadon);color:var(--ink);border-color:var(--celadon)}
+.pchip.staple{opacity:.5}
+.pchip.staple.added{opacity:1}
 .pantry-have{display:flex;flex-wrap:wrap;gap:8px;min-height:20px}
 .haveitem{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:5px 6px 5px 11px}
 .haveitem .hn{font-size:13px;color:var(--cream)}
@@ -239,6 +241,8 @@ footer{border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);f
      <div class="pantry-pick" id="pantrypick"></div>
      <p class="ctl-lab" style="margin-top:14px">Your ingredients</p>
      <div class="pantry-have" id="pantryhave"></div>
+     <p class="ctl-lab" style="margin-top:14px">Staples <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">— assumed you have these; tap to remove</span></p>
+     <div class="pantry-have" id="staples"></div>
      <div class="modebar sub"><button class="modebtn on" id="rank-have">Cook with what I have</button><button class="modebtn" id="rank-shop">One shop away</button></div>
    </div>
    <div class="ctl3">
@@ -803,12 +807,15 @@ function substitutesFor(id,R,{have=null,limit=5}={}){
 /* SEARCH: score every dish by how well the cook's ingredients cover it.
    mode "have"  -> only count an ingredient as covered if the cook has it or a substitute they have
    mode "shop"  -> count near-misses too, and report what to buy / swap */
-function searchByIngredients(dishes,haveIds,R,{mode="have"}={}){
+function searchByIngredients(dishes,haveIds,R,{mode="have",assumed=null}={}){
   const have=new Set(haveIds);
-  const AROMATIC=new Set(["salt","pepper","water","vegetable_oil","olive_oil","garlic","onion","ginger","white_sugar","soy_sauce"]);
+  // "assumed present" = water + whatever staples the cook still has ticked.
+  // garlic / onion / ginger are NOT assumed — they're pickable ingredients you actually track.
+  const IGNORE=new Set(["water"]);
+  const staples=assumed||new Set(["water","salt","pepper","white_sugar","vegetable_oil","sesame_oil","soy_sauce"]);
   const out=[];
   dishes.forEach(d=>{
-    const comps=(d.grocery_items||[]).filter(g=>!AROMATIC.has(g.id));
+    const comps=(d.grocery_items||[]).filter(g=>!IGNORE.has(g.id) && !staples.has(g.id));
     if(!comps.length) return;
     let covered=0; const missing=[], subs=[];
     comps.forEach(g=>{
@@ -1265,6 +1272,8 @@ document.addEventListener("click",e=>{
 /* ===== EXPLORE MODE ===== */
 let appMode="plan", rankMode="have";
 const pantry={};
+const STAPLE_IDS=["salt","pepper","white_sugar","vegetable_oil","sesame_oil","soy_sauce"];
+const staplesOn={}; STAPLE_IDS.forEach(id=>staplesOn[id]=true);
 const PANTRY_UNIT={proteins:"g",fats_oils:"tbsp",condiments:"tbsp"};
 function pantryUnit(id){const c=(REF.byId[id]||{}).category;return PANTRY_UNIT[c]||"";}
 const PANTRY_CATS=[["proteins","Proteins"],["vegetables","Vegetables"],["starches","Rice, grains & bread"],["dairy","Dairy"],["fruits","Fruit"]];
@@ -1302,11 +1311,23 @@ function renderPantryHave(){
     box.appendChild(it);
   });
 }
+function renderStaples(){
+  const box=document.getElementById("staples"); if(!box)return; box.innerHTML="";
+  STAPLE_IDS.forEach(id=>{
+    const on=staplesOn[id];
+    const b=document.createElement("button");
+    b.className="pchip staple"+(on?" added":"");
+    b.textContent=(on?"":"+ ")+(REF.byId[id]?REF.byId[id].name:id);
+    b.onclick=()=>{ staplesOn[id]=!staplesOn[id]; renderStaples(); if(appMode==="explore")renderExplore(); };
+    box.appendChild(b);
+  });
+}
+function assumedSet(){ const s=new Set(["water"]); STAPLE_IDS.forEach(id=>{if(staplesOn[id])s.add(id);}); return s; }
 function renderExplore(){
   const out=document.getElementById("out"); const ids=Object.keys(pantry);
   if(!ids.length){out.innerHTML='<div class="panel exp-empty">Add a few things from your kitchen, and I will show what you can cook, or what you are one shop away from.</div>';return;}
   const cookable=DISHES.filter(d=>(d.appliance_options||[]).some(o=>owned.has(o.appliance)));
-  const res=searchByIngredients(cookable,ids,REF,{mode:rankMode});
+  const res=searchByIngredients(cookable,ids,REF,{mode:rankMode,assumed:assumedSet()});
   if(!res.length){out.innerHTML='<div class="panel exp-empty">Nothing matches yet with what is in your kitchen and your appliances.<br>Try One shop away, or add another ingredient.</div>';return;}
   let html='<div class="panel">';
   res.slice(0,12).forEach(r=>{
@@ -1324,7 +1345,7 @@ function setMode(m){
   document.getElementById("planonly").style.display=m==="plan"?"":"none";
   document.getElementById("exploreonly").style.display=m==="explore"?"":"none";
   const act=document.getElementById("actions"); if(act&&act.parentElement)act.parentElement.style.display=m==="plan"?"":"none";
-  if(m==="explore"){buildPantryPicker();renderPantryHave();renderExplore();} else compose();
+  if(m==="explore"){buildPantryPicker();renderPantryHave();renderStaples();renderExplore();} else compose();
 }
 function wireModes(){
   document.getElementById("mode-plan").onclick=()=>setMode("plan");
