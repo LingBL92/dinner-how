@@ -811,17 +811,29 @@ function subScore(aId,bId,R){
   s+=([...anc].filter(x=>bnc.has(x)).length)*0.15;
   const ba=meatBehaviour(pa.has("collagen_rich"),"whole"), bb=meatBehaviour(pb.has("collagen_rich"),"whole");
   if(A.category==="proteins" && ba===bb) s+=0.5;
+  // VEG/STARCH discriminators: matching starchy/holds_shape rewards; differing sweetness penalises
+  const DISC=["starchy","holds_shape"];
+  if(A.category==="vegetables"||A.category==="starches"){
+    DISC.forEach(p=>{ if(pa.has(p)===pb.has(p)) s+=0.4; else s-=0.6; });   // texture/starch must align
+    if(pa.has("sweet")!==pb.has("sweet")) s-=0.8;                          // sweet vs not = poor swap
+  }
   return s;
 }
 
 /* ranked substitutes for one ingredient.
    have = Set of ingredient ids the cook has on hand (for the toggle). */
-function substitutesFor(id,R,{have=null,limit=5}={}){
+function substitutesFor(id,R,{have=null,limit=5,dishRole=null}={}){
+  const src=R.byId[id]||{}; const sp=new Set(src.provides||[]);
   const cands=[];
   for(const other in R.byId){
-    const s=subScore(id,other,R);
+    let s=subScore(id,other,R);
     if(s<=0) continue;
-    cands.push({id:other, name:R.byId[other].name, score:s, onHand: have?have.has(other):false});
+    const op=new Set((R.byId[other]||{}).provides||[]);
+    // LOAD-BEARING RULE: in a dessert, a sweet ingredient must not swap to a non-sweet one.
+    if(dishRole==="dessert" && sp.has("sweet") && !op.has("sweet")) continue;
+    let flag=null;
+    if(sp.has("sweet")!==op.has("sweet")) flag = op.has("sweet")?"sweeter than the original":"less sweet than the original";
+    cands.push({id:other, name:R.byId[other].name, score:s, flag, onHand: have?have.has(other):false});
   }
   cands.sort((a,b)=> (b.onHand-a.onHand) || (b.score-a.score));   // on-hand first, then closeness
   return cands.slice(0,limit);
@@ -847,8 +859,8 @@ function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}
       // --- do we have it at all? (self, or an on-hand substitute) ---
       let sourceId=null;
       if(have.has(g.id)) sourceId=g.id;
-      else { const sub=substitutesFor(g.id,R,{have,limit:3}).find(x=>x.onHand);
-             if(sub){sourceId=sub.id; subs.push({need:g.name,use:sub.name});} }
+      else { const sub=substitutesFor(g.id,R,{have,limit:3,dishRole:d.role}).find(x=>x.onHand);
+             if(sub){sourceId=sub.id; subs.push({need:g.name,use:sub.name,flag:sub.flag});} }
       if(!sourceId){ missing.push(g); return; }
       // --- do we have ENOUGH? (only where units line up; otherwise presence is enough) ---
       const p=pantry[sourceId]||{};
@@ -872,7 +884,7 @@ function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}
     if(mode==="have"){ if(ratio<1) return; }                    // strict: must be fully covered
     out.push({
       dish:d.name, role:d.role, ratio, covered, total:comps.length, subs, short,
-      buy: missing.map(m=>{ const best=substitutesFor(m.id,R,{have,limit:1})[0];
+      buy: missing.map(m=>{ const best=substitutesFor(m.id,R,{have,limit:1,dishRole:d.role})[0];
         return {item:m.name, closest: best?best.name:null}; })
     });
   });
@@ -1430,7 +1442,7 @@ function renderExplore(){
     const metaLine = meta.length||chips ? '<div class="exp-meta">'+meta.join('<span class="exp-dot">·</span>')+(chips?' '+chips:'')+'</div>' : '';
     const right = rankMode==="have" ? '<span class="exp-cov">'+r.covered+'/'+r.total+'</span>'
       : (r.buy.length? '<span class="exp-buy">buy '+r.buy.map(b=>b.item).join(", ")+'</span>' : '<span class="exp-cov">have it all</span>');
-    const sub = r.subs.length? '<div class="exp-sub">using '+r.subs.map(x=>x.use+" for "+x.need).join(", ")+'</div>':'';
+    const sub = r.subs.length? '<div class="exp-sub">using '+r.subs.map(x=>x.use+" for "+x.need+(x.flag?" ("+x.flag+")":"")).join(", ")+'</div>':'';
     const shortLine = r.short&&r.short.length? '<div class="exp-short">not quite enough: '+r.short.map(x=>x.item+" ("+x.have+x.unit+" / "+x.need+x.unit+")").join(", ")+'</div>':'';
     html+='<div class="exp-card" onclick="openExplore('+idx+')"><div class="exp-left"><div class="exp-name">'+r.dish+'</div>'+metaLine+sub+shortLine+'</div><div class="exp-right">'+right+'</div></div>';
   });
