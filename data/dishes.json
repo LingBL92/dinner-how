@@ -17,7 +17,8 @@
    "oven_temp_c": "baking temperature; two oven dishes may share the oven if within 10C",
    "cuts": "optional cut choices, each with its own ingredients and steps",
    "swaps": "optional protein swaps, same shape as cuts",
-   "pack": "optional shortcut using a ready-made paste"
+   "pack": "optional shortcut using a ready-made paste",
+   "needs": "optional. A prerequisite the cook must have ready, e.g. 'cooked rice'. Shown as a note on the dish."
   },
   "derived_automatically": "cooking time for every appliance, what the cooking produces, the shopping list and its quantities, shopping aisles, the taste profile, the protein tag, slow-versus-quick cooking, and how each ingredient is prepped. Never write these by hand.",
   "overrides": "If you disagree with the engine, add an explicit 'time' or 'results' to a dish and it wins.",
@@ -1754,7 +1755,8 @@
    "handson_action": "stir-frying over high heat",
    "serves": 4,
    "base_volume": 1.2,
-   "fresh": true
+   "fresh": true,
+   "needs": "day-old cooked rice"
   },
   {
    "name": "Mee Goreng",
@@ -2426,7 +2428,8 @@
    "handson_action": "simmering in the broth",
    "serves": 4,
    "base_volume": 1.3,
-   "fresh": true
+   "fresh": true,
+   "needs": "cooked rice"
   },
   {
    "name": "Miso Soup",
@@ -2580,18 +2583,20 @@
    "handson_action": "deep-frying until crisp",
    "serves": 4,
    "base_volume": 1.4,
-   "fresh": true
+   "fresh": true,
+   "needs": "cooked rice"
   },
   {
-   "name": "Japanese Curry Rice",
-   "role": "base",
+   "name": "Japanese Beef Curry",
+   "role": "meat",
    "cuisine": "japanese",
    "appliance": "stovetop",
    "appliances": [
-    "stovetop"
+    "stovetop",
+    "pressure_cooker",
+    "slow_cooker"
    ],
    "ingredients": [
-    "3 cups cooked rice",
     "400 g beef",
     "2 potatoes",
     "2 carrots",
@@ -2604,7 +2609,7 @@
     "Brown the beef, onion, carrot, and potato in oil.",
     "Add the water and simmer for 20 minutes until the vegetables are tender.",
     "Stir in the curry roux until dissolved and the sauce thickens.",
-    "Simmer for 5 more minutes, then serve over rice."
+    "Simmer for 5 more minutes, then serve."
    ],
    "handson_action": "browning, then simmering",
    "serves": 4,

@@ -49,7 +49,7 @@
    "tonkatsu_sauce",
    "nori",
    "wakame",
-   "stock"
+   "broth"
   ],
   "heat_weights": {
    "chilli": 2,
@@ -105,7 +105,7 @@
     "protein"
    ],
    "aisle": "Meat & protein",
-   "prep_verb": "cut into chunks",
+   "prep_verb": "cut into pieces",
    "parent": "beef",
    "category": "proteins",
    "cut_role": "braise",
@@ -171,25 +171,6 @@
    "category": "proteins",
    "cut_role": "quick",
    "cut": "Steak/Sirloin"
-  },
-  {
-   "id": "beef_mince",
-   "name": "Minced beef",
-   "aliases": [
-    "minced beef",
-    "beef mince",
-    "ground beef"
-   ],
-   "provides": [
-    "fat_solid",
-    "protein"
-   ],
-   "aisle": "Meat & protein",
-   "prep_verb": "cut into pieces",
-   "parent": "beef",
-   "category": "proteins",
-   "cut_role": "mince",
-   "cut": "Minced"
   },
   {
    "id": "chicken",
@@ -269,7 +250,7 @@
     "protein"
    ],
    "aisle": "Meat & protein",
-   "prep_verb": "cut into chunks",
+   "prep_verb": "cut into pieces",
    "parent": "pork",
    "category": "proteins",
    "cut_role": "braise",
@@ -290,7 +271,7 @@
     "protein"
    ],
    "aisle": "Meat & protein",
-   "prep_verb": "blanch",
+   "prep_verb": "cut into pieces",
    "parent": "pork",
    "category": "proteins",
    "cut_role": "braise",
@@ -337,25 +318,6 @@
    "cut": "Loin/Chop"
   },
   {
-   "id": "pork_mince",
-   "name": "Minced pork",
-   "aliases": [
-    "minced pork",
-    "pork mince",
-    "ground pork"
-   ],
-   "provides": [
-    "fat_solid",
-    "protein"
-   ],
-   "aisle": "Meat & protein",
-   "prep_verb": "cut into pieces",
-   "parent": "pork",
-   "category": "proteins",
-   "cut_role": "mince",
-   "cut": "Minced"
-  },
-  {
    "id": "fish",
    "name": "Fish",
    "aliases": [
@@ -367,7 +329,7 @@
     "protein"
    ],
    "aisle": "Fish & seafood",
-   "prep_verb": "clean and cut",
+   "prep_verb": "cut into pieces",
    "parent": "proteins",
    "category": "proteins"
   },
@@ -385,7 +347,7 @@
     "water"
    ],
    "aisle": "Meat & protein",
-   "prep_verb": "beat",
+   "prep_verb": "cut into pieces",
    "parent": "proteins",
    "category": "proteins"
   },
@@ -488,7 +450,7 @@
     "protein"
    ],
    "aisle": "Meat & protein",
-   "prep_verb": "cut into chunks",
+   "prep_verb": "cut into pieces",
    "parent": "proteins",
    "category": "proteins"
   },
@@ -504,7 +466,7 @@
     "protein"
    ],
    "aisle": "Fish & seafood",
-   "prep_verb": "peel and devein",
+   "prep_verb": "cut into pieces",
    "parent": "proteins",
    "category": "proteins"
   },
@@ -829,6 +791,7 @@
     "rice"
    ],
    "provides": [
+    "grain_rice",
     "starch"
    ],
    "aisle": "Rice, grains & bread",
@@ -844,6 +807,7 @@
     "potatoes"
    ],
    "provides": [
+    "root_veg",
     "starch",
     "water"
    ],
@@ -941,6 +905,7 @@
     "yam"
    ],
    "provides": [
+    "root_veg",
     "starch"
    ],
    "aisle": "Rice, grains & bread",
@@ -987,6 +952,7 @@
     "glutinous rice flour"
    ],
    "provides": [
+    "grain_rice",
     "starch"
    ],
    "aisle": "Rice, grains & bread",
@@ -1042,6 +1008,21 @@
    "category": "starches"
   },
   {
+   "id": "brown_rice",
+   "name": "Brown rice",
+   "aliases": [
+    "brown rice"
+   ],
+   "provides": [
+    "grain_rice",
+    "starch"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "measure",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
    "id": "vegetables",
    "name": "Vegetables",
    "aliases": [],
@@ -1060,6 +1041,7 @@
     "shallots"
    ],
    "provides": [
+    "allium",
     "aromatic",
     "sugar"
    ],
@@ -1075,6 +1057,7 @@
     "garlic"
    ],
    "provides": [
+    "allium",
     "aromatic"
    ],
    "aisle": "Vegetables",
@@ -1137,6 +1120,7 @@
     "carrots"
    ],
    "provides": [
+    "root_veg",
     "sugar",
     "water"
    ],
@@ -1159,7 +1143,7 @@
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "slice",
+   "prep_verb": "wash and chop",
    "parent": "vegetables",
    "category": "vegetables"
   },
@@ -1170,10 +1154,11 @@
     "cabbage"
    ],
    "provides": [
+    "leafy",
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "shred",
+   "prep_verb": "wash and chop",
    "parent": "vegetables",
    "category": "vegetables"
   },
@@ -1188,7 +1173,7 @@
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "slice",
+   "prep_verb": "wash and chop",
    "parent": "vegetables",
    "category": "vegetables"
   },
@@ -1212,7 +1197,7 @@
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "deseed and slice",
+   "prep_verb": "wash and chop",
    "parent": "vegetables",
    "category": "vegetables"
   },
@@ -1223,10 +1208,11 @@
     "spinach"
    ],
    "provides": [
+    "leafy",
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "wash",
+   "prep_verb": "wash and chop",
    "parent": "vegetables",
    "category": "vegetables"
   },
@@ -1290,7 +1276,7 @@
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "rinse",
+   "prep_verb": "wash and chop",
    "parent": "vegetables",
    "category": "vegetables"
   },
@@ -1305,7 +1291,7 @@
     "sugar"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "cut from the cob",
+   "prep_verb": "wash and chop",
    "parent": "vegetables",
    "category": "vegetables"
   },
@@ -1318,10 +1304,11 @@
     "lettuce"
    ],
    "provides": [
+    "leafy",
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "wash and tear",
+   "prep_verb": "wash and chop",
    "parent": "vegetables",
    "category": "vegetables"
   },
@@ -1343,13 +1330,14 @@
    "id": "cucumber",
    "name": "Cucumber",
    "aliases": [
-    "cucumber"
+    "cucumber",
+    "cucumbers"
    ],
    "provides": [
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "slice",
+   "prep_verb": "wash and chop",
    "parent": "vegetables",
    "category": "vegetables"
   },
@@ -1363,10 +1351,11 @@
     "kai lan"
    ],
    "provides": [
+    "leafy",
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "wash and cut",
+   "prep_verb": "wash and chop",
    "parent": "vegetables",
    "category": "vegetables"
   },
@@ -1380,10 +1369,11 @@
     "bok choi"
    ],
    "provides": [
+    "leafy",
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "wash and cut",
+   "prep_verb": "wash and chop",
    "parent": "vegetables",
    "category": "vegetables"
   },
@@ -1400,7 +1390,7 @@
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "trim and cut",
+   "prep_verb": "wash and chop",
    "parent": "vegetables",
    "category": "vegetables"
   },
@@ -1411,10 +1401,11 @@
     "watercress"
    ],
    "provides": [
+    "leafy",
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "wash and trim",
+   "prep_verb": "wash and chop",
    "parent": "vegetables",
    "category": "vegetables"
   },
@@ -1429,7 +1420,7 @@
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "bruise and slice",
+   "prep_verb": "wash and chop",
    "parent": "vegetables",
    "category": "vegetables"
   },
@@ -1443,7 +1434,7 @@
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "slice",
+   "prep_verb": "wash and chop",
    "parent": "vegetables",
    "category": "vegetables"
   },
@@ -1459,7 +1450,7 @@
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "trim and halve",
+   "prep_verb": "wash and chop",
    "parent": "vegetables",
    "category": "vegetables"
   },
@@ -1473,10 +1464,11 @@
     "kangkung"
    ],
    "provides": [
+    "leafy",
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "wash and cut",
+   "prep_verb": "wash and chop",
    "parent": "vegetables",
    "category": "vegetables"
   },
@@ -1493,7 +1485,7 @@
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "rinse",
+   "prep_verb": "wash and chop",
    "parent": "vegetables",
    "category": "vegetables"
   },
@@ -1536,6 +1528,7 @@
     "japanese radish"
    ],
    "provides": [
+    "root_veg",
     "water"
    ],
    "aisle": "Vegetables",
@@ -1697,6 +1690,22 @@
    "aliases": [
     "lime",
     "lime juice"
+   ],
+   "provides": [
+    "acid",
+    "water"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "squeeze",
+   "parent": "acids",
+   "category": "acids"
+  },
+  {
+   "id": "rice_vinegar",
+   "name": "Rice Vinegar",
+   "aliases": [
+    "rice vinegar",
+    "rice wine vinegar"
    ],
    "provides": [
     "acid",
@@ -2009,10 +2018,11 @@
     "green onion"
    ],
    "provides": [
+    "allium",
     "aromatic"
    ],
    "aisle": "Herbs & spices",
-   "prep_verb": "slice",
+   "prep_verb": "measure",
    "parent": "seasonings",
    "category": "seasonings"
   },
@@ -2034,7 +2044,7 @@
     "aromatic"
    ],
    "aisle": "Herbs & spices",
-   "prep_verb": "slice",
+   "prep_verb": "measure",
    "parent": "seasonings",
    "category": "seasonings"
   },
@@ -2189,6 +2199,39 @@
    "category": "seasonings"
   },
   {
+   "id": "sesame_seeds",
+   "name": "Sesame Seeds",
+   "aliases": [
+    "sesame seeds",
+    "sesame seed",
+    "toasted sesame seeds"
+   ],
+   "provides": [
+    "aromatic",
+    "fat_solid"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "matcha",
+   "name": "Matcha",
+   "aliases": [
+    "matcha powder",
+    "matcha",
+    "green tea powder"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
    "id": "condiments",
    "name": "Condiments",
    "aliases": [],
@@ -2256,7 +2299,9 @@
     "bouillon cube",
     "bouillon",
     "broth",
-    "stock"
+    "stock",
+    "pork stock",
+    "dashi stock"
    ],
    "provides": [
     "salt",
@@ -2577,23 +2622,6 @@
    "category": "condiments"
   },
   {
-   "id": "stock",
-   "name": "Stock",
-   "aliases": [
-    "chicken stock",
-    "pork stock",
-    "beef stock",
-    "stock"
-   ],
-   "provides": [
-    "water"
-   ],
-   "aisle": "Condiments & sauces",
-   "prep_verb": "measure",
-   "parent": "condiments",
-   "category": "condiments"
-  },
-  {
    "id": "japanese_curry_roux",
    "name": "Japanese Curry Roux",
    "aliases": [
@@ -2700,7 +2728,7 @@
     "water"
    ],
    "aisle": "Fruit",
-   "prep_verb": "core and chop",
+   "prep_verb": "peel and chop",
    "parent": "fruits",
    "category": "fruits"
   },
@@ -2768,7 +2796,7 @@
     "water"
    ],
    "aisle": "Fruit",
-   "prep_verb": "peel and chunk",
+   "prep_verb": "peel and chop",
    "parent": "fruits",
    "category": "fruits"
   }
