@@ -807,8 +807,10 @@
     "potatoes"
    ],
    "provides": [
+    "holds_shape",
     "root_veg",
     "starch",
+    "starchy",
     "water"
    ],
    "aisle": "Rice, grains & bread",
@@ -905,11 +907,14 @@
     "yam"
    ],
    "provides": [
+    "holds_shape",
     "root_veg",
-    "starch"
+    "starch",
+    "starchy",
+    "sweet"
    ],
    "aisle": "Rice, grains & bread",
-   "prep_verb": "measure",
+   "prep_verb": "peel and cube",
    "parent": "starches",
    "category": "starches"
   },
@@ -1023,6 +1028,22 @@
    "category": "starches"
   },
   {
+   "id": "yam",
+   "name": "Yam",
+   "aliases": [
+    "yam"
+   ],
+   "provides": [
+    "holds_shape",
+    "starch",
+    "starchy"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "peel and cube",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
    "id": "vegetables",
    "name": "Vegetables",
    "aliases": [],
@@ -1105,6 +1126,7 @@
     "broccoli"
    ],
    "provides": [
+    "holds_shape",
     "water"
    ],
    "aisle": "Vegetables",
@@ -1120,8 +1142,10 @@
     "carrots"
    ],
    "provides": [
+    "holds_shape",
     "root_veg",
     "sugar",
+    "sweet",
     "water"
    ],
    "aisle": "Vegetables",
@@ -1154,6 +1178,7 @@
     "cabbage"
    ],
    "provides": [
+    "holds_shape",
     "leafy",
     "water"
    ],
@@ -1193,6 +1218,7 @@
     "capsicums"
    ],
    "provides": [
+    "holds_shape",
     "sugar",
     "water"
    ],
@@ -1226,6 +1252,7 @@
     "squash"
    ],
    "provides": [
+    "holds_shape",
     "water"
    ],
    "aisle": "Vegetables",
@@ -1241,6 +1268,7 @@
     "aubergine"
    ],
    "provides": [
+    "holds_shape",
     "water"
    ],
    "aisle": "Vegetables",
@@ -1257,6 +1285,7 @@
     "string bean"
    ],
    "provides": [
+    "holds_shape",
     "water"
    ],
    "aisle": "Vegetables",
@@ -1271,6 +1300,7 @@
     "peas"
    ],
    "provides": [
+    "holds_shape",
     "starch",
     "sugar",
     "water"
@@ -1287,8 +1317,11 @@
     "corn"
    ],
    "provides": [
+    "holds_shape",
     "starch",
-    "sugar"
+    "starchy",
+    "sugar",
+    "sweet"
    ],
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
@@ -1319,6 +1352,7 @@
     "cauliflower"
    ],
    "provides": [
+    "holds_shape",
     "water"
    ],
    "aisle": "Vegetables",
@@ -1387,6 +1421,7 @@
     "yardlong beans"
    ],
    "provides": [
+    "holds_shape",
     "water"
    ],
    "aisle": "Vegetables",
@@ -1447,6 +1482,7 @@
     "ladies finger"
    ],
    "provides": [
+    "holds_shape",
     "water"
    ],
    "aisle": "Vegetables",
@@ -1528,11 +1564,29 @@
     "japanese radish"
    ],
    "provides": [
+    "holds_shape",
     "root_veg",
     "water"
    ],
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "pumpkin",
+   "name": "Pumpkin",
+   "aliases": [
+    "pumpkin"
+   ],
+   "provides": [
+    "holds_shape",
+    "starchy",
+    "sweet",
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "peel and cube",
    "parent": "vegetables",
    "category": "vegetables"
   },
