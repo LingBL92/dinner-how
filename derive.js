@@ -496,7 +496,7 @@ function swapSafety(arch,curBehaviour,newBehaviour){
    ============================================================ */
 
 /* how alike are two ingredients? higher = closer substitute. */
-const SUB_FAMILY_FLAGS=["grain_rice","collagen_rich","leafy","root_veg","allium"]; // fine-grained "same kind" tags
+const SUB_FAMILY_FLAGS=["grain_rice","collagen_rich","leafy","root_veg","allium","fruit_sweet"]; // fine-grained "same kind" tags
 function subScore(aId,bId,R){
   const A=R.byId[aId], B=R.byId[bId];
   if(!A||!B||aId===bId) return -1;
@@ -515,17 +515,29 @@ function subScore(aId,bId,R){
   s+=([...anc].filter(x=>bnc.has(x)).length)*0.15;
   const ba=meatBehaviour(pa.has("collagen_rich"),"whole"), bb=meatBehaviour(pb.has("collagen_rich"),"whole");
   if(A.category==="proteins" && ba===bb) s+=0.5;
+  // VEG/STARCH discriminators: matching starchy/holds_shape rewards; differing sweetness penalises
+  const DISC=["starchy","holds_shape"];
+  if(A.category==="vegetables"||A.category==="starches"){
+    DISC.forEach(p=>{ if(pa.has(p)===pb.has(p)) s+=0.4; else s-=0.6; });   // texture/starch must align
+    if(pa.has("sweet")!==pb.has("sweet")) s-=0.8;                          // sweet vs not = poor swap
+  }
   return s;
 }
 
 /* ranked substitutes for one ingredient.
    have = Set of ingredient ids the cook has on hand (for the toggle). */
-function substitutesFor(id,R,{have=null,limit=5}={}){
+function substitutesFor(id,R,{have=null,limit=5,dish=null}={}){
   const cands=[];
   for(const other in R.byId){
-    const s=subScore(id,other,R);
+    let s=subScore(id,other,R);
     if(s<=0) continue;
-    cands.push({id:other, name:R.byId[other].name, score:s, onHand: have?have.has(other):false});
+    let flag=null, rename=null;
+    if(dish){
+      const c=swapConstraint(dish,id,other,R);
+      if(c.block) continue;                // property is essential -> not offered
+      flag=c.flag||null; rename=c.rename||null;
+    }
+    cands.push({id:other, name:R.byId[other].name, score:s, flag, rename, onHand: have?have.has(other):false});
   }
   cands.sort((a,b)=> (b.onHand-a.onHand) || (b.score-a.score));   // on-hand first, then closeness
   return cands.slice(0,limit);
@@ -551,8 +563,8 @@ function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}
       // --- do we have it at all? (self, or an on-hand substitute) ---
       let sourceId=null;
       if(have.has(g.id)) sourceId=g.id;
-      else { const sub=substitutesFor(g.id,R,{have,limit:3}).find(x=>x.onHand);
-             if(sub){sourceId=sub.id; subs.push({need:g.name,use:sub.name});} }
+      else { const sub=substitutesFor(g.id,R,{have,limit:3,dish:d}).find(x=>x.onHand);
+             if(sub){sourceId=sub.id; subs.push({need:g.name,use:sub.name,flag:sub.flag,rename:sub.rename});} }
       if(!sourceId){ missing.push(g); return; }
       // --- do we have ENOUGH? (only where units line up; otherwise presence is enough) ---
       const p=pantry[sourceId]||{};
@@ -574,9 +586,10 @@ function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}
     });
     const ratio=covered/comps.length;
     if(mode==="have"){ if(ratio<1) return; }                    // strict: must be fully covered
+    const renamed=(subs.find(x=>x.rename)||{}).rename||null;
     out.push({
-      dish:d.name, role:d.role, ratio, covered, total:comps.length, subs, short,
-      buy: missing.map(m=>{ const best=substitutesFor(m.id,R,{have,limit:1})[0];
+      dish:d.name, displayName:renamed||d.name, role:d.role, ratio, covered, total:comps.length, subs, short,
+      buy: missing.map(m=>{ const best=substitutesFor(m.id,R,{have,limit:1,dish:d})[0];
         return {item:m.name, closest: best?best.name:null}; })
     });
   });
@@ -619,4 +632,45 @@ function requiredCount(qty,unit){
   // a bare number, or a piece-y unit, counts as pieces; a weight/volume unit does not
   if(!unit||["piece","pieces","whole","clove","cloves","block","can","stalk","stalks","sheet"].includes(unit)) return qty;
   return null;
+}
+
+/* ============================================================
+   SWAP CONSTRAINTS — one table for "the dish's context defines a property
+   a swap must respect." Every rule that governs whether an ingredient can be
+   swapped lives here, so there's a single place to reason about and extend.
+   Returns {block, flag, rename}:
+     block  : this swap is not allowed (the property is essential)
+     flag   : allowed, but note the difference
+     rename : allowed, but the dish should be renamed (title-named ingredient)
+   ============================================================ */
+function swapConstraint(dish, fromId, toId, R){
+  const from=R.byId[fromId]||{}, to=R.byId[toId]||{};
+  const fp=new Set(from.provides||[]), tp=new Set(to.provides||[]);
+  const dishName=(dish.name||"").toLowerCase();
+  const fromName=(from.name||"").toLowerCase();
+  const toName=(to.name||"").toLowerCase();
+
+  // RULE 1 — TITLE-NAMED INGREDIENT. If the dish is named after this ingredient,
+  // it's the dish's identity. Two flavours:
+  //   * mandatory word ("... soup/bean") -> BLOCK (no red bean = not red bean soup)
+  //   * otherwise -> RENAME (apple muffin made with pineapple = pineapple muffin)
+  if(fromName && dishName.includes(fromName)){
+    const mandatory=/\b(soup|bean|beans)\b/.test(dishName);   // named + a "must-contain" word
+    if(mandatory) return {block:true};
+    return {rename: dish.name.replace(new RegExp(from.name,"i"), to.name)};
+  }
+
+  // RULE 2 — DESSERT PROTECTS SWEETNESS. In a dessert, a sweet ingredient can't
+  // become a non-sweet one.
+  if(dish.role==="dessert" && fp.has("sweet") && !tp.has("sweet")) return {block:true};
+
+  // RULE 3 — BRAISE PROTECTS COLLAGEN. A braise's protein must stay braise-suited.
+  if(dish.build==="braise" && fp.has("collagen_rich") && !tp.has("collagen_rich"))
+    return {flag:"cooks faster than a braise \u2014 shorten it to a simmer"};
+
+  // RULE 4 — SWEETNESS SHIFT (savoury). A sweet<->savoury swap is usable but noted.
+  if((from.category==="vegetables"||from.category==="starches") && fp.has("sweet")!==tp.has("sweet"))
+    return {flag: tp.has("sweet")?"sweeter than the original":"less sweet than the original"};
+
+  return {};   // no constraint
 }
