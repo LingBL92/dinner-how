@@ -129,6 +129,7 @@ input[type=time]{background:var(--panel2);border:1px solid var(--line);color:var
 .exp-chip{font-size:10.5px;padding:2px 7px;border-radius:999px;background:rgba(122,155,139,.16);color:var(--cool);border:1px solid rgba(122,155,139,.3)}
 .exp-buy{display:block;font-size:12px;color:var(--gold);font-family:"Space Mono",monospace;margin-top:4px}
 .exp-sub{font-size:11.5px;color:var(--cool);font-family:"Space Mono",monospace;margin-top:4px}
+.exp-short{font-size:11.5px;color:var(--gold);font-family:"Space Mono",monospace;margin-top:4px}
 .exp-right{white-space:nowrap;text-align:right}
 .exp-cov{font-family:"Space Mono",monospace;font-size:13px;color:var(--muted);white-space:nowrap}
 .needs{font-family:"Space Mono",monospace;font-size:10.5px;color:var(--gold);margin:2px 0 5px;letter-spacing:.02em}
@@ -829,41 +830,91 @@ function substitutesFor(id,R,{have=null,limit=5}={}){
 /* SEARCH: score every dish by how well the cook's ingredients cover it.
    mode "have"  -> only count an ingredient as covered if the cook has it or a substitute they have
    mode "shop"  -> count near-misses too, and report what to buy / swap */
-function searchByIngredients(dishes,haveIds,R,{mode="have",assumed=null}={}){
-  const have=new Set(haveIds);
-  // "assumed present" = water + whatever staples the cook still has ticked.
-  // garlic / onion / ginger are NOT assumed — they're pickable ingredients you actually track.
+function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}={}){
+  // pantry: { id: {qty, ...} }  — qty is grams for weigh items, pieces for count items.
+  const have=new Set(Object.keys(pantry));
   const IGNORE=new Set(["water"]);
   const staples=assumed||new Set(["water","salt","pepper","white_sugar","vegetable_oil","sesame_oil","soy_sauce"]);
   const out=[];
   dishes.forEach(d=>{
+    const scale = (pax && d.serves) ? (pax/d.serves) : 1;      // size the recipe to the diners
     const comps=(d.grocery_items||[]).filter(g=>!IGNORE.has(g.id) && !staples.has(g.id));
     if(!comps.length) return;
-    let covered=0; const missing=[], subs=[];
+    let covered=0; const missing=[], subs=[], short=[];
     comps.forEach(g=>{
-      if(have.has(g.id)){covered++;return;}
-      // is a substitute the cook has available?
-      const onHandSub=substitutesFor(g.id,R,{have,limit:3}).find(s=>s.onHand);
-      if(onHandSub){covered++;subs.push({need:g.name,use:onHandSub.name});return;}
-      missing.push(g);
+      const mt=measureTypeOf(R.byId[g.id]);
+      if(mt==="assumed"){ covered++; return; }   // aromatics/seasonings: always on hand
+      // --- do we have it at all? (self, or an on-hand substitute) ---
+      let sourceId=null;
+      if(have.has(g.id)) sourceId=g.id;
+      else { const sub=substitutesFor(g.id,R,{have,limit:3}).find(x=>x.onHand);
+             if(sub){sourceId=sub.id; subs.push({need:g.name,use:sub.name});} }
+      if(!sourceId){ missing.push(g); return; }
+      // --- do we have ENOUGH? (only where units line up; otherwise presence is enough) ---
+      const p=pantry[sourceId]||{};
+      if(mt==="weigh"){
+        const need=requiredGrams(g.qty,g.unit);
+        if(need!=null && p.qty!=null){
+          const needScaled=need*scale;
+          if(p.qty >= needScaled){ covered++; }
+          else { covered++; short.push({item:g.name, have:Math.round(p.qty), need:Math.round(needScaled), unit:"g"}); }
+        } else covered++;                                       // can't compare units -> presence counts
+      } else if(mt==="count"){
+        const need=requiredCount(g.qty,g.unit);
+        if(need!=null && p.qty!=null){
+          const needScaled=Math.ceil(need*scale);
+          if(p.qty >= needScaled){ covered++; }
+          else { covered++; short.push({item:g.name, have:p.qty, need:needScaled, unit:""}); }
+        } else covered++;
+      } else covered++;                                         // assumed -> presence
     });
     const ratio=covered/comps.length;
-    if(mode==="have" && missing.length) {
-      // strict: only surface fully-cookable dishes (subs from on-hand are fine)
-      if(ratio<1) return;
-    }
+    if(mode==="have"){ if(ratio<1) return; }                    // strict: must be fully covered
     out.push({
-      dish:d.name, role:d.role, ratio, covered, total:comps.length,
-      subs,
-      buy: missing.map(m=>{
-        const best=substitutesFor(m.id,R,{have,limit:1})[0];
-        return {item:m.name, closest: best?best.name:null};
-      })
+      dish:d.name, role:d.role, ratio, covered, total:comps.length, subs, short,
+      buy: missing.map(m=>{ const best=substitutesFor(m.id,R,{have,limit:1})[0];
+        return {item:m.name, closest: best?best.name:null}; })
     });
   });
-  // rank: most-covered first; in shop mode, near-misses (buy 1) bubble up
+
   out.sort((a,b)=> b.ratio-a.ratio || a.buy.length-b.buy.length);
   return out;
+}
+
+/* ============================================================
+   MEASURE TYPE — how an ingredient is quantity-checked for pantry management.
+     weigh  : bought & used by weight (proteins, leafy greens, rice)   -> grams
+     count  : bought & used by the piece (eggs, onions, potatoes)      -> pieces
+     assumed: aromatics, seasonings, condiments, oils                  -> presence only
+   Derived from category + a small explicit list; an ingredient may carry
+   its own `measure_type` to override. */
+const MT_ASSUMED=new Set(["garlic","ginger","chilli","lemongrass","galangal","scallion","curry_leaves",
+  "pandan","dried_orange_peel","dang_gui","dried_shrimp","belacan"]);
+const MT_COUNT=new Set(["egg","onion","potato","sweet_potato","tomato","carrot","cucumber","bell_pepper",
+  "eggplant","zucchini","corn","tofu","lemon","lime","apple","banana","pineapple","okra","daikon","shallot"]);
+function measureTypeOf(ing){
+  if(!ing) return "assumed";
+  if(ing.measure_type) return ing.measure_type;                 // authored override
+  const cat=ing.category, id=ing.id;
+  if(MT_ASSUMED.has(id)) return "assumed";
+  if(["seasonings","condiments","fats_oils","sweeteners","acids","leaveners"].includes(cat)) return "assumed";
+  if(cat==="dairy") return "assumed";                           // milk/cream by volume; rarely the limiter
+  if(MT_COUNT.has(id)) return "count";
+  if(cat==="fruits") return "count";
+  if(cat==="proteins") return "weigh";                          // egg already caught above as count
+  if(cat==="starches") return "weigh";
+  if(cat==="vegetables") return "weigh";                        // leafy greens etc. by weight
+  return "assumed";
+}
+
+/* normalise a recipe requirement to grams (for weigh) or pieces (for count). null = can't tell. */
+const _TO_G={g:1,kg:1000,gram:1,grams:1,pound:454,pounds:454,lb:454,oz:28,ounce:28,ounces:28};
+function requiredGrams(qty,unit){ if(qty==null)return null; const f=_TO_G[unit]; return f?qty*f:null; }
+function requiredCount(qty,unit){
+  if(qty==null)return null;
+  // a bare number, or a piece-y unit, counts as pieces; a weight/volume unit does not
+  if(!unit||["piece","pieces","whole","clove","cloves","block","can","stalk","stalks","sheet"].includes(unit)) return qty;
+  return null;
 }
 
 function prepVerb(d,n){return (d&&d.prep_overrides&&d.prep_overrides[n])||PREP_VERB[n]||"prep";}
@@ -1297,7 +1348,8 @@ const pantry={};
 const STAPLE_IDS=["salt","pepper","white_sugar","vegetable_oil","sesame_oil","soy_sauce"];
 const staplesOn={}; STAPLE_IDS.forEach(id=>staplesOn[id]=true);
 const PANTRY_UNIT={proteins:"g",fats_oils:"tbsp",condiments:"tbsp"};
-function pantryUnit(id){const c=(REF.byId[id]||{}).category;return PANTRY_UNIT[c]||"";}
+function measureType(id){return measureTypeOf(REF.byId[id]);}
+function pantryUnit(id){const mt=measureType(id);return mt==="weigh"?"g":mt==="count"?"":"";}
 const PANTRY_CATS=[["proteins","Proteins"],["vegetables","Vegetables"],["starches","Rice, grains & bread"],["dairy","Dairy"],["fruits","Fruit"]];
 function buildPantryPicker(){
   const box=document.getElementById("pantrypick"); if(!box)return; box.innerHTML="";
@@ -1310,7 +1362,7 @@ function buildPantryPicker(){
     items.forEach(i=>{
       const b=document.createElement("button");
       b.className="pchip"+(pantry[i.id]?" added":""); b.textContent=i.name;
-      b.onclick=()=>{ if(pantry[i.id])delete pantry[i.id]; else pantry[i.id]={qty:1};
+      b.onclick=()=>{ if(pantry[i.id])delete pantry[i.id]; else pantry[i.id]={qty:(measureType(i.id)==="weigh"?300:1)};
         buildPantryPicker(); renderPantryHave(); if(appMode==="explore")renderExplore(); };
       row.appendChild(b);
     });
@@ -1321,12 +1373,13 @@ const SHELVES=[["proteins","Proteins"],["vegetables","Vegetables"],["else","Grai
 const SHELF_ICON={proteins:(ROLE_ICON.meat||''),vegetables:(ROLE_ICON.veg||''),else:(ROLE_ICON.base||'')};
 function shelfOf(id){const c=(REF.byId[id]||{}).category; return c==="proteins"?"proteins":c==="vegetables"?"vegetables":"else";}
 function makeHaveItem(id){
-  const it=document.createElement("div"); it.className="haveitem"; const unit=pantryUnit(id);
-  it.innerHTML='<span class="hn">'+(REF.byId[id]?REF.byId[id].name:id)+'</span>'+
+  const it=document.createElement("div"); it.className="haveitem"; const unit=pantryUnit(id); const mt=measureType(id);
+  const qstep = mt==="assumed" ? '' :
     '<span class="qstep"><button class="qbtn" data-d="-1">−</button>'+
-    '<span class="qval">'+pantry[id].qty+(unit?'<span class="qunit"> '+unit+'</span>':'')+'</span>'+
-    '<button class="qbtn" data-d="1">+</button></span><button class="hx" title="remove">×</button>';
-  const step=unit==="g"?100:1;
+    '<span class="qval">'+pantry[id].qty+(unit?'<span class="qunit"> '+unit+'</span>':(mt==="count"?'<span class="qunit"> pcs</span>':''))+'</span>'+
+    '<button class="qbtn" data-d="1">+</button></span>';
+  it.innerHTML='<span class="hn">'+(REF.byId[id]?REF.byId[id].name:id)+'</span>'+qstep+'<button class="hx" title="remove">×</button>';
+  const step=mt==="weigh"?100:1;
   it.querySelectorAll(".qbtn").forEach(b=>b.onclick=()=>{pantry[id].qty=Math.max(step,pantry[id].qty+(+b.dataset.d)*step);renderPantryHave();if(appMode==="explore")renderExplore();});
   it.querySelector(".hx").onclick=()=>{delete pantry[id];buildPantryPicker();renderPantryHave();if(appMode==="explore")renderExplore();};
   return it;
@@ -1362,7 +1415,7 @@ function renderExplore(){
   const out=document.getElementById("out"); const ids=Object.keys(pantry);
   if(!ids.length){out.innerHTML='<div class="panel exp-empty">Add a few things from your kitchen, and I will show what you can cook, or what you are one shop away from.</div>';return;}
   const cookable=DISHES.filter(d=>(d.appliance_options||[]).some(o=>owned.has(o.appliance)));
-  const res=searchByIngredients(cookable,ids,REF,{mode:rankMode,assumed:assumedSet()});
+  const res=searchByIngredients(cookable,pantry,REF,{mode:rankMode,assumed:assumedSet(),pax:pax});
   if(!res.length){out.innerHTML='<div class="panel exp-empty">Nothing matches yet with what is in your kitchen and your appliances.<br>Try One shop away, or add another ingredient.</div>';return;}
   const byName={}; DISHES.forEach(d=>byName[d.name]=d);
   let html='<div class="panel">';
@@ -1378,7 +1431,8 @@ function renderExplore(){
     const right = rankMode==="have" ? '<span class="exp-cov">'+r.covered+'/'+r.total+'</span>'
       : (r.buy.length? '<span class="exp-buy">buy '+r.buy.map(b=>b.item).join(", ")+'</span>' : '<span class="exp-cov">have it all</span>');
     const sub = r.subs.length? '<div class="exp-sub">using '+r.subs.map(x=>x.use+" for "+x.need).join(", ")+'</div>':'';
-    html+='<div class="exp-card" onclick="openExplore('+idx+')"><div class="exp-left"><div class="exp-name">'+r.dish+'</div>'+metaLine+sub+'</div><div class="exp-right">'+right+'</div></div>';
+    const shortLine = r.short&&r.short.length? '<div class="exp-short">not quite enough: '+r.short.map(x=>x.item+" ("+x.have+x.unit+" / "+x.need+x.unit+")").join(", ")+'</div>':'';
+    html+='<div class="exp-card" onclick="openExplore('+idx+')"><div class="exp-left"><div class="exp-name">'+r.dish+'</div>'+metaLine+sub+shortLine+'</div><div class="exp-right">'+right+'</div></div>';
   });
   out.innerHTML=html+'</div>';
 }

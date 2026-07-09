@@ -487,3 +487,136 @@ function swapSafety(arch,curBehaviour,newBehaviour){
     return {safe:true,flag:"needs a long braise \\u2014 a quick simmer won't tenderise it"};
   return {safe:true,flag:"cooks differently \\u2014 adjust the time"};
 }
+
+/* ============================================================
+   SUBSTITUTION + SEARCH — "what can I cook with what I have,
+   and what can stand in for what's missing."
+   Candidates are ranked by SHARED PROPERTIES and behaviour, not
+   just a shared parent (the tree is too flat for that alone).
+   ============================================================ */
+
+/* how alike are two ingredients? higher = closer substitute. */
+const SUB_FAMILY_FLAGS=["grain_rice","collagen_rich","leafy","root_veg","allium"]; // fine-grained "same kind" tags
+function subScore(aId,bId,R){
+  const A=R.byId[aId], B=R.byId[bId];
+  if(!A||!B||aId===bId) return -1;
+  if(A.category!==B.category) return -1;                 // never cross protein/veg/starch
+  const pa=new Set(A.provides||[]), pb=new Set(B.provides||[]);
+  // require a SHARED PARENT or a shared fine-grained family flag — same category alone is NOT enough.
+  const sameParent = A.parent && A.parent===B.parent && A.parent!==A.category;
+  const sharedFamily = SUB_FAMILY_FLAGS.some(f=>pa.has(f)&&pb.has(f));
+  if(!sameParent && !sharedFamily) return -1;            // e.g. carrot !-> spinach, rice !-> flour
+  const shared=[...pa].filter(f=>pb.has(f)).length;
+  const union=new Set([...pa,...pb]).size||1;
+  let s=shared/union;
+  if(sameParent) s+=1;
+  if(sharedFamily) s+=1;
+  const anc=R.anc[aId]||new Set(), bnc=R.anc[bId]||new Set();
+  s+=([...anc].filter(x=>bnc.has(x)).length)*0.15;
+  const ba=meatBehaviour(pa.has("collagen_rich"),"whole"), bb=meatBehaviour(pb.has("collagen_rich"),"whole");
+  if(A.category==="proteins" && ba===bb) s+=0.5;
+  return s;
+}
+
+/* ranked substitutes for one ingredient.
+   have = Set of ingredient ids the cook has on hand (for the toggle). */
+function substitutesFor(id,R,{have=null,limit=5}={}){
+  const cands=[];
+  for(const other in R.byId){
+    const s=subScore(id,other,R);
+    if(s<=0) continue;
+    cands.push({id:other, name:R.byId[other].name, score:s, onHand: have?have.has(other):false});
+  }
+  cands.sort((a,b)=> (b.onHand-a.onHand) || (b.score-a.score));   // on-hand first, then closeness
+  return cands.slice(0,limit);
+}
+
+/* SEARCH: score every dish by how well the cook's ingredients cover it.
+   mode "have"  -> only count an ingredient as covered if the cook has it or a substitute they have
+   mode "shop"  -> count near-misses too, and report what to buy / swap */
+function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}={}){
+  // pantry: { id: {qty, ...} }  — qty is grams for weigh items, pieces for count items.
+  const have=new Set(Object.keys(pantry));
+  const IGNORE=new Set(["water"]);
+  const staples=assumed||new Set(["water","salt","pepper","white_sugar","vegetable_oil","sesame_oil","soy_sauce"]);
+  const out=[];
+  dishes.forEach(d=>{
+    const scale = (pax && d.serves) ? (pax/d.serves) : 1;      // size the recipe to the diners
+    const comps=(d.grocery_items||[]).filter(g=>!IGNORE.has(g.id) && !staples.has(g.id));
+    if(!comps.length) return;
+    let covered=0; const missing=[], subs=[], short=[];
+    comps.forEach(g=>{
+      const mt=measureTypeOf(R.byId[g.id]);
+      if(mt==="assumed"){ covered++; return; }   // aromatics/seasonings: always on hand
+      // --- do we have it at all? (self, or an on-hand substitute) ---
+      let sourceId=null;
+      if(have.has(g.id)) sourceId=g.id;
+      else { const sub=substitutesFor(g.id,R,{have,limit:3}).find(x=>x.onHand);
+             if(sub){sourceId=sub.id; subs.push({need:g.name,use:sub.name});} }
+      if(!sourceId){ missing.push(g); return; }
+      // --- do we have ENOUGH? (only where units line up; otherwise presence is enough) ---
+      const p=pantry[sourceId]||{};
+      if(mt==="weigh"){
+        const need=requiredGrams(g.qty,g.unit);
+        if(need!=null && p.qty!=null){
+          const needScaled=need*scale;
+          if(p.qty >= needScaled){ covered++; }
+          else { covered++; short.push({item:g.name, have:Math.round(p.qty), need:Math.round(needScaled), unit:"g"}); }
+        } else covered++;                                       // can't compare units -> presence counts
+      } else if(mt==="count"){
+        const need=requiredCount(g.qty,g.unit);
+        if(need!=null && p.qty!=null){
+          const needScaled=Math.ceil(need*scale);
+          if(p.qty >= needScaled){ covered++; }
+          else { covered++; short.push({item:g.name, have:p.qty, need:needScaled, unit:""}); }
+        } else covered++;
+      } else covered++;                                         // assumed -> presence
+    });
+    const ratio=covered/comps.length;
+    if(mode==="have"){ if(ratio<1) return; }                    // strict: must be fully covered
+    out.push({
+      dish:d.name, role:d.role, ratio, covered, total:comps.length, subs, short,
+      buy: missing.map(m=>{ const best=substitutesFor(m.id,R,{have,limit:1})[0];
+        return {item:m.name, closest: best?best.name:null}; })
+    });
+  });
+
+  out.sort((a,b)=> b.ratio-a.ratio || a.buy.length-b.buy.length);
+  return out;
+}
+
+/* ============================================================
+   MEASURE TYPE — how an ingredient is quantity-checked for pantry management.
+     weigh  : bought & used by weight (proteins, leafy greens, rice)   -> grams
+     count  : bought & used by the piece (eggs, onions, potatoes)      -> pieces
+     assumed: aromatics, seasonings, condiments, oils                  -> presence only
+   Derived from category + a small explicit list; an ingredient may carry
+   its own `measure_type` to override. */
+const MT_ASSUMED=new Set(["garlic","ginger","chilli","lemongrass","galangal","scallion","curry_leaves",
+  "pandan","dried_orange_peel","dang_gui","dried_shrimp","belacan"]);
+const MT_COUNT=new Set(["egg","onion","potato","sweet_potato","tomato","carrot","cucumber","bell_pepper",
+  "eggplant","zucchini","corn","tofu","lemon","lime","apple","banana","pineapple","okra","daikon","shallot"]);
+function measureTypeOf(ing){
+  if(!ing) return "assumed";
+  if(ing.measure_type) return ing.measure_type;                 // authored override
+  const cat=ing.category, id=ing.id;
+  if(MT_ASSUMED.has(id)) return "assumed";
+  if(["seasonings","condiments","fats_oils","sweeteners","acids","leaveners"].includes(cat)) return "assumed";
+  if(cat==="dairy") return "assumed";                           // milk/cream by volume; rarely the limiter
+  if(MT_COUNT.has(id)) return "count";
+  if(cat==="fruits") return "count";
+  if(cat==="proteins") return "weigh";                          // egg already caught above as count
+  if(cat==="starches") return "weigh";
+  if(cat==="vegetables") return "weigh";                        // leafy greens etc. by weight
+  return "assumed";
+}
+
+/* normalise a recipe requirement to grams (for weigh) or pieces (for count). null = can't tell. */
+const _TO_G={g:1,kg:1000,gram:1,grams:1,pound:454,pounds:454,lb:454,oz:28,ounce:28,ounces:28};
+function requiredGrams(qty,unit){ if(qty==null)return null; const f=_TO_G[unit]; return f?qty*f:null; }
+function requiredCount(qty,unit){
+  if(qty==null)return null;
+  // a bare number, or a piece-y unit, counts as pieces; a weight/volume unit does not
+  if(!unit||["piece","pieces","whole","clove","cloves","block","can","stalk","stalks","sheet"].includes(unit)) return qty;
+  return null;
+}
