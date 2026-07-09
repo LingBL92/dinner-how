@@ -593,7 +593,7 @@ function syncKitchenUI(){
   syncHob();
   const pn=document.getElementById("paxn"); if(pn)pn.textContent=pax;
 }
-let meal=[]; let cuisines=new Set(["singaporean","japanese","western"]); let budget=60; let burners=2; const count={base:1,veg:1,meat:1,fish:0,soup:0,dessert:0}/*weeknight*/; let packsOn=false; let pax=4; const ROLELAB={base:"Rice",veg:"Vegetable",meat:"Meat",fish:"Fish",soup:"Soup",dessert:"Dessert"};
+let meal=[]; let cuisines=new Set(["singaporean","japanese","western"]); let budget=60; let burners=2; const count={base:1,veg:1,meat:1,fish:0,soup:0,dessert:0}/*weeknight*/; let packsOn=false; let pax=4; let paxTouched=false; const ROLELAB={base:"Rice",veg:"Vegetable",meat:"Meat",fish:"Fish",soup:"Soup",dessert:"Dessert"};
 
 const applBox=document.getElementById("appls");
 function buildAppls(){applBox.innerHTML="";
@@ -640,10 +640,10 @@ function syncShape(){ROLES.forEach(r=>{const e=document.getElementById("c-"+r);i
   const w=document.getElementById("step-"+r);if(w)w.classList.toggle("on",count[r]>0);});}
 syncShape();
 const PRESETS={
- "One-dish night":     {count:{base:1,veg:0,meat:0,fish:0,soup:0,dessert:0},budget:45},
- "Simple family meal": {count:{base:1,veg:1,meat:1,fish:0,soup:0,dessert:0},budget:60},
- "Guests over":        {count:{base:1,veg:1,meat:1,fish:1,soup:1,dessert:0},budget:120},
- "Reunion dinner":     {count:{base:1,veg:2,meat:2,fish:1,soup:1,dessert:1},budget:150}};
+ "One-dish night":     {count:{base:1,veg:0,meat:0,fish:0,soup:0,dessert:0},budget:45, pax:2},
+ "Simple family meal": {count:{base:1,veg:1,meat:1,fish:0,soup:0,dessert:0},budget:60, pax:4},
+ "Guests over":        {count:{base:1,veg:1,meat:1,fish:1,soup:1,dessert:0},budget:120, pax:6},
+ "Reunion dinner":     {count:{base:1,veg:2,meat:2,fish:1,soup:1,dessert:1},budget:150, pax:8}};
 const DEFAULT_PRESET="Simple family meal";
 const presetBox=document.getElementById("preset");
 function markPreset(name){[...presetBox.children].forEach(x=>x.setAttribute("aria-pressed",x.textContent===name));}
@@ -651,12 +651,13 @@ Object.keys(PRESETS).forEach(k=>{const b=document.createElement("button");b.clas
   b.onclick=()=>{const P=PRESETS[k];Object.assign(count,P.count);syncShape();
     budget=P.budget;const sl=document.getElementById("budget"),rd=document.getElementById("budgetread");
     if(sl)sl.value=budget; if(rd)rd.textContent="up to "+budget+"m hands-on";
+    if(!paxTouched&&P.pax){pax=P.pax;const pn=document.getElementById("paxn");if(pn)pn.textContent=pax;}
     markPreset(k);compose();};
   presetBox.appendChild(b);});
 markPreset(DEFAULT_PRESET);
 const paxWrap=document.createElement("div");paxWrap.className="step";paxWrap.innerHTML='<span class="stepicon">'+ROLE_ICON.pax+'</span><span class="steplab">People</span>'
   +'<span class="stepctl"><button class="stepbtn" data-d="-1">\u2212</button><span class="stepn" id="paxn">'+pax+'</span><button class="stepbtn" data-d="1">+</button></span>';
-paxWrap.classList.add("on");paxWrap.querySelectorAll(".stepbtn").forEach(b=>b.onclick=()=>{pax=Math.max(1,Math.min(12,pax+ +b.dataset.d));document.getElementById("paxn").textContent=pax;saveKitchen();render();});document.getElementById("paxbox").appendChild(paxWrap);
+paxWrap.classList.add("on");paxWrap.querySelectorAll(".stepbtn").forEach(b=>b.onclick=()=>{paxTouched=true;pax=Math.max(1,Math.min(12,pax+ +b.dataset.d));document.getElementById("paxn").textContent=pax;saveKitchen();render();});document.getElementById("paxbox").appendChild(paxWrap);
 document.getElementById("compose").onclick=compose;
 document.getElementById("shuffle").onclick=()=>compose(true);
 const bslider=document.getElementById("budget"),bread=document.getElementById("budgetread");
