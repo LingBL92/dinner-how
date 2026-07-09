@@ -98,6 +98,14 @@ input[type=time]{background:var(--panel2);border:1px solid var(--line);color:var
 .pchip.staple{opacity:.5}
 .pchip.staple.added{opacity:1}
 .pantry-have{display:flex;flex-wrap:wrap;gap:8px;min-height:20px}
+.shelf{margin-bottom:12px}
+.shelf-lab{font-family:"Space Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 5px}
+.shelf-tray{display:flex;flex-wrap:wrap;gap:8px;max-height:118px;overflow-y:auto;padding:8px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px}
+.shelf-empty{color:var(--muted);font-size:13px;padding:4px 2px}
+.shelf{margin-bottom:12px}
+.shelf-lab{font-family:"Space Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 5px}
+.shelf-tray{display:flex;flex-wrap:wrap;gap:8px;max-height:118px;overflow-y:auto;padding:8px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px}
+.shelf-empty{color:var(--muted);font-size:13px;padding:4px 2px}
 .haveitem{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:5px 6px 5px 11px}
 .haveitem .hn{font-size:13px;color:var(--cream)}
 .qstep{display:flex;align-items:center;gap:2px}
@@ -107,10 +115,19 @@ input[type=time]{background:var(--panel2);border:1px solid var(--line);color:var
 .hx{border:none;background:none;color:var(--muted);cursor:pointer;font-size:15px;padding:0 3px}
 .hx:hover{color:var(--coral)}
 .exp-empty{text-align:center;color:var(--muted);padding:20px;line-height:1.6}
-.exp-card{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--card)}
-.exp-buy{font-size:12px;color:var(--gold);font-family:"Space Mono",monospace}
-.exp-sub{font-size:11.5px;color:var(--celadon);font-family:"Space Mono",monospace}
-.exp-cov{font-family:"Space Mono",monospace;font-size:12px;color:var(--muted);white-space:nowrap}
+.exp-card{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:13px 15px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--card);transition:.15s}
+.exp-card:hover{border-color:var(--celadon)}
+.exp-left{min-width:0}
+.exp-name{font-size:15.5px;font-weight:600;color:var(--cream);line-height:1.25}
+.exp-meta{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:5px}
+.exp-time{font-family:"Space Mono",monospace;font-size:11.5px;color:var(--cream)}
+.exp-prot{font-family:"Space Mono",monospace;font-size:11.5px;color:var(--muted)}
+.exp-dot{color:var(--muted);font-size:11px}
+.exp-chip{font-size:10.5px;padding:2px 7px;border-radius:999px;background:rgba(122,155,139,.16);color:var(--cool);border:1px solid rgba(122,155,139,.3)}
+.exp-buy{display:block;font-size:12px;color:var(--gold);font-family:"Space Mono",monospace;margin-top:4px}
+.exp-sub{font-size:11.5px;color:var(--cool);font-family:"Space Mono",monospace;margin-top:4px}
+.exp-right{white-space:nowrap;text-align:right}
+.exp-cov{font-family:"Space Mono",monospace;font-size:13px;color:var(--muted);white-space:nowrap}
 .needs{font-family:"Space Mono",monospace;font-size:10.5px;color:var(--gold);margin:2px 0 5px;letter-spacing:.02em}
 .dish{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;text-align:left;font:inherit;color:inherit;position:relative}
 .reroll{position:absolute;top:10px;right:10px;width:27px;height:27px;border-radius:50%;border:1px solid var(--line);background:var(--panel2);color:var(--ember);font-size:15px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
@@ -1296,20 +1313,33 @@ function buildPantryPicker(){
     box.appendChild(row);
   });
 }
+const SHELVES=[["proteins","Proteins"],["vegetables","Vegetables"],["else","Grains, dairy & more"]];
+function shelfOf(id){const c=(REF.byId[id]||{}).category; return c==="proteins"?"proteins":c==="vegetables"?"vegetables":"else";}
+function makeHaveItem(id){
+  const it=document.createElement("div"); it.className="haveitem"; const unit=pantryUnit(id);
+  it.innerHTML='<span class="hn">'+(REF.byId[id]?REF.byId[id].name:id)+'</span>'+
+    '<span class="qstep"><button class="qbtn" data-d="-1">−</button>'+
+    '<span class="qval">'+pantry[id].qty+(unit?'<span class="qunit"> '+unit+'</span>':'')+'</span>'+
+    '<button class="qbtn" data-d="1">+</button></span><button class="hx" title="remove">×</button>';
+  const step=unit==="g"?100:1;
+  it.querySelectorAll(".qbtn").forEach(b=>b.onclick=()=>{pantry[id].qty=Math.max(step,pantry[id].qty+(+b.dataset.d)*step);renderPantryHave();if(appMode==="explore")renderExplore();});
+  it.querySelector(".hx").onclick=()=>{delete pantry[id];buildPantryPicker();renderPantryHave();if(appMode==="explore")renderExplore();};
+  return it;
+}
 function renderPantryHave(){
   const box=document.getElementById("pantryhave"); if(!box)return; box.innerHTML="";
   const ids=Object.keys(pantry);
   if(!ids.length){box.innerHTML='<span style="color:var(--muted);font-size:12.5px">Tap ingredients above to add them.</span>';return;}
-  ids.forEach(id=>{
-    const it=document.createElement("div"); it.className="haveitem"; const unit=pantryUnit(id);
-    it.innerHTML='<span class="hn">'+(REF.byId[id]?REF.byId[id].name:id)+'</span>'+
-      '<span class="qstep"><button class="qbtn" data-d="-1">−</button>'+
-      '<span class="qval">'+pantry[id].qty+(unit?'<span class="qunit"> '+unit+'</span>':'')+'</span>'+
-      '<button class="qbtn" data-d="1">+</button></span><button class="hx" title="remove">×</button>';
-    const step=unit==="g"?100:1;
-    it.querySelectorAll(".qbtn").forEach(b=>b.onclick=()=>{pantry[id].qty=Math.max(step,pantry[id].qty+(+b.dataset.d)*step);renderPantryHave();if(appMode==="explore")renderExplore();});
-    it.querySelector(".hx").onclick=()=>{delete pantry[id];buildPantryPicker();renderPantryHave();if(appMode==="explore")renderExplore();};
-    box.appendChild(it);
+  const grouped={proteins:[],vegetables:[],else:[]};
+  ids.forEach(id=>grouped[shelfOf(id)].push(id));
+  SHELVES.forEach(function(pair){
+    const key=pair[0], label=pair[1], items=grouped[key];
+    const shelf=document.createElement("div"); shelf.className="shelf";
+    const lab=document.createElement("div"); lab.className="shelf-lab"; lab.textContent=label; shelf.appendChild(lab);
+    const tray=document.createElement("div"); tray.className="shelf-tray";
+    if(items.length){ items.forEach(id=>tray.appendChild(makeHaveItem(id))); }
+    else { const e=document.createElement("span"); e.className="shelf-empty"; e.textContent="—"; tray.appendChild(e); }
+    shelf.appendChild(tray); box.appendChild(shelf);
   });
 }
 function renderStaples(){
@@ -1330,12 +1360,21 @@ function renderExplore(){
   const cookable=DISHES.filter(d=>(d.appliance_options||[]).some(o=>owned.has(o.appliance)));
   const res=searchByIngredients(cookable,ids,REF,{mode:rankMode,assumed:assumedSet()});
   if(!res.length){out.innerHTML='<div class="panel exp-empty">Nothing matches yet with what is in your kitchen and your appliances.<br>Try One shop away, or add another ingredient.</div>';return;}
+  const byName={}; DISHES.forEach(d=>byName[d.name]=d);
   let html='<div class="panel">';
   res.slice(0,12).forEach(r=>{
+    const d=byName[r.dish]||{};
+    const opt=(d.appliance_options||[]).find(o=>owned.has(o.appliance))||(d.appliance_options||[])[0];
+    const mins=opt&&opt.time?opt.time.ready_in_min:null;
+    const meta=[];
+    if(mins!=null)meta.push('<span class="exp-time">'+mins+' min</span>');
+    if(d.protein_tag)meta.push('<span class="exp-prot">'+d.protein_tag+'</span>');
+    const chips=(d.results||[]).slice(0,2).map(c=>'<span class="exp-chip">'+c+'</span>').join("");
+    const metaLine = meta.length||chips ? '<div class="exp-meta">'+meta.join('<span class="exp-dot">·</span>')+(chips?' '+chips:'')+'</div>' : '';
     const right = rankMode==="have" ? '<span class="exp-cov">'+r.covered+'/'+r.total+'</span>'
       : (r.buy.length? '<span class="exp-buy">buy '+r.buy.map(b=>b.item).join(", ")+'</span>' : '<span class="exp-cov">have it all</span>');
     const sub = r.subs.length? '<div class="exp-sub">using '+r.subs.map(x=>x.use+" for "+x.need).join(", ")+'</div>':'';
-    html+='<div class="exp-card"><div><div style="font-size:15px;color:var(--cream)">'+r.dish+'</div>'+sub+'</div>'+right+'</div>';
+    html+='<div class="exp-card"><div class="exp-left"><div class="exp-name">'+r.dish+'</div>'+metaLine+sub+'</div><div class="exp-right">'+right+'</div></div>';
   });
   out.innerHTML=html+'</div>';
 }
