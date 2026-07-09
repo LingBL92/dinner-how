@@ -80,6 +80,7 @@ input[type=time]{background:var(--panel2);border:1px solid var(--line);color:var
 .meal-tot{font-family:"Space Mono",monospace;font-size:13px}.meal-tot .on{color:var(--ember)}.meal-tot .rd{color:var(--cool)}
 .dishes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
 .ptag{font-family:"Space Mono",monospace;font-size:11px;color:var(--muted);margin:3px 0 5px;letter-spacing:.02em}
+.needs{font-family:"Space Mono",monospace;font-size:10.5px;color:var(--gold);margin:2px 0 5px;letter-spacing:.02em}
 .dish{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;text-align:left;font:inherit;color:inherit;position:relative}
 .reroll{position:absolute;top:10px;right:10px;width:27px;height:27px;border-radius:50%;border:1px solid var(--line);background:var(--panel2);color:var(--ember);font-size:15px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
 .reroll:hover{border-color:var(--ember);transform:rotate(90deg);transition:transform .2s}
@@ -290,13 +291,20 @@ function groceryItems(ings,R,misses){
   ings.forEach(raw=>{const id=R.match(raw);
     if(!id){if(misses)misses.push(raw);return;}
     const q=parseQty(raw);
-    out.push({name:R.byId[id].name,id,qty:q.qty,unit:q.unit});});
+    let name=R.byId[id].name;
+    // "mince" is a FORM, not a node: derive the shopping name for minced meat
+    const ing=R.byId[id];
+    if(ing.category==="proteins" && /\b(minced|ground)\b/.test(raw.toLowerCase()) && !/^minced/i.test(name)){
+      name="Minced "+name.toLowerCase();
+    }
+    out.push({name,id,qty:q.qty,unit:q.unit});});
   return out;
 }
 function bucket(x){return x<=0?0:(x<1.5?1:(x<2.5?2:3));}
 function tasteOf(items,R){
   const T=R.taste, S={sweet:0,sour:0,salty:0,umami:0,fat:0,heat:0};
   items.forEach(it=>{const ing=R.byId[it.id];if(!ing)return;const pv=new Set(ing.provides||[]);
+    if(/^minced /i.test(it.name))pv.add("fat_solid");   // minced meat carries fat (from the trim it's made of)
     for(const axis in T.from_flags){if(T.from_flags[axis].some(f=>pv.has(f)))S[axis]+=1;}
     if(pv.has("protein"))S.umami+=T.umami_from_protein;
     if(T.umami_ingredients.includes(it.id))S.umami+=1;
@@ -308,7 +316,7 @@ function proteinTagOf(items,R){
   const prots=[];let egg=null;
   items.forEach(it=>{const ing=R.byId[it.id];if(!ing||SKIP.has(it.id))return;
     if(ing.category!=="proteins")return;
-    const nm=ing.name.toLowerCase();
+    const nm=it.name.toLowerCase();   // uses the (possibly "minced ...") display name
     if(it.id==="egg")egg=nm; else if(!prots.includes(nm))prots.push(nm);});
   return prots.length?prots.slice(0,2).join(" & "):(egg||"");
 }
@@ -318,12 +326,21 @@ function prepOverridesOf(ings,R){
     const c=statedCut(raw);if(c)ov[R.byId[id].name]=c;});
   return ov;
 }
-function cookStyleOf(d){
-  if(d.cuts){const r=d.cuts.options[d.cuts.default].cut_role;return r==="braise"?"slow":"quick";}
+function cookStyleOf(d,R){
+  if(d.cuts){const opt=d.cuts.options[d.cuts.default];const mp=dishBehaviour(opt.ingredients,R);
+    if(mp)return mp.behaviour==="braise"?"slow":"quick";
+    return opt.cut_role==="braise"?"slow":"quick";}
   if(d.role!=="meat"&&d.role!=="fish")return undefined;
-  return (d.time&&d.time.hands_off_min>=30)?"slow":"quick";
+  const mp=dishBehaviour(d.ingredients,R);           // two-axis first
+  if(mp)return mp.behaviour==="braise"?"slow":"quick";
+  return (d.time&&d.time.hands_off_min>=30)?"slow":"quick";   // fallback: walk-away time
 }
 
+/* the first meat line in an ingredient list, resolved through the two axes */
+function dishBehaviour(ings,R){
+  for(const raw of (ings||[])){ const p=meatProfile(raw,R); if(p) return p; }
+  return null;
+}
 /* hydrate a dish (and its cut/swap variants) with everything derived */
 function hydrateVariant(v,R,misses){
   const gi=groceryItems(v.ingredients||[],R,misses);
@@ -332,7 +349,10 @@ function hydrateVariant(v,R,misses){
   v.taste=tasteOf(gi,R);
   v.protein_tag=proteinTagOf(gi,R);
   v.prep_overrides=prepOverridesOf(v.ingredients||[],R);
-  if(v.cut_role)v.cook_style=v.cut_role==="braise"?"slow":"quick";
+  const mp=dishBehaviour(v.ingredients,R);
+  if(mp){ v.cut_role=mp.behaviour; v.cook_style=(mp.behaviour==="braise"?"slow":"quick"); v._muscle=mp.muscle; v._form=mp.form; v.forgiveness=mp.forgiveness;
+         if(!v.note) v.note=cutReason(mp.behaviour,mp.forgiveness); }
+  else if(v.cut_role){ v.cook_style=v.cut_role==="braise"?"slow":"quick"; }
   return v;
 }
 /* the time engine, applied to a dish: one analysis per appliance it can cook on */
@@ -358,12 +378,19 @@ function timeVariant(v,d,R,M){
   return v;
 }
 function hydrate(dishes,R,M){
-  const unknown=[], noMethod=[];
+  const unknown=[], noMethod=[], archNone=[], archLow=[];
   dishes.forEach(d=>{
     const misses=[];
     hydrateVariant(d,R,misses);
     if(M)timeDish(d,R,M,noMethod);
-    const cs=cookStyleOf(d); if(cs)d.cook_style=cs;
+    const cs=cookStyleOf(d,R); if(cs)d.cook_style=cs;
+    const _mp=dishBehaviour(d.ingredients,R); if(_mp)d.forgiveness=_mp.forgiveness;
+    if(d.role==="meat"||d.role==="fish"){
+      const c=classifyArchetype(d,R);
+      d.build=c.archetype; d._buildConfidence=c.confidence;
+      if(c.confidence==="none") archNone.push(d.name);
+      else if(c.confidence==="low") archLow.push(d.name+" ("+c.archetype+" \u2014 "+c.reason+")");
+    }
     ["cuts","swaps"].forEach(f=>{
       if(d[f])Object.values(d[f].options).forEach(o=>{
         hydrateVariant(o,R,misses);
@@ -382,7 +409,17 @@ function hydrate(dishes,R,M){
       "so their time is prep-only and probably wrong. Reword the step, or add an alias in data/methods.json.");
     noMethod.forEach(n=>console.warn("   "+n));
   }
-  hydrate.unknown=unknown; hydrate.noMethod=noMethod;
+  if(archNone.length){
+    console.warn("[Dinner How?] "+archNone.length+" protein dish(es) could not be classified by construction, "+
+      "so protein-swap advice may be wrong. Add a \"build\" field (coat | braise | simmer | poach | steam | stir_fry | fry_dry).");
+    archNone.forEach(n=>console.warn("   "+n));
+  }
+  if(archLow.length){
+    console.warn("[Dinner How?] "+archLow.length+" protein dish(es) were classified with LOW confidence \u2014 the construction is ambiguous, "+
+      "so protein-swap advice is a guess. Pin it with a \"build\" field if the guess is wrong.");
+    archLow.forEach(n=>console.warn("   "+n));
+  }
+  hydrate.unknown=unknown; hydrate.noMethod=noMethod; hydrate.archNone=archNone; hydrate.archLow=archLow;
   return dishes;
 }
 
@@ -558,6 +595,126 @@ function analyzeRecipe(ingStrings,steps,appliance,R,M,nativeSteps){
 function chipsFor(reactionIds,M){
   return reactionIds.map(r=>M.reactions[r]).filter(r=>r&&r.chip)
     .sort((a,b)=>a.chip_order-b.chip_order).map(r=>r.chip).slice(0,M._meta.max_chips||4);
+}
+
+/* ============================================================
+   THE TWO AXES OF MEAT
+     HIERARCHY (muscle): which part of the animal -> collagen -> texture
+     FORM (cross-cutting): how it is cut -> how fast heat gets in -> time
+   Cook behaviour is DERIVED from their combination, not hand-set.
+   ============================================================ */
+
+/* FORM — read off the recipe line. Applies to any muscle of any meat. */
+const FORM_RULES=[
+  [/\b(minced|ground)\b/, "mince"],
+  [/\b(thinly sliced|thin[- ]sliced|shabu|sukiyaki|bulgogi|hotpot|shaved)\b/, "slice"],
+  [/\b(sliced|strips|shredded|julienned)\b/, "slice"],
+  [/\b(cubed|diced|chunks?|cut into chunks|bite[- ]sized|stewing|braising)\b/, "chunk"],
+];
+function detectForm(raw){
+  const low=raw.toLowerCase();
+  for(const [re,f] of FORM_RULES){ if(re.test(low)) return f; }
+  return "whole";
+}
+
+/* COLLAGEN — from the muscle node's flags (the hierarchy).
+   A generic meat line can still imply collagen via braise-words. */
+function collagenOf(id,raw,R){
+  const flags=(R.byId[id]||{}).provides||[];
+  if(flags.includes("collagen_rich")) return true;
+  if(raw && /\b(stewing|braising|shin|shank)\b/i.test(raw)) return true;   // line-level hint
+  return false;
+}
+
+/* BEHAVIOUR — the two axes combine. One universal function; the VALUES
+   (which muscles are collagen-rich) are per-species, carried in the data. */
+function meatBehaviour(collagen, form){
+  if(form==="mince") return "mince";       // ground: fast, any muscle
+  if(form==="slice") return "quick";       // thin: fast regardless of muscle (sukiyaki, galbi, bulgogi)
+  return collagen ? "braise" : "quick";    // whole/chunk: collagen wants slow; lean wants a fast sear
+}
+/* FORGIVENESS — a second muscle property (fat) that matters most where collagen is
+   absent: it separates a fatty, hard-to-dry cut (chicken thigh, pork belly) from a
+   lean one that overcooks in seconds (breast, loin, sirloin). */
+function forgivenessOf(id,R){
+  const f=(R.byId[id]||{}).provides||[];
+  if(f.includes("collagen_rich")) return "forgiving";        // braises are very forgiving
+  if(f.includes("fat_solid")||f.includes("fat_liquid")) return "forgiving";
+  return "delicate";
+}
+/* the reasoning line, derived from behaviour x forgiveness (authored notes still win) */
+function cutReason(behaviour,forgiveness,mins){
+  const t = mins?(" \u2014 about "+mins+" min."):".";
+  if(behaviour==="braise") return "A collagen-rich cut, braised low and slow until it pulls apart"+t;
+  if(behaviour==="mince")  return "Minced, so it cooks fast"+t;
+  if(forgiveness==="forgiving") return "A fattier, forgiving cut \u2014 cooks fast and stays moist even if a little overdone"+t;
+  return "A lean cut \u2014 cook it quick and gently, it dries out if overdone"+t;
+}
+
+/* Resolve a meat ingredient line to {muscle, meat, collagen, form, behaviour}. */
+function meatProfile(raw,R){
+  const id=R.match(raw); if(!id) return null;
+  const ing=R.byId[id]; if(!ing) return null;
+  const anc=R.anc[id]||new Set();
+  const isMeat = ing.category==="proteins" && (anc.has("meat")||["beef","pork","chicken","mutton"].some(m=>anc.has(m)||id===m||ing.parent===m));
+  if(!isMeat) return null;
+  // walk up to the species node (child of "meat"/"proteins")
+  let meat=id, p=ing.parent;
+  while(p && !["meat","proteins",null].includes(p)){ meat=p; p=(R.byId[p]||{}).parent; }
+  const collagen=collagenOf(id,raw,R);
+  const form=detectForm(raw);
+  const flags=(R.byId[id]||{}).provides||[];
+  const fat=flags.includes("fat_solid")||flags.includes("fat_liquid");
+  return {muscle:id, meat, collagen, fat, form,
+          behaviour:meatBehaviour(collagen,form), forgiveness:forgivenessOf(id,R)};
+}
+
+/* ============================================================
+   DISH ARCHETYPE — how a dish is CONSTRUCTED, which governs whether
+   a protein swap is free or needs a method change.
+     coat    : protein cooked alone, then tossed in a separate sauce  -> swap any protein freely
+     braise  : protein cooked long in liquid (collagen-driven)        -> swap only among braise-suited; flag lean
+     simmer  : protein cooked in liquid, shorter                      -> flag when behaviour differs
+     poach/steam : gentle wet cooking                                 -> flag when behaviour differs
+     stir_fry: protein + aromatics cooked fast together               -> quick swaps safe
+     bake/fry_dry : protein cooked dry, no sauce to couple to         -> swap fry-able proteins
+   Detected from the steps; an authored `build` field overrides. */
+function classifyArchetype(d,R){
+  if(d.build) return {archetype:d.build, confidence:"authored", reason:"set by build tag"};
+  const t=(d.steps||[]).join(" ").toLowerCase();
+  const coat = /\b(set aside|drain|remove from)/.test(t) && /\b(toss|coat|return the|back (in|to))/.test(t);
+  const braiseKw=/\b(brais|stew)/.test(t), poach=/\bpoach/.test(t), steam=/\bsteam/.test(t),
+        simmer=/\bsimmer/.test(t), stir=/stir[- ]?fry/.test(t),
+        dry=/\b(bake|baked|roast|air[- ]?fry|deep[- ]?fry|fry|grill)/.test(t);
+  const b=dishBehaviour(d.ingredients,R);
+  const braise = braiseKw || (b&&b.behaviour==="braise");
+  if(coat){
+    if(stir) return {archetype:"coat", confidence:"low", reason:"reads as both coat and stir-fry \u2014 confirm which"};
+    return {archetype:"coat", confidence:"high", reason:"protein cooked apart, then sauced"};
+  }
+  if(braise) return {archetype:"braise", confidence:"high", reason:"protein cooked long in liquid"};
+  if(poach)  return {archetype:"poach",  confidence:"high", reason:"gentle wet cooking"};
+  if(steam)  return {archetype:"steam",  confidence:"high", reason:"steamed"};
+  if(simmer) return {archetype:"simmer", confidence:"medium", reason:"protein simmered in liquid"};
+  if(stir)   return {archetype:"stir_fry", confidence:"medium", reason:"stir-fried"};
+  if(dry)    return {archetype:"fry_dry", confidence:"medium", reason:"cooked dry \u2014 no sauce to couple to"};
+  return {archetype:"unknown", confidence:"none", reason:"no construction signal found"};
+}
+function dishArchetype(d,R){ return classifyArchetype(d,R).archetype; }
+
+/* Given a dish's archetype + its current protein behaviour, is swapping to a
+   protein of `newBehaviour` free, or does it need a heads-up? (the (c) hybrid) */
+function swapSafety(arch,curBehaviour,newBehaviour){
+  if(arch==="coat"||arch==="fry_dry") return {safe:true,flag:null};   // protein cooked to its own doneness
+  if(arch==="stir_fry")
+    return newBehaviour==="braise" ? {safe:true,flag:"this cut wants a slow braise, not a quick stir-fry"} : {safe:true,flag:null};
+  // coupled wet methods: braise / simmer / poach / steam
+  if(newBehaviour===curBehaviour) return {safe:true,flag:null};
+  if(curBehaviour==="braise"&&newBehaviour!=="braise")
+    return {safe:true,flag:"cooks much faster than a braise \\u2014 shorten it to a simmer"};
+  if(curBehaviour!=="braise"&&newBehaviour==="braise")
+    return {safe:true,flag:"needs a long braise \\u2014 a quick simmer won't tenderise it"};
+  return {safe:true,flag:"cooks differently \\u2014 adjust the time"};
 }
 
 function prepVerb(d,n){return (d&&d.prep_overrides&&d.prep_overrides[n])||PREP_VERB[n]||"prep";}
@@ -839,7 +996,7 @@ function render(){
     ? `<div class="cuinote">No ${chosen} ${offCui.map(d=>ROLELAB[d.role].toLowerCase()).join(" or ")} dish in the catalogue \u2014 filled with ${offCui.map(d=>"<b>"+d.name+"</b>").join(", ")}.</div>`
     : "";
   const cards=list.map((d,i)=>`<div class="dish" onclick="openD(${i})"><button class="reroll" onclick="rerollOne(${i},event)" aria-label="Swap this dish" title="Swap this dish">\u21bb</button><span class="role">${d.role}${d._packed?" \u00b7 pack":""}</span>
-     <div class="nm">${d.name}</div>${d.protein_tag?`<div class="ptag">${d.protein_tag}</div>`:""}<div class="chips">${chips(d)}</div><div class="taste">${tasteSig(d)}</div></div>`).join("");
+     <div class="nm">${d.name}</div>${d.protein_tag?`<div class="ptag">${d.protein_tag}</div>`:""}${d.needs?`<div class="needs">needs ${d.needs}</div>`:""}<div class="chips">${chips(d)}</div><div class="taste">${tasteSig(d)}</div></div>`).join("");
   const stations={}; sc.items.forEach(it=>{(stations[it.ap]=stations[it.ap]||[]).push(it);});
   const KORDER=APPLIANCE_ORDER;
   const box=ap=>{const its=stations[ap]||[];const active=its.length>0;
@@ -898,7 +1055,7 @@ function swapCut(i,key){const d=meal[i];const o=d.cuts.options[key];
 function openD(i){const d=eff(meal[i]);const ap=bestOption(d).appliance;
   const variant=d.steps_variants&&d.steps_variants[ap];const steps=variant||d.steps;
   sheet.innerHTML=`<button class="close" onclick="closeD()">×</button><span class="role" style="font-family:'Space Mono';font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)">${d.role} · ${APPL[ap]}</span>
-   <h3>${d.name}</h3>${d.protein_tag?`<div class="ptag">${d.protein_tag}</div>`:""}<div class="chips">${chips(d)}</div>
+   <h3>${d.name}</h3>${d.protein_tag?`<div class="ptag">${d.protein_tag}</div>`:""}${d.needs?`<div class="needs">needs ${d.needs}</div>`:""}<div class="chips">${chips(d)}</div>
    ${d._packed?`<div class="swaps">Using the <b>${d._packlabel}</b> \u2014 the from-scratch paste prep is skipped.</div>`:""}
    ${d.swaps?`<div class="swap"><span class="swaplab">Protein</span>${Object.keys(d.swaps.options).map(k=>`<button class="swapbtn ${(d._protein||d.swaps.default)===k?"on":""}" onclick="swapProtein(${i},'${k}')">${d.swaps.options[k].label}</button>`).join("")}</div>`:""}
    ${d.cuts?(()=>{const opts=d.cuts.options,cur=d._cut||d.cuts.default;const byRole={};Object.keys(opts).forEach(k=>{const r=opts[k].cut_role||"other";(byRole[r]=byRole[r]||[]).push(k);});const RL={braise:"Braise \u2014 low & slow",quick:"Quick \u2014 sear or fry",mince:"Minced",other:"Other"};const order=["braise","quick","mince","other"].filter(r=>byRole[r]);const groups=order.map(r=>`<div class="cutgroup"><span class="cutgrouplab">${RL[r]}</span><div class="cutbtns">${byRole[r].map(k=>`<button class="swapbtn ${cur===k?"on":""}" onclick="swapCut(${i},'${k}')">${opts[k].label}</button>`).join("")}</div></div>`).join("");const o=opts[cur];const note=(o.note||(o.cut_role==="braise"?"A collagen-rich cut, braised low and slow":o.cut_role==="quick"?"A lean cut, cooked quick":"Minced"))+" \u2014 about "+o.time.ready_in_min+" min.";const interch=byRole[o.cut_role]&&byRole[o.cut_role].length>1?`<div class="cutinterch">${byRole[o.cut_role].map(k=>opts[k].label).join(", ")} are interchangeable here \u2014 they ${o.cut_role==="braise"?"braise":"cook"} alike.</div>`:"";return `<div class="swap cutswap"><span class="swaplab">Cut</span><div class="cutgroups">${groups}</div></div><div class="cutnote">${note}</div>${interch}`;})():""}
@@ -929,7 +1086,7 @@ function findSubstitute(d,ap){
     const scope=d.role==="soup"?cands.filter(c=>c.role!=="dessert"):cands;
     const kl=protLabel(key);
     let best=null,bs=0;const ds=d.cook_style;
-    scope.forEach(c=>{const ck=keyOf(c);if(ck&&GROC_CAT[ck]==="Meat & protein"&&protLabel(ck)===kl){const s=10+(c.cuisine===d.cuisine?2:0)+(c.role===d.role?3:0)+(ds&&c.cook_style===ds?6:0);if(s>bs){bs=s;best=c;}}});
+    scope.forEach(c=>{const ck=keyOf(c);if(ck&&GROC_CAT[ck]==="Meat & protein"&&protLabel(ck)===kl){const s=10+(c.cuisine===d.cuisine?2:0)+(c.role===d.role?3:0)+(ds&&c.cook_style===ds?6:0)+(d.forgiveness&&c.forgiveness===d.forgiveness?1:0);if(s>bs){bs=s;best=c;}}});
     if(best){const mism=ds&&best.cook_style&&best.cook_style!==ds?{want:ds,got:best.cook_style}:null;return {sub:best,mode:d.role==="soup"?"soup":"protein",sameRole:best.role===d.role,styleMismatch:mism};}
     const alts={};
     scope.forEach(c=>{const ck=keyOf(c);if(ck&&GROC_CAT[ck]==="Meat & protein"){const lab=protLabel(ck);if(lab!==kl&&(!alts[lab]||(c.role===d.role&&alts[lab].role!==d.role)))alts[lab]=c;}});
