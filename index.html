@@ -792,7 +792,7 @@ function swapSafety(arch,curBehaviour,newBehaviour){
    ============================================================ */
 
 /* how alike are two ingredients? higher = closer substitute. */
-const SUB_FAMILY_FLAGS=["grain_rice","collagen_rich","leafy","root_veg","allium"]; // fine-grained "same kind" tags
+const SUB_FAMILY_FLAGS=["grain_rice","collagen_rich","leafy","root_veg","allium","fruit_sweet"]; // fine-grained "same kind" tags
 function subScore(aId,bId,R){
   const A=R.byId[aId], B=R.byId[bId];
   if(!A||!B||aId===bId) return -1;
@@ -822,18 +822,18 @@ function subScore(aId,bId,R){
 
 /* ranked substitutes for one ingredient.
    have = Set of ingredient ids the cook has on hand (for the toggle). */
-function substitutesFor(id,R,{have=null,limit=5,dishRole=null}={}){
-  const src=R.byId[id]||{}; const sp=new Set(src.provides||[]);
+function substitutesFor(id,R,{have=null,limit=5,dish=null}={}){
   const cands=[];
   for(const other in R.byId){
     let s=subScore(id,other,R);
     if(s<=0) continue;
-    const op=new Set((R.byId[other]||{}).provides||[]);
-    // LOAD-BEARING RULE: in a dessert, a sweet ingredient must not swap to a non-sweet one.
-    if(dishRole==="dessert" && sp.has("sweet") && !op.has("sweet")) continue;
-    let flag=null;
-    if(sp.has("sweet")!==op.has("sweet")) flag = op.has("sweet")?"sweeter than the original":"less sweet than the original";
-    cands.push({id:other, name:R.byId[other].name, score:s, flag, onHand: have?have.has(other):false});
+    let flag=null, rename=null;
+    if(dish){
+      const c=swapConstraint(dish,id,other,R);
+      if(c.block) continue;                // property is essential -> not offered
+      flag=c.flag||null; rename=c.rename||null;
+    }
+    cands.push({id:other, name:R.byId[other].name, score:s, flag, rename, onHand: have?have.has(other):false});
   }
   cands.sort((a,b)=> (b.onHand-a.onHand) || (b.score-a.score));   // on-hand first, then closeness
   return cands.slice(0,limit);
@@ -859,8 +859,8 @@ function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}
       // --- do we have it at all? (self, or an on-hand substitute) ---
       let sourceId=null;
       if(have.has(g.id)) sourceId=g.id;
-      else { const sub=substitutesFor(g.id,R,{have,limit:3,dishRole:d.role}).find(x=>x.onHand);
-             if(sub){sourceId=sub.id; subs.push({need:g.name,use:sub.name,flag:sub.flag});} }
+      else { const sub=substitutesFor(g.id,R,{have,limit:3,dish:d}).find(x=>x.onHand);
+             if(sub){sourceId=sub.id; subs.push({need:g.name,use:sub.name,flag:sub.flag,rename:sub.rename});} }
       if(!sourceId){ missing.push(g); return; }
       // --- do we have ENOUGH? (only where units line up; otherwise presence is enough) ---
       const p=pantry[sourceId]||{};
@@ -882,9 +882,10 @@ function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}
     });
     const ratio=covered/comps.length;
     if(mode==="have"){ if(ratio<1) return; }                    // strict: must be fully covered
+    const renamed=(subs.find(x=>x.rename)||{}).rename||null;
     out.push({
-      dish:d.name, role:d.role, ratio, covered, total:comps.length, subs, short,
-      buy: missing.map(m=>{ const best=substitutesFor(m.id,R,{have,limit:1,dishRole:d.role})[0];
+      dish:d.name, displayName:renamed||d.name, role:d.role, ratio, covered, total:comps.length, subs, short,
+      buy: missing.map(m=>{ const best=substitutesFor(m.id,R,{have,limit:1,dish:d})[0];
         return {item:m.name, closest: best?best.name:null}; })
     });
   });
@@ -927,6 +928,117 @@ function requiredCount(qty,unit){
   // a bare number, or a piece-y unit, counts as pieces; a weight/volume unit does not
   if(!unit||["piece","pieces","whole","clove","cloves","block","can","stalk","stalks","sheet"].includes(unit)) return qty;
   return null;
+}
+
+/* ============================================================
+   SWAP CONSTRAINTS — one table for "the dish's context defines a property
+   a swap must respect." Every rule that governs whether an ingredient can be
+   swapped lives here, so there's a single place to reason about and extend.
+   Returns {block, flag, rename}:
+     block  : this swap is not allowed (the property is essential)
+     flag   : allowed, but note the difference
+     rename : allowed, but the dish should be renamed (title-named ingredient)
+   ============================================================ */
+function swapConstraint(dish, fromId, toId, R){
+  const from=R.byId[fromId]||{}, to=R.byId[toId]||{};
+  const fp=new Set(from.provides||[]), tp=new Set(to.provides||[]);
+  const dishName=(dish.name||"").toLowerCase();
+  const fromName=(from.name||"").toLowerCase();
+  const toName=(to.name||"").toLowerCase();
+
+  // RULE 1 — TITLE-NAMED INGREDIENT. If the dish is named after this ingredient,
+  // it's the dish's identity. Two flavours:
+  //   * mandatory word ("... soup/bean") -> BLOCK (no red bean = not red bean soup)
+  //   * otherwise -> RENAME (apple muffin made with pineapple = pineapple muffin)
+  if(fromName && dishName.includes(fromName)){
+    const mandatory=/\b(soup|bean|beans)\b/.test(dishName);   // named + a "must-contain" word
+    if(mandatory) return {block:true};
+    return {rename: dish.name.replace(new RegExp(from.name,"i"), to.name)};
+  }
+
+  // RULE 2 — DESSERT PROTECTS SWEETNESS. In a dessert, a sweet ingredient can't
+  // become a non-sweet one.
+  if(dish.role==="dessert" && fp.has("sweet") && !tp.has("sweet")) return {block:true};
+
+  // RULE 3 — BRAISE PROTECTS COLLAGEN. A braise's protein must stay braise-suited.
+  if(dish.build==="braise" && fp.has("collagen_rich") && !tp.has("collagen_rich"))
+    return {flag:"cooks faster than a braise \u2014 shorten it to a simmer"};
+
+  // RULE 4 — SWEETNESS SHIFT (savoury). A sweet<->savoury swap is usable but noted.
+  if((from.category==="vegetables"||from.category==="starches") && fp.has("sweet")!==tp.has("sweet"))
+    return {flag: tp.has("sweet")?"sweeter than the original":"less sweet than the original"};
+
+  return {};   // no constraint
+}
+
+/* ============================================================
+   VARIANT GENERATOR — draft a protein variant of an existing dish.
+   Derives everything derivable (name, ingredients, renamed steps,
+   behaviour) and FLAGS what only a curator can verify — chiefly the
+   stated cook times, which are authored for the ORIGINAL protein.
+   Output is a ready-to-paste swaps option. NEVER commit unblessed.
+   ============================================================ */
+function _titleCaseName(s){ return s.replace(/\b\w/g,c=>c.toUpperCase()); }
+function generateVariant(dish, targetId, R, allDishes){
+  const tgt=R.byId[targetId];
+  if(!tgt || tgt.category!=="proteins") return {ok:false, reason:"target is not a protein in the taxonomy"};
+  // find the dish's protein line
+  const prot=(dish.grocery_items||[]).find(g=>(R.byId[g.id]||{}).category==="proteins" && g.id!=="egg");
+  if(!prot) return {ok:false, reason:"dish has no swappable protein line"};
+  const rawLine=(dish.ingredients||[]).find(l=>R.match(l)===prot.id);
+  if(!rawLine) return {ok:false, reason:"could not locate the protein ingredient line"};
+
+  // constraint gate (title-mandatory, dessert-sweet, etc.)
+  const con=swapConstraint(dish, prot.id, targetId, R);
+  if(con.block) return {ok:false, reason:"blocked: this ingredient is essential to the dish's identity"};
+
+  // behaviour comparison — the honest core
+  const srcProf=meatProfile(rawLine,R);
+  const tgtLine=rawLine.toLowerCase().replace(new RegExp((R.byId[prot.id].name||"").toLowerCase(),"i"), tgt.name.toLowerCase());
+  const tgtLine2 = tgtLine!==rawLine.toLowerCase()? tgtLine :
+      rawLine.toLowerCase().replace(/\b(chicken thigh|chicken breast|chicken|beef chuck|beef brisket|beef short rib|beef|pork ribs|pork belly|pork shoulder|pork loin|pork|mutton|fish|prawn|salmon)\b/i, tgt.name.toLowerCase());
+  const tgtProf=meatProfile(tgtLine2,R) || {behaviour:"quick",forgiveness:forgivenessOf(targetId,R)};
+
+  // name: replace the original protein's name in the title, else prefix
+  const srcName=(R.byId[prot.id].name||"");
+  const baseMeat=srcName.split(" ")[0];
+  let newName=dish.name;
+  if(new RegExp(srcName,"i").test(newName)) newName=newName.replace(new RegExp(srcName,"i"), tgt.name);
+  else if(new RegExp("\\b"+baseMeat+"\\b","i").test(newName)) newName=newName.replace(new RegExp("\\b"+baseMeat+"\\b","i"), tgt.name);
+  else newName=tgt.name+" "+newName;
+  newName=_titleCaseName(newName);
+
+  // ingredients + steps: rename the protein everywhere
+  const renameRe=new RegExp("\\b"+srcName.replace(/ /g,"[ -]")+"\\b|\\b"+baseMeat+"\\b","gi");
+  const ingredients=(dish.ingredients||[]).map(l=> l===rawLine ? l.replace(renameRe, tgt.name.toLowerCase()) : l);
+  const steps=(dish.steps||[]).map(s=>s.replace(renameRe, tgt.name.toLowerCase()));
+
+  // FLAGS — what a human must verify
+  const flags=[];
+  if(con.flag) flags.push("behaviour: "+con.flag);
+  if(srcProf && srcProf.behaviour!==tgtProf.behaviour)
+    flags.push("cook behaviour changes "+srcProf.behaviour+" \u2192 "+tgtProf.behaviour+" \u2014 the method and times below were written for "+srcName.toLowerCase()+".");
+  (dish.steps||[]).forEach((s,i)=>{
+    const mins=explicitMinutes(s);
+    if(mins!=null){
+      const dir = (srcProf&&srcProf.behaviour!=="braise"&&tgtProf.behaviour==="braise") ? "likely needs LONGER"
+                : (srcProf&&srcProf.behaviour==="braise"&&tgtProf.behaviour!=="braise") ? "likely needs SHORTER"
+                : "verify for "+tgt.name.toLowerCase();
+      flags.push("step "+(i+1)+" states "+mins+" min \u2014 authored for "+srcName.toLowerCase()+"; "+dir+".");
+    }
+  });
+  if(/skin[- ]side/i.test((dish.steps||[]).join(" ")) && !/chicken|duck/i.test(tgt.name))
+    flags.push("steps mention 'skin-side' \u2014 reword for "+tgt.name.toLowerCase()+".");
+  flags.push("quantity kept at the original's \u2014 confirm it suits "+tgt.name.toLowerCase()+".");
+
+  if(allDishes && allDishes.some(x=>x.name.toLowerCase()===newName.toLowerCase()))
+    return {ok:false, reason:"'"+newName+"' already exists in the catalogue \u2014 no draft needed"};
+
+  return { ok:true, name:newName,
+    swapsOption:{ key:targetId, label:tgt.name, name:newName, ingredients, steps,
+                  handson_action:dish.handson_action },
+    behaviour:{from:srcProf?srcProf.behaviour:"?", to:tgtProf.behaviour},
+    flags };
 }
 
 function prepVerb(d,n){return (d&&d.prep_overrides&&d.prep_overrides[n])||PREP_VERB[n]||"prep";}

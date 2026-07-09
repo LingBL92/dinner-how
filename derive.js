@@ -674,3 +674,73 @@ function swapConstraint(dish, fromId, toId, R){
 
   return {};   // no constraint
 }
+
+/* ============================================================
+   VARIANT GENERATOR — draft a protein variant of an existing dish.
+   Derives everything derivable (name, ingredients, renamed steps,
+   behaviour) and FLAGS what only a curator can verify — chiefly the
+   stated cook times, which are authored for the ORIGINAL protein.
+   Output is a ready-to-paste swaps option. NEVER commit unblessed.
+   ============================================================ */
+function _titleCaseName(s){ return s.replace(/\b\w/g,c=>c.toUpperCase()); }
+function generateVariant(dish, targetId, R, allDishes){
+  const tgt=R.byId[targetId];
+  if(!tgt || tgt.category!=="proteins") return {ok:false, reason:"target is not a protein in the taxonomy"};
+  // find the dish's protein line
+  const prot=(dish.grocery_items||[]).find(g=>(R.byId[g.id]||{}).category==="proteins" && g.id!=="egg");
+  if(!prot) return {ok:false, reason:"dish has no swappable protein line"};
+  const rawLine=(dish.ingredients||[]).find(l=>R.match(l)===prot.id);
+  if(!rawLine) return {ok:false, reason:"could not locate the protein ingredient line"};
+
+  // constraint gate (title-mandatory, dessert-sweet, etc.)
+  const con=swapConstraint(dish, prot.id, targetId, R);
+  if(con.block) return {ok:false, reason:"blocked: this ingredient is essential to the dish's identity"};
+
+  // behaviour comparison — the honest core
+  const srcProf=meatProfile(rawLine,R);
+  const tgtLine=rawLine.toLowerCase().replace(new RegExp((R.byId[prot.id].name||"").toLowerCase(),"i"), tgt.name.toLowerCase());
+  const tgtLine2 = tgtLine!==rawLine.toLowerCase()? tgtLine :
+      rawLine.toLowerCase().replace(/\b(chicken thigh|chicken breast|chicken|beef chuck|beef brisket|beef short rib|beef|pork ribs|pork belly|pork shoulder|pork loin|pork|mutton|fish|prawn|salmon)\b/i, tgt.name.toLowerCase());
+  const tgtProf=meatProfile(tgtLine2,R) || {behaviour:"quick",forgiveness:forgivenessOf(targetId,R)};
+
+  // name: replace the original protein's name in the title, else prefix
+  const srcName=(R.byId[prot.id].name||"");
+  const baseMeat=srcName.split(" ")[0];
+  let newName=dish.name;
+  if(new RegExp(srcName,"i").test(newName)) newName=newName.replace(new RegExp(srcName,"i"), tgt.name);
+  else if(new RegExp("\\b"+baseMeat+"\\b","i").test(newName)) newName=newName.replace(new RegExp("\\b"+baseMeat+"\\b","i"), tgt.name);
+  else newName=tgt.name+" "+newName;
+  newName=_titleCaseName(newName);
+
+  // ingredients + steps: rename the protein everywhere
+  const renameRe=new RegExp("\\b"+srcName.replace(/ /g,"[ -]")+"\\b|\\b"+baseMeat+"\\b","gi");
+  const ingredients=(dish.ingredients||[]).map(l=> l===rawLine ? l.replace(renameRe, tgt.name.toLowerCase()) : l);
+  const steps=(dish.steps||[]).map(s=>s.replace(renameRe, tgt.name.toLowerCase()));
+
+  // FLAGS — what a human must verify
+  const flags=[];
+  if(con.flag) flags.push("behaviour: "+con.flag);
+  if(srcProf && srcProf.behaviour!==tgtProf.behaviour)
+    flags.push("cook behaviour changes "+srcProf.behaviour+" \u2192 "+tgtProf.behaviour+" \u2014 the method and times below were written for "+srcName.toLowerCase()+".");
+  (dish.steps||[]).forEach((s,i)=>{
+    const mins=explicitMinutes(s);
+    if(mins!=null){
+      const dir = (srcProf&&srcProf.behaviour!=="braise"&&tgtProf.behaviour==="braise") ? "likely needs LONGER"
+                : (srcProf&&srcProf.behaviour==="braise"&&tgtProf.behaviour!=="braise") ? "likely needs SHORTER"
+                : "verify for "+tgt.name.toLowerCase();
+      flags.push("step "+(i+1)+" states "+mins+" min \u2014 authored for "+srcName.toLowerCase()+"; "+dir+".");
+    }
+  });
+  if(/skin[- ]side/i.test((dish.steps||[]).join(" ")) && !/chicken|duck/i.test(tgt.name))
+    flags.push("steps mention 'skin-side' \u2014 reword for "+tgt.name.toLowerCase()+".");
+  flags.push("quantity kept at the original's \u2014 confirm it suits "+tgt.name.toLowerCase()+".");
+
+  if(allDishes && allDishes.some(x=>x.name.toLowerCase()===newName.toLowerCase()))
+    return {ok:false, reason:"'"+newName+"' already exists in the catalogue \u2014 no draft needed"};
+
+  return { ok:true, name:newName,
+    swapsOption:{ key:targetId, label:tgt.name, name:newName, ingredients, steps,
+                  handson_action:dish.handson_action },
+    behaviour:{from:srcProf?srcProf.behaviour:"?", to:tgtProf.behaviour},
+    flags };
+}
