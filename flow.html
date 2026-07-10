@@ -56,8 +56,13 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 <header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="canvas">
   <svg id="wires"></svg>
+  <div class="col" id="col-pantry">
+    <div class="colhead">Pantry</div>
+    <div class="comp" id="comp-pantry"><div class="comphead">Always on hand</div><div id="pantry-ports"></div></div>
+    <div class="hint">Checked = you have it. Uncheck anything you're out of.</div>
+  </div>
   <div class="col" id="col-ing">
-    <div class="colhead">Ingredients</div>
+    <div class="colhead">Add ingredients</div>
     <input id="search" placeholder="search an ingredient &mdash; try salmon" autocomplete="off">
     <div class="hint" id="ing-hint">Type and press Enter. A component appears with its family &mdash; tap a port to wire it in.</div>
     <div id="ingcomps" style="display:flex;flex-direction:column;gap:14px"></div>
@@ -834,7 +839,8 @@ function generateVariant(dish, targetId, R, allDishes){
 
 
 /* ================= FLOW STATE ================= */
-const FLOW={comps:[],active:new Set(),appl:new Set(["stovetop","oven"]),taste:new Set(),results:[]};
+const PANTRY_ITEMS=["garlic","onion","ginger","egg","scallion","chilli","salt","pepper","white_sugar","vegetable_oil","sesame_oil","soy_sauce","oyster_sauce"];
+const FLOW={comps:[],active:new Set(),pantry:new Set(PANTRY_ITEMS),appl:new Set(["stovetop","oven"]),taste:new Set(),results:[]};
 let REF=null,DISHES=[],APPL={},APPLIANCE_ORDER=[];
 const TASTE_AXES=["sweet","sour","salty","umami","fat","heat"];
 const TOP_CATS=new Set(["proteins","vegetables","fruits","starches","dairy","fats_oils","seasonings","condiments","acids","sweeteners","leaveners"]);
@@ -885,12 +891,23 @@ function removeComp(key){
   FLOW.comps=FLOW.comps.filter(x=>x.key!==key);
   renderComps(); recompute();
 }
+function togglePantry(id){ FLOW.pantry.has(id)?FLOW.pantry.delete(id):FLOW.pantry.add(id); renderPantry(); recompute(); }
+function renderPantry(){
+  const box=el("pantry-ports"); if(!box)return; box.innerHTML="";
+  PANTRY_ITEMS.forEach(id=>{
+    const on=FLOW.pantry.has(id);
+    const p=document.createElement("div"); p.className="port"+(on?" on":"");
+    p.innerHTML="<span>"+((REF.byId[id]||{}).name||id)+"</span><span class=\"dot\" data-pantry=\""+id+"\"></span>";
+    p.onclick=()=>togglePantry(id);
+    box.appendChild(p);
+  });
+}
 function toggleAppl(a){ FLOW.appl.has(a)?FLOW.appl.delete(a):FLOW.appl.add(a); renderAppl(); recompute(); }
 function toggleTaste(t){ FLOW.taste.has(t)?FLOW.taste.delete(t):FLOW.taste.add(t); renderTaste(); recompute(); }
 
 function recompute(){
-  const ids=[...FLOW.active];
-  if(!ids.length||!FLOW.appl.size){ FLOW.results=[]; renderRecipes(); requestAnimationFrame(drawWires); return; }
+  const ids=[...new Set([...FLOW.active, ...FLOW.pantry])];
+  if(!FLOW.active.size||!FLOW.appl.size){ FLOW.results=[]; renderRecipes(); requestAnimationFrame(drawWires); return; }
   const pantry={}; ids.forEach(id=>pantry[id]={});
   const cookable=DISHES.filter(d=>(d.appliance_options||[]).some(o=>FLOW.appl.has(o.appliance)));
   let res=searchByIngredients(cookable,pantry,REF,{mode:"shop"});
@@ -999,7 +1016,8 @@ function drawWires(){
   const aIn=anchor(applC, vertical?"top":"left", cr, cv);
   document.querySelectorAll(".port.on .dot").forEach(dot=>{
     const p=anchor(dot,"mid",cr,cv);
-    html+=wire(p, vertical?{x:aIn.x,y:aIn.y-4}:{x:aIn.x-4,y:aIn.y}, 2, .5);
+    const isPantry=dot.getAttribute&&dot.getAttribute("data-pantry");
+    html+=wire(p, vertical?{x:aIn.x,y:aIn.y-4}:{x:aIn.x-4,y:aIn.y}, isPantry?1.4:2, isPantry?.32:.5);
   });
   // appliance -> taste -> recipes : anchor to the COLUMNS (always sized), not the inner scroller
   const hasFlow = FLOW.active.size && FLOW.appl.size;
@@ -1043,7 +1061,7 @@ async function boot(){
     const R=buildReference(ingData); REF=R;
     (applData.appliances||[]).sort((a,b)=>a.order-b.order).forEach(a=>{APPL[a.id]=a.name;APPLIANCE_ORDER.push(a.id);});
     DISHES=hydrate(dishData.dishes,R,methodData);
-    renderAppl(); renderTaste(); renderRecipes();
+    renderPantry(); renderAppl(); renderTaste(); renderRecipes();
     const s=el("search");
     if(s) s.addEventListener("keydown",e=>{ if(e.key==="Enter"){ const ok=spawn(s.value); if(ok)s.value=""; }});
     window.addEventListener("resize",()=>requestAnimationFrame(drawWires));
