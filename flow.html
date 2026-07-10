@@ -13,8 +13,11 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   background-image:radial-gradient(rgba(27,16,11,.10) 1px,transparent 1px);background-size:22px 22px;
   display:flex;gap:34px;align-items:flex-start}
 #wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
-.col{position:relative;z-index:2;display:flex;flex-direction:column;gap:14px;min-width:220px;max-width:250px}
+.col{position:relative;z-index:2;display:flex;flex-direction:column;gap:14px;min-width:150px;max-width:180px}
 #col-out{max-width:520px}
+#col-ctrl{min-width:96px;max-width:110px}
+#col-type{min-width:120px;max-width:140px}
+#col-app{min-width:140px;max-width:165px}
 .colhead{font-family:"Space Mono",monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
 @media(max-width:760px){
   .col{position:relative}
@@ -92,7 +95,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   <div class="col" id="col-pantry">
     <div class="colhead">Pantry</div>
     <div class="topspace"><p class="coldesc">Everyday things you keep on hand. Uncheck what you’re out of.</p></div>
-    <div class="comp" id="comp-pantry"><div class="comphead">Always on hand</div><div id="pantry-ports"></div></div>
+    <div class="comp" id="comp-pantry"><div class="comphead">Pantry</div><div id="pantry-ports"></div></div>
     <div class="hint">Checked = you have it. Uncheck anything you're out of.</div>
   </div>
   <div class="col" id="col-ing">
@@ -109,9 +112,9 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
     <div class="comp" id="comp-appl"><div class="comphead">Your kitchen</div><div id="appl-ports"></div></div>
   </div>
   <div class="col" id="col-type">
-    <div class="colhead">Type of dish</div>
+    <div class="colhead">&nbsp;</div>
     <div class="topspace"><p class="coldesc">Optional. Narrow to a kind of dish before recipes come out.</p></div>
-    <div class="comp" id="comp-type"><div class="comphead">Kind</div><div id="type-ports"></div></div>
+    <div class="comp" id="comp-type"><div class="comphead">Type of dish</div><div id="type-ports"></div></div>
   </div>
 
   <div class="col" id="col-out" data-anchor="out">
@@ -122,9 +125,9 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
     </div>
   </div>
   <div class="col" id="col-ctrl">
-    <div class="colhead">Taste</div>
+    <div class="colhead">&nbsp;</div>
     <div class="topspace"><p class="coldesc">Optional. Lean the ranking toward a flavour you’re after.</p></div>
-    <div class="comp" id="comp-taste"><div class="comphead">Lean the ranking</div><div id="taste-ports"></div></div>
+    <div class="comp" id="comp-taste"><div class="comphead">Taste</div><div id="taste-ports"></div></div>
   </div>
 </div>
 <div id="overlay"><div id="sheet"></div></div>
