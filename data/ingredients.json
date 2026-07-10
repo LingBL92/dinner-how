@@ -1046,6 +1046,22 @@
    "category": "starches"
   },
   {
+   "id": "noodles",
+   "name": "Noodles",
+   "aliases": [
+    "noodle",
+    "wheat noodles",
+    "egg noodles"
+   ],
+   "provides": [
+    "starch"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "measure",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
    "id": "vegetables",
    "name": "Vegetables",
    "aliases": [],
