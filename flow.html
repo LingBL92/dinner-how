@@ -91,6 +91,11 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
     <div class="topspace"><p class="coldesc">Turn on the appliances you own. Dishes that can’t run on them drop out.</p></div>
     <div class="comp" id="comp-appl"><div class="comphead">Your kitchen</div><div id="appl-ports"></div></div>
   </div>
+  <div class="col" id="col-type">
+    <div class="colhead">Type of dish</div>
+    <div class="topspace"><p class="coldesc">Optional. Narrow to a kind of dish before recipes come out.</p></div>
+    <div class="comp" id="comp-type"><div class="comphead">Kind</div><div id="type-ports"></div></div>
+  </div>
 
   <div class="col" id="col-out" data-anchor="out">
     <div class="colhead">Recipes</div>
@@ -100,10 +105,9 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
     </div>
   </div>
   <div class="col" id="col-ctrl">
-    <div class="colhead">Refine</div>
-    <div class="topspace"><p class="coldesc">Filter the output by kind of dish, then lean the ranking.</p></div>
-    <div class="comp" id="comp-type"><div class="comphead">Type of dish</div><div id="type-ports"></div></div>
-    <div class="comp" id="comp-taste" style="margin-top:14px"><div class="comphead">Lean the ranking</div><div id="taste-ports"></div></div>
+    <div class="colhead">Taste</div>
+    <div class="topspace"><p class="coldesc">Optional. Lean the ranking toward a flavour you’re after.</p></div>
+    <div class="comp" id="comp-taste"><div class="comphead">Lean the ranking</div><div id="taste-ports"></div></div>
   </div>
 </div>
 <div id="overlay"><div id="sheet"></div></div>
@@ -1108,17 +1112,25 @@ function drawWires(){
     const isPantry=dot.getAttribute&&dot.getAttribute("data-pantry");
     html+=wire(p, vertical?{x:aIn.x,y:aIn.y-4}:{x:aIn.x-4,y:aIn.y}, isPantry?1.4:2, isPantry?.32:.5);
   });
-  // MAIN FLOW: appliance -> recipes (taste/type are side controls, not pipeline stages)
+  // MAIN FLOW: appliance -> type -> recipes  (type is a pipeline stage)
   const hasFlow = FLOW.active.size && FLOW.appl.size;
+  const typeC=el("comp-type");
   const aOut=anchor(applC, vertical?"bottom":"right", cr, cv);
   const rBox = (recInner && recInner.getBoundingClientRect && recInner.getBoundingClientRect().height>10) ? recInner : recC;
   const rIn =anchor(rBox, vertical?"top":"left", cr, cv);
   const on = hasFlow?.72:.28;
-  html+=wire(aOut,rIn,2.4,on);
-  // CONTROL WIRE: Refine column -> recipes (thin, dashed feel via low opacity), only when active
-  const ctrlC=el("comp-type");
-  if(ctrlC && (FLOW.types.size||FLOW.taste.size)){
-    const cIn=anchor(ctrlC, vertical?"top":"left", cr, cv);
+  if(typeC){
+    const tIn =anchor(typeC, vertical?"top":"left", cr, cv);
+    const tOut=anchor(typeC, vertical?"bottom":"right", cr, cv);
+    html+=wire(aOut,tIn,2.4,on);
+    html+=wire(tOut,rIn,2.4,on);
+  } else {
+    html+=wire(aOut,rIn,2.4,on);
+  }
+  // CONTROL WIRE: Taste -> recipes (thin), only when leaning
+  const tasteCtrl=el("comp-taste");
+  if(tasteCtrl && FLOW.taste.size){
+    const cIn=anchor(tasteCtrl, vertical?"top":"left", cr, cv);
     html+=wire(cIn, rIn, 1.4, .3);
   }
   svg.innerHTML=html;
