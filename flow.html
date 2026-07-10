@@ -14,6 +14,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   display:flex;gap:34px;align-items:flex-start}
 #wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
 .col{position:relative;z-index:2;display:flex;flex-direction:column;gap:14px;min-width:220px;max-width:250px}
+#col-out{max-width:520px}
 .colhead{font-family:"Space Mono",monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
 @media(max-width:760px){
   .col{position:relative}
@@ -49,7 +50,17 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .rmeta{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;font-family:"Space Mono",monospace;font-size:11px;color:var(--muted)}
 .rchip{font-size:10px;padding:1px 7px;border-radius:999px;background:rgba(50,117,100,.12);color:var(--cool)}
 .rbuy{color:var(--gold)}
-#recipes{display:flex;flex-direction:column;gap:9px;min-width:230px;max-width:280px}
+#recipes{display:flex;flex-direction:column;gap:9px;min-width:230px}
+#col-out{max-width:none}
+.rgrid{--rowlab:78px;display:grid;gap:6px;align-items:stretch}
+.gcorner{}
+.ghead{font-family:"Space Mono",monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--cool);padding:4px 6px;font-weight:700;border-bottom:2px solid var(--line);text-align:center}
+.growlab{font-family:"Space Mono",monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;align-items:center;padding-right:6px}
+.gcell{display:flex;flex-direction:column;gap:4px;padding:4px;border:1px solid var(--line);border-radius:8px;background:var(--panel);min-height:34px}
+.gcell.gempty{background:transparent;border:1px dashed rgba(220,205,186,.5)}
+.gchip{font-size:11.5px;line-height:1.2;padding:5px 7px;border-radius:6px;background:rgba(50,117,100,.08);color:var(--ink);cursor:pointer;transition:.12s}
+.gchip:hover{background:rgba(50,117,100,.16)}
+.gchip.gcombo{background:rgba(168,114,24,.14);font-weight:600}
 .rgroup{font-family:"Space Mono",monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--cool);margin:10px 0 2px}
 .rgroup:first-child{margin-top:0}
 #overlay{position:fixed;inset:0;background:rgba(27,16,11,.45);display:none;z-index:50}
@@ -66,7 +77,13 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .col{max-width:none;min-width:0;width:100%}
   .col>.comp{width:100%}
   #recipes{max-width:none;width:100%}
+  #col-out{max-width:none}
   #search{width:100%}
+  .rgrid{display:flex;flex-direction:column;gap:0}
+  .gcorner,.ghead{display:none}
+  .growlab{margin-top:12px;font-size:11px;color:var(--cool)}
+  .gcell.gempty{display:none}
+  .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
 <header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span></h1><a href="index.html">&larr; back to the composer</a></header>
@@ -1009,41 +1026,85 @@ function renderRecipes(){
   if(!FLOW.active.size){ box.innerHTML="<div class=\"hint\">Wire in an ingredient to see what flows out.</div>"; return; }
   if(!FLOW.appl.size){ box.innerHTML="<div class=\"hint\">Turn on at least one appliance.</div>"; return; }
   if(!FLOW.results.length){ box.innerHTML="<div class=\"hint\">Nothing flows from this yet &mdash; add another ingredient.</div>"; return; }
-  // wired ingredients that are NOT aromatics/assumed — these are candidate "heroes"
+
   const searched=[...FLOW.active];
   const heroable=searched.filter(id=>measureTypeOf(REF.byId[id])!=="assumed");
-  // for each result, which of MY ingredients does it use, and which is its hero?
+  const nameOf=id=>((REF.byId[id]||{}).name)||id;
+
+  // which of MY ingredients does a result use (dish has it, or a sub maps to it)
   function usesOf(r){
     const d=DISHES.find(x=>x.name===r.dish)||{};
     const ids=new Set((d.grocery_items||[]).map(g=>g.id));
-    // count a wired ingredient as "used" if the dish has it OR a sub maps to it
     const used=searched.filter(id=>ids.has(id) || (r.subs||[]).some(su=>{
       const useId=(REF.list.find(x=>x.name===su.use)||{}).id; return useId===id;
     }));
     return {d, used};
   }
-  function heroOf(d, used){
-    // the dish's central ingredient among the ones I wired: prefer its protein/base
-    const prot=(d.grocery_items||[]).find(g=>(REF.byId[g.id]||{}).category==="proteins" && g.id!=="egg");
-    const base=(d.grocery_items||[]).find(g=>(REF.byId[g.id]||{}).category==="starches");
-    const usedNonAromatic=used.filter(id=>measureTypeOf(REF.byId[id])!=="assumed");
-    if(prot && used.includes(prot.id)) return prot.id;
-    if(base && used.includes(base.id)) return base.id;
-    return usedNonAromatic[0] || used[0] || null;
-  }
 
-  // bucket every result
-  const combo=[]; const singles={};
+  // COLUMNS = wired ingredients that appear in at least one result (heroable first, aromatics after)
+  // ROWS = dish types (roles + one-pot) that appear
+  const TYPE_ROWS=[["base","Rice & noodles"],["meat","Meat"],["fish","Fish"],["veg","Vegetable"],["soup","Soup"],["dessert","Dessert"]];
+  function rowKeyFor(d){ return d.role; }              // a dish sits in its role row
+
+  // build cell map: cell[ingId][rowKey] = [ {r,idx} ... ]
+  const cell={}; const colUse={}; const rowUse={};
   FLOW.results.forEach((r,idx)=>{
     const {d,used}=usesOf(r);
-    const usedReal=used.filter(id=>measureTypeOf(REF.byId[id])!=="assumed" || heroable.length===0);
-    if(usedReal.length>=2){ combo.push({r,idx,d}); }
-    else { const h=heroOf(d,used)|| (used[0]||"_other"); (singles[h]=singles[h]||[]).push({r,idx,d}); }
+    const rk=rowKeyFor(d);
+    // place the dish in each wired-ingredient column it uses (so combos appear in both)
+    const cols = used.length?used:["_other"];
+    cols.forEach(c=>{
+      cell[c]=cell[c]||{}; (cell[c][rk]=cell[c][rk]||[]).push({r,idx,combo:used.length>=2});
+      colUse[c]=true; rowUse[rk]=true;
+    });
   });
 
-  const nameOf=id=>((REF.byId[id]||{}).name)||"other";
+  // ordered, populated columns and rows only
+  const colOrder=[...heroable, ...searched.filter(id=>!heroable.includes(id)), "_other"].filter(c=>colUse[c]);
+  const rowOrder=TYPE_ROWS.filter(([k])=>rowUse[k]);
+
+  // if only one column, the grid is just a list — render grouped-by-type instead (cleaner)
+  if(colOrder.length<=1){
+    const only=colOrder[0]||"_other";
+    rowOrder.forEach(([rk,label])=>{
+      const items=(cell[only]||{})[rk]; if(!items||!items.length)return;
+      const h=document.createElement("div"); h.className="rgroup"; h.textContent=label; box.appendChild(h);
+      items.forEach(it=>box.appendChild(card(it)));
+    });
+    return;
+  }
+
+  // 2D GRID
+  const grid=document.createElement("div"); grid.className="rgrid";
+  grid.style.gridTemplateColumns="var(--rowlab) repeat("+colOrder.length+",1fr)";
+  // header row: blank corner + ingredient names
+  grid.appendChild(cornerCell(""));
+  colOrder.forEach(c=>grid.appendChild(headCell(c==="_other"?"Other":nameOf(c))));
+  // body rows
+  rowOrder.forEach(([rk,label])=>{
+    grid.appendChild(rowLabel(label));
+    colOrder.forEach(c=>{
+      const items=(cell[c]||{})[rk]||[];
+      grid.appendChild(gridCell(items));
+    });
+  });
+  box.appendChild(grid);
+
+  function cornerCell(){ const d=document.createElement("div"); d.className="gcorner"; return d; }
+  function headCell(t){ const d=document.createElement("div"); d.className="ghead"; d.textContent=t; return d; }
+  function rowLabel(t){ const d=document.createElement("div"); d.className="growlab"; d.textContent=t; return d; }
+  function gridCell(items){
+    const d=document.createElement("div"); d.className="gcell";
+    if(!items.length){ d.className="gcell gempty"; return d; }
+    items.forEach(it=>{
+      const chip=document.createElement("div"); chip.className="gchip"+(it.combo?" gcombo":"");
+      chip.textContent=it.r.dish; chip.onclick=()=>openR(it.idx);
+      d.appendChild(chip);
+    });
+    return d;
+  }
   function card(item){
-    const {r,idx,d}=item;
+    const {r,idx}=item; const d=DISHES.find(x=>x.name===r.dish)||{};
     const opt=(d.appliance_options||[]).find(o=>FLOW.appl.has(o.appliance));
     const mins=opt&&opt.time?opt.time.ready_in_min:null;
     const c=document.createElement("div"); c.className="rcard"; c.onclick=()=>openR(idx);
@@ -1054,19 +1115,8 @@ function renderRecipes(){
     c.innerHTML="<div class=\"rname\">"+r.dish+"</div><div class=\"rmeta\">"+meta+"</div>";
     return c;
   }
-  function group(label, items){
-    if(!items.length)return;
-    const h=document.createElement("div"); h.className="rgroup"; h.textContent=label; box.appendChild(h);
-    items.forEach(it=>box.appendChild(card(it)));
-  }
-
-  group("Uses several of yours", combo);
-  // singles ordered by the order the user wired real ingredients, aromatics last
-  const order=[...heroable, ...searched.filter(id=>!heroable.includes(id))];
-  const seen=new Set();
-  order.forEach(id=>{ if(singles[id]&&!seen.has(id)){ seen.add(id); group("Mostly "+nameOf(id).toLowerCase(), singles[id]); }});
-  Object.keys(singles).forEach(k=>{ if(!seen.has(k)){ seen.add(k); group(k==="_other"?"Other":"Mostly "+nameOf(k).toLowerCase(), singles[k]); }});
 }
+
 function openR(idx){
   const r=FLOW.results[idx]; if(!r)return;
   const d=DISHES.find(x=>x.name===r.dish); if(!d)return;
