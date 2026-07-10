@@ -3,12 +3,12 @@
   "purpose": "The menu. Add, remove or edit dishes here. Nothing else needs changing.",
   "you_write": {
    "name": "the dish name",
-   "role": "base | veg | meat | fish | soup | dessert — which slot of the meal it fills",
-   "cuisine": "singaporean | japanese | western — used by the cuisine filter",
+   "role": "base | veg | meat | fish | soup | dessert \u2014 which slot of the meal it fills",
+   "cuisine": "singaporean | japanese | western \u2014 used by the cuisine filter",
    "appliance": "the default appliance",
    "appliances": "every appliance this dish can be cooked on, e.g. ['stovetop','pressure_cooker']",
    "ingredients": "plain strings, e.g. '800 g pork ribs'",
-   "steps": "the method, in order. Say how long things cook — 'simmer for 1 hour'.",
+   "steps": "the method, in order. Say how long things cook \u2014 'simmer for 1 hour'.",
    "steps_variants": "optional. Different steps for a given appliance. Times stated here belong to that appliance.",
    "handson_action": "how the active cooking reads in the timeline, e.g. 'stir-frying over high heat'",
    "serves": "how many the stated quantities feed",
@@ -41,7 +41,7 @@
     "salt to taste"
    ],
    "steps": [
-    "Preheat the oven to 350 F.",
+    "Preheat the oven to 180\u00b0C.",
     "Put the chicken in a baking pan or casserole dish.",
     "Sprinkle with garlic powder and pepper to taste.",
     "Bake for 1 hour."
@@ -86,7 +86,7 @@
     "Heat to a boil.",
     "Pour hot lemon mixture around chicken.",
     "Top each piece with a lemon slice.",
-    "Bake for 30 minutes at 400 F until golden brown."
+    "Bake for 30 minutes at 200\u00b0C until golden brown."
    ],
    "steps_variants": {
     "air_fryer": [
@@ -162,7 +162,7 @@
     "1 teaspoon vegetable oil"
    ],
    "steps": [
-    "Preheat oven to 350 F.",
+    "Preheat oven to 180\u00b0C.",
     "Add poultry seasoning to milk.",
     "Combine remaining spices with cornflake crumbs in a plastic bag.",
     "Dip chicken into milk, then shake in the bag with the crumbs.",
@@ -202,7 +202,7 @@
     "1/4 teaspoon lemon pepper seasoning"
    ],
    "steps": [
-    "Preheat oven to 350 F.",
+    "Preheat oven to 180\u00b0C.",
     "Place the fillets on a piece of foil.",
     "Spread the onions, salt, pepper, and oil on top.",
     "Fold the foil over the fish to wrap it.",
@@ -423,7 +423,7 @@
     "Keep refrigerated until ready to eat."
    ],
    "steps_variants": {},
-   "handson_action": "assembling — no cooking",
+   "handson_action": "assembling \u2014 no cooking",
    "serves": 4,
    "base_volume": 1.2,
    "fresh": false
@@ -488,7 +488,7 @@
     "Top with the low-fat dressing of your choice."
    ],
    "steps_variants": {},
-   "handson_action": "assembling — no cooking",
+   "handson_action": "assembling \u2014 no cooking",
    "serves": 4,
    "base_volume": 1.2,
    "fresh": false
@@ -512,7 +512,7 @@
     "1 tart apple, chopped"
    ],
    "steps": [
-    "Preheat oven to 400 F.",
+    "Preheat oven to 200\u00b0C.",
     "In a mixing bowl, add milk and applesauce.",
     "Stir until blended.",
     "Stir in flour, oats, sugar, baking powder, and cinnamon.",
@@ -545,7 +545,7 @@
     "1 cup flour, sifted"
    ],
    "steps": [
-    "Preheat the oven to 325 F.",
+    "Preheat the oven to 160\u00b0C.",
     "In a large mixing bowl, beat the egg whites until foamy.",
     "Add the cream of tartar and beat until stiff.",
     "Gradually beat in the sugar.",
@@ -594,7 +594,7 @@
      "Rest, covered, for 5 minutes, then fluff with a fork."
     ]
    },
-   "handson_action": "steaming — barely any hands-on",
+   "handson_action": "steaming \u2014 barely any hands-on",
    "serves": 4,
    "base_volume": 0.9,
    "fresh": false,
@@ -806,7 +806,7 @@
     "Heat the oil until smoking and pour it over the fish, then drizzle with soy sauce and sesame oil."
    ],
    "steps_variants": {},
-   "handson_action": "steaming — barely any hands-on",
+   "handson_action": "steaming \u2014 barely any hands-on",
    "serves": 4,
    "base_volume": 1.3,
    "fresh": true
@@ -2078,7 +2078,7 @@
     "Steam over low heat for 12 minutes until just set and silky.",
     "Drizzle with soy sauce and sesame oil, and scatter with spring onion."
    ],
-   "handson_action": "steaming — barely any hands-on",
+   "handson_action": "steaming \u2014 barely any hands-on",
    "serves": 4,
    "base_volume": 1.0,
    "fresh": false
@@ -2170,7 +2170,7 @@
     "Add the sweet potato, yam, and sago, and simmer gently for 5 minutes.",
     "Serve warm or chilled."
    ],
-   "handson_action": "steaming — barely any hands-on",
+   "handson_action": "steaming \u2014 barely any hands-on",
    "serves": 4,
    "base_volume": 1.8,
    "fresh": false
@@ -2197,7 +2197,7 @@
     "Add the mung beans and simmer gently for 2 minutes.",
     "Serve warm."
    ],
-   "handson_action": "steaming — barely any hands-on",
+   "handson_action": "steaming \u2014 barely any hands-on",
    "serves": 4,
    "base_volume": 1.6,
    "fresh": false
@@ -2671,7 +2671,7 @@
        "Spoon the glossy sauce over the pork to serve."
       ],
       "handson_action": "searing, then setting it to braise",
-      "note": "A collagen-rich cut — braised low and slow until fall-apart tender."
+      "note": "A collagen-rich cut \u2014 braised low and slow until fall-apart tender."
      },
      "belly": {
       "key": "belly",
@@ -2696,7 +2696,7 @@
        "Spoon the glossy sauce over the pork to serve."
       ],
       "handson_action": "searing, then setting it to braise",
-      "note": "A fatty, collagen-rich cut — braised until meltingly tender."
+      "note": "A fatty, collagen-rich cut \u2014 braised until meltingly tender."
      },
      "shoulder": {
       "key": "shoulder",
@@ -2721,7 +2721,7 @@
        "Spoon the glossy sauce over the pork to serve."
       ],
       "handson_action": "searing, then setting it to braise",
-      "note": "A collagen-rich cut — braised low and slow until it shreds."
+      "note": "A collagen-rich cut \u2014 braised low and slow until it shreds."
      },
      "loin": {
       "key": "loin",
@@ -2739,10 +2739,10 @@
       "steps": [
        "Sear the pork loin in oil for three minutes each side until browned.",
        "Stir in the soy sauce, sugar, garlic, and ginger and cook until glossy, about two minutes.",
-       "Rest briefly, then slice — a lean cut, seared quickly rather than braised so it stays juicy."
+       "Rest briefly, then slice \u2014 a lean cut, seared quickly rather than braised so it stays juicy."
       ],
       "handson_action": "pan-frying, then glazing the sauce",
-      "note": "A lean cut — seared quickly so it stays juicy, not braised."
+      "note": "A lean cut \u2014 seared quickly so it stays juicy, not braised."
      }
     }
    }
@@ -2783,7 +2783,7 @@
       "key": "chuck",
       "label": "Chuck",
       "cut_role": "braise",
-      "note": "A collagen-rich cut — braised low and slow until it pulls apart.",
+      "note": "A collagen-rich cut \u2014 braised low and slow until it pulls apart.",
       "name": "Soy-Braised Beef Chuck",
       "ingredients": [
        "800 g beef chuck",
@@ -2808,7 +2808,7 @@
       "key": "brisket",
       "label": "Brisket",
       "cut_role": "braise",
-      "note": "A collagen-rich cut — braised low and slow until it pulls apart.",
+      "note": "A collagen-rich cut \u2014 braised low and slow until it pulls apart.",
       "name": "Soy-Braised Beef Brisket",
       "ingredients": [
        "800 g beef brisket",
@@ -2833,7 +2833,7 @@
       "key": "short_rib",
       "label": "Short rib",
       "cut_role": "braise",
-      "note": "A collagen-rich cut — braised low and slow until it pulls apart.",
+      "note": "A collagen-rich cut \u2014 braised low and slow until it pulls apart.",
       "name": "Soy-Braised Beef Short Rib",
       "ingredients": [
        "800 g beef short rib",
@@ -2858,7 +2858,7 @@
       "key": "sirloin",
       "label": "Sirloin (lean)",
       "cut_role": "quick",
-      "note": "A lean cut — seared fast and rested; braising it would turn it grey and dry.",
+      "note": "A lean cut \u2014 seared fast and rested; braising it would turn it grey and dry.",
       "name": "Soy-Seared Beef Sirloin",
       "ingredients": [
        "500 g beef sirloin",
@@ -2871,7 +2871,7 @@
       "steps": [
        "Sear the beef sirloin in oil for two minutes each side for medium-rare, browning the surface.",
        "Stir in the soy sauce, sugar, garlic, and ginger and glaze for one minute.",
-       "Rest, then slice against the grain — a lean cut, seared fast so it stays tender."
+       "Rest, then slice against the grain \u2014 a lean cut, seared fast so it stays tender."
       ],
       "handson_action": "searing fast over high heat"
      }
@@ -2913,7 +2913,7 @@
       "key": "thigh",
       "label": "Thigh",
       "cut_role": "braise",
-      "note": "The fattier, forgiving cut — stays moist through a braise or a fry.",
+      "note": "The fattier, forgiving cut \u2014 stays moist through a braise or a fry.",
       "name": "Soy-Braised Chicken Thigh",
       "ingredients": [
        "800 g chicken thigh",
@@ -2937,7 +2937,7 @@
       "key": "breast",
       "label": "Breast (lean)",
       "cut_role": "quick",
-      "note": "Lean and quick to dry — cooked briefly and gently, never braised hard.",
+      "note": "Lean and quick to dry \u2014 cooked briefly and gently, never braised hard.",
       "name": "Soy-Glazed Chicken Breast",
       "ingredients": [
        "600 g chicken breast",
@@ -2950,7 +2950,7 @@
       "steps": [
        "Sear the chicken breast briefly on each side.",
        "Stir in the soy sauce, sugar, garlic, and ginger.",
-       "Cook gently for eight minutes, just until cooked through — a lean cut, cooked quick and gentle so it stays juicy, not braised.",
+       "Cook gently for eight minutes, just until cooked through \u2014 a lean cut, cooked quick and gentle so it stays juicy, not braised.",
        "Rest, then slice."
       ],
       "handson_action": "pan-frying gently"
@@ -3004,7 +3004,7 @@
     "Rehydrate the wakame in cold water, then drain.",
     "Whisk the rice vinegar, sugar, and salt together, then toss with the cucumber and wakame and scatter with sesame seeds."
    ],
-   "handson_action": "slicing and dressing — no cooking",
+   "handson_action": "slicing and dressing \u2014 no cooking",
    "serves": 4,
    "base_volume": 0.7,
    "fresh": false,
@@ -3102,7 +3102,7 @@
      "Fluff with a fork and fold in the parsley."
     ]
    },
-   "handson_action": "sautéing, then simmering the rice",
+   "handson_action": "saut\u00e9ing, then simmering the rice",
    "serves": 4,
    "base_volume": 1.6,
    "fresh": false
