@@ -91,18 +91,19 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
     <div class="topspace"><p class="coldesc">Turn on the appliances you own. Dishes that can’t run on them drop out.</p></div>
     <div class="comp" id="comp-appl"><div class="comphead">Your kitchen</div><div id="appl-ports"></div></div>
   </div>
-  <div class="col" id="col-taste">
-    <div class="colhead">Taste</div>
-    <div class="topspace"><p class="coldesc">Optional. Lean the ranking toward a flavour you’re after.</p></div>
-    <div class="comp" id="comp-taste"><div class="comphead">Lean the ranking</div><div id="taste-ports"></div></div>
-    <div class="hint">Optional &mdash; tap axes to rank recipes by them.</div>
-  </div>
+
   <div class="col" id="col-out" data-anchor="out">
     <div class="colhead">Recipes</div>
     <div class="topspace"><p class="coldesc">What flows out — ranked by how much you already have.</p></div>
     <div id="comp-out" style="min-height:40px">
       <div id="recipes"><div class="hint">Wire in an ingredient to see what flows out.</div></div>
     </div>
+  </div>
+  <div class="col" id="col-ctrl">
+    <div class="colhead">Refine</div>
+    <div class="topspace"><p class="coldesc">Filter the output by kind of dish, then lean the ranking.</p></div>
+    <div class="comp" id="comp-type"><div class="comphead">Type of dish</div><div id="type-ports"></div></div>
+    <div class="comp" id="comp-taste" style="margin-top:14px"><div class="comphead">Lean the ranking</div><div id="taste-ports"></div></div>
   </div>
 </div>
 <div id="overlay"><div id="sheet"></div></div>
@@ -862,9 +863,17 @@ function generateVariant(dish, targetId, R, allDishes){
 
 /* ================= FLOW STATE ================= */
 const PANTRY_ITEMS=["garlic","onion","ginger","egg","scallion","chilli","salt","pepper","white_sugar","vegetable_oil","sesame_oil","soy_sauce","oyster_sauce"];
-const FLOW={comps:[],active:new Set(),pantry:new Set(PANTRY_ITEMS),appl:new Set(["stovetop","oven"]),taste:new Set(),results:[]};
+const FLOW={comps:[],active:new Set(),pantry:new Set(PANTRY_ITEMS),appl:new Set(["stovetop","oven"]),taste:new Set(),types:new Set(),results:[]};
 let REF=null,DISHES=[],APPL={},APPLIANCE_ORDER=[];
 const TASTE_AXES=["sweet","sour","salty","umami","fat","heat"];
+const TASTE_LABEL={sweet:"sweet",sour:"sour",salty:"salty",umami:"umami",fat:"rich",heat:"spicy"};
+const TYPE_OPTS=[["soup","Soup"],["base","Rice & noodles"],["veg","Vegetable"],["meat","Meat"],["fish","Fish"],["dessert","Dessert"],["onepot","One-pot"]];
+function isOnePot(d){ return d.role==="soup" || (["braise","simmer"].includes(d.build) && (d.appliance_options||[]).length<=2); }
+function dishMatchesType(d){
+  if(!FLOW.types.size) return true;
+  for(const t of FLOW.types){ if(t==="onepot"){ if(isOnePot(d))return true; } else if(d.role===t) return true; }
+  return false;
+}
 const TOP_CATS=new Set(["proteins","vegetables","fruits","starches","dairy","fats_oils","seasonings","condiments","acids","sweeteners","leaveners"]);
 
 function findLeaf(q){
@@ -928,12 +937,22 @@ function renderPantry(){
 }
 function toggleAppl(a){ FLOW.appl.has(a)?FLOW.appl.delete(a):FLOW.appl.add(a); renderAppl(); recompute(); }
 function toggleTaste(t){ FLOW.taste.has(t)?FLOW.taste.delete(t):FLOW.taste.add(t); renderTaste(); recompute(); }
+function toggleType(t){ FLOW.types.has(t)?FLOW.types.delete(t):FLOW.types.add(t); renderType(); recompute(); }
+function renderType(){
+  const box=el("type-ports"); if(!box)return; box.innerHTML="";
+  TYPE_OPTS.forEach(([id,label])=>{
+    const t=document.createElement("div"); t.className="tgl"+(FLOW.types.has(id)?" on":"");
+    t.innerHTML="<span>"+label+"</span><span class=\"dot\"></span>";
+    t.onclick=()=>toggleType(id);
+    box.appendChild(t);
+  });
+}
 
 function recompute(){
   const ids=[...new Set([...FLOW.active, ...FLOW.pantry])];
   if(!FLOW.active.size||!FLOW.appl.size){ FLOW.results=[]; renderRecipes(); requestAnimationFrame(drawWires); return; }
   const pantry={}; ids.forEach(id=>pantry[id]={});
-  const cookable=DISHES.filter(d=>(d.appliance_options||[]).some(o=>FLOW.appl.has(o.appliance)));
+  const cookable=DISHES.filter(d=>(d.appliance_options||[]).some(o=>FLOW.appl.has(o.appliance)) && dishMatchesType(d));
   let res=searchByIngredients(cookable,pantry,REF,{mode:"shop"});
   if(FLOW.taste.size){
     const ts=d=>TASTE_AXES.reduce((n,ax)=>n+(FLOW.taste.has(ax)?(( (DISHES.find(x=>x.name===d.dish)||{}).taste||{})[ax]||0):0),0);
@@ -976,7 +995,7 @@ function renderTaste(){
   const box=el("taste-ports"); if(!box)return; box.innerHTML="";
   TASTE_AXES.forEach(ax=>{
     const t=document.createElement("div"); t.className="tgl"+(FLOW.taste.has(ax)?" on":"");
-    t.innerHTML="<span>"+ax+"</span><span class=\"dot\"></span>";
+    t.innerHTML="<span>"+(TASTE_LABEL[ax]||ax)+"</span><span class=\"dot\"></span>";
     t.onclick=()=>toggleTaste(ax);
     box.appendChild(t);
   });
@@ -1089,16 +1108,19 @@ function drawWires(){
     const isPantry=dot.getAttribute&&dot.getAttribute("data-pantry");
     html+=wire(p, vertical?{x:aIn.x,y:aIn.y-4}:{x:aIn.x-4,y:aIn.y}, isPantry?1.4:2, isPantry?.32:.5);
   });
-  // appliance -> taste -> recipes : anchor to the COLUMNS (always sized), not the inner scroller
+  // MAIN FLOW: appliance -> recipes (taste/type are side controls, not pipeline stages)
   const hasFlow = FLOW.active.size && FLOW.appl.size;
   const aOut=anchor(applC, vertical?"bottom":"right", cr, cv);
-  const tIn =anchor(tasteC, vertical?"top":"left", cr, cv);
-  const tOut=anchor(tasteC, vertical?"bottom":"right", cr, cv);
   const rBox = (recInner && recInner.getBoundingClientRect && recInner.getBoundingClientRect().height>10) ? recInner : recC;
   const rIn =anchor(rBox, vertical?"top":"left", cr, cv);
   const on = hasFlow?.72:.28;
-  html+=wire(aOut,tIn,2.4,on);
-  html+=wire(tOut,rIn,2.4,on);
+  html+=wire(aOut,rIn,2.4,on);
+  // CONTROL WIRE: Refine column -> recipes (thin, dashed feel via low opacity), only when active
+  const ctrlC=el("comp-type");
+  if(ctrlC && (FLOW.types.size||FLOW.taste.size)){
+    const cIn=anchor(ctrlC, vertical?"top":"left", cr, cv);
+    html+=wire(cIn, rIn, 1.4, .3);
+  }
   svg.innerHTML=html;
 }
 
@@ -1131,7 +1153,7 @@ async function boot(){
     const R=buildReference(ingData); REF=R;
     (applData.appliances||[]).sort((a,b)=>a.order-b.order).forEach(a=>{APPL[a.id]=a.name;APPLIANCE_ORDER.push(a.id);});
     DISHES=hydrate(dishData.dishes,R,methodData);
-    renderPantry(); renderAppl(); renderTaste(); renderRecipes();
+    renderPantry(); renderAppl(); renderType(); renderTaste(); renderRecipes();
     const s=el("search");
     if(s) s.addEventListener("keydown",e=>{ if(e.key==="Enter"){ const ok=spawn(s.value); if(ok)s.value=""; }});
     window.addEventListener("resize",()=>requestAnimationFrame(drawWires));
