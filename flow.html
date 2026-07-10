@@ -64,6 +64,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .gchip{font-size:11.5px;line-height:1.2;padding:5px 7px;border-radius:6px;background:rgba(50,117,100,.08);color:var(--ink);cursor:pointer;transition:.12s}
 .gchip:hover{background:rgba(50,117,100,.16)}
 .gchip.gcombo{background:rgba(168,114,24,.14);font-weight:600}
+.gmore{font-family:"Space Mono",monospace;font-size:10px;color:var(--muted);padding:2px 6px}
 .rgroup{font-family:"Space Mono",monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--cool);margin:10px 0 2px}
 .rgroup:first-child{margin-top:0}
 #overlay{position:fixed;inset:0;background:rgba(27,16,11,.45);display:none;z-index:50}
@@ -886,8 +887,10 @@ function generateVariant(dish, targetId, R, allDishes){
 
 
 /* ================= FLOW STATE ================= */
-const PANTRY_ITEMS=["garlic","onion","ginger","egg","scallion","chilli","salt","pepper","white_sugar","vegetable_oil","sesame_oil","soy_sauce","oyster_sauce"];
-const FLOW={comps:[],active:new Set(),pantry:new Set(PANTRY_ITEMS),appl:new Set(["stovetop","oven"]),taste:new Set(),types:new Set(),results:[]};
+const PANTRY_ITEMS=["garlic","onion","ginger","egg","scallion","chilli","rice","brown_rice","noodles","udon","salt","pepper","white_sugar","vegetable_oil","sesame_oil","soy_sauce","oyster_sauce"];
+const PANTRY_OFF=new Set(["brown_rice","noodles","udon"]);   // present in the pantry but unchecked by default
+const PANTRY_ON=PANTRY_ITEMS.filter(id=>!PANTRY_OFF.has(id));
+const FLOW={comps:[],active:new Set(),pantry:new Set(PANTRY_ON),appl:new Set(["stovetop","oven"]),taste:new Set(),types:new Set(),results:[]};
 let REF=null,DISHES=[],APPL={},APPLIANCE_ORDER=[];
 const TASTE_AXES=["sweet","sour","salty","umami","fat","heat"];
 const TASTE_LABEL={sweet:"sweet",sour:"sour",salty:"salty",umami:"umami",fat:"rich",heat:"spicy"};
@@ -927,7 +930,7 @@ function groupFor(ing){
     title=title.charAt(0).toUpperCase()+title.slice(1);
   }
   // hide leaves already covered by the pantry (they're managed there) — unless it's the exact thing searched
-  leaves=leaves.filter(x=> x.id===ing.id || !PANTRY_ITEMS.includes(x.id));
+  leaves=leaves.filter(x=> !PANTRY_ITEMS.includes(x.id));   // pantry items live in the pantry only
   if(leaves.length>12){
     leaves=leaves.filter(x=>x.id===ing.id).concat(leaves.filter(x=>x.id!==ing.id).slice(0,11));
   }
@@ -935,6 +938,12 @@ function groupFor(ing){
 }
 function spawn(q){
   const ing=findLeaf(q); if(!ing)return null;
+  if(PANTRY_ITEMS.includes(ing.id)){
+    // it's a pantry staple — make sure it's checked there rather than spawning a component
+    FLOW.pantry.add(ing.id); renderPantry(); recompute();
+    const h=el("ing-hint"); if(h){ h.style.display=""; h.textContent="\""+ing.name+"\" is in your Pantry — it\u2019s already checked there."; }
+    return ing.id;
+  }
   let comp=FLOW.comps.find(c=>c.key===groupFor(ing).key);
   if(!comp){ const g=groupFor(ing); comp={key:g.key,title:g.title,leaves:g.leaves,dx:0,dy:0}; FLOW.comps.push(comp); }
   FLOW.active.add(ing.id);
@@ -1099,11 +1108,17 @@ function renderRecipes(){
   function gridCell(items){
     const d=document.createElement("div"); d.className="gcell";
     if(!items.length){ d.className="gcell gempty"; return d; }
-    items.forEach(it=>{
+    const shown=items.slice(0,3);                 // at most 3 per intersection
+    shown.forEach(it=>{
       const chip=document.createElement("div"); chip.className="gchip"+(it.combo?" gcombo":"");
       chip.textContent=it.r.dish; chip.onclick=()=>openR(it.idx);
       d.appendChild(chip);
     });
+    if(items.length>3){
+      const more=document.createElement("div"); more.className="gmore";
+      more.textContent="+"+(items.length-3)+" more";
+      d.appendChild(more);
+    }
     return d;
   }
   function card(item){
