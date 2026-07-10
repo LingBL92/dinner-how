@@ -71,9 +71,11 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
     <div class="comp" id="comp-taste"><div class="comphead">Lean the ranking</div><div id="taste-ports"></div></div>
     <div class="hint">Optional &mdash; tap axes to rank recipes by them.</div>
   </div>
-  <div class="col" id="col-out">
+  <div class="col" id="col-out" data-anchor="out">
     <div class="colhead">Recipes</div>
-    <div id="recipes"><div class="hint">Wire in an ingredient to see what flows out.</div></div>
+    <div id="comp-out" style="min-height:40px">
+      <div id="recipes"><div class="hint">Wire in an ingredient to see what flows out.</div></div>
+    </div>
   </div>
 </div>
 <div id="overlay"><div id="sheet"></div></div>
@@ -990,22 +992,25 @@ function drawWires(){
   const cr=cv.getBoundingClientRect();
   const vertical=window.innerWidth<760;
   let html="";
-  const applC=el("comp-appl"), tasteC=el("comp-taste"), recC=el("recipes");
+  const applC=el("comp-appl"), tasteC=el("comp-taste"), recC=el("comp-out")||el("col-out"), recInner=el("recipes");
   if(!applC)return;
+  const wire=(a,b,w,o)=>"<path d=\""+wirePath(a,b,vertical)+"\" fill=\"none\" stroke=\"#327564\" stroke-width=\""+w+"\" stroke-linecap=\"round\" opacity=\""+o+"\"/>";
+  // ingredient ports -> appliance
   const aIn=anchor(applC, vertical?"top":"left", cr, cv);
-  document.querySelectorAll(".port.on .dot, .port .dot").forEach(dot=>{
-    const pr=dot.closest(".port"); if(!pr||!pr.classList.contains("on"))return;
+  document.querySelectorAll(".port.on .dot").forEach(dot=>{
     const p=anchor(dot,"mid",cr,cv);
-    html+="<path d=\""+wirePath(p, vertical?{x:aIn.x,y:aIn.y-4}:{x:aIn.x-4,y:aIn.y}, vertical)+"\" fill=\"none\" stroke=\"#327564\" stroke-width=\"2\" opacity=\".55\"/>";
+    html+=wire(p, vertical?{x:aIn.x,y:aIn.y-4}:{x:aIn.x-4,y:aIn.y}, 2, .5);
   });
-  if(FLOW.active.size&&FLOW.appl.size){
-    const aOut=anchor(applC, vertical?"bottom":"right", cr, cv);
-    const tIn=anchor(tasteC, vertical?"top":"left", cr, cv);
-    const tOut=anchor(tasteC, vertical?"bottom":"right", cr, cv);
-    const rIn=anchor(recC, vertical?"top":"left", cr, cv);
-    html+="<path d=\""+wirePath(aOut,tIn,vertical)+"\" fill=\"none\" stroke=\"#327564\" stroke-width=\"2.4\" opacity=\".7\"/>";
-    html+="<path d=\""+wirePath(tOut,rIn,vertical)+"\" fill=\"none\" stroke=\"#327564\" stroke-width=\"2.4\" opacity=\".7\"/>";
-  }
+  // appliance -> taste -> recipes : anchor to the COLUMNS (always sized), not the inner scroller
+  const hasFlow = FLOW.active.size && FLOW.appl.size;
+  const aOut=anchor(applC, vertical?"bottom":"right", cr, cv);
+  const tIn =anchor(tasteC, vertical?"top":"left", cr, cv);
+  const tOut=anchor(tasteC, vertical?"bottom":"right", cr, cv);
+  const rBox = (recInner && recInner.getBoundingClientRect && recInner.getBoundingClientRect().height>10) ? recInner : recC;
+  const rIn =anchor(rBox, vertical?"top":"left", cr, cv);
+  const on = hasFlow?.72:.28;
+  html+=wire(aOut,tIn,2.4,on);
+  html+=wire(tOut,rIn,2.4,on);
   svg.innerHTML=html;
 }
 
