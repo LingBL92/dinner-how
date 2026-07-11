@@ -42,16 +42,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   /* breathing room between the tags/search block and the spawned components */
   .inghead{height:auto!important;padding-bottom:6px}
   #ingcomps{margin-top:14px}
-  /* appliance: horizontal chip row across the panel */
-  #appl-ports{display:flex;flex-wrap:wrap;gap:6px;padding:8px}
-  #appl-ports .tgl{flex:0 0 auto;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12.5px;gap:6px}
-  #appl-ports .tgl.on{background:rgba(50,117,100,.12);border-color:var(--cool)}
-  #appl-ports .tgl .dot{margin-left:0;width:9px;height:9px}
-  /* type: also horizontal chips (reads better than a tall list) */
-  #type-ports .type-filters{display:flex;flex-wrap:wrap;gap:6px}
-  #type-ports .type-filters .tgl{flex:0 0 auto;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12.5px;gap:6px}
-  #type-ports .type-filters .tgl.on{background:rgba(50,117,100,.12);border-color:var(--cool)}
-  #type-ports .type-filters .tgl .dot{margin-left:0;width:9px;height:9px}
+
   /* recipes always visible, never collapsed by the minimap */
   #col-out{order:99}
 }
@@ -66,7 +57,8 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 #col-app{min-width:140px;max-width:165px}
 .colhead{font-family:"Space Mono",monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
 @media(max-width:760px){
-  .col{position:relative;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--panel)}
+  .col{position:relative;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--panel)}
+  .col>.comp{border:1px solid var(--line)}
   .colhead{cursor:pointer;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink);font-weight:700;letter-spacing:.06em}
   .colhead::after{content:"\2212";font-size:15px;font-weight:700;opacity:.6;margin-left:auto;line-height:1;width:18px;height:18px;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--line);border-radius:5px}
   .col.collapsed .colhead::after{content:"+"}
@@ -100,7 +92,8 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 #search:focus{outline:2px solid var(--cool)}
 .hint{font-size:11.5px;color:var(--muted);font-family:"Space Mono",monospace;line-height:1.5}
 .tgl{display:flex;align-items:center;gap:9px;padding:7px 12px;font-size:13px;cursor:pointer;user-select:none}
-.tgl .dot{width:11px;height:11px;border-radius:3px;border:2px solid var(--muted);flex:none;margin-left:auto}
+.tgl .dot{width:11px;height:11px;border-radius:50%;border:2px solid var(--muted);flex:none;margin-left:auto}
+.tgl.on .dot{background:var(--cool);border-color:var(--cool)}
 .tgl.on{font-weight:700;color:var(--cool)}
 .tgl.on .dot{background:var(--cool);border-color:var(--cool)}
 .rcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 13px;cursor:pointer;transition:.14s}
@@ -175,7 +168,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.11</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.12</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
