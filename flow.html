@@ -9,6 +9,35 @@ body{font-family:"Space Grotesk",sans-serif;background:var(--paper);color:var(--
 header{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line)}
 header h1{font-size:15px;letter-spacing:.14em}
 header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:none}
+#minimap{display:none}
+#settings-sheet{display:none}
+@media(max-width:760px){
+  #minimap{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:30;background:var(--paper)}
+  .mm-steps{display:flex;align-items:center;flex:1;gap:0}
+  .mm-step{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;
+    padding:4px 2px;cursor:pointer;position:relative;font-family:inherit}
+  /* connector line between steps */
+  .mm-step:not(:last-child)::after{content:"";position:absolute;top:11px;left:calc(50% + 13px);right:calc(-50% + 13px);
+    height:2px;background:var(--line)}
+  .mm-step.done:not(:last-child)::after{background:var(--cool);opacity:.5}
+  .mm-n{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;
+    justify-content:center;font-size:11px;font-weight:700;color:var(--muted);background:var(--paper);z-index:1}
+  .mm-step.active .mm-n{background:var(--cool);border-color:var(--cool);color:#fff}
+  .mm-step.done .mm-n{border-color:var(--cool);color:var(--cool)}
+  .mm-l{font-size:9px;letter-spacing:.03em;color:var(--muted);text-align:center;line-height:1.1}
+  .mm-step.active .mm-l{color:var(--cool);font-weight:700}
+  #mm-settings{background:none;border:1px solid var(--line);border-radius:8px;font-size:16px;
+    width:34px;height:34px;cursor:pointer;color:var(--ink);flex:none}
+  #settings-sheet.on{display:flex;position:fixed;inset:0;background:rgba(27,16,11,.45);z-index:60;align-items:flex-end}
+  .ss-inner{background:var(--paper);width:100%;border-radius:16px 16px 0 0;padding:16px 18px 28px;max-height:70vh;overflow-y:auto}
+  .ss-head{display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:14px;margin-bottom:10px}
+  .ss-head button{border:none;background:none;font-size:22px;cursor:pointer;color:var(--muted)}
+  /* mobile: hide the taste column (it lives in the settings sheet now) */
+  #col-ctrl{display:none}
+  /* recipes always visible, never collapsed by the minimap */
+  #col-out{order:99}
+}
 #canvas{position:relative;min-height:calc(100vh - 50px);padding:18px;overflow:auto;
   background-image:radial-gradient(rgba(27,16,11,.10) 1px,transparent 1px);background-size:22px 22px;
   display:flex;gap:34px;align-items:flex-start}
@@ -116,7 +145,17 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.8</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.9</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<div id="minimap">
+  <div class="mm-steps">
+    <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
+    <button class="mm-step" data-target="col-ing"><span class="mm-n">2</span><span class="mm-l">Ingredients</span></button>
+    <button class="mm-step" data-target="col-app"><span class="mm-n">3</span><span class="mm-l">Appliance</span></button>
+    <button class="mm-step" data-target="col-type"><span class="mm-n">4</span><span class="mm-l">Type / Meal</span></button>
+  </div>
+  <button id="mm-settings" title="Taste">&#9776;</button>
+</div>
+<div id="settings-sheet"><div class="ss-inner"><div class="ss-head"><span>Taste</span><button id="ss-close">&times;</button></div><div id="ss-body"></div></div></div>
 <div id="canvas">
   <svg id="wires"></svg>
   <div class="col" id="col-pantry">
@@ -1041,6 +1080,7 @@ function recompute(){
   }
   FLOW.results=res.slice(0,10);
   renderRecipes(); requestAnimationFrame(drawWires);
+  if(mobileView()) renderMinimap(document.querySelector(".mm-step.active")?document.querySelector(".mm-step.active").getAttribute("data-target"):null);
 }
 
 /* ================= RENDER ================= */
@@ -1374,15 +1414,63 @@ function wireDrag(handle,comp,compEl){
 }
 
 /* ================= BOOT ================= */
+const MM_STEPS=["col-pantry","col-ing","col-app","col-type"];
+function mobileView(){ return window.innerWidth<760; }
+function openStep(target){
+  if(!mobileView())return;
+  MM_STEPS.forEach(id=>{ const c=el(id); if(!c)return;
+    if(id===target) c.classList.remove("collapsed"); else c.classList.add("collapsed");
+  });
+  renderMinimap(target);
+  const c=el(target); if(c&&c.scrollIntoView) c.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function stepHasContent(id){
+  if(id==="col-pantry") return FLOW.pantry.size>0;
+  if(id==="col-ing")    return FLOW.active.size>0;
+  if(id==="col-app")    return FLOW.appl.size>0;
+  if(id==="col-type")   return FLOW.types.size>0 || !!FLOW.compose;
+  return false;
+}
+function renderMinimap(activeId){
+  document.querySelectorAll(".mm-step").forEach(btn=>{
+    const t=btn.getAttribute("data-target");
+    btn.classList.remove("active");
+    btn.classList.remove("done");
+    if(t===activeId) btn.classList.add("active");
+    if(stepHasContent(t)) btn.classList.add("done");
+  });
+}
 function setupCollapse(){
-  const mobile=()=>window.innerWidth<760;
+  // section headers still toggle individually
   document.querySelectorAll(".col").forEach(col=>{
     const head=col.querySelector(".colhead");
     if(!head)return;
-    head.addEventListener("click",()=>{ if(mobile()) col.classList.toggle("collapsed"); });
+    head.addEventListener("click",()=>{ if(mobileView()) col.classList.toggle("collapsed"); });
   });
-  // default: pantry collapsed on mobile
-  if(mobile()){ const p=el("col-pantry"); if(p)p.classList.add("collapsed"); }
+  // minimap steps
+  document.querySelectorAll(".mm-step").forEach(btn=>{
+    btn.addEventListener("click",()=>openStep(btn.getAttribute("data-target")));
+  });
+  // settings sheet holds the taste controls on mobile
+  const setBtn=el("mm-settings"), sheet=el("settings-sheet"), body=el("ss-body"), close=el("ss-close");
+  if(setBtn&&sheet&&body){
+    setBtn.addEventListener("click",()=>{
+      body.innerHTML="";
+      const box=document.createElement("div"); box.id="taste-ports-m";
+      TASTE_AXES.forEach(ax=>{
+        const t=document.createElement("div"); t.className="tgl"+(FLOW.taste.has(ax)?" on":"");
+        t.innerHTML="<span>"+(TASTE_LABEL[ax]||ax)+"</span><span class=\"dot\"></span>";
+        t.onclick=()=>{ toggleTaste(ax); t.className="tgl"+(FLOW.taste.has(ax)?" on":""); };
+        box.appendChild(t);
+      });
+      body.appendChild(box);
+      sheet.classList.add("on");
+    });
+    if(close) close.addEventListener("click",()=>sheet.classList.remove("on"));
+    sheet.addEventListener("click",e=>{ if(e.target===sheet) sheet.classList.remove("on"); });
+  }
+  // start on step 2 (ingredients) — pantry is set-and-forget
+  if(mobileView()) openStep("col-ing");
 }
 async function boot(){
   try{
