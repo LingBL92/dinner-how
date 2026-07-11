@@ -39,6 +39,9 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .ss-head button{border:none;background:none;font-size:22px;cursor:pointer;color:var(--muted)}
   /* mobile: hide the taste column (it lives in the settings sheet now) */
   #col-ctrl{display:none}
+  /* breathing room between the tags/search block and the spawned components */
+  .inghead{height:auto!important;padding-bottom:6px}
+  #ingcomps{margin-top:14px}
   /* appliance: horizontal chip row across the panel */
   #appl-ports{display:flex;flex-wrap:wrap;gap:6px;padding:8px}
   #appl-ports .tgl{flex:0 0 auto;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12.5px;gap:6px}
@@ -90,7 +93,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .port.on{font-weight:700;color:var(--cool)}
 .port.on .dot{background:var(--cool);border-color:var(--cool)}
 #search{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:12px;font:inherit;font-size:13.5px;background:var(--panel)}
-#ingtags{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+#ingtags{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;margin-bottom:12px}
 .ingtag{font-family:"Space Mono",monospace;font-size:11px;padding:5px 10px;border:1px solid var(--line);
   border-radius:999px;background:var(--panel);color:var(--muted);cursor:pointer;transition:.12s}
 .ingtag:hover{border-color:var(--cool);color:var(--cool)}
@@ -119,6 +122,16 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .gchip.gcombo{background:rgba(168,114,24,.14);font-weight:600}
 .gmore{font-family:"Space Mono",monospace;font-size:10px;color:var(--muted);padding:2px 6px}
 .rgroup{font-family:"Space Mono",monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--cool);margin:10px 0 2px}
+.minigrid{display:grid;gap:3px;margin:4px 0 6px}
+.mg-corner{}
+.mg-head{font-family:"Space Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.04em;
+  color:var(--cool);text-align:center;padding:3px 2px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mg-rowlab{font-family:"Space Mono",monospace;font-size:9px;text-transform:uppercase;color:var(--muted);
+  display:flex;align-items:center;padding-right:4px}
+.mg-cell{display:flex;align-items:center;justify-content:center;min-height:26px;border-radius:6px;
+  background:rgba(50,117,100,.14);color:var(--cool);font-size:12px;font-weight:700;font-family:"Space Mono",monospace}
+.mg-cell.mg-empty{background:transparent;border:1px dashed rgba(220,205,186,.6)}
+.mg-legend{font-family:"Space Mono",monospace;font-size:9.5px;color:var(--muted);margin-bottom:10px}
 .type-filters.muted{opacity:.4}
 .type-div{display:flex;align-items:center;gap:8px;margin:10px 0 8px;font-family:"Space Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
 .type-div::before,.type-div::after{content:"";flex:1;height:1px;background:var(--line)}
@@ -149,8 +162,9 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   #sheet{max-height:94vh;margin-top:8px}
   #wires{display:none}
   #canvas{flex-direction:column;align-items:stretch;gap:20px;padding:14px}
-  .col{max-width:none;min-width:0;width:100%}
+  .col{max-width:none!important;min-width:0;width:100%}
   .col>.comp{width:100%}
+  #col-app,#col-type,#col-ctrl,#col-pantry,#col-ing,#col-out{max-width:none!important;width:100%}
   #recipes{max-width:none;width:100%}
   #col-out{max-width:none}
   #search{width:100%}
@@ -161,7 +175,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.10</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.11</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -1224,10 +1238,37 @@ function renderRecipes(){
     return;
   }
 
-  // MOBILE: no columns — render each type-row once, dishes deduplicated across ingredients
+  // MOBILE: an at-a-glance MINI GRID overview, then the deduplicated list below
   if(window.innerWidth<760){
+    // --- mini 2D overview: rows = dish type, columns = your ingredients, cells = counts ---
+    const mini=document.createElement("div"); mini.className="minigrid";
+    mini.style.gridTemplateColumns="minmax(58px,auto) repeat("+colOrder.length+",1fr)";
+    const corner=document.createElement("div"); corner.className="mg-corner"; mini.appendChild(corner);
+    colOrder.forEach(c=>{
+      const h=document.createElement("div"); h.className="mg-head";
+      h.textContent = c==="_other" ? "Other" : nameOf(c);
+      mini.appendChild(h);
+    });
     rowOrder.forEach(([rk,label])=>{
-      // gather all dishes in this row across every column, unique by dish name
+      const rl=document.createElement("div"); rl.className="mg-rowlab"; rl.textContent=label; mini.appendChild(rl);
+      colOrder.forEach(c=>{
+        const items=(cell[c]||{})[rk]||[];
+        const cellEl=document.createElement("div");
+        cellEl.className="mg-cell"+(items.length?"":" mg-empty");
+        if(items.length){
+          cellEl.textContent=items.length;
+          cellEl.title=items.map(i=>i.r.dish).join(", ");
+        }
+        mini.appendChild(cellEl);
+      });
+    });
+    box.appendChild(mini);
+    const legend=document.createElement("div"); legend.className="mg-legend";
+    legend.textContent="Numbers = how many dishes sit at each crossing.";
+    box.appendChild(legend);
+
+    // --- the actual list, deduplicated per type ---
+    rowOrder.forEach(([rk,label])=>{
       const seen=new Set(); const items=[];
       colOrder.forEach(c=>{ ((cell[c]||{})[rk]||[]).forEach(it=>{
         if(!seen.has(it.r.dish)){ seen.add(it.r.dish); items.push(it); }
