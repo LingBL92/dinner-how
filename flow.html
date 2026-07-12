@@ -145,8 +145,26 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .meal-chip{font-size:12.5px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);cursor:pointer;transition:.12s}
 .meal-chip:hover{border-color:var(--cool)}
 .meal-chip.picked{background:var(--cool);color:#fff;border-color:var(--cool);font-weight:600}
+.meal-chip.dimmed{opacity:.38;font-size:11.5px;padding:4px 8px}
+.meal-chip.dimmed:hover{opacity:.75}
 .meal-empty{font-size:12px;color:var(--gold);font-style:italic;padding:6px 2px}
 .meal-sum{margin-top:14px;padding:12px 14px;background:rgba(50,117,100,.07);border-radius:10px;font-size:13px;line-height:1.5}
+#grocery{margin-top:18px}
+.gro-head{display:flex;align-items:baseline;gap:8px;font-weight:700;font-size:14px;padding-bottom:8px;border-bottom:2px solid var(--line);margin-bottom:10px}
+.gro-sub{font-family:"Space Mono",monospace;font-size:10.5px;color:var(--muted);font-weight:400;margin-left:auto}
+.gro-sec{display:flex;align-items:center;gap:8px;font-family:"Space Mono",monospace;font-size:10.5px;text-transform:uppercase;
+  letter-spacing:.1em;margin:12px 0 4px;font-weight:700}
+.gro-sec.buy{color:var(--gold)}
+.gro-sec.have{color:var(--cool)}
+.gro-n{margin-left:auto;font-weight:400;opacity:.7}
+.gro-aisle{font-family:"Space Mono",monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--muted);margin:8px 0 3px;opacity:.75}
+.gro-row{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:7px;font-size:13px;margin-bottom:3px}
+.gro-row.buy{background:rgba(168,114,24,.09)}
+.gro-row.have{background:rgba(50,117,100,.06);opacity:.75}
+.gro-item{flex:1}
+.gro-amt{font-family:"Space Mono",monospace;font-size:11.5px;color:var(--muted)}
+.gro-row.buy .gro-amt{color:var(--gold)}
 .meal-sum strong{color:var(--cool)}
 .rgroup:first-child{margin-top:0}
 #overlay{position:fixed;inset:0;background:rgba(27,16,11,.45);display:none;z-index:50}
@@ -175,7 +193,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.15</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.17</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -224,6 +242,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
     <div id="comp-out" style="min-height:40px">
       <div id="recipes"><div class="hint">Wire in an ingredient to see what flows out.</div></div>
     </div>
+    <div id="grocery"></div>
   </div>
   <div class="col" id="col-ctrl">
     <div class="colhead">&nbsp;</div>
@@ -1123,7 +1142,8 @@ function recompute(){
     res=res.map(r=>({...r,_t:ts(r)})).sort((a,b)=> b.ratio-a.ratio || b._t-a._t || a.buy.length-b.buy.length);
   }
   FLOW.results=res.slice(0,10);
-  renderRecipes(); requestAnimationFrame(drawWires);
+  renderRecipes();
+  if(!FLOW.compose){ const g=el("grocery"); if(g)g.innerHTML=""; } requestAnimationFrame(drawWires);
   if(mobileView()) renderMinimap(document.querySelector(".mm-step.active")?document.querySelector(".mm-step.active").getAttribute("data-target"):null);
 }
 
@@ -1366,10 +1386,11 @@ function renderMealBuilder(){
       missing.push(label.toLowerCase());
       opts.innerHTML="<div class=\"meal-empty\">you\u2019d need a "+label.toLowerCase()+"</div>";
     } else {
+      const hasPick = !!(FLOW.mealPick && FLOW.mealPick[role]);
       cands.slice(0,4).forEach(it=>{
         const chip=document.createElement("div");
         const chosen=FLOW.mealPick&&FLOW.mealPick[role]===it.r.dish;
-        chip.className="meal-chip"+(chosen?" picked":"");
+        chip.className="meal-chip"+(chosen?" picked":(hasPick?" dimmed":""));
         chip.textContent=it.r.dish;
         chip.onclick=()=>{ FLOW.mealPick=FLOW.mealPick||{}; FLOW.mealPick[role]= (FLOW.mealPick[role]===it.r.dish?null:it.r.dish); renderMealBuilder(); };
         opts.appendChild(chip);
@@ -1391,6 +1412,69 @@ function renderMealBuilder(){
     sum.innerHTML="Pick one from each row to complete the meal.";
   }
   box.appendChild(sum);
+  renderGrocery();
+}
+function renderGrocery(){
+  const box=el("grocery"); if(!box)return; box.innerHTML="";
+  const picks=(FLOW.mealPick)||{};
+  const dishNames=Object.values(picks).filter(Boolean);
+  if(!FLOW.compose || !dishNames.length){ return; }   // only while composing, once something's picked
+
+  // merge ingredients across the picked dishes
+  const need={};   // id -> {name, qty, unit, aisle, mt}
+  dishNames.forEach(dn=>{
+    const d=DISHES.find(x=>x.name===dn); if(!d)return;
+    (d.grocery_items||[]).forEach(g=>{
+      if(g.id==="water")return;
+      const ing=REF.byId[g.id]||{};
+      const mt=measureTypeOf(ing);
+      const key=g.id;
+      if(!need[key]) need[key]={id:g.id,name:g.name,qty:0,unit:g.unit||"",aisle:ing.aisle||"Other",mt,dishes:[]};
+      // sum only when units agree; otherwise leave qty null (can't add tbsp + g)
+      if(need[key].unit===(g.unit||"") && g.qty!=null && need[key].qty!=null) need[key].qty+=g.qty;
+      else if(g.qty!=null && need[key].qty===0 && !need[key].unit){ need[key].qty=g.qty; need[key].unit=g.unit||""; }
+      else if(need[key].unit!==(g.unit||"")) need[key].qty=null;   // mixed units: show without a total
+      need[key].dishes.push(dn);
+    });
+  });
+
+  // split: HAVE (in pantry or wired) vs BUY
+  const haveSet=new Set([...FLOW.active, ...FLOW.pantry]);
+  const have=[], buy=[];
+  Object.values(need).forEach(n=>{
+    // assumed items you keep on hand count as "have" if they're pantry-checked
+    if(haveSet.has(n.id)) have.push(n); else buy.push(n);
+  });
+
+  const head=document.createElement("div"); head.className="gro-head";
+  head.innerHTML="<span>Grocery list</span><span class=\"gro-sub\">for "+dishNames.length+" dish"+(dishNames.length>1?"es":"")+"</span>";
+  box.appendChild(head);
+
+  function amt(n){
+    if(n.mt==="assumed") return "";                       // aromatics/seasonings: no amount worth buying to
+    if(n.qty==null||n.qty===0) return "";
+    return n.qty+(n.unit?(n.unit==="g"||n.unit==="kg"?n.unit:" "+n.unit):"");
+  }
+  function section(title,items,cls){
+    if(!items.length)return;
+    const h=document.createElement("div"); h.className="gro-sec "+cls;
+    h.innerHTML="<span>"+title+"</span><span class=\"gro-n\">"+items.length+"</span>";
+    box.appendChild(h);
+    // group by aisle
+    const byAisle={};
+    items.forEach(n=>{(byAisle[n.aisle]=byAisle[n.aisle]||[]).push(n);});
+    Object.keys(byAisle).sort().forEach(aisle=>{
+      const al=document.createElement("div"); al.className="gro-aisle"; al.textContent=aisle; box.appendChild(al);
+      byAisle[aisle].forEach(n=>{
+        const row=document.createElement("div"); row.className="gro-row "+cls;
+        const a=amt(n);
+        row.innerHTML="<span class=\"gro-item\">"+n.name+"</span>"+(a?"<span class=\"gro-amt\">"+a+"</span>":"");
+        box.appendChild(row);
+      });
+    });
+  }
+  section("You need to buy", buy, "buy");
+  section("You already have", have, "have");
 }
 function simpleCard(item){
   const {r,idx,d}=item;
