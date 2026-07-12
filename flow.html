@@ -478,7 +478,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.65</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.66</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2460,9 +2460,21 @@ function renderMealBuilder(){
       opts.innerHTML="<div class=\"meal-empty\">you\u2019d need a "+label.toLowerCase()+"</div>";
     } else {
       const hasPick = !!(FLOW.mealPick && FLOW.mealPick[role]);
-      // leftmost = fewest new things to buy, then best coverage
-      cands.sort((a,b)=> (a.r.buy.length-b.r.buy.length) || (b.r.ratio-a.r.ratio));
-      cands.slice(0,4).forEach(it=>{
+      /* Rank by VALUE, not just cheapness. "Fewest to buy" alone buries the dish that
+         actually makes the most of your ingredients: with chicken wired, a Chicken Curry
+         needing one potato lost to four dishes needing nothing. A one-item shop is not a
+         real obstacle. So: how many of YOUR ingredients it uses, minus the shopping cost. */
+      const mine=[...FLOW.active].filter(id=>measureTypeOf(REF.byId[id])!=="assumed");
+      const usesMine=(r)=>{
+        const d=DISHES.find(x=>x.name===r.dish)||{};
+        const ids=new Set((d.grocery_items||[]).map(g=>g.id));
+        return mine.filter(id=>ids.has(id) || (r.subs||[]).some(su=>{
+          const useId=(REF.list.find(z=>z.name===su.use)||{}).id; return useId===id;
+        })).length;
+      };
+      const score=(x)=> usesMine(x.r)*2 + x.r.ratio - x.r.buy.length*0.6;
+      cands.sort((a,b)=> score(b)-score(a) || (a.r.buy.length-b.r.buy.length));
+      cands.slice(0,5).forEach(it=>{
         const chip=document.createElement("div");
         const chosen=FLOW.mealPick&&FLOW.mealPick[role]===it.r.dish;
         chip.className="meal-chip"+(chosen?" picked":(hasPick?" dimmed":""));
