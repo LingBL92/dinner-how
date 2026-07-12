@@ -228,6 +228,37 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .pr-dish{display:inline-flex;flex-direction:column;font-size:12.5px;padding:4px 10px;border-radius:8px;
   background:rgba(50,117,100,.09);color:var(--cool);border:1px solid rgba(50,117,100,.2)}
 .pr-dish em{font-style:normal;font-family:"Space Mono",monospace;font-size:8.5px;opacity:.75}
+/* ===== ONE-POT: a clear hierarchy — the schedule is the hero ===== */
+.op-title{margin-bottom:12px}
+.op-name{font-size:20px;font-weight:700;line-height:1.2;letter-spacing:-.01em}
+.op-sub{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.4}
+.op-hero{display:flex;align-items:baseline;gap:12px;padding-bottom:10px;margin-bottom:4px;
+  border-bottom:2px solid var(--line)}
+.op-times{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.op-big{font-size:30px;font-weight:700;color:var(--cool);line-height:1;font-family:"Space Grotesk",sans-serif}
+.op-big em{font-style:normal;font-size:13px;font-weight:400;margin-left:3px;color:var(--muted)}
+.op-free{font-family:"Space Mono",monospace;font-size:11.5px;color:var(--gold);
+  background:rgba(168,114,24,.1);padding:3px 9px;border-radius:999px}
+.op-need{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin:4px 0 12px;
+  font-size:12px}
+.op-need-l{font-family:"Space Mono",monospace;font-size:9px;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--muted);margin-right:2px}
+/* folded sections — quiet by default */
+.op-fold{border-top:1px solid var(--line);margin-top:2px}
+.op-fold-h{display:flex;align-items:center;justify-content:space-between;padding:11px 0;
+  cursor:pointer;font-size:12.5px;color:var(--muted);user-select:none}
+.op-fold-h:hover{color:var(--ink)}
+.op-fold-h strong{color:var(--cool);font-weight:600}
+.op-x{font-family:"Space Mono",monospace;font-size:13px;width:18px;height:18px;border:1px solid var(--line);
+  border-radius:5px;display:flex;align-items:center;justify-content:center;flex:none;line-height:1}
+.op-fold-b{padding:2px 0 12px}
+.op-row{display:flex;gap:10px;padding:5px 0;font-size:12.5px;line-height:1.5}
+.op-k{font-family:"Space Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--muted);min-width:74px;flex:none;padding-top:3px}
+.op-v{flex:1;color:var(--ink)}
+.op-v em{font-style:normal;font-family:"Space Mono",monospace;font-size:9px;color:var(--cool);opacity:.8;display:block;margin-top:1px}
+.pf-chip.small{min-width:0;padding:5px 10px}
+.pf-chip.small .pf-name{font-size:11.5px;font-weight:500}
 .pot-timeline{position:relative;margin:6px 0}
 .pot-svg{position:absolute;left:0;top:0;pointer-events:none}
 .pot-labels{position:relative;margin-left:46px}
@@ -235,8 +266,8 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .pl-time{font-family:"Space Mono",monospace;font-size:10.5px;color:var(--cool);font-weight:700;
   min-width:46px;flex:none}
 .pl-body{flex:1}
-.ps-items{font-size:14px;font-weight:600;line-height:1.3}
-.ps-why{font-family:"Space Mono",monospace;font-size:10px;color:var(--muted);margin-top:2px}
+.ps-items{font-size:13.5px;font-weight:600;line-height:1.25}
+.ps-why{font-family:"Space Mono",monospace;font-size:9.5px;color:var(--muted);margin-top:1px}
 .pot-done{font-size:13px;color:var(--muted);padding:8px 0 4px;margin-left:46px}
 .pd-t{color:var(--cool);font-weight:700;font-family:"Space Mono",monospace}
 .pot-gap{margin-top:8px;padding:10px 12px;background:rgba(168,114,24,.08);border-radius:9px;
@@ -346,7 +377,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.48</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.49</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2445,142 +2476,131 @@ function openIngredient(n){
 }
 function renderOnePot(){
   const box=el("recipes"); if(!box)return; box.innerHTML="";
-  // only what you deliberately wired in — the pantry seasons the broth, it isn't the contents
   const ids=[...FLOW.active].filter(id=>measureTypeOf(REF.byId[id])!=="assumed");
   if(!ids.length){
     box.innerHTML="<div class=\"hint\">Add a protein and some vegetables \u2014 the pot builds itself around them.</div>";
     return;
   }
-
-  // ===== THE FORK: the same pot becomes a different dish depending on how you season it =====
   const nm=id=>{ const n=(REF.byId[id]||{}).name; return n||id.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()); };
   const seen=new Set(); const dirs=[];
   SEASONING_DIRS.forEach(x=>{ if(x.key==="clear"||seen.has(x.key))return; seen.add(x.key); dirs.push(x); });
-
-  // what the pot IS, once you take a path
   const pathDir = FLOW.potPath ? dirs.find(d=>d.key===FLOW.potPath) : null;
   const potIds  = pathDir ? ids.concat(pathDir.markers.slice(0,3)) : ids;
-  const pk      = buildOnePot(potIds, REF, DISHES);
+  const p       = buildOnePot(potIds, REF, DISHES);
 
-  const head=document.createElement("div"); head.className="pot-head";
-  const blend=(pk.character&&pk.character.blended)?" &amp; <strong>"+pk.character.blended.join("</strong> &amp; <strong>")+"</strong>":"";
-  head.innerHTML="<div class=\"pot-title\">Your pot</div>"+
-    "<div class=\"pot-broth\">"+pk.describe.replace(/^./,c=>c.toUpperCase())+".</div>"+
-    (pk.character?"<div class=\"pot-base\">Built on <strong>"+pk.character.baseName+"</strong>"+blend+" \u2014 "+pk.character.note+".</div>":"")+
-    "<div class=\"pot-cons\"><span class=\"pc-lab\">Consistency</span>"+
-      "<span class=\"pc-v\">"+(pk.character&&pk.character.milky?"milky (\u5976\u6c64) \u2014 boiled hard, the fat emulsifies":"clear (\u6e05\u6c64) \u2014 gently simmered")+"</span>"+
-      "<span class=\"pc-prov\">derived from how you cook it</span></div>";
-  box.appendChild(head);
+  /* ============ 1. THE HEADLINE — what this pot is, in one line ============ */
+  const title=document.createElement("div"); title.className="op-title";
+  const dishName = pathDir ? pathDir.label.replace(/ \(.*\)/,"") : "Your pot";
+  title.innerHTML="<div class=\"op-name\">"+dishName+"</div>"+
+    "<div class=\"op-sub\">"+p.describe.replace(/^./,c=>c.toUpperCase())+
+      (p.character?" \u00b7 built on "+p.character.baseName.toLowerCase():"")+"</div>";
+  box.appendChild(title);
 
-  // the fork itself — tap a path and the pot becomes that dish
-  const fork=document.createElement("div"); fork.className="pot-fork";
-  const flab=document.createElement("div"); flab.className="pf-lab";
-  flab.innerHTML = (FLOW.potPath ? "Seasoned as" : "Which way are you taking it?")+
-    "<span class=\"pf-prov\">local knowledge \u2014 a chef\u2019s call, not derived</span>";
-  fork.appendChild(flab);
+  /* ============ 2. THE SCHEDULE — the hero. This is the answer. ============ */
+  const hero=document.createElement("div"); hero.className="op-hero";
+  hero.innerHTML="<div class=\"op-times\">"+
+    "<span class=\"op-big\">"+p.total+"<em>min</em></span>"+
+    "<span class=\"op-free\">"+p.handsOff+" min you\u2019re free</span></div>";
+  box.appendChild(hero);
 
-  // group the directions by region so the fork reads as a map of traditions
-  const byRegion={};
-  dirs.forEach(o=>{ const r=o.region||"Other"; (byRegion[r]=byRegion[r]||[]).push(o); });
-  const ORDER=["Teochew","Hokkien/Klang","Chinese","Malay/Peranakan","SEA","Indian","Japanese","Western"];
-  const regions=ORDER.filter(r=>byRegion[r]).concat(Object.keys(byRegion).filter(r=>!ORDER.includes(r)));
-
-  const frow=document.createElement("div"); frow.className="pf-row";
-  const none=document.createElement("div");
-  none.className="pf-chip"+(FLOW.potPath===null?" on":"");
-  none.innerHTML="<span class=\"pf-name\">Unseasoned</span><span class=\"pf-add\">let the broth speak</span>";
-  none.onclick=()=>{ FLOW.potPath=null; renderOnePot(); };
-  frow.appendChild(none);
-  fork.appendChild(frow);
-
-  regions.forEach(rg=>{
-    const rl=document.createElement("div"); rl.className="pf-region"; rl.textContent=rg;
-    fork.appendChild(rl);
-    const row=document.createElement("div"); row.className="pf-row";
-    byRegion[rg].forEach(o=>{
-      const on = FLOW.potPath===o.key;
-      const c=document.createElement("div"); c.className="pf-chip"+(on?" on":"");
-      c.innerHTML="<span class=\"pf-name\">"+o.label.replace(/ \u2014 .*/,"").replace(/ \(.*\)/,"")+"</span>"+
-        "<span class=\"pf-add\">+ "+(o.markers||[]).slice(0,3).map(nm).join(", ")+"</span>";
-      c.onclick=()=>{ FLOW.potPath = (FLOW.potPath===o.key)?null:o.key; renderOnePot(); };
-      row.appendChild(c);
-    });
-    fork.appendChild(row);
-  });
-  box.appendChild(fork);
-
-  // once a path is chosen: what to buy, and what it becomes
-  if(pathDir){
-    const need=pathDir.markers.slice(0,3).filter(m=>!ids.includes(m));
-    const become=document.createElement("div"); become.className="pot-become";
-    let h="<div class=\"pb-line\">This makes it a <strong>"+pathDir.label.replace(/ \(.*\)/,"").toLowerCase()+"</strong> pot \u2014 "+pathDir.note+".</div>";
-    if(need.length) h+="<div class=\"pb-need\">You\u2019ll need: "+need.map(m=>"<span class=\"bchip\">"+nm(m)+"</span>").join("")+"</div>";
-    become.innerHTML=h;
-    box.appendChild(become);
-  }
-  const p2=pk;   // everything below uses the seasoned pot
-
-  // --- reminds me of ---
-  const p=p2;
-  if(p.reminds.length){
-    const r=document.createElement("div"); r.className="pot-reminds";
-    r.innerHTML="<span class=\"pr-lab\">Reminds me of</span>"+
-      p.reminds.map(x=>"<span class=\"pr-dish\">"+x.dish+"<em>"+x.closeness+"</em></span>").join("");
-    box.appendChild(r);
-  }
-
-  // --- times ---
-  const t=document.createElement("div"); t.className="timegrid";
-  t.innerHTML="<div class=\"tg tgtot\"><span class=\"tgv\">"+p.total+"</span><span class=\"tgl2\">min total</span></div>"+
-    "<div class=\"tg\"><span class=\"tgv\">"+p.handsOn+"</span><span class=\"tgl2\">min hands-on</span></div>"+
-    "<div class=\"tg\"><span class=\"tgv\">"+p.handsOff+"</span><span class=\"tgl2\">min free</span></div>";
-  box.appendChild(t);
-
-  // --- the schedule, as a proportional vertical timeline ---
-  const sh=document.createElement("div"); sh.className="rgroup"; sh.textContent="What goes in, and when";
-  box.appendChild(sh);
-
-  const ROW=64, AXIS=26, PAD=14;                 // label row height, axis column width
+  const ROW=58, PAD=12;
   const n=p.steps.length;
-  const H=Math.max(n*ROW, 120);                  // total height of the whole block
-  const yOf=(mins)=> PAD + (p.total? (mins/p.total)*(H-PAD*2) : 0);   // TRUE position on the axis
-  const rowMid=(i)=> i*ROW + ROW/2;              // labels sit at even intervals
-
+  const H=Math.max(n*ROW, 100);
+  const yOf=(mins)=> PAD + (p.total? (mins/p.total)*(H-PAD*2) : 0);
+  const rowMid=(i)=> i*ROW + ROW/2;
   const tl=document.createElement("div"); tl.className="pot-timeline"; tl.style.height=H+"px";
-
-  // the axis + leader lines (SVG, so the lines can be diagonal)
   let svg="<svg class=\"pot-svg\" width=\"100%\" height=\""+H+"\" viewBox=\"0 0 240 "+H+"\" preserveAspectRatio=\"none\">";
   svg+="<line x1=\"13\" y1=\""+yOf(0)+"\" x2=\"13\" y2=\""+yOf(p.total)+"\" stroke=\"var(--line)\" stroke-width=\"2\"/>";
   p.steps.forEach((st,i)=>{
     const y=yOf(st.at), ry=rowMid(i);
-    // the stretch this ingredient is actually in the pot
-    svg+="<line x1=\"13\" y1=\""+y+"\" x2=\"13\" y2=\""+yOf(p.total)+"\" stroke=\"var(--cool)\" stroke-width=\"2.5\" opacity=\".25\"/>";
+    svg+="<line x1=\"13\" y1=\""+y+"\" x2=\"13\" y2=\""+yOf(p.total)+"\" stroke=\"var(--cool)\" stroke-width=\"2.5\" opacity=\".22\"/>";
     svg+="<circle cx=\"13\" cy=\""+y+"\" r=\"5\" fill=\"var(--cool)\"/>";
-    // leader line from the TRUE time to the evenly-spaced label
-    svg+="<path d=\"M18,"+y+" C34,"+y+" 26,"+ry+" 42,"+ry+"\" fill=\"none\" stroke=\"var(--cool)\" stroke-width=\"1.2\" opacity=\".5\"/>";
+    svg+="<path d=\"M18,"+y+" C34,"+y+" 26,"+ry+" 42,"+ry+"\" fill=\"none\" stroke=\"var(--cool)\" stroke-width=\"1.2\" opacity=\".45\"/>";
   });
-  // the finish
-  svg+="<circle cx=\"13\" cy=\""+yOf(p.total)+"\" r=\"4\" fill=\"none\" stroke=\"var(--cool)\" stroke-width=\"2\"/>";
-  svg+="</svg>";
+  svg+="<circle cx=\"13\" cy=\""+yOf(p.total)+"\" r=\"4\" fill=\"none\" stroke=\"var(--cool)\" stroke-width=\"2\"/></svg>";
   tl.innerHTML=svg;
-
-  // the evenly-spaced labels, overlaid
   const labels=document.createElement("div"); labels.className="pot-labels";
   p.steps.forEach((st,i)=>{
     const row=document.createElement("div"); row.className="pot-lrow"; row.style.height=ROW+"px";
     row.innerHTML="<div class=\"pl-time\">"+(st.at===0?"start":"+"+st.at+"m")+"</div>"+
       "<div class=\"pl-body\"><div class=\"ps-items\">"+st.items.map(x=>x.name).join(", ")+"</div>"+
-      "<div class=\"ps-why\">"+st.why+" \u00b7 "+st.cooks+" min in the pot</div></div>";
+      "<div class=\"ps-why\">"+st.why+"</div></div>";
     labels.appendChild(row);
   });
   tl.appendChild(labels);
   box.appendChild(tl);
 
-  const done=document.createElement("div"); done.className="pot-done";
-  done.innerHTML="<span class=\"pd-t\">"+p.total+" min</span> \u2014 season, taste, eat.";
-  box.appendChild(done);
+  if(pathDir){
+    const need=pathDir.markers.slice(0,3).filter(m=>!ids.includes(m));
+    if(need.length){
+      const nd=document.createElement("div"); nd.className="op-need";
+      nd.innerHTML="<span class=\"op-need-l\">season with</span>"+
+        need.map(m=>"<span class=\"bchip\">"+nm(m)+"</span>").join("");
+      box.appendChild(nd);
+    }
+  }
 
-  // --- honest gaps (nudge, never enforce) ---
+  /* ============ 3. THE FORK — compact, collapsed until you open it ============ */
+  const fork=document.createElement("div"); fork.className="op-fold";
+  const fh=document.createElement("div"); fh.className="op-fold-h";
+  fh.innerHTML="<span>"+(pathDir?"Seasoned as <strong>"+dishName+"</strong>":"Season it \u2014 take it somewhere")+"</span><span class=\"op-x\">"+(FLOW.potForkOpen?"\u2212":"+")+"</span>";
+  fh.onclick=()=>{ FLOW.potForkOpen=!FLOW.potForkOpen; renderOnePot(); };
+  fork.appendChild(fh);
+  if(FLOW.potForkOpen){
+    const body=document.createElement("div"); body.className="op-fold-b";
+    const byRegion={};
+    dirs.forEach(o=>{ const r=o.region||"Other"; (byRegion[r]=byRegion[r]||[]).push(o); });
+    const ORDER=["Teochew","Hokkien/Klang","Chinese","Malay/Peranakan","SEA","Indian","Japanese","Korean","Western"];
+    const none=document.createElement("div");
+    none.className="pf-chip small"+(FLOW.potPath===null?" on":"");
+    none.innerHTML="<span class=\"pf-name\">Unseasoned</span>";
+    none.onclick=()=>{ FLOW.potPath=null; renderOnePot(); };
+    const row0=document.createElement("div"); row0.className="pf-row"; row0.appendChild(none);
+    body.appendChild(row0);
+    ORDER.filter(r=>byRegion[r]).forEach(rg=>{
+      const rl=document.createElement("div"); rl.className="pf-region"; rl.textContent=rg;
+      body.appendChild(rl);
+      const row=document.createElement("div"); row.className="pf-row";
+      byRegion[rg].forEach(o=>{
+        const c=document.createElement("div");
+        c.className="pf-chip small"+(FLOW.potPath===o.key?" on":"");
+        c.innerHTML="<span class=\"pf-name\">"+o.label.replace(/ \u2014 .*/,"").replace(/ \(.*\)/,"")+"</span>";
+        c.title=o.note;
+        c.onclick=()=>{ FLOW.potPath=(FLOW.potPath===o.key)?null:o.key; renderOnePot(); };
+        row.appendChild(c);
+      });
+      body.appendChild(row);
+    });
+    fork.appendChild(body);
+  }
+  box.appendChild(fork);
+
+  /* ============ 4. ABOUT — everything else, folded away ============ */
+  const about=document.createElement("div"); about.className="op-fold";
+  const ah=document.createElement("div"); ah.className="op-fold-h";
+  ah.innerHTML="<span>About this pot</span><span class=\"op-x\">"+(FLOW.potAboutOpen?"\u2212":"+")+"</span>";
+  ah.onclick=()=>{ FLOW.potAboutOpen=!FLOW.potAboutOpen; renderOnePot(); };
+  about.appendChild(ah);
+  if(FLOW.potAboutOpen){
+    const b=document.createElement("div"); b.className="op-fold-b";
+    let h="";
+    if(p.character){
+      h+="<div class=\"op-row\"><span class=\"op-k\">Broth</span><span class=\"op-v\">"+
+         p.character.note.replace(/^./,c=>c.toUpperCase())+"</span></div>";
+      h+="<div class=\"op-row\"><span class=\"op-k\">Consistency</span><span class=\"op-v\">"+
+         (p.character.milky?"Milky (\u5976\u6c64) \u2014 boiled hard, the fat emulsifies":"Clear (\u6e05\u6c64) \u2014 gently simmered")+
+         "<em> derived from how you cook it</em></span></div>";
+    }
+    if(p.reminds&&p.reminds.length){
+      h+="<div class=\"op-row\"><span class=\"op-k\">Like</span><span class=\"op-v\">"+
+         p.reminds.map(r=>r.dish+" <em>("+r.closeness+")</em>").join("<br>")+"</span></div>";
+    }
+    b.innerHTML=h;
+    about.appendChild(b);
+  }
+  box.appendChild(about);
+
+  /* ============ 5. GAPS — only if there's something honest to say ============ */
   p.gaps.forEach(g=>{
     const w=document.createElement("div"); w.className="pot-gap";
     w.innerHTML="<strong>It wants "+g.what+".</strong> "+g.why+".";
