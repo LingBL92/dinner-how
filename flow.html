@@ -234,7 +234,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.26</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.27</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -1120,7 +1120,15 @@ function renderIngTags(){
     box.appendChild(b);
   });
 }
-function toggleIng(id){ FLOW.active.has(id)?FLOW.active.delete(id):FLOW.active.add(id); renderComps(); recompute(); }
+function toggleIng(id){
+  FLOW.active.has(id)?FLOW.active.delete(id):FLOW.active.add(id);
+  // update just this port in place — rebuilding the list would reset the scroll position
+  const dot=document.querySelector('[data-port="'+id+'"]');
+  const port=dot&&dot.parentElement;
+  if(port){ if(FLOW.active.has(id)) port.classList.add("on"); else port.classList.remove("on"); }
+  else renderComps();
+  recompute();
+}
 function removeComp(key){
   const c=FLOW.comps.find(x=>x.key===key); if(!c)return;
   c.leaves.forEach(l=>FLOW.active.delete(l.id));
@@ -1197,6 +1205,7 @@ function recompute(){
     const ts=d=>TASTE_AXES.reduce((n,ax)=>n+(FLOW.taste.has(ax)?(( (DISHES.find(x=>x.name===d.dish)||{}).taste||{})[ax]||0):0),0);
     res=res.map(r=>({...r,_t:ts(r)})).sort((a,b)=> b.ratio-a.ratio || b._t-a._t || a.buy.length-b.buy.length);
   }
+  FLOW.resultsAll=res;              // full set — compose mode needs every role represented
   FLOW.results=res.slice(0,10);
   renderRecipes();
   requestAnimationFrame(drawWires);
@@ -1437,8 +1446,10 @@ function renderMealBuilder(){
   const slots=MEAL_TEMPLATES.family_meal;   // [["base","Rice"],["meat","Meat"],["veg","Vegetable"]]
   const nameOf=id=>((REF.byId[id]||{}).name)||id;
   // candidate dishes per slot-role, from current results (already ingredient/appliance filtered)
-  const byRole={}; FLOW.results.forEach((r,idx)=>{
+  const pool=(FLOW.resultsAll&&FLOW.resultsAll.length)?FLOW.resultsAll:FLOW.results;
+  const byRole={}; pool.forEach((r,idx)=>{
     const d=DISHES.find(x=>x.name===r.dish)||{}; if(isPlainStaple(d)&&d.role!=="base")return;
+    if(r.ratio<=0) return;                      // nothing of yours in it
     (byRole[d.role]=byRole[d.role]||[]).push({r,idx,d});
   });
   // which of MY ingredients does a dish use (for the x-axis columns) — non-aromatic
@@ -1609,7 +1620,8 @@ function jumpToRecipe(dishName){
   setTimeout(()=>c.classList.remove("rc-flash"),1200);
 }
 function openR(idx){
-  const r=FLOW.results[idx]; if(!r)return;
+  const pool=(FLOW.compose&&FLOW.resultsAll&&FLOW.resultsAll.length)?FLOW.resultsAll:FLOW.results;
+  const r=pool[idx]; if(!r)return;
   const d=DISHES.find(x=>x.name===r.dish); if(!d)return;
   const opt=(d.appliance_options||[]).find(o=>FLOW.appl.has(o.appliance))||(d.appliance_options||[])[0];
   const ap=opt?opt.appliance:d.appliance;
@@ -1684,12 +1696,6 @@ function drawWires(){
       const b=anchor(target, vertical?"top":"left", cr, cv);
       html+=wire(a,b,1.8,.6);
     });
-  }
-  // CONTROL WIRE: Taste -> recipes (thin), only when leaning
-  const tasteCtrl=el("comp-taste");
-  if(tasteCtrl && FLOW.taste.size){
-    const cIn=anchor(tasteCtrl, vertical?"top":"left", cr, cv);
-    html+=wire(cIn, rIn, 1.4, .3);
   }
   svg.innerHTML=html;
 }
