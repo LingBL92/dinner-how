@@ -362,6 +362,16 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .sc-name em{display:block;font-style:normal;font-family:"Space Mono",monospace;font-size:8.5px;
   color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:1px}
 .sc-track{flex:1;position:relative;height:20px;background:rgba(27,16,11,.04);border-radius:5px}
+.sc-track{cursor:default}
+.sc-tip{position:absolute;left:0;bottom:26px;z-index:20;display:none;flex-direction:column;gap:1px;
+  background:var(--ink);color:#fff;padding:8px 11px;border-radius:9px;white-space:nowrap;
+  box-shadow:0 4px 18px rgba(27,16,11,.25);pointer-events:none}
+.sc-row:hover .sc-tip{display:flex}
+.sc-tip strong{font-size:12.5px;font-weight:700}
+.st-l{font-family:"Space Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.08em;opacity:.65}
+.st-r{font-family:"Space Mono",monospace;font-size:10px;opacity:.9;margin-top:2px}
+.st-r b{color:#8fd0bd}
+.st-w{font-family:"Space Mono",monospace;font-size:9.5px;color:var(--gold);margin-top:3px}
 .sc-bar{position:absolute;top:0;height:20px;border-radius:5px;background:rgba(50,117,100,.22);overflow:hidden}
 .sc-active{position:absolute;left:0;top:0;height:20px;background:var(--cool);border-radius:5px 0 0 5px}
 .sc-when{width:62px;flex:none;text-align:right;font-family:"Space Mono",monospace;font-size:10.5px;color:var(--cool);font-weight:700}
@@ -460,7 +470,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.62</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.63</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2519,12 +2529,25 @@ function renderSchedule(sc, picked){
   sc.items.slice().sort((a,b)=>a.start-b.start).forEach(it=>{
     const row=document.createElement("div"); row.className="sc-row";
     const pct=(v)=>(100*v/W).toFixed(2)+"%";
+    const dur=it.done-it.start, active=it.fp+it.ac, off=it.off;
+    const tip = it.d.name+" \u2014 "+(APPL[it.ap]||it.ap).toLowerCase()+"\n"+
+      (it.start===0?"Start straight away":"Start "+it.start+" min in")+"\n"+
+      active+" min hands-on"+(off?", then "+off+" min you can walk away":"")+"\n"+
+      "Done at "+it.done+" min"+(it.batches>1?"\n\u26a0 "+it.batches+" batches \u2014 it won\u2019t all fit at once":"");
+    row.title=tip;
     row.innerHTML=
       "<div class=\"sc-name\">"+it.d.name+
         "<em>"+(APPL[it.ap]||it.ap)+"</em></div>"+
       "<div class=\"sc-track\">"+
-        "<div class=\"sc-bar\" style=\"left:"+pct(it.start)+";width:"+pct(Math.max(1,it.done-it.start))+"\">"+
-          "<span class=\"sc-active\" style=\"width:"+pct(it.fp+it.ac)+"\"></span>"+
+        "<div class=\"sc-bar\" style=\"left:"+pct(it.start)+";width:"+pct(Math.max(1,dur))+"\">"+
+          "<span class=\"sc-active\" style=\"width:"+pct(active)+"\"></span>"+
+        "</div>"+
+        "<div class=\"sc-tip\">"+
+          "<strong>"+it.d.name+"</strong>"+
+          "<span class=\"st-l\">"+(APPL[it.ap]||it.ap)+"</span>"+
+          "<span class=\"st-r\"><b>"+(it.start===0?"start now":"+"+it.start+" min")+"</b> \u00b7 "+
+            active+" min hands-on"+(off?" \u00b7 "+off+" min free":"")+" \u00b7 done at "+it.done+" min</span>"+
+          (it.batches>1?"<span class=\"st-w\">"+it.batches+" batches \u2014 it won\u2019t all fit at once</span>":"")+
         "</div>"+
       "</div>"+
       "<div class=\"sc-when\">"+(it.start===0?"start now":"+"+it.start+"m")+"</div>";

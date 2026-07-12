@@ -1431,12 +1431,14 @@ function potClassOf(id,R){
 }
 
 /* Build the pot: a base, a staged schedule, and honest gaps. */
-function buildOnePot(ingIds, R, dishes){
+function buildOnePot(ingIds, R, dishes, opts){
   // STAGING only cares about things you physically add and time (not seasonings).
   // REASONING (broth character, seasoning direction, similarity) needs the FULL list —
   // otherwise the star anise you added never reaches "what does this remind me of".
   const real=ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed");
   const all=ingIds;
+  const APP=(opts&&opts.appliance)||null;
+  const APPD=(opts&&opts.applData)||null;
   const staged={};
   real.forEach(id=>{
     const k=potClassOf(id,R);
@@ -1444,21 +1446,39 @@ function buildOnePot(ingIds, R, dishes){
     (staged[k]=staged[k]||[]).push({id, name:(R.byId[id]||{}).name||id});
   });
 
-  // longest thing in the pot sets the total cook time
+  /* THE VESSEL CHANGES THE COOK. A pressure cooker breaks collagen down in a fraction
+     of the time; a slow cooker takes hours. appliances.json already carries these
+     multipliers. They apply to the PASSIVE stages (the long softening) — not to a
+     leafy green, which wilts in a minute whatever the pot. */
+  const mult = APPD && APPD.passive_multiplier!=null ? APPD.passive_multiplier : 1;
+  const cap  = APPD ? APPD.passive_cap_min : null;
+  function scaled(key){
+    const base=POT_MINS[key]||0;
+    if(mult===1) return base;
+    if(!["collagen","dense_root"].includes(key)) return base;   // quick things stay quick
+    let v=Math.round(base*mult);
+    if(cap!=null) v=Math.min(v, cap);
+    return Math.max(1, v);
+  }
+
   let total=0;
-  Object.keys(staged).forEach(k=>{ total=Math.max(total, POT_MINS[k]||0); });
+  Object.keys(staged).forEach(k=>{ total=Math.max(total, scaled(k)); });
   if(!total) total=15;
 
   // each class goes in so that it finishes at the same moment
   const steps=POT_CLASS
     .filter(c=>staged[c.key])
-    .map(c=>({
-      at: Math.max(0, total-c.mins),
-      cooks: c.mins,
-      label: c.label,
-      why: c.why,
-      items: staged[c.key]
-    }))
+    .map(c=>{
+      const mins=scaled(c.key);
+      const faster = mins<c.mins, slower = mins>c.mins;
+      return {
+        at: Math.max(0, total-mins),
+        cooks: mins,
+        label: c.label,
+        why: c.why + ((faster||slower) && APP ? " \u00b7 " + (faster?"much faster":"slower") + " in the " + APP.replace(/_/g," ") : ""),
+        items: staged[c.key]
+      };
+    })
     .sort((a,b)=>a.at-b.at);
 
   const character = brothCharacter(all,R);
@@ -1478,6 +1498,7 @@ function buildOnePot(ingIds, R, dishes){
   const handsOn = Math.max(6, steps.length*2);
 
   return {
+    appliance: APP, multiplier: mult,
     base, character,
     describe: character?describeBroth(character):"a light vegetable broth",
     steps, total, handsOn, handsOff: Math.max(0,total-handsOn),
