@@ -85,6 +85,11 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .comphead .cx{margin-left:auto;border:none;background:none;color:var(--muted);cursor:pointer;font-size:14px}
 .comphead .cx:hover{color:var(--ember)}
 .port{display:flex;align-items:center;gap:9px;padding:7px 12px;font-size:13px;cursor:pointer;user-select:none}
+#ingcomps .comp{max-height:320px;overflow-y:auto}
+.portgroup{font-family:"Space Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--muted);padding:8px 12px 3px;opacity:.8;border-top:1px solid var(--line);margin-top:2px}
+.portgroup:first-of-type{border-top:none;margin-top:0}
+#ingcomps .comp .comphead{position:sticky;top:0;background:var(--panel);z-index:1}
 .port:hover{background:rgba(50,117,100,.05)}
 .port .dot{width:11px;height:11px;border-radius:50%;border:2px solid var(--muted);flex:none;margin-left:auto}
 .port.on{font-weight:700;color:var(--cool)}
@@ -229,7 +234,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.24</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.26</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -1088,9 +1093,8 @@ function groupFor(ing){
   }
   // hide leaves already covered by the pantry (they're managed there) — unless it's the exact thing searched
   leaves=leaves.filter(x=> !PANTRY_ITEMS.includes(x.id));   // pantry items live in the pantry only
-  if(leaves.length>12){
-    leaves=leaves.filter(x=>x.id===ing.id).concat(leaves.filter(x=>x.id!==ing.id).slice(0,11));
-  }
+  // keep the searched item first, then the rest — the component scrolls rather than truncating
+  leaves=leaves.filter(x=>x.id===ing.id).concat(leaves.filter(x=>x.id!==ing.id));
   return {key:(pid&&!TOP_CATS.has(pid))?pid:ing.category, title, leaves};
 }
 function spawn(q){
@@ -1150,7 +1154,8 @@ function renderType(){
   const body1=document.createElement("div"); body1.className="tmode-body";
   TYPE_OPTS.forEach(([id,label])=>{
     const t=document.createElement("div"); t.className="tgl"+(FLOW.types.has(id)?" on":"");
-    t.innerHTML="<span>"+label+"</span><span class=\"dot\"></span>";
+    t.setAttribute("data-type",id);
+    t.innerHTML="<span>"+label+"</span><span class=\"dot\" data-typedot=\""+id+"\"></span>";
     t.onclick=()=>{ FLOW.mode="type"; FLOW.compose=null; FLOW.mealPick=null; toggleType(id); };
     body1.appendChild(t);
   });
@@ -1194,6 +1199,7 @@ function recompute(){
   }
   FLOW.results=res.slice(0,10);
   renderRecipes();
+  requestAnimationFrame(drawWires);
   if(!FLOW.compose){ const g=el("grocery"); if(g)g.innerHTML=""; } requestAnimationFrame(drawWires);
   if(mobileView()) renderMinimap(document.querySelector(".mm-step.active")?document.querySelector(".mm-step.active").getAttribute("data-target"):null);
 }
@@ -1210,12 +1216,33 @@ function renderComps(){
     h.appendChild(x); d.appendChild(h); wireDrag(h,c,d);
     // mobile: tap header to collapse this component's ports
     h.addEventListener("click",e=>{ if(window.innerWidth<760 && !e.target.classList.contains("cx")){ d.classList.toggle("ccollapsed"); }});
-    c.leaves.forEach(l=>{
+    const GROUP_LABEL={leafy:"Leafy greens",root:"Roots & tubers",fruiting:"Fruiting vegetables",
+      pods:"Beans & pods",florets:"Broccoli & cauliflower",fungi:"Mushrooms & seaweed",aromatic:"Aromatics"};
+    const GROUP_ORDER=["leafy","root","fruiting","pods","florets","fungi","aromatic"];
+    const grouped={}, ungrouped=[];
+    c.leaves.forEach(l=>{ const g=(REF.byId[l.id]||{}).group; if(g){(grouped[g]=grouped[g]||[]).push(l);} else ungrouped.push(l); });
+    const hasGroups=Object.keys(grouped).length>1;
+    const addPort=(l)=>{
       const p=document.createElement("div"); p.className="port"+(FLOW.active.has(l.id)?" on":"");
       p.innerHTML="<span>"+l.name+"</span><span class=\"dot\" data-port=\""+l.id+"\"></span>";
       p.onclick=()=>toggleIng(l.id);
       d.appendChild(p);
-    });
+    };
+    if(hasGroups){
+      GROUP_ORDER.forEach(g=>{
+        if(!grouped[g])return;
+        const h=document.createElement("div"); h.className="portgroup"; h.textContent=GROUP_LABEL[g]||g;
+        d.appendChild(h);
+        grouped[g].forEach(addPort);
+      });
+      if(ungrouped.length){
+        const h=document.createElement("div"); h.className="portgroup"; h.textContent="Other";
+        d.appendChild(h);
+        ungrouped.forEach(addPort);
+      }
+    } else {
+      c.leaves.forEach(addPort);
+    }
     box.appendChild(d);
   });
   if(el("ing-hint")) el("ing-hint").style.display=FLOW.comps.length?"none":"";
@@ -1361,7 +1388,7 @@ function renderRecipes(){
   grid.appendChild(cornerCell(""));
   colOrder.forEach(c=>grid.appendChild(headCell(c==="_other"?"Other":nameOf(c))));
   rowOrder.forEach(([rk,label])=>{
-    grid.appendChild(rowLabel(label));
+    grid.appendChild(rowLabel(label,rk));
     colOrder.forEach(c=>{
       const items=(cell[c]||{})[rk]||[];
       grid.appendChild(gridCell(items));
@@ -1371,7 +1398,7 @@ function renderRecipes(){
 
   function cornerCell(){ const d=document.createElement("div"); d.className="gcorner"; return d; }
   function headCell(t){ const d=document.createElement("div"); d.className="ghead"; d.textContent=t; return d; }
-  function rowLabel(t){ const d=document.createElement("div"); d.className="growlab"; d.textContent=t; return d; }
+  function rowLabel(t,rk){ const d=document.createElement("div"); d.className="growlab"; d.textContent=t; if(rk)d.setAttribute("data-row",rk); return d; }
   function gridCell(items){
     const d=document.createElement("div"); d.className="gcell";
     if(!items.length){ d.className="gcell gempty"; return d; }
@@ -1642,9 +1669,21 @@ function drawWires(){
     const tIn =anchor(typeC, vertical?"top":"left", cr, cv);
     const tOut=anchor(typeC, vertical?"bottom":"right", cr, cv);
     html+=wire(aOut,tIn,2.4,on);
-    html+=wire(tOut,rIn,2.4,on);
+    if(!FLOW.types.size) html+=wire(tOut,rIn,2.4,on);   // per-type wires replace the trunk when filtering
   } else {
     html+=wire(aOut,rIn,2.4,on);
+  }
+  // PER-TYPE WIRES: each selected dish type -> its row label in the grid
+  if(FLOW.types.size){
+    document.querySelectorAll("[data-typedot]").forEach(dot=>{
+      const id=dot.getAttribute("data-typedot");
+      if(!FLOW.types.has(id))return;
+      const target=document.querySelector('[data-row="'+id+'"]');
+      if(!target)return;                                  // that row has no dishes
+      const a=anchor(dot,"mid",cr,cv);
+      const b=anchor(target, vertical?"top":"left", cr, cv);
+      html+=wire(a,b,1.8,.6);
+    });
   }
   // CONTROL WIRE: Taste -> recipes (thin), only when leaning
   const tasteCtrl=el("comp-taste");
