@@ -496,7 +496,7 @@ function swapSafety(arch,curBehaviour,newBehaviour){
    ============================================================ */
 
 /* how alike are two ingredients? higher = closer substitute. */
-const SUB_FAMILY_FLAGS=["grain_rice","collagen_rich","leafy","root_veg","allium","fruit_sweet"]; // fine-grained "same kind" tags
+const SUB_FAMILY_FLAGS=["grain_rice","collagen_rich","leafy","root_veg","allium","fruit_sweet","fish_family"]; // fine-grained "same kind" tags
 function subScore(aId,bId,R){
   const A=R.byId[aId], B=R.byId[bId];
   if(!A||!B||aId===bId) return -1;
@@ -554,17 +554,30 @@ function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}
   const out=[];
   dishes.forEach(d=>{
     const scale = (pax && d.serves) ? (pax/d.serves) : 1;      // size the recipe to the diners
-    const comps=(d.grocery_items||[]).filter(g=>!IGNORE.has(g.id) && !staples.has(g.id));
+    const STAPLE_MANAGED=new Set(["salt","pepper","white_sugar","vegetable_oil","sesame_oil","soy_sauce"]);
+    const comps=(d.grocery_items||[]).filter(g=>{
+      if(IGNORE.has(g.id)||staples.has(g.id))return false;
+      // aromatics/seasonings are assumed present, so they are NOT evidence of a match —
+      // they don't count toward coverage. Unticked staples stay checkable.
+      return measureTypeOf(R.byId[g.id])!=="assumed" || STAPLE_MANAGED.has(g.id);
+    });
     if(!comps.length) return;
     let covered=0; const missing=[], subs=[], short=[];
     comps.forEach(g=>{
       const mt=measureTypeOf(R.byId[g.id]);
-      if(mt==="assumed"){ covered++; return; }   // aromatics/seasonings: always on hand
       // --- do we have it at all? (self, or an on-hand substitute) ---
       let sourceId=null;
       if(have.has(g.id)) sourceId=g.id;
-      else { const sub=substitutesFor(g.id,R,{have,limit:3,dish:d}).find(x=>x.onHand);
-             if(sub){sourceId=sub.id; subs.push({need:g.name,use:sub.name,flag:sub.flag,rename:sub.rename});} }
+      else {
+        // OWNING A SPECIFIC CUT SATISFIES A GENERIC REQUIREMENT.
+        // "300g chicken" is covered by chicken thigh; "beef" by beef chuck; etc.
+        const kin=[...have].find(hid=>(R.anc[hid]||new Set()).has(g.id));
+        if(kin){ sourceId=kin; if(kin!==g.id) subs.push({need:g.name,use:(R.byId[kin]||{}).name||kin,flag:null,rename:null}); }
+        else {
+          const sub=substitutesFor(g.id,R,{have,limit:3,dish:d}).find(x=>x.onHand);
+          if(sub){sourceId=sub.id; subs.push({need:g.name,use:sub.name,flag:sub.flag,rename:sub.rename});}
+        }
+      }
       if(!sourceId){ missing.push(g); return; }
       // --- do we have ENOUGH? (only where units line up; otherwise presence is enough) ---
       const p=pantry[sourceId]||{};

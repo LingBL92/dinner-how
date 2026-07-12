@@ -864,8 +864,16 @@ function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}
       // --- do we have it at all? (self, or an on-hand substitute) ---
       let sourceId=null;
       if(have.has(g.id)) sourceId=g.id;
-      else { const sub=substitutesFor(g.id,R,{have,limit:3,dish:d}).find(x=>x.onHand);
-             if(sub){sourceId=sub.id; subs.push({need:g.name,use:sub.name,flag:sub.flag,rename:sub.rename});} }
+      else {
+        // OWNING A SPECIFIC CUT SATISFIES A GENERIC REQUIREMENT.
+        // "300g chicken" is covered by chicken thigh; "beef" by beef chuck; etc.
+        const kin=[...have].find(hid=>(R.anc[hid]||new Set()).has(g.id));
+        if(kin){ sourceId=kin; if(kin!==g.id) subs.push({need:g.name,use:(R.byId[kin]||{}).name||kin,flag:null,rename:null}); }
+        else {
+          const sub=substitutesFor(g.id,R,{have,limit:3,dish:d}).find(x=>x.onHand);
+          if(sub){sourceId=sub.id; subs.push({need:g.name,use:sub.name,flag:sub.flag,rename:sub.rename});}
+        }
+      }
       if(!sourceId){ missing.push(g); return; }
       // --- do we have ENOUGH? (only where units line up; otherwise presence is enough) ---
       const p=pantry[sourceId]||{};
