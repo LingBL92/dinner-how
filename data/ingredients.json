@@ -1065,6 +1065,22 @@
    "category": "starches"
   },
   {
+   "id": "red_bean",
+   "name": "Red Bean",
+   "aliases": [
+    "red beans",
+    "adzuki beans",
+    "red bean paste"
+   ],
+   "provides": [
+    "starch"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "measure",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
    "id": "vegetables",
    "name": "Vegetables",
    "aliases": [],
@@ -1706,23 +1722,6 @@
     "palm sugar"
    ],
    "provides": [
-    "sugar"
-   ],
-   "aisle": "Baking",
-   "prep_verb": "measure",
-   "parent": "sweeteners",
-   "category": "sweeteners"
-  },
-  {
-   "id": "red_bean",
-   "name": "Red Bean",
-   "aliases": [
-    "red beans",
-    "adzuki beans",
-    "red bean paste"
-   ],
-   "provides": [
-    "starch",
     "sugar"
    ],
    "aisle": "Baking",
