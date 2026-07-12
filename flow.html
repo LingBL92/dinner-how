@@ -237,17 +237,19 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .op-season.on{background:var(--cool);border-color:var(--cool);color:#fff}
 .os-dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.55}
 .op-season.on .os-dot{opacity:1}
-.radial{position:fixed;inset:0;z-index:200;background:rgba(253,250,245,.80);
-  backdrop-filter:blur(4px);opacity:0;transition:opacity .16s}
+.radial{position:fixed;inset:0;z-index:200;background:rgba(27,16,11,.55);
+  backdrop-filter:blur(6px);opacity:0;transition:opacity .18s}
 .radial.in{opacity:1}
-.rad-hub{position:fixed;width:12px;height:12px;border-radius:50%;background:var(--cool);
-  transform:translate(-50%,-50%);box-shadow:0 0 0 6px rgba(50,117,100,.15)}
+.rad-hub{position:fixed;width:12px;height:12px;border-radius:50%;background:#fff;
+  transform:translate(-50%,-50%);box-shadow:0 0 0 7px rgba(255,255,255,.18)}
 /* a cluster = a region label with its buttons underneath */
 .rad-clu{position:fixed;transform:translate(-50%,-50%);display:flex;flex-direction:column;
-  align-items:center;gap:5px}
-.rad-lab{font-family:"Space Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.13em;
-  color:var(--cool);opacity:.8;font-weight:700;white-space:nowrap}
-.rad-btns{display:flex;flex-direction:column;gap:5px;align-items:center}
+  align-items:flex-start;gap:5px}
+.rad-clu.multi{transform:translate(0,-50%)}          /* multi-option rows grow rightward */
+.rad-clu.single{transform:translate(-50%,-50%);align-items:center}
+.rad-lab{font-family:"Space Mono",monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:.14em;
+  color:#fff;opacity:.75;font-weight:700;white-space:nowrap}
+.rad-btns{display:flex;flex-direction:row;gap:6px;align-items:center;flex-wrap:nowrap}
 .rad-btn{padding:7px 14px;border-radius:999px;background:var(--panel);border:1px solid var(--line);
   font-size:12.5px;font-weight:600;color:var(--ink);cursor:pointer;white-space:nowrap;
   box-shadow:0 2px 10px rgba(27,16,11,.08);transition:transform .09s ease-out,background .13s,border-color .13s;
@@ -407,7 +409,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.54</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.55</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2561,8 +2563,12 @@ function openRadial(dirs, nm){
 
   regions.forEach((rg,i)=>{
     const pt=place(i+1);
-    const clu=document.createElement("div"); clu.className="rad-clu";
-    clu.style.left=pt.x+"px"; clu.style.top=pt.y+"px";
+    const multi = byRegion[rg].length>1;
+    const clu=document.createElement("div"); clu.className="rad-clu "+(multi?"multi":"single");
+    // a multi-option row grows rightward — pull it left so it can't run off the edge
+    const rowW = multi ? byRegion[rg].length*150 : 0;
+    const lx = multi ? Math.min(pt.x-40, VW-rowW-40) : pt.x;
+    clu.style.left=Math.max(24,lx)+"px"; clu.style.top=pt.y+"px";
     const lab=document.createElement("div"); lab.className="rad-lab"; lab.textContent=rg;
     clu.appendChild(lab);
     const row=document.createElement("div"); row.className="rad-btns";
