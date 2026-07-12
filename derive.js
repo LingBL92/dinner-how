@@ -1136,7 +1136,11 @@ function potClassOf(id,R){
 
 /* Build the pot: a base, a staged schedule, and honest gaps. */
 function buildOnePot(ingIds, R, dishes){
+  // STAGING only cares about things you physically add and time (not seasonings).
+  // REASONING (broth character, seasoning direction, similarity) needs the FULL list —
+  // otherwise the star anise you added never reaches "what does this remind me of".
   const real=ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed");
+  const all=ingIds;
   const staged={};
   real.forEach(id=>{
     const k=potClassOf(id,R);
@@ -1161,7 +1165,7 @@ function buildOnePot(ingIds, R, dishes){
     }))
     .sort((a,b)=>a.at-b.at);
 
-  const character = brothCharacter(real,R);
+  const character = brothCharacter(all,R);
   const base = character ? character.base : null;
 
   // what's missing (nudge, never enforce)
@@ -1182,7 +1186,8 @@ function buildOnePot(ingIds, R, dishes){
     describe: character?describeBroth(character):"a light vegetable broth",
     steps, total, handsOn, handsOff: Math.max(0,total-handsOn),
     gaps,
-    reminds: dishes ? brothLikeDishes(real,R,dishes.filter(hasBroth),2) : []
+    seasoning: seasoningOf(all),
+    reminds: dishes ? brothLikeDishes(all,R,dishes.filter(hasBroth),2) : []
   };
 }
 
@@ -1196,39 +1201,97 @@ function buildOnePot(ingIds, R, dishes){
    A dish's direction is DERIVED by matching its ingredients against these.
    (The marker lists are a cook's knowledge; the matching is derived.)
    ============================================================ */
+/* ---- CONSISTENCY: derived, canonical. Not authored. ----
+   Two independent axes, both grounded in real culinary doctrine:
+     opacity    : clear (\u6e05\u6c64 / consomm\u00e9) vs milky-emulsified (\u5976\u6c64 / tonkotsu)
+                  \u2014 DERIVED from the steps: a hard rolling boil emulsifies fat into
+                    the water; a gentle simmer + skimming keeps it clear.
+     thickening : none / roux / pur\u00e9e / cream / starch  (Escoffier's axis)
+                  \u2014 DERIVED from ingredients + steps.
+   Neither needs a chef. The engine can defend every claim here. */
+function consistencyOf(d,R){
+  const txt=((d.steps||[]).join(" ")).toLowerCase();
+  const ids=new Set((d.grocery_items||[]).map(g=>g.id));
+  const m=brothMethod(d);
+  const opacity = m.hardBoil ? "milky" : (m.gentle||m.skimmed) ? "clear" : "unspecified";
+  let thickening="none";
+  if(ids.has("flour")&&/roux|butter and flour/.test(txt)) thickening="roux";
+  else if(/blend|pur\u00e9e|puree|mash/.test(txt))         thickening="puree";
+  else if(ids.has("cream")||ids.has("coconut_milk"))     thickening="enriched";
+  else if(ids.has("cornstarch")&&/thicken|slurry/.test(txt)) thickening="starch";
+  return {opacity, thickening,
+    note: opacity==="milky" ? "boiled hard \u2014 the fat emulsifies, turning it milky (\u5976\u6c64)"
+        : opacity==="clear" ? "gently simmered \u2014 kept clear (\u6e05\u6c64)"
+        : "consistency not specified in the steps"};
+}
+
+/* ---- SEASONING DIRECTION: AUTHORED. This is the local knowledge. ----
+   No public taxonomy provides this. Escoffier classifies soups by thickness,
+   not by flavour identity; flavour-network research maps compound sharing, not
+   culinary direction. So this table is Singaporean culinary judgment, written
+   down. It is CONTESTED, REGIONAL, and INCOMPLETE by nature \u2014 a chef should own it.
+
+   Structure mirrors how ramen is actually taught: BROTH x TARE. The base sets
+   the body; the direction sets the identity. */
 const SEASONING_DIRS=[
-  {key:"curry",   label:"Curry",
-   markers:["turmeric","coriander_seed","cumin","fennel","cardamom","coconut_milk",
-            "curry_leaves","belacan","tamarind"],
-   need:2, note:"warm spice and coconut"},
-  {key:"curry",   label:"Curry",           // a roux/paste IS the curry, on its own
-   markers:["curry_powder","curry_paste_pack","japanese_curry_roux"],
-   need:1, note:"a ready curry base"},
-  {key:"soy",     label:"Soy-braised",
-   markers:["soy_sauce","dark_soy_sauce","white_sugar","star_anise","shaoxing","rock_sugar"],
-   need:2, note:"savoury-sweet, dark and glossy"},
-  {key:"herbal",  label:"Herbal (bak kut teh style)",
-   markers:["dang_gui","white_pepper","star_anise","cinnamon","cloves_spice","goji","wolfberry"],
-   need:2, note:"peppery, medicinal, warming"},
-  {key:"japanese",label:"Japanese",
-   markers:["miso","dashi","mirin","sake","wakame","nori","kombu"],
-   need:1, note:"clean dashi umami"},
-  {key:"western", label:"Western herb",
-   markers:["bay_leaf","parsley","thyme","rosemary","oregano","celery","broth"],
-   need:2, note:"herb-and-stock, homely"},
-  {key:"chilli",  label:"Chilli-hot",
-   markers:["chilli","chili_powder","sambal","hot_sauce","doubanjiang"],
-   need:1, note:"heat-forward"},
-  {key:"clear",   label:"Clear & simple",
-   markers:[], need:0, note:"seasoned only with salt and pepper \u2014 the broth speaks for itself"}
+  // --- Chinese / Singaporean ---
+  {key:"bkt_teochew", label:"Bak kut teh \u2014 Teochew", region:"Teochew",
+   markers:["white_pepper","garlic","pork_ribs"], need:3,          // ALL three, and…
+   exclude:["dang_gui","dark_soy_sauce","star_anise","cinnamon","cloves_spice","white_sugar","soy_sauce"],
+   note:"peppery and garlicky, kept clear \u2014 no herbs, no dark soy"},
+  {key:"bkt_hokkien", label:"Bak kut teh \u2014 Hokkien", region:"Hokkien/Klang",
+   markers:["dang_gui","star_anise","cinnamon","cloves_spice","goji","wolfberry","dark_soy_sauce"],
+   need:2, note:"dark and herbal \u2014 medicinal warmth"},
+  {key:"hong_shao",   label:"Red-braised (\u7ea2\u70e7)", region:"Chinese",
+   markers:["dark_soy_sauce","white_sugar","rock_sugar","shaoxing","star_anise"], need:2,
+   note:"soy and sugar \u2014 dark, glossy, savoury-sweet"},
+  {key:"clear_chinese", label:"Clear Chinese soup (\u6e05\u6c64)", region:"Chinese",
+   markers:["ginger","scallion","salt"], need:2, exclude:["dark_soy_sauce","coconut_milk","curry_powder"],
+   note:"the broth speaks for itself \u2014 ginger, scallion, salt"},
+  // --- Malay / Peranakan ---
+  {key:"rempah",      label:"Rempah (Malay/Peranakan)", region:"Malay/Peranakan",
+   markers:["belacan","candlenut","lemongrass","galangal","kaffir_lime"], need:1,   // the SEA signature
+   also:["turmeric","chilli","shallot","coconut_milk"],
+   note:"pounded spice paste \u2014 belacan, lemongrass, galangal"},
+  {key:"assam",       label:"Sour-hot (assam / tom yum)", region:"SEA",
+   markers:["lemongrass","galangal","kaffir_lime","chilli","fish_sauce"], need:2,
+   require:["tamarind","lime"],        // the SOUR agent is the whole point — no sour, no assam
+   exclude:["coconut_milk","coriander_seed","cumin"],   // that's a curry, not a tom yum
+   note:"tamarind or lime against chilli \u2014 sharp and hot"},
+  // --- Indian ---
+  {key:"masala",      label:"Indian masala", region:"Indian",
+   markers:["turmeric","coriander_seed","cumin","fennel","cardamom","curry_leaves","garam_masala","mustard_seed"],
+   need:3, note:"toasted whole spice \u2014 layered and warm"},
+  // --- Japanese (broth x tare, as ramen is actually taught) ---
+  {key:"dashi_miso",  label:"Dashi + miso", region:"Japanese",
+   markers:["miso","dashi","kombu","wakame"], need:1, note:"clean kelp umami, thickened by miso"},
+  {key:"dashi_shoyu", label:"Dashi + shoyu", region:"Japanese",
+   markers:["dashi","soy_sauce","mirin","sake","kombu"], need:2, exclude:["miso"],
+   note:"dashi seasoned with soy \u2014 clear and savoury"},
+  {key:"jp_curry",    label:"Japanese curry", region:"Japanese",
+   markers:["japanese_curry_roux","curry_powder"], need:1, note:"a roux-thickened, gently sweet curry"},
+  // --- Western ---
+  {key:"western_herb",label:"Western herb & stock", region:"Western",
+   markers:["bay_leaf","parsley","thyme","rosemary","oregano","celery","broth"], need:2,
+   note:"herb-and-stock \u2014 homely and clean"},
+  // --- fallback ---
+  {key:"clear",       label:"Unseasoned", region:"\u2014", markers:[], need:0,
+   note:"salt and pepper only \u2014 nothing steering it yet"}
 ];
+
 function seasoningOf(ingIds){
   const set=new Set(ingIds);
   const hits=[];
   SEASONING_DIRS.forEach(dir=>{
     if(!dir.markers.length) return;
+    // an EXCLUDE marker rules a direction out — this is what separates a Teochew
+    // bak kut teh (no dang gui, no dark soy) from a Hokkien one.
+    if((dir.exclude||[]).some(x=>set.has(x))) return;
+    // a REQUIRE list means: at least one of these MUST be present (e.g. a sour agent for tom yum)
+    if((dir.require||[]).length && !dir.require.some(x=>set.has(x))) return;
     const found=dir.markers.filter(m=>set.has(m));
-    if(found.length>=dir.need) hits.push({...dir, found, strength:found.length});
+    const bonus=(dir.also||[]).filter(m=>set.has(m)).length;
+    if(found.length>=dir.need) hits.push({...dir, found, strength:found.length+bonus*0.5});
   });
   hits.sort((a,b)=>b.strength-a.strength);
   const seen=new Set(); const uniq=[];
