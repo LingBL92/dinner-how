@@ -900,7 +900,7 @@ const BROTH_BASE={
   pork_belly:     {body:3, sweetness:2, depth:2, clean:0, marine:0, note:"fatty and rich"},
   pork_shoulder:  {body:2, sweetness:2, depth:2, clean:1, marine:0, note:"gently sweet, medium body"},
   pork:           {body:2, sweetness:2, depth:2, clean:1, marine:0, note:"sweet and rounded"},
-  beef_chuck:     {body:3, sweetness:1, depth:3, clean:0, marine:0, note:"deep, heavy, iron-y"},
+  beef_chuck:     {body:3, sweetness:1, depth:3, clean:0, marine:0, gamey:0, note:"deep, heavy, iron-y"},
   beef_brisket:   {body:3, sweetness:1, depth:3, clean:0, marine:0, note:"deep and beefy"},
   beef_short_rib: {body:3, sweetness:1, depth:3, clean:0, marine:0, note:"very rich, unctuous"},
   beef:           {body:2, sweetness:1, depth:3, clean:0, marine:0, note:"deep and savoury"},
@@ -916,9 +916,9 @@ const BROTH_BASE={
   wakame:         {body:0, sweetness:0, depth:1, clean:3, marine:3, note:"clean oceanic umami, no fat"},
   nori:           {body:0, sweetness:0, depth:1, clean:2, marine:3, note:"oceanic, toasty"},
   tofu:           {body:1, sweetness:0, depth:0, clean:3, marine:0, note:"a carrier \u2014 takes the broth's character"},
-  mutton:         {body:3, sweetness:1, depth:3, clean:0, marine:0, note:"strong, gamey, assertive"}
+  mutton:         {body:3, sweetness:0, depth:3, clean:0, marine:0, gamey:2, note:"strong, gamey, assertive"}
 };
-const BROTH_AXES=["body","sweetness","depth","clean","marine"];
+const BROTH_AXES=["body","sweetness","depth","clean","marine","gamey"];
 
 /* the base of a pot/dish = its principal protein (the thing the broth is built on) */
 function brothBaseOf(ingIds,R){
@@ -929,9 +929,21 @@ function brothBaseOf(ingIds,R){
   return prots[0];
 }
 function brothCharacter(ingIds,R){
-  const base=brothBaseOf(ingIds,R);
-  if(!base) return null;
+  const bases=ingIds.filter(id=>BROTH_BASE[id]);
+  if(!bases.length) return null;
+  // BLEND every protein in the pot — a beef+pork broth is not a beef broth.
+  // The heaviest base leads (it dominates the character), the others pull it.
+  bases.sort((a,b)=>(BROTH_BASE[b].body+BROTH_BASE[b].depth)-(BROTH_BASE[a].body+BROTH_BASE[a].depth));
+  const base=bases[0];
   const c={...BROTH_BASE[base]};
+  if(bases.length>1){
+    BROTH_AXES.forEach(ax=>{
+      // weighted: lead base counts double, the rest average in
+      const rest=bases.slice(1).reduce((sum,b)=>sum+BROTH_BASE[b][ax],0)/(bases.length-1);
+      c[ax]=(c[ax]*2 + rest)/3;
+    });
+    c.blended=bases.slice(1).map(b=>(R.byId[b]||{}).name||b);
+  }
   // vegetables shift the character: sweet roots sweeten it, seaweed cleans+marines it
   ingIds.forEach(id=>{
     if(id===base) return;
@@ -961,6 +973,7 @@ function describeBroth(c){
   else if(c.depth<=1) bits.push("delicate");
   if(c.clean>=3 && !c.milky) bits.push("clear and clean");
   if(c.roasted) bits.push("with roasted depth");
+  if(c.gamey>=1.5) bits.push("gamey");
   if(c.marine>=2) bits.push("distinctly of the sea");
   return bits.join(", ")||"balanced";
 }
@@ -972,6 +985,7 @@ function describeBroth(c){
 function brothLikeDishes(ingIds, R, dishes, limit=3){
   const mine=brothCharacter(ingIds,R);
   if(!mine) return [];
+  const mySeason=seasoningOf(ingIds).map(x=>x.key);
   const out=[];
   dishes.forEach(d=>{
     const ids=(d.grocery_items||[]).map(g=>g.id);
@@ -979,15 +993,27 @@ function brothLikeDishes(ingIds, R, dishes, limit=3){
     if(!theirs) return;
     const dist=brothDistance(mine,theirs);
     const sameBase=theirs.base===mine.base;
+    const theirSeason=seasoningOf(ids);
+    const theirKeys=theirSeason.map(x=>x.key);
+    const seasonShared=mySeason.filter(k=>theirKeys.includes(k));
+    // a seasoning MISMATCH is a real distance: a plain pot is NOT a curry
+    const seasonGap = seasonShared.length ? 0 : 2.5;
     out.push({dish:d.name, d, base:theirs.baseName, character:describeBroth(theirs),
-              dist, sameBase, soupish:(d.role==="soup"||["braise","simmer"].includes(d.build))});
+              dist, total:dist+seasonGap, seasonGap,
+              season:theirSeason[0]?theirSeason[0].label:"Clear & simple",
+              seasonShared, sameBase,
+              soupish:(d.role==="soup"||["braise","simmer"].includes(d.build))});
   });
-  // closest character first; prefer actual soups/braises, and same base
-  out.sort((a,b)=> (a.dist-b.dist) || (b.sameBase-a.sameBase) || (b.soupish-a.soupish));
-  return out.slice(0,limit).map(x=>({
-    ...x,
-    closeness: x.dist<=1 ? "the same kind of broth" : x.dist<=2.5 ? "a similar broth" : "a different broth, but related"
-  }));
+  out.sort((a,b)=> (a.total-b.total) || (b.sameBase-a.sameBase) || (b.soupish-a.soupish));
+  return out.slice(0,limit).map(x=>{
+    let closeness;
+    if(x.seasonGap>0 && x.dist<=1)      closeness="same broth, but it's seasoned as "+x.season.toLowerCase();
+    else if(x.sameBase && x.dist<=1)    closeness="the same base, seasoned the same way";
+    else if(x.dist<=1)                  closeness="a broth of the same character";
+    else if(x.dist<=2.5)                closeness="a similar broth";
+    else                                closeness="a different broth, but related";
+    return {...x, closeness};
+  });
 }
 
 
@@ -1158,4 +1184,62 @@ function buildOnePot(ingIds, R, dishes){
     gaps,
     reminds: dishes ? brothLikeDishes(real,R,dishes.filter(hasBroth),2) : []
   };
+}
+
+/* ============================================================
+   SEASONING DIRECTION — where a pot is headed, flavour-wise.
+   The broth model knows the PROTEIN base; it was blind to the seasoning,
+   so a plain beef pot "reminded" the engine of Beef Curry. It doesn't.
+   The curry's identity is its spices.
+
+   Each direction is defined by its MARKERS — ingredients that signal it.
+   A dish's direction is DERIVED by matching its ingredients against these.
+   (The marker lists are a cook's knowledge; the matching is derived.)
+   ============================================================ */
+const SEASONING_DIRS=[
+  {key:"curry",   label:"Curry",
+   markers:["turmeric","coriander_seed","cumin","fennel","cardamom","coconut_milk",
+            "curry_leaves","belacan","tamarind"],
+   need:2, note:"warm spice and coconut"},
+  {key:"curry",   label:"Curry",           // a roux/paste IS the curry, on its own
+   markers:["curry_powder","curry_paste_pack","japanese_curry_roux"],
+   need:1, note:"a ready curry base"},
+  {key:"soy",     label:"Soy-braised",
+   markers:["soy_sauce","dark_soy_sauce","white_sugar","star_anise","shaoxing","rock_sugar"],
+   need:2, note:"savoury-sweet, dark and glossy"},
+  {key:"herbal",  label:"Herbal (bak kut teh style)",
+   markers:["dang_gui","white_pepper","star_anise","cinnamon","cloves_spice","goji","wolfberry"],
+   need:2, note:"peppery, medicinal, warming"},
+  {key:"japanese",label:"Japanese",
+   markers:["miso","dashi","mirin","sake","wakame","nori","kombu"],
+   need:1, note:"clean dashi umami"},
+  {key:"western", label:"Western herb",
+   markers:["bay_leaf","parsley","thyme","rosemary","oregano","celery","broth"],
+   need:2, note:"herb-and-stock, homely"},
+  {key:"chilli",  label:"Chilli-hot",
+   markers:["chilli","chili_powder","sambal","hot_sauce","doubanjiang"],
+   need:1, note:"heat-forward"},
+  {key:"clear",   label:"Clear & simple",
+   markers:[], need:0, note:"seasoned only with salt and pepper \u2014 the broth speaks for itself"}
+];
+function seasoningOf(ingIds){
+  const set=new Set(ingIds);
+  const hits=[];
+  SEASONING_DIRS.forEach(dir=>{
+    if(!dir.markers.length) return;
+    const found=dir.markers.filter(m=>set.has(m));
+    if(found.length>=dir.need) hits.push({...dir, found, strength:found.length});
+  });
+  hits.sort((a,b)=>b.strength-a.strength);
+  const seen=new Set(); const uniq=[];
+  hits.forEach(h=>{ if(!seen.has(h.key)){ seen.add(h.key); uniq.push(h); } });
+  if(!uniq.length) return [{...SEASONING_DIRS[SEASONING_DIRS.length-1], found:[], strength:0}];
+  return uniq;
+}
+/* do two dishes share a seasoning direction? */
+function seasoningMatch(aIds,bIds){
+  const a=seasoningOf(aIds).map(x=>x.key);
+  const b=seasoningOf(bIds).map(x=>x.key);
+  const shared=a.filter(k=>b.includes(k));
+  return {shared, aDirs:a, bDirs:b, same: shared.length>0};
 }
