@@ -127,7 +127,8 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .ruses{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
 .uchip{font-family:"Space Mono",monospace;font-size:9.5px;padding:2px 7px;border-radius:999px;
   background:rgba(50,117,100,.10);color:var(--cool);border:1px solid rgba(50,117,100,.22)}
-.combo-head{color:var(--gold)!important;border-bottom:1px solid rgba(168,114,24,.3);padding-bottom:4px}
+.combo-head{color:var(--cool)!important;border-bottom:1px solid rgba(50,117,100,.3);padding-bottom:4px}
+.combo-head.shop-head{color:var(--gold)!important;border-bottom-color:rgba(168,114,24,.3)}
 .pairinfo{margin-top:14px;padding:12px 14px;background:rgba(50,117,100,.06);border-radius:10px;
   border-left:3px solid var(--cool)}
 .pi-head{font-family:"Space Mono",monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:.1em;
@@ -262,7 +263,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.32</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.33</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -1193,15 +1194,43 @@ function removeComp(key){
   renderComps(); recompute();
 }
 function togglePantry(id){ FLOW.pantry.has(id)?FLOW.pantry.delete(id):FLOW.pantry.add(id); renderPantry(); recompute(); }
+const PANTRY_GROUPS=[
+  ["Aromatics",   ["garlic","onion","ginger","scallion","chilli"]],
+  ["Rice & noodles",["rice","brown_rice","noodles","udon"]],
+  ["Fresh",       ["egg"]],
+  ["Seasonings",  ["salt","pepper","white_sugar"]],
+  ["Oils",        ["vegetable_oil","sesame_oil"]],
+  ["Sauces",      ["soy_sauce","oyster_sauce","ketchup"]]
+];
 function renderPantry(){
   const box=el("pantry-ports"); if(!box)return; box.innerHTML="";
-  PANTRY_ITEMS.forEach(id=>{
-    const on=FLOW.pantry.has(id);
-    const p=document.createElement("div"); p.className="port"+(on?" on":"");
-    p.innerHTML="<span>"+((REF.byId[id]||{}).name||id)+"</span><span class=\"dot\" data-pantry=\""+id+"\"></span>";
-    p.onclick=()=>togglePantry(id);
-    box.appendChild(p);
+  PANTRY_GROUPS.forEach(([label,ids])=>{
+    const present=ids.filter(id=>PANTRY_ITEMS.includes(id));
+    if(!present.length)return;
+    const h=document.createElement("div"); h.className="portgroup"; h.textContent=label;
+    box.appendChild(h);
+    present.forEach(id=>{
+      const on=FLOW.pantry.has(id);
+      const p=document.createElement("div"); p.className="port"+(on?" on":"");
+      p.innerHTML="<span>"+((REF.byId[id]||{}).name||id)+"</span><span class=\"dot\" data-pantry=\""+id+"\"></span>";
+      p.onclick=()=>togglePantry(id);
+      box.appendChild(p);
+    });
   });
+  // anything not in a group (safety net)
+  const grouped=new Set(PANTRY_GROUPS.flatMap(g=>g[1]));
+  const rest=PANTRY_ITEMS.filter(id=>!grouped.has(id));
+  if(rest.length){
+    const h=document.createElement("div"); h.className="portgroup"; h.textContent="Other";
+    box.appendChild(h);
+    rest.forEach(id=>{
+      const on=FLOW.pantry.has(id);
+      const p=document.createElement("div"); p.className="port"+(on?" on":"");
+      p.innerHTML="<span>"+((REF.byId[id]||{}).name||id)+"</span><span class=\"dot\" data-pantry=\""+id+"\"></span>";
+      p.onclick=()=>togglePantry(id);
+      box.appendChild(p);
+    });
+  }
 }
 function toggleAppl(a){ FLOW.appl.has(a)?FLOW.appl.delete(a):FLOW.appl.add(a); renderAppl(); recompute(); }
 function toggleTaste(t){ FLOW.taste.has(t)?FLOW.taste.delete(t):FLOW.taste.add(t); renderTaste(); recompute(); }
@@ -1479,14 +1508,25 @@ function renderRecipes(){
     const {d,used}=usesOf(r);
     if(isPlainStaple(d))return;
     const real=used.filter(id=>measureTypeOf(REF.byId[id])!=="assumed");
-    if(real.length>=2 && !seenMulti.has(r.dish)){ seenMulti.add(r.dish); multi.push({r,idx,d,n:real.length}); }
+    if(real.length>=2 && !seenMulti.has(r.dish)){
+      seenMulti.add(r.dish); multi.push({r,idx,d,n:real.length,buy:r.buy.length});
+    }
   });
-  multi.sort((a,b)=>b.n-a.n);
-  if(multi.length){
+  // TIER 1: uses the most of yours AND needs nothing bought — the true sweet spot
+  const ready=multi.filter(x=>x.buy===0).sort((a,b)=>b.n-a.n);
+  // TIER 2: uses a lot of yours but you'd have to shop
+  const shop =multi.filter(x=>x.buy>0).sort((a,b)=>(b.n-a.n)||(a.buy-b.buy));
+  if(ready.length){
     const h=document.createElement("div"); h.className="rgroup combo-head";
-    h.textContent="Makes the most of what you have";
+    h.textContent="Cook now \u2014 uses the most of yours, buy nothing";
     box.appendChild(h);
-    multi.slice(0,4).forEach(it=>box.appendChild(card(it)));
+    ready.slice(0,4).forEach(it=>box.appendChild(card(it)));
+  }
+  if(shop.length){
+    const h=document.createElement("div"); h.className="rgroup combo-head shop-head";
+    h.textContent="Uses a lot of yours \u2014 but you\u2019d need to shop";
+    box.appendChild(h);
+    shop.slice(0,3).forEach(it=>box.appendChild(card(it)));
   }
 
   // DESKTOP 2D GRID
