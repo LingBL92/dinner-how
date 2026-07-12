@@ -372,6 +372,14 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .st-r{font-family:"Space Mono",monospace;font-size:10px;opacity:.9;margin-top:2px}
 .st-r b{color:#8fd0bd}
 .st-w{font-family:"Space Mono",monospace;font-size:9.5px;color:var(--gold);margin-top:3px}
+.sc-tip{max-width:320px;white-space:normal}
+.st-job{font-size:11.5px;line-height:1.45;margin-top:4px;opacity:.95;
+  padding-left:10px;position:relative}
+.st-job::before{content:"\2022";position:absolute;left:0;color:#8fd0bd}
+.sc-bar.prep{background:rgba(168,114,24,.22)}
+.sc-bar.prep .sc-active{background:var(--gold)}
+.sc-prep .sc-name{color:var(--gold)}
+.sc-prep .sc-name em{color:var(--gold);opacity:.75}
 .sc-bar{position:absolute;top:0;height:20px;border-radius:5px;background:rgba(50,117,100,.22);overflow:hidden}
 .sc-active{position:absolute;left:0;top:0;height:20px;background:var(--cool);border-radius:5px 0 0 5px}
 .sc-when{width:62px;flex:none;text-align:right;font-family:"Space Mono",monospace;font-size:10.5px;color:var(--cool);font-weight:700}
@@ -470,7 +478,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.63</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.65</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2516,7 +2524,7 @@ function renderSchedule(sc, picked){
   sc.items.forEach(it=>{ (byAppl[it.ap]=byAppl[it.ap]||[]).push(it); });
   const notes=[];
   if(sc.cobake) notes.push("Both "+sc.cobake.names.join(" and ")+" go in the oven together at "+sc.cobake.temp+"\u00b0C"+(sc.cobake.saved?" \u2014 saves "+sc.cobake.saved+" min":"")+".");
-  if(sc.nShared) notes.push(sc.nShared+" ingredient"+(sc.nShared>1?"s are":" is")+" shared \u2014 prep once, up front.");
+  if(sc.holdingPeak>=3) notes.push("At the busiest point you\u2019ll have "+sc.holdingPeak+" piles of prepped ingredients waiting \u2014 clear some bench space.");
   Object.keys(byAppl).forEach(ap=>{
     const n=byAppl[ap].length;
     const cap = ap==="stovetop"?burners : ap==="oven"?2 : 1;
@@ -2526,15 +2534,50 @@ function renderSchedule(sc, picked){
   // a bar per dish, positioned on the shared clock
   const W=Math.max(sc.wall,1);
   const rows=document.createElement("div"); rows.className="sc-rows";
+
+  // ---- SHARED PREP: do it once, up front ----
+  if(sc.sharedPrep>0){
+    const pr=document.createElement("div"); pr.className="sc-row sc-prep";
+    const pct0=(v)=>(100*v/W).toFixed(2)+"%";
+    const what=(sc.sharedList||[]).map(g=>{
+      const ing=REF.list.find(x=>x.name===g);
+      const verb=ing?(ing.prep_verb||"prep"):"prep";
+      return g+" \u2014 "+verb;
+    });
+    pr.title="Shared prep \u2014 "+sc.sharedPrep+" min\n"+what.join("\n");
+    pr.innerHTML=
+      "<div class=\"sc-name\">Shared prep<em>do it once</em></div>"+
+      "<div class=\"sc-track\">"+
+        "<div class=\"sc-bar prep\" style=\"left:0;width:"+pct0(Math.max(1,sc.sharedPrep))+"\">"+
+          "<span class=\"sc-active\" style=\"width:100%\"></span></div>"+
+        "<div class=\"sc-tip\"><strong>Shared prep</strong>"+
+          "<span class=\"st-l\">"+sc.sharedPrep+" min \u00b7 used by more than one dish</span>"+
+          what.map(w=>"<span class=\"st-job\">"+w+"</span>").join("")+
+        "</div>"+
+      "</div>"+
+      "<div class=\"sc-when\">start now</div>";
+    rows.appendChild(pr);
+  }
   sc.items.slice().sort((a,b)=>a.start-b.start).forEach(it=>{
     const row=document.createElement("div"); row.className="sc-row";
     const pct=(v)=>(100*v/W).toFixed(2)+"%";
     const dur=it.done-it.start, active=it.fp+it.ac, off=it.off;
-    const tip = it.d.name+" \u2014 "+(APPL[it.ap]||it.ap).toLowerCase()+"\n"+
-      (it.start===0?"Start straight away":"Start "+it.start+" min in")+"\n"+
-      active+" min hands-on"+(off?", then "+off+" min you can walk away":"")+"\n"+
-      "Done at "+it.done+" min"+(it.batches>1?"\n\u26a0 "+it.batches+" batches \u2014 it won\u2019t all fit at once":"");
-    row.title=tip;
+    // WHAT you actually do at this moment — not just when
+    const ownPrep=(sc.finishingList&&sc.finishingList[it.d.name])||[];
+    const prepJobs=ownPrep.map(g=>{
+      const ing=REF.list.find(x=>x.name===g);
+      const verb=(ing&&ing.prep_verb)||"prep";
+      return g+" \u2014 "+verb;                 // "Pork ribs — cut into pieces"
+    });
+    const opt=(it.d.appliance_options||[]).find(o=>o.appliance===it.ap);
+    const steps=((opt&&opt.steps)||it.d.steps||[]);
+    const firstStep=steps[0]||"";
+    const jobs=[];
+    if(prepJobs.length) jobs.push("Prep: "+prepJobs.join("; "));
+    if(firstStep) jobs.push(firstStep);
+    if(off) jobs.push("Then leave it \u2014 "+off+" min hands-off.");
+    row.title=it.d.name+" \u2014 "+(APPL[it.ap]||it.ap).toLowerCase()+"\n"+
+      (it.start===0?"Start straight away":"Start "+it.start+" min in")+"\n"+jobs.join("\n");
     row.innerHTML=
       "<div class=\"sc-name\">"+it.d.name+
         "<em>"+(APPL[it.ap]||it.ap)+"</em></div>"+
@@ -2544,9 +2587,10 @@ function renderSchedule(sc, picked){
         "</div>"+
         "<div class=\"sc-tip\">"+
           "<strong>"+it.d.name+"</strong>"+
-          "<span class=\"st-l\">"+(APPL[it.ap]||it.ap)+"</span>"+
-          "<span class=\"st-r\"><b>"+(it.start===0?"start now":"+"+it.start+" min")+"</b> \u00b7 "+
-            active+" min hands-on"+(off?" \u00b7 "+off+" min free":"")+" \u00b7 done at "+it.done+" min</span>"+
+          "<span class=\"st-l\">"+(APPL[it.ap]||it.ap)+" \u00b7 "+
+            (it.start===0?"start now":"+"+it.start+" min")+" \u00b7 done at "+it.done+" min</span>"+
+          jobs.map(j=>"<span class=\"st-job\">"+j+"</span>").join("")+
+          "<span class=\"st-r\">"+active+" min hands-on"+(off?" \u00b7 "+off+" min free":"")+"</span>"+
           (it.batches>1?"<span class=\"st-w\">"+it.batches+" batches \u2014 it won\u2019t all fit at once</span>":"")+
         "</div>"+
       "</div>"+
