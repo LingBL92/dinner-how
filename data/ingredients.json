@@ -229,6 +229,65 @@
    "cut": "Thigh"
   },
   {
+   "id": "chicken_drumstick",
+   "name": "Chicken Drumstick",
+   "aliases": [
+    "drumstick",
+    "drumsticks",
+    "chicken leg"
+   ],
+   "provides": [
+    "fat_solid",
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "pat dry",
+   "parent": "chicken",
+   "category": "proteins",
+   "cut": "quick",
+   "cut_note": "dark meat on the bone \u2014 forgiving"
+  },
+  {
+   "id": "chicken_wing",
+   "name": "Chicken Wing",
+   "aliases": [
+    "chicken wing",
+    "wings",
+    "wingette"
+   ],
+   "provides": [
+    "collagen_rich",
+    "fat_solid",
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "pat dry",
+   "parent": "chicken",
+   "category": "proteins",
+   "cut": "quick",
+   "cut_note": "skin and collagen \u2014 crisps well, stays moist"
+  },
+  {
+   "id": "chicken_whole",
+   "name": "Whole Chicken",
+   "aliases": [
+    "whole chicken",
+    "chicken, whole",
+    "spring chicken"
+   ],
+   "provides": [
+    "collagen_rich",
+    "fat_solid",
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "joint or leave whole",
+   "parent": "chicken",
+   "category": "proteins",
+   "cut": "braise",
+   "cut_note": "the whole bird \u2014 poach, roast or braise"
+  },
+  {
    "id": "pork",
    "name": "Pork",
    "aliases": [
@@ -547,7 +606,7 @@
     "protein"
    ],
    "aisle": "Meat & protein",
-   "prep_verb": "have it sliced thin",
+   "prep_verb": "cut into pieces",
    "parent": "proteins",
    "category": "proteins"
   },
