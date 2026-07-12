@@ -51,15 +51,15 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   /* recipes always visible, never collapsed by the minimap */
   #col-out{order:99}
 }
-#canvas{position:relative;min-height:calc(100vh - 50px);padding:18px;overflow:auto;
+#canvas{position:relative;min-height:calc(100vh - 50px);padding:9px 14px;overflow:auto;
   background-image:radial-gradient(rgba(27,16,11,.10) 1px,transparent 1px);background-size:22px 22px;
-  display:flex;gap:34px;align-items:flex-start}
+  display:flex;gap:20px;align-items:flex-start;justify-content:space-between}
 #wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
-.col{position:relative;z-index:2;display:flex;flex-direction:column;gap:14px;min-width:150px;max-width:180px}
-#col-out{max-width:520px}
-#col-ctrl{min-width:96px;max-width:110px}
-#col-type{min-width:120px;max-width:140px}
-#col-app{min-width:140px;max-width:165px}
+.col{position:relative;z-index:2;display:flex;flex-direction:column;gap:10px;flex:1 1 0;min-width:150px;max-width:230px}
+#col-out{flex:2 1 0;max-width:none}
+#col-ctrl{flex:0 0 auto;min-width:96px;max-width:118px}
+#col-type{flex:1 1 0;min-width:135px;max-width:175px}
+#col-app{flex:1 1 0;min-width:150px;max-width:195px}
 .colhead{font-family:"Space Mono",monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
 @media(max-width:760px){
   .col{position:relative;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--panel)}
@@ -74,10 +74,10 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   #ingcomps .comp.ccollapsed .port{display:none}
   .flowarrow{display:block;text-align:center;color:var(--cool);opacity:.45;font-size:18px;font-weight:700;margin:-6px 0}
 }
-:root{--headh:148px}
+:root{--headh:120px}
 .topspace{height:var(--headh);display:flex;flex-direction:column}
 .inghead{height:var(--headh);display:flex;flex-direction:column;gap:8px}
-.coldesc{font-size:11.5px;line-height:1.45;color:var(--muted);margin:0}
+.coldesc{font-size:11px;line-height:1.4;color:var(--muted);margin:0}
 @media(max-width:760px){.topspace{min-height:0;height:auto}}
 .comp{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 10px rgba(27,16,11,.06)}
 .comphead{padding:8px 12px;border-bottom:1px solid var(--line);font-weight:700;font-size:13px;cursor:grab;touch-action:none;
@@ -99,8 +99,9 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .tgl{display:flex;align-items:center;gap:9px;padding:7px 12px;font-size:13px;cursor:pointer;user-select:none}
 .tgl .dot{width:11px;height:11px;border-radius:50%;border:2px solid var(--muted);flex:none;margin-left:auto}
 .tgl.on .dot{background:var(--cool);border-color:var(--cool)}
-.aicon{font-size:14px;width:18px;text-align:center;flex:none;filter:grayscale(.35);opacity:.8}
-.tgl.on .aicon{filter:none;opacity:1}
+.aicon{width:17px;height:17px;flex:none;display:flex;align-items:center;justify-content:center;color:var(--muted);opacity:.75}
+.aicon svg{width:17px;height:17px;display:block}
+.tgl.on .aicon{color:var(--cool);opacity:1}
 .tgl.on{font-weight:700;color:var(--cool)}
 .tgl.on .dot{background:var(--cool);border-color:var(--cool)}
 .rcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 13px;cursor:pointer;transition:.14s}
@@ -135,10 +136,23 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .mg-cell.mg-tap:active{background:rgba(50,117,100,.3)}
 .rcard.rc-flash{outline:2px solid var(--cool);outline-offset:2px;background:rgba(50,117,100,.06)}
 .mg-legend{font-family:"Space Mono",monospace;font-size:9.5px;color:var(--muted);margin-bottom:10px}
-.type-filters.muted{opacity:.35}
-.type-div{display:flex;align-items:center;gap:8px;margin:14px -12px 10px;padding:0 12px;
-  font-family:"Space Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--gold);font-weight:700}
-.type-div::before,.type-div::after{content:"";flex:1;height:1px;background:var(--gold);opacity:.35}
+/* two exclusive modes inside the Type panel */
+.tmode{border-top:1px solid var(--line)}
+.tmode:first-child{border-top:none}
+.tmode-head{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;
+  font-family:"Space Mono",monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:.12em;
+  color:var(--muted);font-weight:700;user-select:none}
+.tmode-head .tm-x{margin-left:auto;width:16px;height:16px;border:1.5px solid var(--line);border-radius:4px;
+  display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1}
+.tmode-head .tm-x::after{content:"+"}
+.tmode.open .tmode-head .tm-x::after{content:"\2212"}
+.tmode.open .tmode-head{color:var(--cool)}
+.tmode.compose.open .tmode-head{color:var(--gold)}
+.tmode.compose.open .tmode-head .tm-x{border-color:var(--gold)}
+.tmode-body{display:none;padding-bottom:6px}
+.tmode.open .tmode-body{display:block}
+.tmode.compose{background:rgba(168,114,24,.04)}
+.tmode.compose.open{background:rgba(168,114,24,.07)}
 /* compose templates: a distinctly different, card-like treatment (gold, not green) */
 .tgl.big{align-items:flex-start;padding:10px 12px;margin:0 -12px;border-left:3px solid transparent;
   background:rgba(168,114,24,.05)}
@@ -176,6 +190,19 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .gro-item{flex:1}
 .gro-amt{font-family:"Space Mono",monospace;font-size:11.5px;color:var(--muted)}
 .gro-row.buy .gro-amt{color:var(--gold)}
+.gro-tap{cursor:pointer;transition:.12s}
+.gro-tap:hover{filter:brightness(.97)}
+.gro-why{font-family:"Space Mono",monospace;font-size:10px;width:15px;height:15px;border-radius:50%;
+  border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);flex:none;opacity:.6}
+.gro-tap:hover .gro-why{border-color:var(--cool);color:var(--cool);opacity:1}
+.ing-status{font-size:13.5px;margin:2px 0 4px}
+.ing-status.need{color:var(--gold)}
+.ing-status.got{color:var(--cool)}
+.ing-for{list-style:none;padding-left:0}
+.ing-for li{display:flex;align-items:center;gap:10px;padding:7px 10px;background:rgba(50,117,100,.06);
+  border-radius:8px;margin-bottom:4px;font-size:13.5px}
+.ifq{margin-left:auto;font-family:"Space Mono",monospace;font-size:11.5px;color:var(--muted)}
+.ing-note{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5}
 .meal-sum strong{color:var(--cool)}
 .rgroup:first-child{margin-top:0}
 #overlay{position:fixed;inset:0;background:rgba(27,16,11,.45);display:none;z-index:50}
@@ -196,7 +223,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   #sheet{max-height:94vh;margin-top:8px}
   #wires{display:none}
   #canvas{flex-direction:column;align-items:stretch;gap:20px;padding:14px}
-  .col{max-width:none!important;min-width:0;width:100%}
+  .col{max-width:none!important;min-width:0;width:100%;flex:0 0 auto!important}
   .col>.comp{width:100%}
   #col-app,#col-type,#col-ctrl,#col-pantry,#col-ing,#col-out{max-width:none!important;width:100%}
   #recipes{max-width:none;width:100%}
@@ -209,7 +236,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.19</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.23</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -1120,29 +1147,43 @@ function toggleType(t){ FLOW.types.has(t)?FLOW.types.delete(t):FLOW.types.add(t)
 function renderType(){
   const box=el("type-ports"); if(!box)return; box.innerHTML="";
   const composing=!!FLOW.compose;
-  // --- FILTERS (above the line) --- hidden/dimmed while composing
-  const filt=document.createElement("div"); filt.className="type-filters"+(composing?" muted":"");
+
+  // ===== MODE 1: SELECT DISH TYPE =====
+  const m1=document.createElement("div"); m1.className="tmode"+(composing?"":" open");
+  const h1=document.createElement("div"); h1.className="tmode-head";
+  h1.innerHTML="<span class=\"tm-t\">Select dish type</span><span class=\"tm-x\"></span>";
+  h1.onclick=()=>{ if(FLOW.compose){ FLOW.compose=null; FLOW.mealPick=null; renderType(); recompute(); } };
+  m1.appendChild(h1);
+  const body1=document.createElement("div"); body1.className="tmode-body";
   TYPE_OPTS.forEach(([id,label])=>{
     const t=document.createElement("div"); t.className="tgl"+(FLOW.types.has(id)?" on":"");
     t.innerHTML="<span>"+label+"</span><span class=\"dot\"></span>";
-    t.onclick=()=>{ if(FLOW.compose){FLOW.compose=null;} toggleType(id); };
-    filt.appendChild(t);
+    t.onclick=()=>{ if(FLOW.compose){FLOW.compose=null;FLOW.mealPick=null;} toggleType(id); };
+    body1.appendChild(t);
   });
-  box.appendChild(filt);
-  // --- DIVIDER ---
-  const hr=document.createElement("div"); hr.className="type-div"; hr.innerHTML="<span>compose a meal</span>"; box.appendChild(hr);
-  // --- COMPOSE TEMPLATES (below the line) ---
+  m1.appendChild(body1);
+  box.appendChild(m1);
+
+  // ===== MODE 2: COMPOSE A MEAL =====
+  const m2=document.createElement("div"); m2.className="tmode compose"+(composing?" open":"");
+  const h2=document.createElement("div"); h2.className="tmode-head";
+  h2.innerHTML="<span class=\"tm-t\">Compose a meal</span><span class=\"tm-x\"></span>";
+  h2.onclick=()=>{ if(!FLOW.compose){ FLOW.compose="family_meal"; FLOW.types.clear(); renderType(); recompute(); } };
+  m2.appendChild(h2);
+  const body2=document.createElement("div"); body2.className="tmode-body";
   COMPOSE_OPTS.forEach(([id,label])=>{
     const t=document.createElement("div"); t.className="tgl big"+(FLOW.compose===id?" on":"");
-    const hint = id==="family_meal" ? "1 rice · 1 meat · 1 veg" : "single-vessel dishes";
+    const hint = id==="family_meal" ? "1 rice \u00b7 1 meat \u00b7 1 veg" : "single-vessel dishes";
     t.innerHTML="<span>"+label+"<em>"+hint+"</em></span><span class=\"dot\"></span>";
     t.onclick=()=>toggleCompose(id);
-    box.appendChild(t);
+    body2.appendChild(t);
   });
+  m2.appendChild(body2);
+  box.appendChild(m2);
 }
 function toggleCompose(id){
-  if(FLOW.compose===id){ FLOW.compose=null; }
-  else { FLOW.compose=id; FLOW.types.clear(); }   // entering compose clears single-dish filters
+  if(FLOW.compose===id){ FLOW.compose=null; FLOW.mealPick=null; }   // off -> back to dish-type mode
+  else { FLOW.compose=id; FLOW.mealPick=null; FLOW.types.clear(); }
   renderType(); recompute();
 }
 
@@ -1185,12 +1226,12 @@ function renderComps(){
   });
   if(el("ing-hint")) el("ing-hint").style.display=FLOW.comps.length?"none":"";
 }
-const APPL_ICON={stovetop:"\u{1F525}",oven:"\u{1F35E}",rice_cooker:"\u{1F35A}",pressure_cooker:"\u{23F1}",slow_cooker:"\u{1F372}",air_fryer:"\u{1F32C}"};
+const APPL_ICON={stovetop:'<svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M2.5 4.5h19a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-19a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1zM8 6.2a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm8 0a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM2.8 15.4h18.4V18H2.8z"/><circle cx="8" cy="10.2" r="1.7"/><circle cx="16" cy="10.2" r="1.7"/><path d="M8 5.4v1.2M8 13.8v1.2M3.8 10.2h1.2M11 10.2h1.2M16 5.4v1.2M16 13.8v1.2M11.8 10.2h1.2M19 10.2h1.2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><circle cx="8" cy="16.7" r="1" fill="none" stroke="currentColor" stroke-width="1"/><path d="M8 15.9v1.6" stroke="currentColor" stroke-width="1" stroke-linecap="round"/><circle cx="16" cy="16.7" r="1" fill="none" stroke="currentColor" stroke-width="1"/><path d="M16 15.9v1.6" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>',oven:'<svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd"><path d="M3 4a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4zm3 2.2a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2zm12 0a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2zM6 10.5h12V18H6z"/></svg>',rice_cooker:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h18v2.5a3.5 3.5 0 0 1-3.5 3.5h-11A3.5 3.5 0 0 1 3 15.5z"/><path d="M4.5 13a7.5 7.5 0 0 1 15 0z"/><circle cx="12" cy="8.4" r="1"/><path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M9 3.5c-.9 1.3 .9 1.8 0 3M15 3.5c-.9 1.3 .9 1.8 0 3"/></svg>',pressure_cooker:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 12h16v4a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3z"/><rect x="3" y="10" width="18" height="2.3" rx="1.15"/><rect x="11" y="6.5" width="2" height="3.5" rx="1"/><circle cx="12" cy="6" r="1.5"/><path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M14.5 5.6c1.8-.2 2.2 1 3.6 .6"/></svg>',slow_cooker:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 13h14v2a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4z"/><path d="M4 12.5a8 8 0 0 1 16 0z"/><circle cx="12" cy="5.4" r="1.1"/><path d="M3 13.5c-1.1 0-1.8 .7-1.8 1.5s .7 1.5 1.8 1.3zM21 13.5c1.1 0 1.8 .7 1.8 1.5s-.7 1.5-1.8 1.3z"/></svg>',air_fryer:'<svg viewBox=\"0 0 24 24\" fill=\"currentColor\" fill-rule=\"evenodd\"><path d=\"M6 2h12a2 2 0 0 1 2 2v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V4a2 2 0 0 1 2-2zm8 3.4a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4zM6.5 6a.9 .9 0 1 0 0 1.8 .9 .9 0 0 0 0-1.8z\"/><path d=\"M6 18h12a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1zm3.5 1.4a.7 .7 0 1 0 0 1.4h5a.7 .7 0 1 0 0-1.4z\"/></svg>'};
 function renderAppl(){
   const box=el("appl-ports"); if(!box)return; box.innerHTML="";
   APPLIANCE_ORDER.forEach(a=>{
     const t=document.createElement("div"); t.className="tgl"+(FLOW.appl.has(a)?" on":"");
-    t.innerHTML="<span class=\"aicon\">"+(APPL_ICON[a]||"\u25CF")+"</span><span>"+(APPL[a]||a)+"</span><span class=\"dot\"></span>";
+    t.innerHTML="<span class=\"aicon\">"+(APPL_ICON[a]||"")+"</span><span>"+(APPL[a]||a)+"</span><span class=\"dot\"></span>";
     t.onclick=()=>toggleAppl(a);
     box.appendChild(t);
   });
@@ -1243,7 +1284,7 @@ function renderRecipes(){
 
   // COLUMNS = wired ingredients that appear in at least one result (heroable first, aromatics after)
   // ROWS = dish types (roles + one-pot) that appear
-  const TYPE_ROWS=[["base","Rice & noodles"],["meat","Meat"],["fish","Fish"],["veg","Vegetable"],["soup","Soup"],["dessert","Dessert"]];
+  const TYPE_ROWS=TYPE_OPTS;   // rows follow the Type-of-dish panel order exactly
   function rowKeyFor(d){ return d.role; }              // a dish sits in its role row
 
   // build cell map: cell[ingId][rowKey] = [ {r,idx} ... ]
@@ -1485,15 +1526,49 @@ function renderGrocery(){
     Object.keys(byAisle).sort().forEach(aisle=>{
       const al=document.createElement("div"); al.className="gro-aisle"; al.textContent=aisle; box.appendChild(al);
       byAisle[aisle].forEach(n=>{
-        const row=document.createElement("div"); row.className="gro-row "+cls;
+        const row=document.createElement("div"); row.className="gro-row "+cls+" gro-tap";
         const a=amt(n);
-        row.innerHTML="<span class=\"gro-item\">"+n.name+"</span>"+(a?"<span class=\"gro-amt\">"+a+"</span>":"");
+        row.innerHTML="<span class=\"gro-item\">"+n.name+"</span>"+(a?"<span class=\"gro-amt\">"+a+"</span>":"")+"<span class=\"gro-why\">?</span>";
+        row.onclick=()=>openIngredient(n);
         box.appendChild(row);
       });
     });
   }
   section("You need to buy", buy, "buy");
   section("You already have", have, "have");
+}
+function openIngredient(n){
+  const ing=REF.byId[n.id]||{};
+  // per-dish breakdown: how much of this ingredient each picked dish needs
+  const rows=[];
+  (n.dishes||[]).forEach(dn=>{
+    const d=DISHES.find(x=>x.name===dn); if(!d)return;
+    const g=(d.grocery_items||[]).find(x=>x.id===n.id); if(!g)return;
+    const q = (n.mt==="assumed"||g.qty==null) ? "" : g.qty+(g.unit?(g.unit==="g"||g.unit==="kg"?g.unit:" "+g.unit):"");
+    rows.push({dish:dn, qty:q});
+  });
+  const uniq=[]; const seen=new Set();
+  rows.forEach(r=>{ const k=r.dish+"|"+r.qty; if(!seen.has(k)){seen.add(k); uniq.push(r);} });
+
+  const total = (n.mt==="assumed"||n.qty==null||n.qty===0) ? "" :
+      n.qty+(n.unit?(n.unit==="g"||n.unit==="kg"?n.unit:" "+n.unit):"");
+  const haveSet=new Set([...FLOW.active, ...FLOW.pantry]);
+  const got = haveSet.has(n.id);
+
+  let html="<button class=\"close\" onclick=\"closeR()\">\u00d7</button>"+
+    "<span class=\"role\">"+(ing.aisle||"Other")+"</span><h3>"+n.name+"</h3>"+
+    "<p class=\"ing-status "+(got?"got":"need")+"\">"+(got?"You already have this.":"You\u2019d need to buy this.")+
+      (total?" <strong>"+total+"</strong> for this meal.":"")+"</p>"+
+    "<div class=\"lab\">What it\u2019s for</div><ul class=\"ing-for\">";
+  uniq.forEach(r=>{ html+="<li><span>"+r.dish+"</span>"+(r.qty?"<span class=\"ifq\">"+r.qty+"</span>":"")+"</li>"; });
+  html+="</ul>";
+  if(n.mt==="assumed"){
+    html+="<p class=\"ing-note\">A seasoning or aromatic \u2014 no amount worth shopping to; a normal bottle or bulb covers it.</p>";
+  }
+  // AFFINITY SLOT — filled once the co-occurrence graph exists
+  html+="<div id=\"aff-slot\"></div>";
+  el("sheet").innerHTML=html;
+  el("overlay").classList.add("on");
 }
 function simpleCard(item){
   const {r,idx,d}=item;
