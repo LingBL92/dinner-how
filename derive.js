@@ -757,3 +757,68 @@ function generateVariant(dish, targetId, R, allDishes){
     behaviour:{from:srcProf?srcProf.behaviour:"?", to:tgtProf.behaviour},
     flags };
 }
+
+/* ============================================================
+   AFFINITY — what goes with what, learned from the recipes themselves.
+   Co-occurrence is counted WITHIN A COOKING CONTEXT (soup with soup,
+   stir-fry with stir-fry), because a pairing that works in a soup may be
+   wrong in a stir-fry. Aromatics are excluded: they're in everything and
+   would swamp the signal.
+
+   This is DERIVED, never stored. Add a recipe and the graph sharpens by
+   itself. It reports PRECEDENT and its strength, never a verdict:
+     "seen 3x in soups"  /  "seen once"  /  "no precedent"
+   Physics (does it survive the pot?) stays with the property rules.
+   ============================================================ */
+function contextOf(d){
+  // the cooking frame a pairing was learned in — the "lowest branch" first
+  if(d.role==="soup") return "soup";
+  if(d.role==="dessert") return "dessert";
+  if(d.build==="braise"||d.build==="simmer") return "braise";
+  if(d.build==="stir_fry") return "stir_fry";
+  if(d.build==="coat"||d.build==="fry_dry") return "fried";
+  if(d.role==="base") return "rice_noodle";
+  return d.role||"other";
+}
+function buildAffinity(dishes,R){
+  const pairs={};      // "ctx|a+b" -> {n, dishes:[]}
+  const seen={};       // "ctx|id"  -> how many dishes in this ctx use it
+  const contexts=new Set();
+  dishes.forEach(d=>{
+    const ctx=contextOf(d); contexts.add(ctx);
+    const ids=[...new Set((d.grocery_items||[])
+      .filter(g=>g.id!=="water" && measureTypeOf(R.byId[g.id])!=="assumed")
+      .map(g=>g.id))];
+    ids.forEach(id=>{ const k=ctx+"|"+id; seen[k]=(seen[k]||0)+1; });
+    for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++){
+      const [a,b]=[ids[i],ids[j]].sort();
+      const k=ctx+"|"+a+"+"+b;
+      if(!pairs[k]) pairs[k]={n:0,dishes:[]};
+      pairs[k].n++; pairs[k].dishes.push(d.name);
+    }
+  });
+  return {pairs, seen, contexts:[...contexts]};
+}
+/* what has ingredient `id` been paired with, in this context? */
+function affinityFor(id, ctx, AFF, R, limit=5){
+  const out=[];
+  const pre=ctx+"|";
+  Object.keys(AFF.pairs).forEach(k=>{
+    if(k.indexOf(pre)!==0) return;
+    const body=k.slice(pre.length);
+    const [a,b]=body.split("+");
+    if(a!==id && b!==id) return;
+    const other=(a===id)?b:a;
+    out.push({id:other, name:(R.byId[other]||{}).name||other, n:AFF.pairs[k].n, dishes:AFF.pairs[k].dishes});
+  });
+  out.sort((x,y)=>y.n-x.n);
+  return out.slice(0,limit);
+}
+/* has this exact pairing been done before, in this context? */
+function precedentFor(a, b, ctx, AFF){
+  const [x,y]=[a,b].sort();
+  const hit=AFF.pairs[ctx+"|"+x+"+"+y];
+  if(!hit) return {n:0, level:"none", text:"no precedent \u2014 nothing in the recipes pairs these", dishes:[]};
+  if(hit.n===1) return {n:1, level:"thin", text:"seen once", dishes:hit.dishes};
+  return {n:hit.n, level:"solid", text:"seen "+hit.n+"\u00d7", dishes:hit.dishes};
+}

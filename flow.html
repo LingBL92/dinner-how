@@ -133,6 +133,10 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   background:rgba(50,117,100,.10);color:var(--cool);border:1px solid rgba(50,117,100,.22)}
 .bchip{font-family:"Space Mono",monospace;font-size:9.5px;padding:2px 7px;border-radius:999px;
   background:rgba(168,114,24,.10);color:var(--gold);border:1px solid rgba(168,114,24,.25)}
+.rlab.sub{color:var(--cool)}
+.schip{font-family:"Space Mono",monospace;font-size:9.5px;padding:2px 7px;border-radius:999px;
+  background:rgba(50,117,100,.07);color:var(--cool);border:1px dashed rgba(50,117,100,.35)}
+.schip s{color:var(--muted)}
 .combo-head{color:var(--cool)!important;border-bottom:1px solid rgba(50,117,100,.3);padding-bottom:4px}
 .combo-head.shop-head{color:var(--gold)!important;border-bottom-color:rgba(168,114,24,.3)}
 .pairinfo{margin-top:14px;padding:12px 14px;background:rgba(50,117,100,.06);border-radius:10px;
@@ -236,6 +240,17 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   border-radius:8px;margin-bottom:4px;font-size:13.5px}
 .ifq{margin-left:auto;font-family:"Space Mono",monospace;font-size:11.5px;color:var(--muted)}
 .ing-note{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5}
+.affbox{background:rgba(50,117,100,.06);border-radius:10px;padding:11px 13px;border-left:3px solid var(--cool)}
+.affbox.thin{border-left-color:var(--muted);background:rgba(27,16,11,.03)}
+.aff-intro{font-size:12.5px;margin:0 0 8px;line-height:1.5}
+.affchips{display:flex;flex-wrap:wrap;gap:5px}
+.achip{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:4px 9px;border-radius:999px;
+  background:var(--panel);border:1px solid var(--line)}
+.achip em{font-style:normal;font-family:"Space Mono",monospace;font-size:9.5px;color:var(--muted)}
+.achip.solid{border-color:var(--cool);color:var(--cool)}
+.achip.solid em{color:var(--cool);opacity:.8}
+.aff-note{font-family:"Space Mono",monospace;font-size:9.5px;color:var(--muted);margin:9px 0 0;opacity:.85}
+.aff-none{font-size:12.5px;color:var(--muted);margin:0;line-height:1.5}
 .meal-sum strong{color:var(--cool)}
 .rgroup:first-child{margin-top:0}
 #overlay{position:fixed;inset:0;background:rgba(27,16,11,.45);display:none;z-index:50}
@@ -245,6 +260,18 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 #sheet h3{font-size:21px;margin:4px 0 8px}
 #sheet .role{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
 #sheet .lab{font-family:"Space Mono",monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:16px 0 6px}
+.swapbox{background:rgba(50,117,100,.07);border-left:3px solid var(--cool);border-radius:8px;padding:10px 12px}
+.swaprow{font-size:13.5px;line-height:1.55;margin-bottom:4px}
+.swaprow:last-child{margin-bottom:0}
+.swaprow s{color:var(--muted);text-decoration-thickness:1px}
+.swaprow strong{color:var(--cool)}
+.swflag{font-style:normal;font-size:11.5px;color:var(--gold);font-family:"Space Mono",monospace}
+.swprec{font-size:11.5px;line-height:1.45;margin-top:5px;padding:5px 8px;border-radius:6px}
+.swprec.ok{background:rgba(50,117,100,.10);color:var(--cool)}
+.swprec.none{background:rgba(168,114,24,.08);color:var(--gold)}
+#sheet li.swapped{color:var(--cool)}
+#sheet li.swapped s{color:var(--muted)}
+#sheet li.swapped strong{color:var(--cool);font-weight:700}
 .timegrid{display:flex;flex-wrap:wrap;gap:8px}
 .tg{flex:1;min-width:72px;background:rgba(50,117,100,.07);border-radius:9px;padding:9px 10px;display:flex;flex-direction:column;gap:1px}
 .tg.tgtot{background:rgba(50,117,100,.16)}
@@ -269,7 +296,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.35</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.38</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -1089,13 +1116,78 @@ function generateVariant(dish, targetId, R, allDishes){
     flags };
 }
 
+/* ============================================================
+   AFFINITY — what goes with what, learned from the recipes themselves.
+   Co-occurrence is counted WITHIN A COOKING CONTEXT (soup with soup,
+   stir-fry with stir-fry), because a pairing that works in a soup may be
+   wrong in a stir-fry. Aromatics are excluded: they're in everything and
+   would swamp the signal.
+
+   This is DERIVED, never stored. Add a recipe and the graph sharpens by
+   itself. It reports PRECEDENT and its strength, never a verdict:
+     "seen 3x in soups"  /  "seen once"  /  "no precedent"
+   Physics (does it survive the pot?) stays with the property rules.
+   ============================================================ */
+function contextOf(d){
+  // the cooking frame a pairing was learned in — the "lowest branch" first
+  if(d.role==="soup") return "soup";
+  if(d.role==="dessert") return "dessert";
+  if(d.build==="braise"||d.build==="simmer") return "braise";
+  if(d.build==="stir_fry") return "stir_fry";
+  if(d.build==="coat"||d.build==="fry_dry") return "fried";
+  if(d.role==="base") return "rice_noodle";
+  return d.role||"other";
+}
+function buildAffinity(dishes,R){
+  const pairs={};      // "ctx|a+b" -> {n, dishes:[]}
+  const seen={};       // "ctx|id"  -> how many dishes in this ctx use it
+  const contexts=new Set();
+  dishes.forEach(d=>{
+    const ctx=contextOf(d); contexts.add(ctx);
+    const ids=[...new Set((d.grocery_items||[])
+      .filter(g=>g.id!=="water" && measureTypeOf(R.byId[g.id])!=="assumed")
+      .map(g=>g.id))];
+    ids.forEach(id=>{ const k=ctx+"|"+id; seen[k]=(seen[k]||0)+1; });
+    for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++){
+      const [a,b]=[ids[i],ids[j]].sort();
+      const k=ctx+"|"+a+"+"+b;
+      if(!pairs[k]) pairs[k]={n:0,dishes:[]};
+      pairs[k].n++; pairs[k].dishes.push(d.name);
+    }
+  });
+  return {pairs, seen, contexts:[...contexts]};
+}
+/* what has ingredient `id` been paired with, in this context? */
+function affinityFor(id, ctx, AFF, R, limit=5){
+  const out=[];
+  const pre=ctx+"|";
+  Object.keys(AFF.pairs).forEach(k=>{
+    if(k.indexOf(pre)!==0) return;
+    const body=k.slice(pre.length);
+    const [a,b]=body.split("+");
+    if(a!==id && b!==id) return;
+    const other=(a===id)?b:a;
+    out.push({id:other, name:(R.byId[other]||{}).name||other, n:AFF.pairs[k].n, dishes:AFF.pairs[k].dishes});
+  });
+  out.sort((x,y)=>y.n-x.n);
+  return out.slice(0,limit);
+}
+/* has this exact pairing been done before, in this context? */
+function precedentFor(a, b, ctx, AFF){
+  const [x,y]=[a,b].sort();
+  const hit=AFF.pairs[ctx+"|"+x+"+"+y];
+  if(!hit) return {n:0, level:"none", text:"no precedent \u2014 nothing in the recipes pairs these", dishes:[]};
+  if(hit.n===1) return {n:1, level:"thin", text:"seen once", dishes:hit.dishes};
+  return {n:hit.n, level:"solid", text:"seen "+hit.n+"\u00d7", dishes:hit.dishes};
+}
+
 
 /* ================= FLOW STATE ================= */
 const PANTRY_ITEMS=["garlic","onion","ginger","egg","scallion","chilli","rice","brown_rice","noodles","udon","salt","pepper","white_sugar","vegetable_oil","sesame_oil","soy_sauce","oyster_sauce","ketchup"];
 const PANTRY_OFF=new Set(["brown_rice","noodles","udon"]);   // present in the pantry but unchecked by default
 const PANTRY_ON=PANTRY_ITEMS.filter(id=>!PANTRY_OFF.has(id));
 const FLOW={comps:[],active:new Set(),pantry:new Set(PANTRY_ON),appl:new Set(["stovetop","oven"]),taste:new Set(),types:new Set(),compose:null,mode:"type",time:{total:null,active:null,cook:null},results:[]};
-let REF=null,DISHES=[],APPL={},APPLIANCE_ORDER=[];
+let REF=null,DISHES=[],APPL={},APPLIANCE_ORDER=[],AFF=null;
 const TASTE_AXES=["sweet","sour","salty","umami","fat","heat"];
 const TASTE_LABEL={sweet:"sweet",sour:"sour",salty:"salty",umami:"umami",fat:"rich",heat:"spicy"};
 const TYPE_OPTS=[["soup","Soup"],["base","Rice & noodles"],["veg","Vegetable"],["meat","Meat"],["fish","Fish"],["dessert","Dessert"]];
@@ -1612,12 +1704,17 @@ function renderRecipes(){
       yours="<div class=\"rline\"><span class=\"rlab\">uses yours</span>"+
         "<span class=\"rchips\">"+used.map(id=>"<span class=\"uchip\">"+nameOf(id)+"</span>").join("")+"</span></div>";
     }
+    let swaps="";
+    if((r.subs||[]).length){
+      swaps="<div class=\"rline\"><span class=\"rlab sub\">instead of</span>"+
+        "<span class=\"rchips\">"+r.subs.map(x=>"<span class=\"schip\"><s>"+x.need+"</s> \u2192 "+x.use+"</span>").join("")+"</span></div>";
+    }
     let shopping="";
     if(r.buy.length){
       shopping="<div class=\"rline\"><span class=\"rlab buy\">need to shop for</span>"+
         "<span class=\"rchips\">"+r.buy.map(b=>"<span class=\"bchip\">"+b.item+"</span>").join("")+"</span></div>";
     }
-    c.innerHTML="<div class=\"rname\">"+r.dish+"</div>"+yours+shopping+"<div class=\"rmeta\">"+meta+"</div>";
+    c.innerHTML="<div class=\"rname\">"+r.dish+"</div>"+yours+swaps+shopping+"<div class=\"rmeta\">"+meta+"</div>";
     c.id="rc-"+r.dish.replace(/[^a-zA-Z0-9]/g,"");
     return c;
   }
@@ -1784,8 +1881,29 @@ function openIngredient(n){
   if(n.mt==="assumed"){
     html+="<p class=\"ing-note\">A seasoning or aromatic \u2014 no amount worth shopping to; a normal bottle or bulb covers it.</p>";
   }
-  // AFFINITY SLOT — filled once the co-occurrence graph exists
-  html+="<div id=\"aff-slot\"></div>";
+  // AFFINITY — what has this been paired with, in the same kind of cooking?
+  if(AFF && (n.dishes||[]).length){
+    const d0=DISHES.find(x=>x.name===n.dishes[0]);
+    const ctx=d0?contextOf(d0):null;
+    if(ctx){
+      const partners=affinityFor(n.id,ctx,AFF,REF,5).filter(p=>p.id!==n.id);
+      const CTXLAB={soup:"soups",braise:"braises",stir_fry:"stir-fries",fried:"fried dishes",
+                    dessert:"desserts",rice_noodle:"rice & noodle dishes",meat:"meat dishes",
+                    veg:"vegetable dishes",fish:"fish dishes"};
+      const lab=CTXLAB[ctx]||ctx;
+      html+="<div class=\"lab\">What it\u2019s been paired with</div>";
+      if(partners.length){
+        html+="<div class=\"affbox\"><p class=\"aff-intro\">In our "+lab+", "+n.name.toLowerCase()+" has appeared alongside:</p><div class=\"affchips\">";
+        partners.forEach(p=>{
+          const strength = p.n>1 ? "solid" : "thin";
+          html+="<span class=\"achip "+strength+"\">"+p.name+"<em>"+(p.n>1?p.n+"\u00d7":"once")+"</em></span>";
+        });
+        html+="</div><p class=\"aff-note\">Learned from the recipes themselves \u2014 it sharpens as the collection grows.</p></div>";
+      } else {
+        html+="<div class=\"affbox thin\"><p class=\"aff-none\">No precedent yet \u2014 nothing else in our "+lab+" has been paired with "+n.name.toLowerCase()+".</p></div>";
+      }
+    }
+  }
   el("sheet").innerHTML=html;
   el("overlay").classList.add("on");
 }
@@ -1814,7 +1932,49 @@ function openR(idx){
   const ap=opt?opt.appliance:d.appliance;
   const t=opt&&opt.time?opt.time:d.time;
   const steps=(d.steps_variants&&d.steps_variants[ap])||d.steps;
-  const ings=(d.grocery_items||[]).map(g=>"<li>"+(g.qty?g.qty+(g.unit||"")+" ":"")+g.name+"</li>").join("");
+  const subMap={}; (r.subs||[]).forEach(x=>{ subMap[x.need]=x; });
+  const ings=(d.grocery_items||[]).map(g=>{
+    const sw=subMap[g.name];
+    const qty=(g.qty?g.qty+(g.unit||"")+" ":"");
+    if(sw){
+      return "<li class=\"swapped\">"+qty+"<s>"+g.name+"</s> \u2192 <strong>"+sw.use+"</strong>"+
+             (sw.flag?" <em class=\"swflag\">("+sw.flag+")</em>":"")+"</li>";
+    }
+    return "<li>"+qty+g.name+"</li>";
+  }).join("");
+  // a clear callout naming each swap in plain words
+  let swapNote="";
+  if((r.subs||[]).length){
+    const ctx=contextOf(d);
+    const others=(d.grocery_items||[]).map(g=>g.id)
+      .filter(id=>measureTypeOf(REF.byId[id])!=="assumed" && id!=="water");
+    swapNote="<div class=\"lab\">Using what you have</div><div class=\"swapbox\">"+
+      r.subs.map(x=>{
+        const useId=(REF.list.find(z=>z.name===x.use)||{}).id;
+        let prec="";
+        if(AFF && useId){
+          // has this substitute ever appeared alongside the dish's other ingredients, in this context?
+          let best={n:0}, wit=null;
+          others.forEach(oid=>{
+            if(oid===useId) return;
+            const p=precedentFor(useId,oid,ctx,AFF);
+            if(p.n>best.n){ best=p; wit=oid; }
+          });
+          if(best.n>0){
+            prec="<div class=\"swprec ok\">Precedent: "+x.use+" has been cooked with "+
+                 ((REF.byId[wit]||{}).name||wit).toLowerCase()+" in our "+ctx.replace("_"," ")+" dishes ("+best.text+").</div>";
+          } else {
+            prec="<div class=\"swprec none\">No precedent \u2014 the cooking works, but nothing in our recipes pairs "+
+                 x.use.toLowerCase()+" with this dish\u2019s other ingredients. Uncharted.</div>";
+          }
+        }
+        return "<div class=\"swaprow\">Instead of <s>"+x.need+"</s>, you can use <strong>"+x.use+"</strong>."+
+          (x.flag?"<span class=\"swflag\"> "+x.flag+"</span>":"")+
+          (x.rename?"<span class=\"swflag\"> This makes it "+x.rename+".</span>":"")+
+          prec+"</div>";
+      }).join("")+
+      "</div>";
+  }
   el("sheet").innerHTML="<button class=\"close\" onclick=\"closeR()\">\u00d7</button>"+
     "<span class=\"role\">"+d.role+" \u00b7 "+(APPL[ap]||ap)+"</span><h3>"+d.name+"</h3>"+
     (t?"<div class=\"lab\">Time</div><div class=\"timegrid\">"+
@@ -1823,6 +1983,7 @@ function openR(idx){
         "<div class=\"tg tgtot\"><span class=\"tgv\">"+t.ready_in_min+"</span><span class=\"tgl2\">min total</span></div>"+
         (t.hands_off_min?"<div class=\"tg\"><span class=\"tgv\">"+t.hands_off_min+"</span><span class=\"tgl2\">min hands-off</span></div>":"")+
       "</div>":"")+
+    swapNote+
     (r.buy.length?"<div class=\"lab\">You'd need to buy</div><p>"+r.buy.map(b=>b.item).join(", ")+"</p>":"")+
     "<div class=\"lab\">You will need</div><ul>"+ings+"</ul>"+
     "<div class=\"lab\">Method</div><ol>"+steps.map(s=>"<li>"+s+"</li>").join("")+"</ol>";
@@ -1986,6 +2147,7 @@ async function boot(){
     const R=buildReference(ingData); REF=R;
     (applData.appliances||[]).sort((a,b)=>a.order-b.order).forEach(a=>{APPL[a.id]=a.name;APPLIANCE_ORDER.push(a.id);});
     DISHES=hydrate(dishData.dishes,R,methodData);
+    AFF=buildAffinity(DISHES,R);
     renderPantry(); renderAppl(); renderType(); renderTaste(); renderTime(); renderIngTags(); renderRecipes();
     setupCollapse();
     const s=el("search");
