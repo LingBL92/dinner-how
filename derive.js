@@ -1067,3 +1067,95 @@ function hasBroth(d){
   if(dryLed && !["braise","simmer"].includes(d.build)) return false;
   return ["braise","simmer"].includes(d.build) || /\bsimmer\b/.test(txt);
 }
+
+/* ============================================================
+   ONE-POT STAGING — everything cooks in one vessel at one temperature,
+   so the only real decision is WHEN each thing goes in.
+
+   The ORDER is derived (collagen > dense root > quick > delicate > leafy,
+   all from properties the engine already has). The MINUTES are AUTHORED —
+   a cook's estimate of how long each class needs in a simmering pot. A chef
+   should own and correct these numbers.
+   ============================================================ */
+const POT_CLASS=[
+  {key:"collagen",  label:"Tough cuts",        mins:50, why:"needs time for the collagen to soften"},
+  {key:"dense_root",label:"Dense roots",       mins:20, why:"dense \u2014 needs a good while to soften"},
+  {key:"firm_veg",  label:"Firm vegetables",   mins:12, why:"holds its shape"},
+  {key:"quick_prot",label:"Quick proteins",    mins:8,  why:"cooks through fast"},
+  {key:"soft",      label:"Soft additions",    mins:5,  why:"just needs heating through"},
+  {key:"delicate",  label:"Delicate seafood",  mins:4,  why:"overcooks in moments"},
+  {key:"leafy",     label:"Leafy greens",      mins:1,  why:"wilts almost instantly \u2014 in at the very end"}
+];
+const POT_MINS={}; POT_CLASS.forEach(c=>POT_MINS[c.key]=c.mins);
+
+function potClassOf(id,R){
+  const i=R.byId[id]; if(!i) return null;
+  const p=new Set(i.provides||[]);
+  const cat=i.category;
+  if(p.has("leafy")) return "leafy";
+  if(cat==="proteins"){
+    if(["fish","salmon","prawn","squid","oyster"].includes(id)) return "delicate";
+    if(p.has("collagen_rich")) return "collagen";
+    if(id==="tofu"||id==="egg") return "soft";
+    return "quick_prot";
+  }
+  if(cat==="vegetables"||cat==="starches"){
+    if(p.has("starchy") && p.has("holds_shape")) return "dense_root";
+    if(p.has("holds_shape")) return "firm_veg";
+    if(id==="mushroom") return "soft";
+    return "soft";
+  }
+  return null;   // aromatics/seasonings go in with the broth, not staged
+}
+
+/* Build the pot: a base, a staged schedule, and honest gaps. */
+function buildOnePot(ingIds, R, dishes){
+  const real=ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed");
+  const staged={};
+  real.forEach(id=>{
+    const k=potClassOf(id,R);
+    if(!k) return;
+    (staged[k]=staged[k]||[]).push({id, name:(R.byId[id]||{}).name||id});
+  });
+
+  // longest thing in the pot sets the total cook time
+  let total=0;
+  Object.keys(staged).forEach(k=>{ total=Math.max(total, POT_MINS[k]||0); });
+  if(!total) total=15;
+
+  // each class goes in so that it finishes at the same moment
+  const steps=POT_CLASS
+    .filter(c=>staged[c.key])
+    .map(c=>({
+      at: Math.max(0, total-c.mins),
+      cooks: c.mins,
+      label: c.label,
+      why: c.why,
+      items: staged[c.key]
+    }))
+    .sort((a,b)=>a.at-b.at);
+
+  const character = brothCharacter(real,R);
+  const base = character ? character.base : null;
+
+  // what's missing (nudge, never enforce)
+  const gaps=[];
+  const hasProtein = real.some(id=>(R.byId[id]||{}).category==="proteins");
+  const hasVeg     = real.some(id=>(R.byId[id]||{}).category==="vegetables");
+  const hasGreen   = real.some(id=>((R.byId[id]||{}).provides||[]).includes("leafy"));
+  if(!hasProtein) gaps.push({what:"a protein", why:"nothing is setting the broth's character \u2014 this will be a light vegetable pot"});
+  if(!hasVeg)     gaps.push({what:"vegetables", why:"it needs something green or sweet to make it a meal"});
+  else if(!hasGreen && character && character.body>=2.5)
+    gaps.push({what:"a leafy green", why:"a rich broth wants something fresh to cut it"});
+
+  // hands-off: everything except the moments you add things
+  const handsOn = Math.max(6, steps.length*2);
+
+  return {
+    base, character,
+    describe: character?describeBroth(character):"a light vegetable broth",
+    steps, total, handsOn, handsOff: Math.max(0,total-handsOn),
+    gaps,
+    reminds: dishes ? brothLikeDishes(real,R,dishes.filter(hasBroth),2) : []
+  };
+}
