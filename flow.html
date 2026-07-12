@@ -269,7 +269,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.34</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.35</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -1461,6 +1461,35 @@ function renderRecipes(){
     return;
   }
 
+  // --- DISHES THAT BRING YOUR INGREDIENTS TOGETHER (rare + valuable, so surfaced first) ---
+  const multi=[];
+  const seenMulti=new Set();
+  const allRes=(FLOW.resultsAll&&FLOW.resultsAll.length)?FLOW.resultsAll:FLOW.results;
+  allRes.forEach((r,idx)=>{
+    const {d,used}=usesOf(r);
+    if(isPlainStaple(d))return;
+    const real=used.filter(id=>measureTypeOf(REF.byId[id])!=="assumed");
+    if(real.length>=2 && !seenMulti.has(r.dish)){
+      seenMulti.add(r.dish); multi.push({r,idx,d,n:real.length,buy:r.buy.length});
+    }
+  });
+  // TIER 1: uses the most of yours AND needs nothing bought — the true sweet spot
+  const ready=multi.filter(x=>x.buy===0).sort((a,b)=>b.n-a.n);
+  // TIER 2: uses a lot of yours but you'd have to shop
+  const shop =multi.filter(x=>x.buy>0).sort((a,b)=>(b.n-a.n)||(a.buy-b.buy));
+  if(ready.length){
+    const h=document.createElement("div"); h.className="rgroup combo-head";
+    h.textContent="Cook now \u2014 uses the most of yours, buy nothing";
+    box.appendChild(h);
+    ready.slice(0,4).forEach(it=>box.appendChild(card(it)));
+  }
+  if(shop.length){
+    const h=document.createElement("div"); h.className="rgroup combo-head shop-head";
+    h.textContent="Uses a lot of yours \u2014 but you\u2019d need to shop";
+    box.appendChild(h);
+    shop.slice(0,3).forEach(it=>box.appendChild(card(it)));
+  }
+
   // MOBILE: an at-a-glance MINI GRID overview, then the deduplicated list below
   if(window.innerWidth<760){
     // --- mini 2D overview: rows = dish type, columns = your ingredients, cells = counts ---
@@ -1504,35 +1533,6 @@ function renderRecipes(){
       items.slice(0,8).forEach(it=>box.appendChild(card(it)));
     });
     return;
-  }
-
-  // --- DISHES THAT BRING YOUR INGREDIENTS TOGETHER (rare + valuable, so surfaced first) ---
-  const multi=[];
-  const seenMulti=new Set();
-  const allRes=(FLOW.resultsAll&&FLOW.resultsAll.length)?FLOW.resultsAll:FLOW.results;
-  allRes.forEach((r,idx)=>{
-    const {d,used}=usesOf(r);
-    if(isPlainStaple(d))return;
-    const real=used.filter(id=>measureTypeOf(REF.byId[id])!=="assumed");
-    if(real.length>=2 && !seenMulti.has(r.dish)){
-      seenMulti.add(r.dish); multi.push({r,idx,d,n:real.length,buy:r.buy.length});
-    }
-  });
-  // TIER 1: uses the most of yours AND needs nothing bought — the true sweet spot
-  const ready=multi.filter(x=>x.buy===0).sort((a,b)=>b.n-a.n);
-  // TIER 2: uses a lot of yours but you'd have to shop
-  const shop =multi.filter(x=>x.buy>0).sort((a,b)=>(b.n-a.n)||(a.buy-b.buy));
-  if(ready.length){
-    const h=document.createElement("div"); h.className="rgroup combo-head";
-    h.textContent="Cook now \u2014 uses the most of yours, buy nothing";
-    box.appendChild(h);
-    ready.slice(0,4).forEach(it=>box.appendChild(card(it)));
-  }
-  if(shop.length){
-    const h=document.createElement("div"); h.className="rgroup combo-head shop-head";
-    h.textContent="Uses a lot of yours \u2014 but you\u2019d need to shop";
-    box.appendChild(h);
-    shop.slice(0,3).forEach(it=>box.appendChild(card(it)));
   }
 
   // DESKTOP 2D GRID
