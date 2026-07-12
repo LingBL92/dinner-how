@@ -1135,12 +1135,14 @@ function potClassOf(id,R){
 }
 
 /* Build the pot: a base, a staged schedule, and honest gaps. */
-function buildOnePot(ingIds, R, dishes){
+function buildOnePot(ingIds, R, dishes, opts){
   // STAGING only cares about things you physically add and time (not seasonings).
   // REASONING (broth character, seasoning direction, similarity) needs the FULL list —
   // otherwise the star anise you added never reaches "what does this remind me of".
   const real=ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed");
   const all=ingIds;
+  const APP=(opts&&opts.appliance)||null;
+  const APPD=(opts&&opts.applData)||null;
   const staged={};
   real.forEach(id=>{
     const k=potClassOf(id,R);
@@ -1148,21 +1150,39 @@ function buildOnePot(ingIds, R, dishes){
     (staged[k]=staged[k]||[]).push({id, name:(R.byId[id]||{}).name||id});
   });
 
-  // longest thing in the pot sets the total cook time
+  /* THE VESSEL CHANGES THE COOK. A pressure cooker breaks collagen down in a fraction
+     of the time; a slow cooker takes hours. appliances.json already carries these
+     multipliers. They apply to the PASSIVE stages (the long softening) — not to a
+     leafy green, which wilts in a minute whatever the pot. */
+  const mult = APPD && APPD.passive_multiplier!=null ? APPD.passive_multiplier : 1;
+  const cap  = APPD ? APPD.passive_cap_min : null;
+  function scaled(key){
+    const base=POT_MINS[key]||0;
+    if(mult===1) return base;
+    if(!["collagen","dense_root"].includes(key)) return base;   // quick things stay quick
+    let v=Math.round(base*mult);
+    if(cap!=null) v=Math.min(v, cap);
+    return Math.max(1, v);
+  }
+
   let total=0;
-  Object.keys(staged).forEach(k=>{ total=Math.max(total, POT_MINS[k]||0); });
+  Object.keys(staged).forEach(k=>{ total=Math.max(total, scaled(k)); });
   if(!total) total=15;
 
   // each class goes in so that it finishes at the same moment
   const steps=POT_CLASS
     .filter(c=>staged[c.key])
-    .map(c=>({
-      at: Math.max(0, total-c.mins),
-      cooks: c.mins,
-      label: c.label,
-      why: c.why,
-      items: staged[c.key]
-    }))
+    .map(c=>{
+      const mins=scaled(c.key);
+      const faster = mins<c.mins, slower = mins>c.mins;
+      return {
+        at: Math.max(0, total-mins),
+        cooks: mins,
+        label: c.label,
+        why: c.why + ((faster||slower) && APP ? " \u00b7 " + (faster?"much faster":"slower") + " in the " + APP.replace(/_/g," ") : ""),
+        items: staged[c.key]
+      };
+    })
     .sort((a,b)=>a.at-b.at);
 
   const character = brothCharacter(all,R);
@@ -1182,6 +1202,7 @@ function buildOnePot(ingIds, R, dishes){
   const handsOn = Math.max(6, steps.length*2);
 
   return {
+    appliance: APP, multiplier: mult,
     base, character,
     describe: character?describeBroth(character):"a light vegetable broth",
     steps, total, handsOn, handsOff: Math.max(0,total-handsOn),
@@ -1246,16 +1267,20 @@ const SEASONING_DIRS=[
    markers:["dark_soy_sauce","white_sugar","rock_sugar","shaoxing","star_anise"], need:2,
    note:"soy and sugar \u2014 dark, glossy, savoury-sweet"},
   {key:"clear_chinese", label:"Clear Chinese soup (\u6e05\u6c64)", region:"Chinese",
-   markers:["ginger","scallion","salt"], need:2, exclude:["dark_soy_sauce","coconut_milk","curry_powder"],
+   markers:["ginger","scallion","salt"], need:2,
+   exclude:["dark_soy_sauce","coconut_milk","curry_powder","gochugaru","laksa_paste","tom_yum_paste"],
    note:"the broth speaks for itself \u2014 ginger, scallion, salt"},
+  {key:"milky_bone",  label:"Milky bone broth (\u5976\u6c64)", region:"Chinese",
+   markers:["pork_ribs","garlic","ginger"], need:2, requireMilky:true,
+   note:"boiled hard until the fat emulsifies \u2014 opaque and rich"},
   // --- Malay / Peranakan ---
   {key:"rempah",      label:"Rempah (Malay/Peranakan)", region:"Malay/Peranakan",
-   markers:["belacan","candlenut","lemongrass","galangal","kaffir_lime"], need:1,   // the SEA signature
+   markers:["belacan","candlenut","laksa_paste","laksa_leaf","lemongrass","galangal","kaffir_lime"], need:1,
    also:["turmeric","chilli","shallot","coconut_milk"],
    note:"pounded spice paste \u2014 belacan, lemongrass, galangal"},
   {key:"assam",       label:"Sour-hot (assam / tom yum)", region:"SEA",
-   markers:["lemongrass","galangal","kaffir_lime","chilli","fish_sauce"], need:2,
-   require:["tamarind","lime"],        // the SOUR agent is the whole point — no sour, no assam
+   markers:["lemongrass","galangal","kaffir_lime","chilli","fish_sauce","tom_yum_paste"], need:2,
+   require:["tamarind","lime","tom_yum_paste"],        // the SOUR agent is the whole point — no sour, no assam
    exclude:["coconut_milk","coriander_seed","cumin"],   // that's a curry, not a tom yum
    note:"tamarind or lime against chilli \u2014 sharp and hot"},
   // --- Indian ---
@@ -1270,6 +1295,10 @@ const SEASONING_DIRS=[
    note:"dashi seasoned with soy \u2014 clear and savoury"},
   {key:"jp_curry",    label:"Japanese curry", region:"Japanese",
    markers:["japanese_curry_roux","curry_powder"], need:1, note:"a roux-thickened, gently sweet curry"},
+  // --- Korean ---
+  {key:"korean",      label:"Korean gochu", region:"Korean",
+   markers:["gochugaru","gochujang","kimchi"], need:1,
+   note:"fermented chilli \u2014 deep, savoury heat"},
   // --- Western ---
   {key:"western_herb",label:"Western herb & stock", region:"Western",
    markers:["bay_leaf","parsley","thyme","rosemary","oregano","celery","broth"], need:2,
@@ -1279,8 +1308,9 @@ const SEASONING_DIRS=[
    note:"salt and pepper only \u2014 nothing steering it yet"}
 ];
 
-function seasoningOf(ingIds){
+function seasoningOf(ingIds, dish){
   const set=new Set(ingIds);
+  const isMilky = dish ? !!brothMethod(dish).hardBoil : false;
   const hits=[];
   SEASONING_DIRS.forEach(dir=>{
     if(!dir.markers.length) return;
@@ -1289,6 +1319,7 @@ function seasoningOf(ingIds){
     if((dir.exclude||[]).some(x=>set.has(x))) return;
     // a REQUIRE list means: at least one of these MUST be present (e.g. a sour agent for tom yum)
     if((dir.require||[]).length && !dir.require.some(x=>set.has(x))) return;
+    if(dir.requireMilky && !isMilky) return;          // \u5976\u6c64 only if it was actually boiled hard
     const found=dir.markers.filter(m=>set.has(m));
     const bonus=(dir.also||[]).filter(m=>set.has(m)).length;
     if(found.length>=dir.need) hits.push({...dir, found, strength:found.length+bonus*0.5});
