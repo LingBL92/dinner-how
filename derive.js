@@ -515,6 +515,16 @@ function subScore(aId,bId,R){
   s+=([...anc].filter(x=>bnc.has(x)).length)*0.15;
   const ba=meatBehaviour(pa.has("collagen_rich"),"whole"), bb=meatBehaviour(pb.has("collagen_rich"),"whole");
   if(A.category==="proteins" && ba===bb) s+=0.5;
+  /* SPECIES MATTERS. Chicken wing and beef chuck are both collagen-rich, so the physics
+     say they swap — and physically they do. But a beef curry made with chicken wings is
+     not a dish. Staying within a species is a far safer swap than crossing one, and the
+     scorer was treating them as near-equal. */
+  if(A.category==="proteins" && B.category==="proteins"){
+    const sp=(id)=>{ const anc=R.anc[id]||new Set();
+      for(const k of ["beef","pork","chicken","mutton","fish","prawn"]) if(anc.has(k)||id===k) return k;
+      return id; };
+    if(sp(aId)!==sp(bId)) s-=1.2;          // crossing species is a real leap
+  }
   // VEG/STARCH discriminators: matching starchy/holds_shape rewards; differing sweetness penalises
   const DISC=["starchy","holds_shape"];
   if(A.category==="vegetables"||A.category==="starches"){
@@ -546,6 +556,8 @@ function substitutesFor(id,R,{have=null,limit=5,dish=null}={}){
 /* SEARCH: score every dish by how well the cook's ingredients cover it.
    mode "have"  -> only count an ingredient as covered if the cook has it or a substitute they have
    mode "shop"  -> count near-misses too, and report what to buy / swap */
+let AFFINITY=null;
+function setAffinity(a){ AFFINITY=a; }
 function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}={}){
   // pantry: { id: {qty, ...} }  — qty is grams for weigh items, pieces for count items.
   const have=new Set(Object.keys(pantry));
@@ -562,7 +574,7 @@ function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}
       return measureTypeOf(R.byId[g.id])!=="assumed" || STAPLE_MANAGED.has(g.id);
     });
     if(!comps.length) return;
-    let covered=0; const missing=[], subs=[], short=[];
+    let covered=0; const missing=[], subs=[], short=[]; let unchartedSwaps=0;
     comps.forEach(g=>{
       const mt=measureTypeOf(R.byId[g.id]);
       // --- do we have it at all? (self, or an on-hand substitute) ---
@@ -575,7 +587,22 @@ function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}
         if(kin){ sourceId=kin; if(kin!==g.id) subs.push({need:g.name,use:(R.byId[kin]||{}).name||kin,flag:null,rename:null}); }
         else {
           const sub=substitutesFor(g.id,R,{have,limit:3,dish:d}).find(x=>x.onHand);
-          if(sub){sourceId=sub.id; subs.push({need:g.name,use:sub.name,flag:sub.flag,rename:sub.rename});}
+          if(sub){
+            /* A swap can be PHYSICALLY sound and CULTURALLY absurd. Chicken wing braises
+               like beef chuck — but a beef curry made with chicken wings is not a dish.
+               The affinity graph knows: it has no precedent for that pairing. Record the
+               swap, but mark it uncharted so the ranking can weigh it honestly. */
+            let uncharted=false;
+            if(AFFINITY && (R.byId[sub.id]||{}).category==="proteins"){
+              const ctx=contextOf(d);
+              const others=(d.grocery_items||[]).map(x=>x.id)
+                .filter(x=>x!==g.id && measureTypeOf(R.byId[x])!=="assumed" && x!=="water");
+              uncharted = !others.some(o=>precedentFor(sub.id,o,ctx,AFFINITY).n>0);
+            }
+            sourceId=sub.id;
+            subs.push({need:g.name,use:sub.name,flag:sub.flag,rename:sub.rename,uncharted});
+            if(uncharted) unchartedSwaps++;
+          }
         }
       }
       if(!sourceId){ missing.push(g); return; }
@@ -601,7 +628,7 @@ function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}
     if(mode==="have"){ if(ratio<1) return; }                    // strict: must be fully covered
     const renamed=(subs.find(x=>x.rename)||{}).rename||null;
     out.push({
-      dish:d.name, displayName:renamed||d.name, role:d.role, ratio, covered, total:comps.length, subs, short,
+      dish:d.name, displayName:renamed||d.name, role:d.role, ratio, covered, total:comps.length, subs, short, unchartedSwaps,
       buy: missing.map(m=>{ const best=substitutesFor(m.id,R,{have,limit:1,dish:d})[0];
         return {item:m.name, closest: best?best.name:null}; })
     });

@@ -338,6 +338,9 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .mc-buy,.mc-have{font-style:normal;font-family:"Space Mono",monospace;font-size:9.5px}
 .mc-buy{color:var(--gold)}
 .mc-sub{font-style:normal;font-family:"Space Mono",monospace;font-size:9.5px;color:var(--cool);display:block}
+.mc-sub.uncharted{color:var(--gold)}
+.schip.unch{border-style:dashed;border-color:var(--gold);color:var(--gold);background:rgba(168,114,24,.07)}
+.schip.unch b{font-weight:700}
 .meal-chip.picked .mc-sub{color:rgba(255,255,255,.9)}
 .mc-open{border:none;background:none;font-family:"Space Mono",monospace;font-size:9px;
   text-transform:uppercase;letter-spacing:.06em;color:var(--muted);cursor:pointer;padding:2px 0 0;
@@ -478,7 +481,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.66</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.67</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -1055,6 +1058,16 @@ function subScore(aId,bId,R){
   s+=([...anc].filter(x=>bnc.has(x)).length)*0.15;
   const ba=meatBehaviour(pa.has("collagen_rich"),"whole"), bb=meatBehaviour(pb.has("collagen_rich"),"whole");
   if(A.category==="proteins" && ba===bb) s+=0.5;
+  /* SPECIES MATTERS. Chicken wing and beef chuck are both collagen-rich, so the physics
+     say they swap — and physically they do. But a beef curry made with chicken wings is
+     not a dish. Staying within a species is a far safer swap than crossing one, and the
+     scorer was treating them as near-equal. */
+  if(A.category==="proteins" && B.category==="proteins"){
+    const sp=(id)=>{ const anc=R.anc[id]||new Set();
+      for(const k of ["beef","pork","chicken","mutton","fish","prawn"]) if(anc.has(k)||id===k) return k;
+      return id; };
+    if(sp(aId)!==sp(bId)) s-=1.2;          // crossing species is a real leap
+  }
   // VEG/STARCH discriminators: matching starchy/holds_shape rewards; differing sweetness penalises
   const DISC=["starchy","holds_shape"];
   if(A.category==="vegetables"||A.category==="starches"){
@@ -1086,6 +1099,8 @@ function substitutesFor(id,R,{have=null,limit=5,dish=null}={}){
 /* SEARCH: score every dish by how well the cook's ingredients cover it.
    mode "have"  -> only count an ingredient as covered if the cook has it or a substitute they have
    mode "shop"  -> count near-misses too, and report what to buy / swap */
+let AFFINITY=null;
+function setAffinity(a){ AFFINITY=a; }
 function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}={}){
   // pantry: { id: {qty, ...} }  — qty is grams for weigh items, pieces for count items.
   const have=new Set(Object.keys(pantry));
@@ -1102,7 +1117,7 @@ function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}
       return measureTypeOf(R.byId[g.id])!=="assumed" || STAPLE_MANAGED.has(g.id);
     });
     if(!comps.length) return;
-    let covered=0; const missing=[], subs=[], short=[];
+    let covered=0; const missing=[], subs=[], short=[]; let unchartedSwaps=0;
     comps.forEach(g=>{
       const mt=measureTypeOf(R.byId[g.id]);
       // --- do we have it at all? (self, or an on-hand substitute) ---
@@ -1115,7 +1130,22 @@ function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}
         if(kin){ sourceId=kin; if(kin!==g.id) subs.push({need:g.name,use:(R.byId[kin]||{}).name||kin,flag:null,rename:null}); }
         else {
           const sub=substitutesFor(g.id,R,{have,limit:3,dish:d}).find(x=>x.onHand);
-          if(sub){sourceId=sub.id; subs.push({need:g.name,use:sub.name,flag:sub.flag,rename:sub.rename});}
+          if(sub){
+            /* A swap can be PHYSICALLY sound and CULTURALLY absurd. Chicken wing braises
+               like beef chuck — but a beef curry made with chicken wings is not a dish.
+               The affinity graph knows: it has no precedent for that pairing. Record the
+               swap, but mark it uncharted so the ranking can weigh it honestly. */
+            let uncharted=false;
+            if(AFFINITY && (R.byId[sub.id]||{}).category==="proteins"){
+              const ctx=contextOf(d);
+              const others=(d.grocery_items||[]).map(x=>x.id)
+                .filter(x=>x!==g.id && measureTypeOf(R.byId[x])!=="assumed" && x!=="water");
+              uncharted = !others.some(o=>precedentFor(sub.id,o,ctx,AFFINITY).n>0);
+            }
+            sourceId=sub.id;
+            subs.push({need:g.name,use:sub.name,flag:sub.flag,rename:sub.rename,uncharted});
+            if(uncharted) unchartedSwaps++;
+          }
         }
       }
       if(!sourceId){ missing.push(g); return; }
@@ -1141,7 +1171,7 @@ function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}
     if(mode==="have"){ if(ratio<1) return; }                    // strict: must be fully covered
     const renamed=(subs.find(x=>x.rename)||{}).rename||null;
     out.push({
-      dish:d.name, displayName:renamed||d.name, role:d.role, ratio, covered, total:comps.length, subs, short,
+      dish:d.name, displayName:renamed||d.name, role:d.role, ratio, covered, total:comps.length, subs, short, unchartedSwaps,
       buy: missing.map(m=>{ const best=substitutesFor(m.id,R,{have,limit:1,dish:d})[0];
         return {item:m.name, closest: best?best.name:null}; })
     });
@@ -2409,7 +2439,8 @@ function renderRecipes(){
     let swaps="";
     if((r.subs||[]).length){
       swaps="<div class=\"rline\"><span class=\"rlab sub\">instead of</span>"+
-        "<span class=\"rchips\">"+r.subs.map(x=>"<span class=\"schip\"><s>"+x.need+"</s> \u2192 "+x.use+"</span>").join("")+"</span></div>";
+        "<span class=\"rchips\">"+r.subs.map(x=>"<span class=\"schip"+(x.uncharted?" unch":"")+"\"><s>"+x.need+"</s> \u2192 "+x.use+
+          (x.uncharted?" <b>?</b>":"")+"</span>").join("")+"</span></div>";
     }
     let shopping="";
     if(r.buy.length){
@@ -2472,7 +2503,10 @@ function renderMealBuilder(){
           const useId=(REF.list.find(z=>z.name===su.use)||{}).id; return useId===id;
         })).length;
       };
-      const score=(x)=> usesMine(x.r)*2 + x.r.ratio - x.r.buy.length*0.6;
+      /* An UNCHARTED swap (physically fine, no culinary precedent) is worse than buying
+         one ingredient. A chicken-wing beef curry should never outrank a real chicken dish. */
+      const score=(x)=> usesMine(x.r)*2 + x.r.ratio - x.r.buy.length*0.6
+                        - (x.r.unchartedSwaps||0)*3;
       cands.sort((a,b)=> score(b)-score(a) || (a.r.buy.length-b.r.buy.length));
       cands.slice(0,5).forEach(it=>{
         const chip=document.createElement("div");
@@ -2480,8 +2514,10 @@ function renderMealBuilder(){
         chip.className="meal-chip"+(chosen?" picked":(hasPick?" dimmed":""));
         const nb=it.r.buy.length;
         const subs=(it.r.subs||[]);
+        const unch=subs.filter(x=>x.uncharted);
         const subLine = subs.length
-          ? "<em class=\"mc-sub\">using "+subs.map(x=>x.use).join(", ")+" for "+subs.map(x=>x.need.toLowerCase()).join(", ")+"</em>"
+          ? "<em class=\"mc-sub"+(unch.length?" uncharted":"")+"\">using "+subs.map(x=>x.use).join(", ")+" for "+subs.map(x=>x.need.toLowerCase()).join(", ")+
+            (unch.length?" \u2014 no precedent for this":"")+"</em>"
           : "";
         chip.innerHTML="<span>"+it.r.dish+"</span>"+subLine+
           (nb? "<em class=\"mc-buy\">buy "+nb+"</em>" : "<em class=\"mc-have\">have all</em>")+
@@ -3372,6 +3408,7 @@ async function boot(){
     (applData.appliances||[]).sort((a,b)=>a.order-b.order).forEach(a=>{APPL[a.id]=a.name;APPLIANCE_ORDER.push(a.id);APPL_DATA[a.id]=a;});
     DISHES=hydrate(dishData.dishes,R,methodData);
     AFF=buildAffinity(DISHES,R);
+    setAffinity(AFF);   // so substitutions can be checked for precedent
     owned.clear(); FLOW.appl.forEach(x=>owned.add(x));
     renderPantry(); renderAppl(); renderType(); renderTaste(); renderTime(); renderIngTags(); renderRecipes();
     setupCollapse();
