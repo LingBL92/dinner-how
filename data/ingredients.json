@@ -818,7 +818,8 @@
    "aisle": "Rice, grains & bread",
    "prep_verb": "peel and cube",
    "parent": "starches",
-   "category": "starches"
+   "category": "starches",
+   "group": "root"
   },
   {
    "id": "couscous",
@@ -918,7 +919,8 @@
    "aisle": "Rice, grains & bread",
    "prep_verb": "peel and cube",
    "parent": "starches",
-   "category": "starches"
+   "category": "starches",
+   "group": "root"
   },
   {
    "id": "sago",
@@ -1043,7 +1045,8 @@
    "aisle": "Rice, grains & bread",
    "prep_verb": "peel and cube",
    "parent": "starches",
-   "category": "starches"
+   "category": "starches",
+   "group": "root"
   },
   {
    "id": "noodles",
@@ -1087,7 +1090,8 @@
    "aisle": "Vegetables",
    "prep_verb": "peel and dice",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "aromatic"
   },
   {
    "id": "garlic",
@@ -1102,7 +1106,8 @@
    "aisle": "Vegetables",
    "prep_verb": "peel and mince",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "aromatic"
   },
   {
    "id": "ginger",
@@ -1116,7 +1121,8 @@
    "aisle": "Vegetables",
    "prep_verb": "peel and slice",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "aromatic"
   },
   {
    "id": "tomato",
@@ -1135,7 +1141,8 @@
    "aisle": "Vegetables",
    "prep_verb": "chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "fruiting"
   },
   {
    "id": "broccoli",
@@ -1150,7 +1157,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "florets"
   },
   {
    "id": "carrot",
@@ -1169,7 +1177,8 @@
    "aisle": "Vegetables",
    "prep_verb": "peel and slice",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "root"
   },
   {
    "id": "mushroom",
@@ -1187,7 +1196,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "fungi"
   },
   {
    "id": "cabbage",
@@ -1203,7 +1213,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "leafy"
   },
   {
    "id": "celery",
@@ -1218,7 +1229,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "aromatic"
   },
   {
    "id": "bell_pepper",
@@ -1243,7 +1255,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "fruiting"
   },
   {
    "id": "spinach",
@@ -1258,7 +1271,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "leafy"
   },
   {
    "id": "zucchini",
@@ -1276,7 +1290,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "fruiting"
   },
   {
    "id": "eggplant",
@@ -1292,7 +1307,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "fruiting"
   },
   {
    "id": "green_bean",
@@ -1309,7 +1325,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "pods"
   },
   {
    "id": "peas",
@@ -1326,7 +1343,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "pods"
   },
   {
    "id": "corn",
@@ -1344,7 +1362,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "fruiting"
   },
   {
    "id": "lettuce",
@@ -1361,7 +1380,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "leafy"
   },
   {
    "id": "cauliflower",
@@ -1376,7 +1396,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "florets"
   },
   {
    "id": "cucumber",
@@ -1391,7 +1412,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "fruiting"
   },
   {
    "id": "kailan",
@@ -1409,7 +1431,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "leafy"
   },
   {
    "id": "bok_choy",
@@ -1427,7 +1450,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "leafy"
   },
   {
    "id": "long_beans",
@@ -1445,7 +1469,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "pods"
   },
   {
    "id": "watercress",
@@ -1460,7 +1485,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "leafy"
   },
   {
    "id": "lemongrass",
@@ -1475,7 +1501,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "aromatic"
   },
   {
    "id": "galangal",
@@ -1489,7 +1516,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "aromatic"
   },
   {
    "id": "okra",
@@ -1506,7 +1534,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "fruiting"
   },
   {
    "id": "kangkong",
@@ -1524,7 +1553,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "leafy"
   },
   {
    "id": "beansprouts",
@@ -1541,7 +1571,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "pods"
   },
   {
    "id": "nori",
@@ -1557,7 +1588,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "fungi"
   },
   {
    "id": "wakame",
@@ -1572,7 +1604,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "fungi"
   },
   {
    "id": "daikon",
@@ -1589,7 +1622,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "root"
   },
   {
    "id": "pumpkin",
@@ -1606,7 +1640,8 @@
    "aisle": "Vegetables",
    "prep_verb": "peel and cube",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "root"
   },
   {
    "id": "sweeteners",
