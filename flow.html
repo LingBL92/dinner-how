@@ -114,6 +114,19 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .rname{font-size:14px;font-weight:600;line-height:1.25}
 .rmeta{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;font-family:"Space Mono",monospace;font-size:11px;color:var(--muted)}
 .rchip{font-size:10px;padding:1px 7px;border-radius:999px;background:rgba(50,117,100,.12);color:var(--cool)}
+.ruses{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.uchip{font-family:"Space Mono",monospace;font-size:9.5px;padding:2px 7px;border-radius:999px;
+  background:rgba(50,117,100,.10);color:var(--cool);border:1px solid rgba(50,117,100,.22)}
+.combo-head{color:var(--gold)!important;border-bottom:1px solid rgba(168,114,24,.3);padding-bottom:4px}
+.pairinfo{margin-top:14px;padding:12px 14px;background:rgba(50,117,100,.06);border-radius:10px;
+  border-left:3px solid var(--cool)}
+.pi-head{font-family:"Space Mono",monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--muted);margin-bottom:6px}
+.pairinfo p{font-size:12.5px;line-height:1.5;margin:0 0 5px}
+.pairinfo p:last-child{margin-bottom:0}
+.pairinfo strong{color:var(--cool)}
+.pi-alone{color:var(--muted)}
+.pi-alone strong{color:var(--gold)}
 .rbuy{color:var(--gold)}
 #recipes{display:flex;flex-direction:column;gap:9px;min-width:230px}
 #col-out{max-width:none}
@@ -125,7 +138,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .gcell.gempty{background:transparent;border:1px dashed rgba(220,205,186,.5)}
 .gchip{font-size:11.5px;line-height:1.2;padding:5px 7px;border-radius:6px;background:rgba(50,117,100,.08);color:var(--ink);cursor:pointer;transition:.12s}
 .gchip:hover{background:rgba(50,117,100,.16)}
-.gchip.gcombo{background:rgba(168,114,24,.14);font-weight:600}
+.gchip.gcombo{background:rgba(50,117,100,.14);font-weight:600}
 .gmore{font-family:"Space Mono",monospace;font-size:10px;color:var(--muted);padding:2px 6px}
 .rgroup{font-family:"Space Mono",monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--cool);margin:10px 0 2px}
 .minigrid{display:grid;gap:3px;margin:4px 0 6px}
@@ -234,7 +247,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.27</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.30</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -1391,6 +1404,24 @@ function renderRecipes(){
     return;
   }
 
+  // --- DISHES THAT BRING YOUR INGREDIENTS TOGETHER (rare + valuable, so surfaced first) ---
+  const multi=[];
+  const seenMulti=new Set();
+  const allRes=(FLOW.resultsAll&&FLOW.resultsAll.length)?FLOW.resultsAll:FLOW.results;
+  allRes.forEach((r,idx)=>{
+    const {d,used}=usesOf(r);
+    if(isPlainStaple(d))return;
+    const real=used.filter(id=>measureTypeOf(REF.byId[id])!=="assumed");
+    if(real.length>=2 && !seenMulti.has(r.dish)){ seenMulti.add(r.dish); multi.push({r,idx,d,n:real.length}); }
+  });
+  multi.sort((a,b)=>b.n-a.n);
+  if(multi.length){
+    const h=document.createElement("div"); h.className="rgroup combo-head";
+    h.textContent="Makes the most of what you have";
+    box.appendChild(h);
+    multi.slice(0,4).forEach(it=>box.appendChild(card(it)));
+  }
+
   // DESKTOP 2D GRID
   const grid=document.createElement("div"); grid.className="rgrid";
   grid.style.gridTemplateColumns="var(--rowlab) repeat("+colOrder.length+",1fr)";
@@ -1404,6 +1435,36 @@ function renderRecipes(){
     });
   });
   box.appendChild(grid);
+  box.appendChild(pairingInfo());
+
+  function pairingInfo(){
+    // for each wired ingredient: how often does it appear in a dish alongside another of yours?
+    const mine=[...FLOW.active].filter(id=>measureTypeOf(REF.byId[id])!=="assumed");
+    if(mine.length<2) return document.createElement("div");
+    const solo={}, together={};
+    mine.forEach(id=>{solo[id]=0; together[id]=0;});
+    const pool=(FLOW.resultsAll&&FLOW.resultsAll.length)?FLOW.resultsAll:FLOW.results;
+    pool.forEach(r=>{
+      const {d,used}=usesOf(r);
+      if(isPlainStaple(d))return;
+      const real=used.filter(id=>measureTypeOf(REF.byId[id])!=="assumed");
+      real.forEach(id=>{ if(real.length>=2) together[id]++; else solo[id]++; });
+    });
+    const box2=document.createElement("div"); box2.className="pairinfo";
+    const ranked=mine.slice().sort((a,b)=>together[b]-together[a]);
+    const best=ranked[0], worst=ranked[ranked.length-1];
+    let html="<div class=\"pi-head\">How your ingredients combine</div>";
+    if(together[best]>0){
+      html+="<p><strong>"+nameOf(best)+"</strong> pairs the most \u2014 it appears with your other ingredients in "+together[best]+" dish"+(together[best]>1?"es":"")+".</p>";
+    }
+    const lonely=mine.filter(id=>together[id]===0);
+    if(lonely.length){
+      html+="<p class=\"pi-alone\"><strong>"+lonely.map(nameOf).join(", ")+"</strong> "+(lonely.length>1?"don\u2019t":"doesn\u2019t")+" combine with anything else you have \u2014 only used alone.</p>";
+    }
+    if(together[best]===0 && !lonely.length){ return document.createElement("div"); }
+    box2.innerHTML=html;
+    return box2;
+  }
 
   function cornerCell(){ const d=document.createElement("div"); d.className="gcorner"; return d; }
   function headCell(t){ const d=document.createElement("div"); d.className="ghead"; d.textContent=t; return d; }
@@ -1426,15 +1487,18 @@ function renderRecipes(){
   }
   function card(item){
     const {r,idx}=item; const d=DISHES.find(x=>x.name===r.dish)||{};
-    // (id assigned below so the mini-grid can scroll to it)
     const opt=(d.appliance_options||[]).find(o=>FLOW.appl.has(o.appliance));
     const mins=opt&&opt.time?opt.time.ready_in_min:null;
     const c=document.createElement("div"); c.className="rcard"; c.onclick=()=>openR(idx);
+    const used=usesOf(r).used.filter(id=>measureTypeOf(REF.byId[id])!=="assumed");
     let meta="";
     if(mins!=null)meta+="<span>"+mins+" min</span>";
-    (d.results||[]).slice(0,2).forEach(x=>meta+="<span class=\"rchip\">"+x+"</span>");
     meta+= r.buy.length? "<span class=\"rbuy\">buy "+r.buy.length+"</span>" : "<span style=\"color:var(--cool)\">have it all</span>";
-    c.innerHTML="<div class=\"rname\">"+r.dish+"</div><div class=\"rmeta\">"+meta+"</div>";
+    let yours="";
+    if(used.length){
+      yours="<div class=\"ruses\">"+used.map(id=>"<span class=\"uchip\">"+nameOf(id)+"</span>").join("")+"</div>";
+    }
+    c.innerHTML="<div class=\"rname\">"+r.dish+"</div>"+yours+"<div class=\"rmeta\">"+meta+"</div>";
     c.id="rc-"+r.dish.replace(/[^a-zA-Z0-9]/g,"");
     return c;
   }
@@ -1620,7 +1684,7 @@ function jumpToRecipe(dishName){
   setTimeout(()=>c.classList.remove("rc-flash"),1200);
 }
 function openR(idx){
-  const pool=(FLOW.compose&&FLOW.resultsAll&&FLOW.resultsAll.length)?FLOW.resultsAll:FLOW.results;
+  const pool=(FLOW.resultsAll&&FLOW.resultsAll.length)?FLOW.resultsAll:FLOW.results;
   const r=pool[idx]; if(!r)return;
   const d=DISHES.find(x=>x.name===r.dish); if(!d)return;
   const opt=(d.appliance_options||[]).find(o=>FLOW.appl.has(o.appliance))||(d.appliance_options||[])[0];
@@ -1665,11 +1729,19 @@ function drawWires(){
   const wire=(a,b,w,o)=>"<path d=\""+wirePath(a,b,vertical)+"\" fill=\"none\" stroke=\"#327564\" stroke-width=\""+w+"\" stroke-linecap=\"round\" opacity=\""+o+"\"/>";
   // ingredient ports -> appliance
   const aIn=anchor(applC, vertical?"top":"left", cr, cv);
-  document.querySelectorAll(".port.on .dot").forEach(dot=>{
-    const p=anchor(dot,"mid",cr,cv);
-    const isPantry=dot.getAttribute&&dot.getAttribute("data-pantry");
-    html+=wire(p, vertical?{x:aIn.x,y:aIn.y-4}:{x:aIn.x-4,y:aIn.y}, isPantry?1.4:2, isPantry?.32:.5);
+  // ONE wire per ingredient component (a component with any active port), plus one for the pantry
+  document.querySelectorAll("#ingcomps .comp").forEach(comp=>{
+    const hasActive = comp.querySelector && comp.querySelector(".port.on");
+    if(!hasActive) return;
+    const p=anchor(comp, vertical?"bottom":"right", cr, cv);
+    html+=wire(p, vertical?{x:aIn.x,y:aIn.y-4}:{x:aIn.x-4,y:aIn.y}, 2, .55);
   });
+  // one wire from the pantry panel as a whole
+  const pantryComp=el("comp-pantry");
+  if(pantryComp && FLOW.pantry.size){
+    const p=anchor(pantryComp, vertical?"bottom":"right", cr, cv);
+    html+=wire(p, vertical?{x:aIn.x,y:aIn.y-4}:{x:aIn.x-4,y:aIn.y}, 1.4, .3);
+  }
   // MAIN FLOW: appliance -> type -> recipes  (type is a pipeline stage)
   const hasFlow = FLOW.active.size && FLOW.appl.size;
   const typeC=el("comp-type");
