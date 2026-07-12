@@ -1054,6 +1054,565 @@ function generateVariant(dish, targetId, R, allDishes){
     flags };
 }
 
+/* ============================================================
+   AFFINITY — what goes with what, learned from the recipes themselves.
+   Co-occurrence is counted WITHIN A COOKING CONTEXT (soup with soup,
+   stir-fry with stir-fry), because a pairing that works in a soup may be
+   wrong in a stir-fry. Aromatics are excluded: they're in everything and
+   would swamp the signal.
+
+   This is DERIVED, never stored. Add a recipe and the graph sharpens by
+   itself. It reports PRECEDENT and its strength, never a verdict:
+     "seen 3x in soups"  /  "seen once"  /  "no precedent"
+   Physics (does it survive the pot?) stays with the property rules.
+   ============================================================ */
+function contextOf(d){
+  // the cooking frame a pairing was learned in — the "lowest branch" first
+  if(d.role==="soup") return "soup";
+  if(d.role==="dessert") return "dessert";
+  if(d.build==="braise"||d.build==="simmer") return "braise";
+  if(d.build==="stir_fry") return "stir_fry";
+  if(d.build==="coat"||d.build==="fry_dry") return "fried";
+  if(d.role==="base") return "rice_noodle";
+  return d.role||"other";
+}
+function buildAffinity(dishes,R){
+  const pairs={};      // "ctx|a+b" -> {n, dishes:[]}
+  const seen={};       // "ctx|id"  -> how many dishes in this ctx use it
+  const contexts=new Set();
+  dishes.forEach(d=>{
+    const ctx=contextOf(d); contexts.add(ctx);
+    const ids=[...new Set((d.grocery_items||[])
+      .filter(g=>g.id!=="water" && measureTypeOf(R.byId[g.id])!=="assumed")
+      .map(g=>g.id))];
+    ids.forEach(id=>{ const k=ctx+"|"+id; seen[k]=(seen[k]||0)+1; });
+    for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++){
+      const [a,b]=[ids[i],ids[j]].sort();
+      const k=ctx+"|"+a+"+"+b;
+      if(!pairs[k]) pairs[k]={n:0,dishes:[]};
+      pairs[k].n++; pairs[k].dishes.push(d.name);
+    }
+  });
+  return {pairs, seen, contexts:[...contexts]};
+}
+/* what has ingredient `id` been paired with, in this context? */
+function affinityFor(id, ctx, AFF, R, limit=5){
+  const out=[];
+  const pre=ctx+"|";
+  Object.keys(AFF.pairs).forEach(k=>{
+    if(k.indexOf(pre)!==0) return;
+    const body=k.slice(pre.length);
+    const [a,b]=body.split("+");
+    if(a!==id && b!==id) return;
+    const other=(a===id)?b:a;
+    out.push({id:other, name:(R.byId[other]||{}).name||other, n:AFF.pairs[k].n, dishes:AFF.pairs[k].dishes});
+  });
+  out.sort((x,y)=>y.n-x.n);
+  return out.slice(0,limit);
+}
+/* has this exact pairing been done before, in this context? */
+function precedentFor(a, b, ctx, AFF){
+  const [x,y]=[a,b].sort();
+  const hit=AFF.pairs[ctx+"|"+x+"+"+y];
+  if(!hit) return {n:0, level:"none", text:"no precedent \u2014 nothing in the recipes pairs these", dishes:[]};
+  if(hit.n===1) return {n:1, level:"thin", text:"seen once", dishes:hit.dishes};
+  return {n:hit.n, level:"solid", text:"seen "+hit.n+"\u00d7", dishes:hit.dishes};
+}
+
+/* ============================================================
+   NEAREST DISH — "this reminds me of…"
+   Given a set of ingredients (a pot you're building), find the catalogue
+   dishes it most resembles, and say what THEY have that you don't — so a
+   dead-end "no precedent" becomes a live suggestion.
+
+   Similarity = shared ingredients (weighted), + shared taste character,
+   + same cooking context. Honest about how close the match actually is.
+   ============================================================ */
+function tasteDistance(a,b){
+  const axes=["sweet","sour","salty","umami","fat","heat"];
+  let d=0; axes.forEach(x=>{ d+=Math.abs((a[x]||0)-(b[x]||0)); });
+  return d;
+}
+function remindsMeOf(ingIds, R, dishes, {ctx=null, limit=3}={}){
+  const mine=new Set(ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed"));
+  if(!mine.size) return [];
+  const myTaste=tasteOf([...mine].map(id=>({id, name:(R.byId[id]||{}).name||id})), R);
+
+  const scored=dishes.map(d=>{
+    const theirs=(d.grocery_items||[])
+      .filter(g=>g.id!=="water" && measureTypeOf(R.byId[g.id])!=="assumed")
+      .map(g=>g.id);
+    const tset=new Set(theirs);
+    const shared=[...mine].filter(id=>tset.has(id));
+
+    const union=new Set([...mine,...tset]).size;
+    const overlap=union? shared.length/union : 0;
+
+    const td=tasteDistance(myTaste, d.taste||{});
+    const tasteClose=1/(1+td);                            // 1.0 = identical character
+    const sameCtx = ctx && contextOf(d)===ctx ? 1 : 0;
+
+    // Ingredient overlap is the ONLY trustworthy similarity signal here: the taste
+    // vectors are too coarse (0–3 per axis) to tell dishes apart — nearly everything
+    // lands 3–4 apart, so flavour distance would produce nonsense "reminders".
+    // Taste is a tiebreak, never a basis.
+    if(!shared.length) return null;
+    const score = overlap*3 + shared.length*0.5 + tasteClose*0.3 + sameCtx*0.4;
+
+    const missing=theirs.filter(id=>!mine.has(id));       // what THEY have that you don't
+    return {dish:d.name, d, score, shared, sharedNames:shared.map(id=>(R.byId[id]||{}).name||id),
+            missing, missingNames:missing.map(id=>(R.byId[id]||{}).name||id),
+            overlap, tasteGap:td, sameContext:!!sameCtx};
+  }).filter(Boolean);
+
+  scored.sort((a,b)=>b.score-a.score);
+  return scored.slice(0,limit).map(s=>{
+    let closeness;
+    if(s.shared.length>=3 || s.overlap>=0.5) closeness="very close";
+    else if(s.shared.length>=2)              closeness="close";
+    else                                     closeness="a loose echo";   // one ingredient in common
+    return {...s, closeness};
+  });
+}
+
+/* ============================================================
+   BROTH CHARACTER — what a protein base gives a pot.
+   AUTHORED, NOT DERIVED. The engine knows the physics (collagen breaks
+   down, fat renders); it cannot know that pork bones make a sweet milky
+   broth while beef makes a deep iron-y one. That is a cook's knowledge,
+   written down here so the engine can reason with it.
+   A chef should own and correct this table.
+
+   Axes are deliberately different from the six taste axes: these describe
+   a BROTH's character, not a dish's flavour.
+     body     : how much collagen/mouthfeel it carries      (0-3)
+     sweetness: natural sweetness from the bones/flesh       (0-3)
+     depth    : savoury weight / heaviness                   (0-3)
+     clean    : clarity & lightness (opposite of heavy)      (0-3)
+     marine   : sea character                                (0-3)
+   ============================================================ */
+const BROTH_BASE={
+  pork_ribs:      {body:3, sweetness:2, depth:2, clean:1, marine:0, note:"bones give a sweet, rich body"},
+  pork_belly:     {body:3, sweetness:2, depth:2, clean:0, marine:0, note:"fatty and rich"},
+  pork_shoulder:  {body:2, sweetness:2, depth:2, clean:1, marine:0, note:"gently sweet, medium body"},
+  pork:           {body:2, sweetness:2, depth:2, clean:1, marine:0, note:"sweet and rounded"},
+  beef_chuck:     {body:3, sweetness:1, depth:3, clean:0, marine:0, gamey:0, note:"deep, heavy, iron-y"},
+  beef_brisket:   {body:3, sweetness:1, depth:3, clean:0, marine:0, note:"deep and beefy"},
+  beef_short_rib: {body:3, sweetness:1, depth:3, clean:0, marine:0, note:"very rich, unctuous"},
+  beef:           {body:2, sweetness:1, depth:3, clean:0, marine:0, note:"deep and savoury"},
+  chicken_thigh:  {body:2, sweetness:1, depth:1, clean:2, marine:0, note:"clean, light, gently savoury"},
+  chicken_breast: {body:1, sweetness:1, depth:1, clean:3, marine:0, note:"very clean and light"},
+  chicken:        {body:2, sweetness:1, depth:1, clean:2, marine:0, note:"clean and comforting"},
+  fish:           {body:1, sweetness:1, depth:1, clean:3, marine:2, note:"delicate; goes in late"},
+  salmon:         {body:1, sweetness:1, depth:2, clean:2, marine:2, note:"oily, distinctly marine"},
+  prawn:          {body:1, sweetness:2, depth:1, clean:2, marine:3, note:"sweet and strongly of the sea"},
+  squid:          {body:1, sweetness:1, depth:1, clean:2, marine:2, note:"clean, faintly sweet"},
+  oyster:         {body:1, sweetness:1, depth:2, clean:1, marine:3, note:"briny and deep"},
+  dried_shrimp:   {body:0, sweetness:1, depth:2, clean:1, marine:3, note:"a seasoning: concentrated sea umami"},
+  wakame:         {body:0, sweetness:0, depth:1, clean:3, marine:3, note:"clean oceanic umami, no fat"},
+  nori:           {body:0, sweetness:0, depth:1, clean:2, marine:3, note:"oceanic, toasty"},
+  tofu:           {body:1, sweetness:0, depth:0, clean:3, marine:0, note:"a carrier \u2014 takes the broth's character"},
+  mutton:         {body:3, sweetness:0, depth:3, clean:0, marine:0, gamey:2, note:"strong, gamey, assertive"}
+};
+const BROTH_AXES=["body","sweetness","depth","clean","marine","gamey"];
+
+/* the base of a pot/dish = its principal protein (the thing the broth is built on) */
+function brothBaseOf(ingIds,R){
+  // prefer a real protein; bones/collagen-rich win over lean, since they define a broth
+  const prots=ingIds.filter(id=>BROTH_BASE[id]);
+  if(!prots.length) return null;
+  prots.sort((a,b)=>(BROTH_BASE[b].body+BROTH_BASE[b].depth)-(BROTH_BASE[a].body+BROTH_BASE[a].depth));
+  return prots[0];
+}
+function brothCharacter(ingIds,R){
+  const bases=ingIds.filter(id=>BROTH_BASE[id]);
+  if(!bases.length) return null;
+  // BLEND every protein in the pot — a beef+pork broth is not a beef broth.
+  // The heaviest base leads (it dominates the character), the others pull it.
+  bases.sort((a,b)=>(BROTH_BASE[b].body+BROTH_BASE[b].depth)-(BROTH_BASE[a].body+BROTH_BASE[a].depth));
+  const base=bases[0];
+  const c={...BROTH_BASE[base]};
+  if(bases.length>1){
+    BROTH_AXES.forEach(ax=>{
+      // weighted: lead base counts double, the rest average in
+      const rest=bases.slice(1).reduce((sum,b)=>sum+BROTH_BASE[b][ax],0)/(bases.length-1);
+      c[ax]=(c[ax]*2 + rest)/3;
+    });
+    c.blended=bases.slice(1).map(b=>(R.byId[b]||{}).name||b);
+  }
+  // vegetables shift the character: sweet roots sweeten it, seaweed cleans+marines it
+  ingIds.forEach(id=>{
+    if(id===base) return;
+    const p=new Set((R.byId[id]||{}).provides||[]);
+    if(p.has("sweet")) c.sweetness=Math.min(3,c.sweetness+0.5);
+    if(p.has("umami")) c.depth=Math.min(3,c.depth+0.4);
+    if(id==="wakame"||id==="nori") { c.marine=Math.min(3,c.marine+1); c.clean=Math.min(3,c.clean+0.5); }
+  });
+  c.base=base; c.baseName=(R.byId[base]||{}).name||base;
+  return c;
+}
+function brothDistance(a,b){
+  if(!a||!b) return 99;
+  let d=0; BROTH_AXES.forEach(x=>{ d+=Math.abs((a[x]||0)-(b[x]||0)); });
+  return d;
+}
+/* describe a broth in words */
+function describeBroth(c){
+  if(!c) return "no protein base \u2014 this will be a vegetable broth";
+  const bits=[];
+  if(c.milky) bits.push("milky and emulsified");
+  if(c.body>=3) bits.push("full-bodied");
+  else if(c.body<=1) bits.push("light-bodied");
+  if(c.sweetness>=2.5) bits.push("notably sweet");
+  else if(c.sweetness>=2) bits.push("gently sweet");
+  if(c.depth>=3) bits.push("deep and heavy");
+  else if(c.depth<=1) bits.push("delicate");
+  if(c.clean>=3 && !c.milky) bits.push("clear and clean");
+  if(c.roasted) bits.push("with roasted depth");
+  if(c.gamey>=1.5) bits.push("gamey");
+  if(c.marine>=2) bits.push("distinctly of the sea");
+  return bits.join(", ")||"balanced";
+}
+
+
+/* Which existing dishes share this pot's BROTH CHARACTER? A far better
+   similarity signal than the six-axis taste vector, which cannot tell a
+   pork broth from a beef one. */
+function brothLikeDishes(ingIds, R, dishes, limit=3){
+  const mine=brothCharacter(ingIds,R);
+  if(!mine) return [];
+  const mySeason=seasoningOf(ingIds).map(x=>x.key);
+  const out=[];
+  dishes.forEach(d=>{
+    const ids=(d.grocery_items||[]).map(g=>g.id);
+    const theirs=brothCharacter(ids,R);
+    if(!theirs) return;
+    const dist=brothDistance(mine,theirs);
+    const sameBase=theirs.base===mine.base;
+    const theirSeason=seasoningOf(ids);
+    const theirKeys=theirSeason.map(x=>x.key);
+    const seasonShared=mySeason.filter(k=>theirKeys.includes(k));
+    // a seasoning MISMATCH is a real distance: a plain pot is NOT a curry
+    const seasonGap = seasonShared.length ? 0 : 2.5;
+    out.push({dish:d.name, d, base:theirs.baseName, character:describeBroth(theirs),
+              dist, total:dist+seasonGap, seasonGap,
+              season:theirSeason[0]?theirSeason[0].label:"Clear & simple",
+              seasonShared, sameBase,
+              soupish:(d.role==="soup"||["braise","simmer"].includes(d.build))});
+  });
+  out.sort((a,b)=> (a.total-b.total) || (b.sameBase-a.sameBase) || (b.soupish-a.soupish));
+  return out.slice(0,limit).map(x=>{
+    let closeness;
+    if(x.seasonGap>0 && x.dist<=1)      closeness="same broth, but it's seasoned as "+x.season.toLowerCase();
+    else if(x.sameBase && x.dist<=1)    closeness="the same base, seasoned the same way";
+    else if(x.dist<=1)                  closeness="a broth of the same character";
+    else if(x.dist<=2.5)                closeness="a similar broth";
+    else                                closeness="a different broth, but related";
+    return {...x, closeness};
+  });
+}
+
+
+/* ============================================================
+   BROTH METHOD — read from the recipe's own steps.
+   The same bones make a different broth depending on how they're cooked:
+   a hard rolling boil emulsifies fat into the water (milky, rich); a gentle
+   simmer keeps it clear and clean. Skimming lightens it. Searing first adds
+   roasted depth. Blanching removes scum and cleans the result.
+   This is DERIVED — it reads the steps the cook actually wrote.
+   ============================================================ */
+function brothMethod(d){
+  const s=((d.steps||[]).join(" | ")).toLowerCase();
+  return {
+    hardBoil:  /rolling boil|hard boil|boil vigorously|boil rapidly/.test(s),
+    gentle:    /simmer gently|gentle simmer|low heat|barely a simmer|reduce the heat/.test(s),
+    simmer:    /simmer/.test(s),
+    skimmed:   /skim/.test(s),
+    blanched:  /blanch|parboil/.test(s),
+    seared:    /\bsear\b|brown(ed)? (the|on|all)/.test(s),
+    longCook:  ((d.time||{}).ready_in_min||0) >= 90
+  };
+}
+/* apply the method to a base character — this is where steps change the broth */
+function applyMethod(c, m){
+  if(!c||!m) return c;
+  const out={...c};
+  if(m.hardBoil){                       // emulsifies fat -> milky, rich, heavy
+    out.body=Math.min(3,out.body+1);
+    out.depth=Math.min(3,out.depth+0.5);
+    out.clean=Math.max(0,out.clean-2);
+    out.milky=true;
+  }
+  if(m.gentle && !m.hardBoil){          // clear and clean
+    out.clean=Math.min(3,out.clean+1);
+    out.milky=false;
+  }
+  if(m.blanched){                       // scum removed -> cleaner
+    out.clean=Math.min(3,out.clean+0.5);
+  }
+  if(m.skimmed){                         // fat removed -> lighter
+    out.body=Math.max(0,out.body-0.5);
+    out.clean=Math.min(3,out.clean+0.5);
+  }
+  if(m.seared){                          // maillard -> roasted depth
+    out.depth=Math.min(3,out.depth+0.7);
+    out.roasted=true;
+  }
+  if(m.longCook){                        // more collagen extracted
+    out.body=Math.min(3,out.body+0.5);
+  }
+  out.method=m;
+  return out;
+}
+/* the honest full character: base (authored) x method (derived from the steps) */
+function brothOf(d,R){
+  const ids=(d.grocery_items||[]).map(g=>g.id);
+  const base=brothCharacter(ids,R);
+  if(!base) return null;
+  return applyMethod(base, brothMethod(d));
+}
+
+
+/* Does this dish actually HAVE a broth?
+   Strict: a soup, or a dish whose steps put it in liquid and keep it there.
+   A stir-fry that splashes in stock is not a broth; a salad certainly isn't. */
+function hasBroth(d){
+  if(d.role==="soup") return true;
+  if(d.role==="veg"||d.role==="dessert"||d.role==="base") return false;
+  const txt=((d.steps||[]).join(" ")).toLowerCase();
+  // must actually simmer/braise/stew in liquid — not just mention water
+  const cooksInLiquid=/\b(simmer|braise|stew)\b/.test(txt) ||
+                      /(cover|add).{0,30}\b(broth|stock|water)\b.{0,40}\b(simmer|cook|braise|boil)\b/.test(txt);
+  if(!cooksInLiquid) return false;
+  // and it must not be a fundamentally dry-cooked dish
+  const dryLed=/\b(deep.?fry|air.?fry|roast|bake in the oven|grill)\b/.test(txt);
+  if(dryLed && !["braise","simmer"].includes(d.build)) return false;
+  return ["braise","simmer"].includes(d.build) || /\bsimmer\b/.test(txt);
+}
+
+/* ============================================================
+   ONE-POT STAGING — everything cooks in one vessel at one temperature,
+   so the only real decision is WHEN each thing goes in.
+
+   The ORDER is derived (collagen > dense root > quick > delicate > leafy,
+   all from properties the engine already has). The MINUTES are AUTHORED —
+   a cook's estimate of how long each class needs in a simmering pot. A chef
+   should own and correct these numbers.
+   ============================================================ */
+const POT_CLASS=[
+  {key:"collagen",  label:"Tough cuts",        mins:50, why:"needs time for the collagen to soften"},
+  {key:"dense_root",label:"Dense roots",       mins:20, why:"dense \u2014 needs a good while to soften"},
+  {key:"firm_veg",  label:"Firm vegetables",   mins:12, why:"holds its shape"},
+  {key:"quick_prot",label:"Quick proteins",    mins:8,  why:"cooks through fast"},
+  {key:"soft",      label:"Soft additions",    mins:5,  why:"just needs heating through"},
+  {key:"delicate",  label:"Delicate seafood",  mins:4,  why:"overcooks in moments"},
+  {key:"leafy",     label:"Leafy greens",      mins:1,  why:"wilts almost instantly \u2014 in at the very end"}
+];
+const POT_MINS={}; POT_CLASS.forEach(c=>POT_MINS[c.key]=c.mins);
+
+function potClassOf(id,R){
+  const i=R.byId[id]; if(!i) return null;
+  const p=new Set(i.provides||[]);
+  const cat=i.category;
+  if(p.has("leafy")) return "leafy";
+  if(cat==="proteins"){
+    if(["fish","salmon","prawn","squid","oyster"].includes(id)) return "delicate";
+    if(p.has("collagen_rich")) return "collagen";
+    if(id==="tofu"||id==="egg") return "soft";
+    return "quick_prot";
+  }
+  if(cat==="vegetables"||cat==="starches"){
+    if(p.has("starchy") && p.has("holds_shape")) return "dense_root";
+    if(p.has("holds_shape")) return "firm_veg";
+    if(id==="mushroom") return "soft";
+    return "soft";
+  }
+  return null;   // aromatics/seasonings go in with the broth, not staged
+}
+
+/* Build the pot: a base, a staged schedule, and honest gaps. */
+function buildOnePot(ingIds, R, dishes){
+  // STAGING only cares about things you physically add and time (not seasonings).
+  // REASONING (broth character, seasoning direction, similarity) needs the FULL list —
+  // otherwise the star anise you added never reaches "what does this remind me of".
+  const real=ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed");
+  const all=ingIds;
+  const staged={};
+  real.forEach(id=>{
+    const k=potClassOf(id,R);
+    if(!k) return;
+    (staged[k]=staged[k]||[]).push({id, name:(R.byId[id]||{}).name||id});
+  });
+
+  // longest thing in the pot sets the total cook time
+  let total=0;
+  Object.keys(staged).forEach(k=>{ total=Math.max(total, POT_MINS[k]||0); });
+  if(!total) total=15;
+
+  // each class goes in so that it finishes at the same moment
+  const steps=POT_CLASS
+    .filter(c=>staged[c.key])
+    .map(c=>({
+      at: Math.max(0, total-c.mins),
+      cooks: c.mins,
+      label: c.label,
+      why: c.why,
+      items: staged[c.key]
+    }))
+    .sort((a,b)=>a.at-b.at);
+
+  const character = brothCharacter(all,R);
+  const base = character ? character.base : null;
+
+  // what's missing (nudge, never enforce)
+  const gaps=[];
+  const hasProtein = real.some(id=>(R.byId[id]||{}).category==="proteins");
+  const hasVeg     = real.some(id=>(R.byId[id]||{}).category==="vegetables");
+  const hasGreen   = real.some(id=>((R.byId[id]||{}).provides||[]).includes("leafy"));
+  if(!hasProtein) gaps.push({what:"a protein", why:"nothing is setting the broth's character \u2014 this will be a light vegetable pot"});
+  if(!hasVeg)     gaps.push({what:"vegetables", why:"it needs something green or sweet to make it a meal"});
+  else if(!hasGreen && character && character.body>=2.5)
+    gaps.push({what:"a leafy green", why:"a rich broth wants something fresh to cut it"});
+
+  // hands-off: everything except the moments you add things
+  const handsOn = Math.max(6, steps.length*2);
+
+  return {
+    base, character,
+    describe: character?describeBroth(character):"a light vegetable broth",
+    steps, total, handsOn, handsOff: Math.max(0,total-handsOn),
+    gaps,
+    seasoning: seasoningOf(all),
+    reminds: dishes ? brothLikeDishes(all,R,dishes.filter(hasBroth),2) : []
+  };
+}
+
+/* ============================================================
+   SEASONING DIRECTION — where a pot is headed, flavour-wise.
+   The broth model knows the PROTEIN base; it was blind to the seasoning,
+   so a plain beef pot "reminded" the engine of Beef Curry. It doesn't.
+   The curry's identity is its spices.
+
+   Each direction is defined by its MARKERS — ingredients that signal it.
+   A dish's direction is DERIVED by matching its ingredients against these.
+   (The marker lists are a cook's knowledge; the matching is derived.)
+   ============================================================ */
+/* ---- CONSISTENCY: derived, canonical. Not authored. ----
+   Two independent axes, both grounded in real culinary doctrine:
+     opacity    : clear (\u6e05\u6c64 / consomm\u00e9) vs milky-emulsified (\u5976\u6c64 / tonkotsu)
+                  \u2014 DERIVED from the steps: a hard rolling boil emulsifies fat into
+                    the water; a gentle simmer + skimming keeps it clear.
+     thickening : none / roux / pur\u00e9e / cream / starch  (Escoffier's axis)
+                  \u2014 DERIVED from ingredients + steps.
+   Neither needs a chef. The engine can defend every claim here. */
+function consistencyOf(d,R){
+  const txt=((d.steps||[]).join(" ")).toLowerCase();
+  const ids=new Set((d.grocery_items||[]).map(g=>g.id));
+  const m=brothMethod(d);
+  const opacity = m.hardBoil ? "milky" : (m.gentle||m.skimmed) ? "clear" : "unspecified";
+  let thickening="none";
+  if(ids.has("flour")&&/roux|butter and flour/.test(txt)) thickening="roux";
+  else if(/blend|pur\u00e9e|puree|mash/.test(txt))         thickening="puree";
+  else if(ids.has("cream")||ids.has("coconut_milk"))     thickening="enriched";
+  else if(ids.has("cornstarch")&&/thicken|slurry/.test(txt)) thickening="starch";
+  return {opacity, thickening,
+    note: opacity==="milky" ? "boiled hard \u2014 the fat emulsifies, turning it milky (\u5976\u6c64)"
+        : opacity==="clear" ? "gently simmered \u2014 kept clear (\u6e05\u6c64)"
+        : "consistency not specified in the steps"};
+}
+
+/* ---- SEASONING DIRECTION: AUTHORED. This is the local knowledge. ----
+   No public taxonomy provides this. Escoffier classifies soups by thickness,
+   not by flavour identity; flavour-network research maps compound sharing, not
+   culinary direction. So this table is Singaporean culinary judgment, written
+   down. It is CONTESTED, REGIONAL, and INCOMPLETE by nature \u2014 a chef should own it.
+
+   Structure mirrors how ramen is actually taught: BROTH x TARE. The base sets
+   the body; the direction sets the identity. */
+const SEASONING_DIRS=[
+  // --- Chinese / Singaporean ---
+  {key:"bkt_teochew", label:"Bak kut teh \u2014 Teochew", region:"Teochew",
+   markers:["white_pepper","garlic","pork_ribs"], need:3,          // ALL three, and…
+   exclude:["dang_gui","dark_soy_sauce","star_anise","cinnamon","cloves_spice","white_sugar","soy_sauce"],
+   note:"peppery and garlicky, kept clear \u2014 no herbs, no dark soy"},
+  {key:"bkt_hokkien", label:"Bak kut teh \u2014 Hokkien", region:"Hokkien/Klang",
+   markers:["dang_gui","star_anise","cinnamon","cloves_spice","goji","wolfberry","dark_soy_sauce"],
+   need:2, note:"dark and herbal \u2014 medicinal warmth"},
+  {key:"hong_shao",   label:"Red-braised (\u7ea2\u70e7)", region:"Chinese",
+   markers:["dark_soy_sauce","white_sugar","rock_sugar","shaoxing","star_anise"], need:2,
+   note:"soy and sugar \u2014 dark, glossy, savoury-sweet"},
+  {key:"clear_chinese", label:"Clear Chinese soup (\u6e05\u6c64)", region:"Chinese",
+   markers:["ginger","scallion","salt"], need:2,
+   exclude:["dark_soy_sauce","coconut_milk","curry_powder","gochugaru","laksa_paste","tom_yum_paste"],
+   note:"the broth speaks for itself \u2014 ginger, scallion, salt"},
+  {key:"milky_bone",  label:"Milky bone broth (\u5976\u6c64)", region:"Chinese",
+   markers:["pork_ribs","garlic","ginger"], need:2, requireMilky:true,
+   note:"boiled hard until the fat emulsifies \u2014 opaque and rich"},
+  // --- Malay / Peranakan ---
+  {key:"rempah",      label:"Rempah (Malay/Peranakan)", region:"Malay/Peranakan",
+   markers:["belacan","candlenut","laksa_paste","laksa_leaf","lemongrass","galangal","kaffir_lime"], need:1,
+   also:["turmeric","chilli","shallot","coconut_milk"],
+   note:"pounded spice paste \u2014 belacan, lemongrass, galangal"},
+  {key:"assam",       label:"Sour-hot (assam / tom yum)", region:"SEA",
+   markers:["lemongrass","galangal","kaffir_lime","chilli","fish_sauce","tom_yum_paste"], need:2,
+   require:["tamarind","lime","tom_yum_paste"],        // the SOUR agent is the whole point — no sour, no assam
+   exclude:["coconut_milk","coriander_seed","cumin"],   // that's a curry, not a tom yum
+   note:"tamarind or lime against chilli \u2014 sharp and hot"},
+  // --- Indian ---
+  {key:"masala",      label:"Indian masala", region:"Indian",
+   markers:["turmeric","coriander_seed","cumin","fennel","cardamom","curry_leaves","garam_masala","mustard_seed"],
+   need:3, note:"toasted whole spice \u2014 layered and warm"},
+  // --- Japanese (broth x tare, as ramen is actually taught) ---
+  {key:"dashi_miso",  label:"Dashi + miso", region:"Japanese",
+   markers:["miso","dashi","kombu","wakame"], need:1, note:"clean kelp umami, thickened by miso"},
+  {key:"dashi_shoyu", label:"Dashi + shoyu", region:"Japanese",
+   markers:["dashi","soy_sauce","mirin","sake","kombu"], need:2, exclude:["miso"],
+   note:"dashi seasoned with soy \u2014 clear and savoury"},
+  {key:"jp_curry",    label:"Japanese curry", region:"Japanese",
+   markers:["japanese_curry_roux","curry_powder"], need:1, note:"a roux-thickened, gently sweet curry"},
+  // --- Korean ---
+  {key:"korean",      label:"Korean gochu", region:"Korean",
+   markers:["gochugaru","gochujang","kimchi"], need:1,
+   note:"fermented chilli \u2014 deep, savoury heat"},
+  // --- Western ---
+  {key:"western_herb",label:"Western herb & stock", region:"Western",
+   markers:["bay_leaf","parsley","thyme","rosemary","oregano","celery","broth"], need:2,
+   note:"herb-and-stock \u2014 homely and clean"},
+  // --- fallback ---
+  {key:"clear",       label:"Unseasoned", region:"\u2014", markers:[], need:0,
+   note:"salt and pepper only \u2014 nothing steering it yet"}
+];
+
+function seasoningOf(ingIds, dish){
+  const set=new Set(ingIds);
+  const isMilky = dish ? !!brothMethod(dish).hardBoil : false;
+  const hits=[];
+  SEASONING_DIRS.forEach(dir=>{
+    if(!dir.markers.length) return;
+    // an EXCLUDE marker rules a direction out — this is what separates a Teochew
+    // bak kut teh (no dang gui, no dark soy) from a Hokkien one.
+    if((dir.exclude||[]).some(x=>set.has(x))) return;
+    // a REQUIRE list means: at least one of these MUST be present (e.g. a sour agent for tom yum)
+    if((dir.require||[]).length && !dir.require.some(x=>set.has(x))) return;
+    if(dir.requireMilky && !isMilky) return;          // \u5976\u6c64 only if it was actually boiled hard
+    const found=dir.markers.filter(m=>set.has(m));
+    const bonus=(dir.also||[]).filter(m=>set.has(m)).length;
+    if(found.length>=dir.need) hits.push({...dir, found, strength:found.length+bonus*0.5});
+  });
+  hits.sort((a,b)=>b.strength-a.strength);
+  const seen=new Set(); const uniq=[];
+  hits.forEach(h=>{ if(!seen.has(h.key)){ seen.add(h.key); uniq.push(h); } });
+  if(!uniq.length) return [{...SEASONING_DIRS[SEASONING_DIRS.length-1], found:[], strength:0}];
+  return uniq;
+}
+/* do two dishes share a seasoning direction? */
+function seasoningMatch(aIds,bIds){
+  const a=seasoningOf(aIds).map(x=>x.key);
+  const b=seasoningOf(bIds).map(x=>x.key);
+  const shared=a.filter(k=>b.includes(k));
+  return {shared, aDirs:a, bDirs:b, same: shared.length>0};
+}
+
 function prepVerb(d,n){return (d&&d.prep_overrides&&d.prep_overrides[n])||PREP_VERB[n]||"prep";}
 ;
 const APPL_ICON={stovetop:'<svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M2.5 4.5h19a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-19a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1zM8 6.2a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm8 0a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM2.8 15.4h18.4V18H2.8z"/><circle cx="8" cy="10.2" r="1.7"/><circle cx="16" cy="10.2" r="1.7"/><path d="M8 5.4v1.2M8 13.8v1.2M3.8 10.2h1.2M11 10.2h1.2M16 5.4v1.2M16 13.8v1.2M11.8 10.2h1.2M19 10.2h1.2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><circle cx="8" cy="16.7" r="1" fill="none" stroke="currentColor" stroke-width="1"/><path d="M8 15.9v1.6" stroke="currentColor" stroke-width="1" stroke-linecap="round"/><circle cx="16" cy="16.7" r="1" fill="none" stroke="currentColor" stroke-width="1"/><path d="M16 15.9v1.6" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>',oven:'<svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd"><path d="M3 4a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4zm3 2.2a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2zm12 0a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2zM6 10.5h12V18H6z"/></svg>',rice_cooker:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h18v2.5a3.5 3.5 0 0 1-3.5 3.5h-11A3.5 3.5 0 0 1 3 15.5z"/><path d="M4.5 13a7.5 7.5 0 0 1 15 0z"/><circle cx="12" cy="8.4" r="1"/><path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M9 3.5c-.9 1.3 .9 1.8 0 3M15 3.5c-.9 1.3 .9 1.8 0 3"/></svg>',pressure_cooker:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 12h16v4a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3z"/><rect x="3" y="10" width="18" height="2.3" rx="1.15"/><rect x="11" y="6.5" width="2" height="3.5" rx="1"/><circle cx="12" cy="6" r="1.5"/><path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M14.5 5.6c1.8-.2 2.2 1 3.6 .6"/></svg>',slow_cooker:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 13h14v2a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4z"/><path d="M4 12.5a8 8 0 0 1 16 0z"/><circle cx="12" cy="5.4" r="1.1"/><path d="M3 13.5c-1.1 0-1.8 .7-1.8 1.5s .7 1.5 1.8 1.3zM21 13.5c1.1 0 1.8 .7 1.8 1.5s-.7 1.5-1.8 1.3z"/></svg>',air_fryer:'<svg viewBox=\"0 0 24 24\" fill=\"currentColor\" fill-rule=\"evenodd\"><path d=\"M6 2h12a2 2 0 0 1 2 2v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V4a2 2 0 0 1 2-2zm8 3.4a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4zM6.5 6a.9 .9 0 1 0 0 1.8 .9 .9 0 0 0 0-1.8z\"/><path d=\"M6 18h12a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1zm3.5 1.4a.7 .7 0 1 0 0 1.4h5a.7 .7 0 1 0 0-1.4z\"/></svg>'};
