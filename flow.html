@@ -240,8 +240,11 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .radial{position:fixed;inset:0;z-index:200;background:rgba(27,16,11,.30);
   backdrop-filter:blur(2px);opacity:0;transition:opacity .18s}
 .radial.in{opacity:1}
-.rad-hub{position:fixed;width:12px;height:12px;border-radius:50%;background:#fff;
-  transform:translate(-50%,-50%);box-shadow:0 0 0 7px rgba(255,255,255,.18)}
+.rad-hub{position:fixed;width:10px;height:10px;border-radius:50%;background:var(--cool);
+  transform:translate(-50%,-50%);box-shadow:0 0 0 5px rgba(255,255,255,.9),0 0 0 7px rgba(50,117,100,.3)}
+.rad-tip{position:fixed;transform:translate(-50%,0);white-space:nowrap;font-size:12px;
+  color:#fff;background:rgba(27,16,11,.75);padding:5px 12px;border-radius:999px;
+  font-weight:500;letter-spacing:.01em;pointer-events:none}
 /* a cluster = a region label with its buttons underneath */
 .rad-clu{position:fixed;transform:translate(-50%,-50%);display:flex;flex-direction:column;
   align-items:flex-start;gap:5px}
@@ -293,11 +296,15 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .pf-chip.small .pf-name{font-size:11.5px;font-weight:500}
 .pot-timeline{position:relative;margin:6px 0}
 .pot-svg{position:absolute;left:0;top:0;pointer-events:none}
-.pot-labels{position:relative;margin-left:46px}
+.pot-labels{position:relative;margin-left:58px}
 .pot-lrow{display:flex;gap:9px;align-items:center}
-.pl-icos{display:flex;gap:3px;flex:none;min-width:40px;align-items:center}
-.pl-ico{width:18px;height:18px;color:var(--cool);opacity:.75;display:flex;align-items:center;justify-content:center}
-.pl-ico svg{width:18px;height:18px;display:block}
+/* role icons sitting ON the timeline axis, in place of the dots */
+.tl-node{position:absolute;left:20px}
+.tl-ico{position:absolute;width:22px;height:22px;color:var(--cool);
+  display:flex;align-items:center;justify-content:center;
+  background:var(--paper);border-radius:50%;padding:2px;box-sizing:content-box}
+.tl-ico svg{width:22px;height:22px;display:block}
+.tl-ico.stacked{opacity:.85}
 .ps-when{font-family:"Space Mono",monospace;font-size:10.5px;color:var(--cool);font-weight:700}
 .pl-body{flex:1}
 .ps-items{font-size:13.5px;font-weight:600;line-height:1.25}
@@ -411,7 +418,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.56</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.57</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2535,9 +2542,15 @@ function openRadial(dirs, nm){
 
   const wrap=document.createElement("div"); wrap.className="radial"; wrap.id="radial";
   wrap.onclick=(e)=>{ if(e.target===wrap) closeRadial(); };
+  // anchor everything to the Season button itself
   const hub=document.createElement("div"); hub.className="rad-hub";
-  hub.style.left=Math.max(cx,140)+"px"; hub.style.top=(VH/2)+"px";
+  hub.style.left=cx+"px"; hub.style.top=cy+"px";
   wrap.appendChild(hub);
+
+  const tip=document.createElement("div"); tip.className="rad-tip";
+  tip.style.left=cx+"px"; tip.style.top=(cy+26)+"px";
+  tip.textContent="Choose a seasoning to flavour your one-pot dish";
+  wrap.appendChild(tip);
 
   // ---- one CLUSTER per region: the region name, with its buttons right below it.
   //      Everything visible at once — no second click.
@@ -2546,16 +2559,16 @@ function openRadial(dirs, nm){
      colliding — the ends of the arc curl back and the vertical gaps collapse.
      So: distribute them EVENLY DOWN THE SCREEN, and bow them outward along a
      gentle arc. Radial in feel, guaranteed room in practice. */
-  const px = Math.max(cx, 140);
-  const topY = 96, botY = VH-104;
-  const step = (botY-topY)/(N-1);
-  const BOW  = Math.min(300, Math.max(170, (VW-px-260)*0.55));   // how far it bulges right
+  // fan out FROM the Season button: spread vertically around it, bowing rightward
+  const topY = Math.max(84, cy - 330);
+  const botY = Math.min(VH-96, cy + 330);
+  const BOW  = Math.min(280, Math.max(150, (VW-cx-300)*0.5));
 
   function place(i){
-    const t = N>1 ? i/(N-1) : 0.5;                 // 0..1 down the screen
+    const t = N>1 ? i/(N-1) : 0.5;                 // 0..1 down the fan
     const y = topY + t*(botY-topY);
-    const bow = Math.sin(t*Math.PI);               // 0 at ends, 1 in the middle
-    const x = px + 130 + bow*BOW;
+    const bow = Math.sin(t*Math.PI);               // 0 at the ends, 1 in the middle
+    const x = cx + 120 + bow*BOW;
     return {x,y};
   }
 
@@ -2614,17 +2627,13 @@ function openRadial(dirs, nm){
 }
 function closeRadial(){ const r=el("radial"); if(r&&r.remove) r.remove(); }
 
-function iconFor(id){
+function iconKey(id){
   const i=REF.byId[id]||{}; const cat=i.category;
-  const p=new Set(i.provides||[]);
-  if(cat==="proteins"){
-    if(["fish","salmon","prawn","squid","oyster","fish_cake"].includes(id)) return ROLE_ICON.fish;
-    return ROLE_ICON.meat;
-  }
-  if(cat==="vegetables") return ROLE_ICON.veg;
-  if(cat==="starches")   return ROLE_ICON.base;
-  if(cat==="fruits")     return ROLE_ICON.dessert;
-  return ROLE_ICON.soup;
+  if(cat==="proteins") return ["fish","salmon","prawn","squid","oyster","fish_cake"].includes(id)?"fish":"meat";
+  if(cat==="vegetables") return "veg";
+  if(cat==="starches")   return "base";
+  if(cat==="fruits")     return "dessert";
+  return "soup";
 }
 function renderOnePot(){
   const box=el("recipes"); if(!box)return; box.innerHTML="";
@@ -2667,24 +2676,40 @@ function renderOnePot(){
   const yOf=(mins)=> PAD + (p.total? (mins/p.total)*(H-PAD*2) : 0);
   const rowMid=(i)=> i*ROW + ROW/2;
   const tl=document.createElement("div"); tl.className="pot-timeline"; tl.style.height=H+"px";
+  // the AXIS is an html layer so the role icons can sit directly on it
   let svg="<svg class=\"pot-svg\" width=\"100%\" height=\""+H+"\" viewBox=\"0 0 240 "+H+"\" preserveAspectRatio=\"none\">";
-  svg+="<line x1=\"13\" y1=\""+yOf(0)+"\" x2=\"13\" y2=\""+yOf(p.total)+"\" stroke=\"var(--line)\" stroke-width=\"2\"/>";
+  svg+="<line x1=\"20\" y1=\""+yOf(0)+"\" x2=\"20\" y2=\""+yOf(p.total)+"\" stroke=\"var(--line)\" stroke-width=\"2\"/>";
   p.steps.forEach((st,i)=>{
     const y=yOf(st.at), ry=rowMid(i);
-    svg+="<line x1=\"13\" y1=\""+y+"\" x2=\"13\" y2=\""+yOf(p.total)+"\" stroke=\"var(--cool)\" stroke-width=\"2.5\" opacity=\".22\"/>";
-    svg+="<circle cx=\"13\" cy=\""+y+"\" r=\"5\" fill=\"var(--cool)\"/>";
-    svg+="<path d=\"M18,"+y+" C34,"+y+" 26,"+ry+" 42,"+ry+"\" fill=\"none\" stroke=\"var(--cool)\" stroke-width=\"1.2\" opacity=\".45\"/>";
+    svg+="<line x1=\"20\" y1=\""+y+"\" x2=\"20\" y2=\""+yOf(p.total)+"\" stroke=\"var(--cool)\" stroke-width=\"2.5\" opacity=\".2\"/>";
+    svg+="<path d=\"M32,"+y+" C46,"+y+" 40,"+ry+" 54,"+ry+"\" fill=\"none\" stroke=\"var(--cool)\" stroke-width=\"1.2\" opacity=\".42\"/>";
   });
-  svg+="<circle cx=\"13\" cy=\""+yOf(p.total)+"\" r=\"4\" fill=\"none\" stroke=\"var(--cool)\" stroke-width=\"2\"/></svg>";
+  svg+="</svg>";
   tl.innerHTML=svg;
+
+  // ROLE ICONS sit ON the axis at each true time — one per category, overlapped if several
+  p.steps.forEach(st=>{
+    const y=yOf(st.at);
+    const cats=[]; const seenCat=new Set();
+    st.items.forEach(x=>{ const k=iconKey(x.id); if(!seenCat.has(k)){ seenCat.add(k); cats.push(k); } });
+    const node=document.createElement("div"); node.className="tl-node"; node.style.top=y+"px";
+    cats.forEach((k,j)=>{
+      const sp=document.createElement("span");
+      sp.className="tl-ico"+(j?" stacked":"");
+      // overlap at an angle when there's more than one category at this moment
+      sp.style.transform="translate(-50%,-50%) translate("+(j*7)+"px,"+(j*-5)+"px) rotate("+(j*-11)+"deg)";
+      sp.style.zIndex=String(10-j);
+      sp.innerHTML=ROLE_ICON[k]||ROLE_ICON.soup;
+      node.appendChild(sp);
+    });
+    tl.appendChild(node);
+  });
   const labels=document.createElement("div"); labels.className="pot-labels";
   p.steps.forEach((st,i)=>{
     const row=document.createElement("div"); row.className="pot-lrow"; row.style.height=ROW+"px";
     const when = st.at===0 ? "start" : "+"+st.at+"m";
-    const icons = st.items.map(x=>"<span class=\"pl-ico\">"+iconFor(x.id)+"</span>").join("");
     const names = st.items.map(x=>x.name).join(", ");
     row.innerHTML=
-      "<div class=\"pl-icos\">"+icons+"</div>"+
       "<div class=\"pl-body\">"+
         "<div class=\"ps-items\">"+names+" <span class=\"ps-when\">("+when+")</span></div>"+
         "<div class=\"ps-why\">"+st.why+"</div>"+
