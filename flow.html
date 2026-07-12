@@ -206,12 +206,17 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .pr-dish{display:inline-flex;flex-direction:column;font-size:12.5px;padding:4px 10px;border-radius:8px;
   background:rgba(50,117,100,.09);color:var(--cool);border:1px solid rgba(50,117,100,.2)}
 .pr-dish em{font-style:normal;font-family:"Space Mono",monospace;font-size:8.5px;opacity:.75}
-.pot-step{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
-.ps-time{font-family:"Space Mono",monospace;font-size:11px;color:var(--cool);font-weight:700;
-  min-width:56px;flex:none;padding-top:2px}
+.pot-timeline{position:relative;margin:6px 0}
+.pot-svg{position:absolute;left:0;top:0;pointer-events:none}
+.pot-labels{position:relative;margin-left:46px}
+.pot-lrow{display:flex;gap:9px;align-items:center}
+.pl-time{font-family:"Space Mono",monospace;font-size:10.5px;color:var(--cool);font-weight:700;
+  min-width:46px;flex:none}
+.pl-body{flex:1}
 .ps-items{font-size:14px;font-weight:600;line-height:1.3}
 .ps-why{font-family:"Space Mono",monospace;font-size:10px;color:var(--muted);margin-top:2px}
-.pot-done{font-size:13px;color:var(--cool);font-weight:600;padding:10px 0 4px}
+.pot-done{font-size:13px;color:var(--muted);padding:8px 0 4px;margin-left:46px}
+.pd-t{color:var(--cool);font-weight:700;font-family:"Space Mono",monospace}
 .pot-gap{margin-top:8px;padding:10px 12px;background:rgba(168,114,24,.08);border-radius:9px;
   font-size:12.5px;line-height:1.5;color:var(--muted)}
 .pot-gap strong{color:var(--gold)}
@@ -319,7 +324,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.42</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.43</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2291,19 +2296,48 @@ function renderOnePot(){
     "<div class=\"tg\"><span class=\"tgv\">"+p.handsOff+"</span><span class=\"tgl2\">min free</span></div>";
   box.appendChild(t);
 
-  // --- the schedule ---
+  // --- the schedule, as a proportional vertical timeline ---
   const sh=document.createElement("div"); sh.className="rgroup"; sh.textContent="What goes in, and when";
   box.appendChild(sh);
+
+  const ROW=64, AXIS=26, PAD=14;                 // label row height, axis column width
+  const n=p.steps.length;
+  const H=Math.max(n*ROW, 120);                  // total height of the whole block
+  const yOf=(mins)=> PAD + (p.total? (mins/p.total)*(H-PAD*2) : 0);   // TRUE position on the axis
+  const rowMid=(i)=> i*ROW + ROW/2;              // labels sit at even intervals
+
+  const tl=document.createElement("div"); tl.className="pot-timeline"; tl.style.height=H+"px";
+
+  // the axis + leader lines (SVG, so the lines can be diagonal)
+  let svg="<svg class=\"pot-svg\" width=\"100%\" height=\""+H+"\" viewBox=\"0 0 240 "+H+"\" preserveAspectRatio=\"none\">";
+  svg+="<line x1=\"13\" y1=\""+yOf(0)+"\" x2=\"13\" y2=\""+yOf(p.total)+"\" stroke=\"var(--line)\" stroke-width=\"2\"/>";
   p.steps.forEach((st,i)=>{
-    const row=document.createElement("div"); row.className="pot-step";
-    const wait = i<p.steps.length-1 ? (p.steps[i+1].at - st.at) : st.cooks;
-    row.innerHTML="<div class=\"ps-time\">"+(st.at===0?"start":"+"+st.at+" min")+"</div>"+
-      "<div class=\"ps-body\"><div class=\"ps-items\">"+st.items.map(x=>x.name).join(", ")+"</div>"+
-      "<div class=\"ps-why\">"+st.why+" \u00b7 "+st.cooks+" min in the pot</div></div>";
-    box.appendChild(row);
+    const y=yOf(st.at), ry=rowMid(i);
+    // the stretch this ingredient is actually in the pot
+    svg+="<line x1=\"13\" y1=\""+y+"\" x2=\"13\" y2=\""+yOf(p.total)+"\" stroke=\"var(--cool)\" stroke-width=\"2.5\" opacity=\".25\"/>";
+    svg+="<circle cx=\"13\" cy=\""+y+"\" r=\"5\" fill=\"var(--cool)\"/>";
+    // leader line from the TRUE time to the evenly-spaced label
+    svg+="<path d=\"M18,"+y+" C34,"+y+" 26,"+ry+" 42,"+ry+"\" fill=\"none\" stroke=\"var(--cool)\" stroke-width=\"1.2\" opacity=\".5\"/>";
   });
+  // the finish
+  svg+="<circle cx=\"13\" cy=\""+yOf(p.total)+"\" r=\"4\" fill=\"none\" stroke=\"var(--cool)\" stroke-width=\"2\"/>";
+  svg+="</svg>";
+  tl.innerHTML=svg;
+
+  // the evenly-spaced labels, overlaid
+  const labels=document.createElement("div"); labels.className="pot-labels";
+  p.steps.forEach((st,i)=>{
+    const row=document.createElement("div"); row.className="pot-lrow"; row.style.height=ROW+"px";
+    row.innerHTML="<div class=\"pl-time\">"+(st.at===0?"start":"+"+st.at+"m")+"</div>"+
+      "<div class=\"pl-body\"><div class=\"ps-items\">"+st.items.map(x=>x.name).join(", ")+"</div>"+
+      "<div class=\"ps-why\">"+st.why+" \u00b7 "+st.cooks+" min in the pot</div></div>";
+    labels.appendChild(row);
+  });
+  tl.appendChild(labels);
+  box.appendChild(tl);
+
   const done=document.createElement("div"); done.className="pot-done";
-  done.textContent="Season, taste, eat.";
+  done.innerHTML="<span class=\"pd-t\">"+p.total+" min</span> \u2014 season, taste, eat.";
   box.appendChild(done);
 
   // --- honest gaps (nudge, never enforce) ---
