@@ -822,3 +822,248 @@ function precedentFor(a, b, ctx, AFF){
   if(hit.n===1) return {n:1, level:"thin", text:"seen once", dishes:hit.dishes};
   return {n:hit.n, level:"solid", text:"seen "+hit.n+"\u00d7", dishes:hit.dishes};
 }
+
+/* ============================================================
+   NEAREST DISH — "this reminds me of…"
+   Given a set of ingredients (a pot you're building), find the catalogue
+   dishes it most resembles, and say what THEY have that you don't — so a
+   dead-end "no precedent" becomes a live suggestion.
+
+   Similarity = shared ingredients (weighted), + shared taste character,
+   + same cooking context. Honest about how close the match actually is.
+   ============================================================ */
+function tasteDistance(a,b){
+  const axes=["sweet","sour","salty","umami","fat","heat"];
+  let d=0; axes.forEach(x=>{ d+=Math.abs((a[x]||0)-(b[x]||0)); });
+  return d;
+}
+function remindsMeOf(ingIds, R, dishes, {ctx=null, limit=3}={}){
+  const mine=new Set(ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed"));
+  if(!mine.size) return [];
+  const myTaste=tasteOf([...mine].map(id=>({id, name:(R.byId[id]||{}).name||id})), R);
+
+  const scored=dishes.map(d=>{
+    const theirs=(d.grocery_items||[])
+      .filter(g=>g.id!=="water" && measureTypeOf(R.byId[g.id])!=="assumed")
+      .map(g=>g.id);
+    const tset=new Set(theirs);
+    const shared=[...mine].filter(id=>tset.has(id));
+
+    const union=new Set([...mine,...tset]).size;
+    const overlap=union? shared.length/union : 0;
+
+    const td=tasteDistance(myTaste, d.taste||{});
+    const tasteClose=1/(1+td);                            // 1.0 = identical character
+    const sameCtx = ctx && contextOf(d)===ctx ? 1 : 0;
+
+    // Ingredient overlap is the ONLY trustworthy similarity signal here: the taste
+    // vectors are too coarse (0–3 per axis) to tell dishes apart — nearly everything
+    // lands 3–4 apart, so flavour distance would produce nonsense "reminders".
+    // Taste is a tiebreak, never a basis.
+    if(!shared.length) return null;
+    const score = overlap*3 + shared.length*0.5 + tasteClose*0.3 + sameCtx*0.4;
+
+    const missing=theirs.filter(id=>!mine.has(id));       // what THEY have that you don't
+    return {dish:d.name, d, score, shared, sharedNames:shared.map(id=>(R.byId[id]||{}).name||id),
+            missing, missingNames:missing.map(id=>(R.byId[id]||{}).name||id),
+            overlap, tasteGap:td, sameContext:!!sameCtx};
+  }).filter(Boolean);
+
+  scored.sort((a,b)=>b.score-a.score);
+  return scored.slice(0,limit).map(s=>{
+    let closeness;
+    if(s.shared.length>=3 || s.overlap>=0.5) closeness="very close";
+    else if(s.shared.length>=2)              closeness="close";
+    else                                     closeness="a loose echo";   // one ingredient in common
+    return {...s, closeness};
+  });
+}
+
+/* ============================================================
+   BROTH CHARACTER — what a protein base gives a pot.
+   AUTHORED, NOT DERIVED. The engine knows the physics (collagen breaks
+   down, fat renders); it cannot know that pork bones make a sweet milky
+   broth while beef makes a deep iron-y one. That is a cook's knowledge,
+   written down here so the engine can reason with it.
+   A chef should own and correct this table.
+
+   Axes are deliberately different from the six taste axes: these describe
+   a BROTH's character, not a dish's flavour.
+     body     : how much collagen/mouthfeel it carries      (0-3)
+     sweetness: natural sweetness from the bones/flesh       (0-3)
+     depth    : savoury weight / heaviness                   (0-3)
+     clean    : clarity & lightness (opposite of heavy)      (0-3)
+     marine   : sea character                                (0-3)
+   ============================================================ */
+const BROTH_BASE={
+  pork_ribs:      {body:3, sweetness:2, depth:2, clean:1, marine:0, note:"bones give a sweet, rich body"},
+  pork_belly:     {body:3, sweetness:2, depth:2, clean:0, marine:0, note:"fatty and rich"},
+  pork_shoulder:  {body:2, sweetness:2, depth:2, clean:1, marine:0, note:"gently sweet, medium body"},
+  pork:           {body:2, sweetness:2, depth:2, clean:1, marine:0, note:"sweet and rounded"},
+  beef_chuck:     {body:3, sweetness:1, depth:3, clean:0, marine:0, note:"deep, heavy, iron-y"},
+  beef_brisket:   {body:3, sweetness:1, depth:3, clean:0, marine:0, note:"deep and beefy"},
+  beef_short_rib: {body:3, sweetness:1, depth:3, clean:0, marine:0, note:"very rich, unctuous"},
+  beef:           {body:2, sweetness:1, depth:3, clean:0, marine:0, note:"deep and savoury"},
+  chicken_thigh:  {body:2, sweetness:1, depth:1, clean:2, marine:0, note:"clean, light, gently savoury"},
+  chicken_breast: {body:1, sweetness:1, depth:1, clean:3, marine:0, note:"very clean and light"},
+  chicken:        {body:2, sweetness:1, depth:1, clean:2, marine:0, note:"clean and comforting"},
+  fish:           {body:1, sweetness:1, depth:1, clean:3, marine:2, note:"delicate; goes in late"},
+  salmon:         {body:1, sweetness:1, depth:2, clean:2, marine:2, note:"oily, distinctly marine"},
+  prawn:          {body:1, sweetness:2, depth:1, clean:2, marine:3, note:"sweet and strongly of the sea"},
+  squid:          {body:1, sweetness:1, depth:1, clean:2, marine:2, note:"clean, faintly sweet"},
+  oyster:         {body:1, sweetness:1, depth:2, clean:1, marine:3, note:"briny and deep"},
+  dried_shrimp:   {body:0, sweetness:1, depth:2, clean:1, marine:3, note:"a seasoning: concentrated sea umami"},
+  wakame:         {body:0, sweetness:0, depth:1, clean:3, marine:3, note:"clean oceanic umami, no fat"},
+  nori:           {body:0, sweetness:0, depth:1, clean:2, marine:3, note:"oceanic, toasty"},
+  tofu:           {body:1, sweetness:0, depth:0, clean:3, marine:0, note:"a carrier \u2014 takes the broth's character"},
+  mutton:         {body:3, sweetness:1, depth:3, clean:0, marine:0, note:"strong, gamey, assertive"}
+};
+const BROTH_AXES=["body","sweetness","depth","clean","marine"];
+
+/* the base of a pot/dish = its principal protein (the thing the broth is built on) */
+function brothBaseOf(ingIds,R){
+  // prefer a real protein; bones/collagen-rich win over lean, since they define a broth
+  const prots=ingIds.filter(id=>BROTH_BASE[id]);
+  if(!prots.length) return null;
+  prots.sort((a,b)=>(BROTH_BASE[b].body+BROTH_BASE[b].depth)-(BROTH_BASE[a].body+BROTH_BASE[a].depth));
+  return prots[0];
+}
+function brothCharacter(ingIds,R){
+  const base=brothBaseOf(ingIds,R);
+  if(!base) return null;
+  const c={...BROTH_BASE[base]};
+  // vegetables shift the character: sweet roots sweeten it, seaweed cleans+marines it
+  ingIds.forEach(id=>{
+    if(id===base) return;
+    const p=new Set((R.byId[id]||{}).provides||[]);
+    if(p.has("sweet")) c.sweetness=Math.min(3,c.sweetness+0.5);
+    if(p.has("umami")) c.depth=Math.min(3,c.depth+0.4);
+    if(id==="wakame"||id==="nori") { c.marine=Math.min(3,c.marine+1); c.clean=Math.min(3,c.clean+0.5); }
+  });
+  c.base=base; c.baseName=(R.byId[base]||{}).name||base;
+  return c;
+}
+function brothDistance(a,b){
+  if(!a||!b) return 99;
+  let d=0; BROTH_AXES.forEach(x=>{ d+=Math.abs((a[x]||0)-(b[x]||0)); });
+  return d;
+}
+/* describe a broth in words */
+function describeBroth(c){
+  if(!c) return "no protein base \u2014 this will be a vegetable broth";
+  const bits=[];
+  if(c.milky) bits.push("milky and emulsified");
+  if(c.body>=3) bits.push("full-bodied");
+  else if(c.body<=1) bits.push("light-bodied");
+  if(c.sweetness>=2.5) bits.push("notably sweet");
+  else if(c.sweetness>=2) bits.push("gently sweet");
+  if(c.depth>=3) bits.push("deep and heavy");
+  else if(c.depth<=1) bits.push("delicate");
+  if(c.clean>=3 && !c.milky) bits.push("clear and clean");
+  if(c.roasted) bits.push("with roasted depth");
+  if(c.marine>=2) bits.push("distinctly of the sea");
+  return bits.join(", ")||"balanced";
+}
+
+
+/* Which existing dishes share this pot's BROTH CHARACTER? A far better
+   similarity signal than the six-axis taste vector, which cannot tell a
+   pork broth from a beef one. */
+function brothLikeDishes(ingIds, R, dishes, limit=3){
+  const mine=brothCharacter(ingIds,R);
+  if(!mine) return [];
+  const out=[];
+  dishes.forEach(d=>{
+    const ids=(d.grocery_items||[]).map(g=>g.id);
+    const theirs=brothCharacter(ids,R);
+    if(!theirs) return;
+    const dist=brothDistance(mine,theirs);
+    const sameBase=theirs.base===mine.base;
+    out.push({dish:d.name, d, base:theirs.baseName, character:describeBroth(theirs),
+              dist, sameBase, soupish:(d.role==="soup"||["braise","simmer"].includes(d.build))});
+  });
+  // closest character first; prefer actual soups/braises, and same base
+  out.sort((a,b)=> (a.dist-b.dist) || (b.sameBase-a.sameBase) || (b.soupish-a.soupish));
+  return out.slice(0,limit).map(x=>({
+    ...x,
+    closeness: x.dist<=1 ? "the same kind of broth" : x.dist<=2.5 ? "a similar broth" : "a different broth, but related"
+  }));
+}
+
+
+/* ============================================================
+   BROTH METHOD — read from the recipe's own steps.
+   The same bones make a different broth depending on how they're cooked:
+   a hard rolling boil emulsifies fat into the water (milky, rich); a gentle
+   simmer keeps it clear and clean. Skimming lightens it. Searing first adds
+   roasted depth. Blanching removes scum and cleans the result.
+   This is DERIVED — it reads the steps the cook actually wrote.
+   ============================================================ */
+function brothMethod(d){
+  const s=((d.steps||[]).join(" | ")).toLowerCase();
+  return {
+    hardBoil:  /rolling boil|hard boil|boil vigorously|boil rapidly/.test(s),
+    gentle:    /simmer gently|gentle simmer|low heat|barely a simmer|reduce the heat/.test(s),
+    simmer:    /simmer/.test(s),
+    skimmed:   /skim/.test(s),
+    blanched:  /blanch|parboil/.test(s),
+    seared:    /\bsear\b|brown(ed)? (the|on|all)/.test(s),
+    longCook:  ((d.time||{}).ready_in_min||0) >= 90
+  };
+}
+/* apply the method to a base character — this is where steps change the broth */
+function applyMethod(c, m){
+  if(!c||!m) return c;
+  const out={...c};
+  if(m.hardBoil){                       // emulsifies fat -> milky, rich, heavy
+    out.body=Math.min(3,out.body+1);
+    out.depth=Math.min(3,out.depth+0.5);
+    out.clean=Math.max(0,out.clean-2);
+    out.milky=true;
+  }
+  if(m.gentle && !m.hardBoil){          // clear and clean
+    out.clean=Math.min(3,out.clean+1);
+    out.milky=false;
+  }
+  if(m.blanched){                       // scum removed -> cleaner
+    out.clean=Math.min(3,out.clean+0.5);
+  }
+  if(m.skimmed){                         // fat removed -> lighter
+    out.body=Math.max(0,out.body-0.5);
+    out.clean=Math.min(3,out.clean+0.5);
+  }
+  if(m.seared){                          // maillard -> roasted depth
+    out.depth=Math.min(3,out.depth+0.7);
+    out.roasted=true;
+  }
+  if(m.longCook){                        // more collagen extracted
+    out.body=Math.min(3,out.body+0.5);
+  }
+  out.method=m;
+  return out;
+}
+/* the honest full character: base (authored) x method (derived from the steps) */
+function brothOf(d,R){
+  const ids=(d.grocery_items||[]).map(g=>g.id);
+  const base=brothCharacter(ids,R);
+  if(!base) return null;
+  return applyMethod(base, brothMethod(d));
+}
+
+
+/* Does this dish actually HAVE a broth?
+   Strict: a soup, or a dish whose steps put it in liquid and keep it there.
+   A stir-fry that splashes in stock is not a broth; a salad certainly isn't. */
+function hasBroth(d){
+  if(d.role==="soup") return true;
+  if(d.role==="veg"||d.role==="dessert"||d.role==="base") return false;
+  const txt=((d.steps||[]).join(" ")).toLowerCase();
+  // must actually simmer/braise/stew in liquid — not just mention water
+  const cooksInLiquid=/\b(simmer|braise|stew)\b/.test(txt) ||
+                      /(cover|add).{0,30}\b(broth|stock|water)\b.{0,40}\b(simmer|cook|braise|boil)\b/.test(txt);
+  if(!cooksInLiquid) return false;
+  // and it must not be a fundamentally dry-cooked dish
+  const dryLed=/\b(deep.?fry|air.?fry|roast|bake in the oven|grill)\b/.test(txt);
+  if(dryLed && !["braise","simmer"].includes(d.build)) return false;
+  return ["braise","simmer"].includes(d.build) || /\bsimmer\b/.test(txt);
+}
