@@ -228,6 +228,44 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .pr-dish{display:inline-flex;flex-direction:column;font-size:12.5px;padding:4px 10px;border-radius:8px;
   background:rgba(50,117,100,.09);color:var(--cool);border:1px solid rgba(50,117,100,.2)}
 .pr-dish em{font-style:normal;font-family:"Space Mono",monospace;font-size:8.5px;opacity:.75}
+/* ===== RADIAL SEASONING SELECTOR ===== */
+.op-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.op-season{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:12px;font-weight:600;
+  padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);
+  color:var(--muted);cursor:pointer;transition:.14s}
+.op-season:hover{border-color:var(--cool);color:var(--cool)}
+.op-season.on{background:var(--cool);border-color:var(--cool);color:#fff}
+.os-dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.55}
+.op-season.on .os-dot{opacity:1}
+.radial{position:fixed;inset:0;z-index:200;background:rgba(253,250,245,.72);
+  backdrop-filter:blur(3px);opacity:0;transition:opacity .16s}
+.radial.in{opacity:1}
+.rad-hub{position:fixed;width:12px;height:12px;border-radius:50%;background:var(--cool);
+  transform:translate(-50%,-50%);box-shadow:0 0 0 6px rgba(50,117,100,.15)}
+.rad-item{position:fixed;transform:translate(-50%,-50%);transform-origin:center;
+  display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;
+  padding:8px 13px;border-radius:11px;background:var(--panel);border:1px solid var(--line);
+  box-shadow:0 3px 14px rgba(27,16,11,.10);transition:transform .09s ease-out, background .13s, border-color .13s;
+  white-space:nowrap;user-select:none}
+.rad-item:hover{border-color:var(--cool)}
+.rad-region .ri-t{font-family:"Space Mono",monospace;font-size:9.5px;text-transform:uppercase;
+  letter-spacing:.09em;color:var(--cool);font-weight:700}
+.rad-region .ri-n{font-family:"Space Mono",monospace;font-size:8.5px;color:var(--muted)}
+.rad-region.sel{background:var(--cool);border-color:var(--cool)}
+.rad-region.sel .ri-t{color:#fff}
+.rad-sub{opacity:0;transition:opacity .18s, transform .09s ease-out}
+.rad-sub.in{opacity:1}
+.rad-sub .ri-t{font-size:13px;font-weight:600;color:var(--ink)}
+.rad-sub .ri-s{font-size:10px;color:var(--muted);max-width:170px;white-space:normal;text-align:center;line-height:1.35}
+.rad-item.on{background:var(--cool);border-color:var(--cool)}
+.rad-item.on .ri-t,.rad-item.on .ri-s{color:#fff}
+.rad-none .ri-t{font-size:12px;font-weight:600;color:var(--muted)}
+.rad-none.on{background:var(--cool);border-color:var(--cool)}
+.rad-none.on .ri-t{color:#fff}
+@media(max-width:760px){
+  .rad-item{padding:6px 10px}
+  .rad-sub .ri-s{display:none}
+}
 /* ===== ONE-POT: a clear hierarchy — the schedule is the hero ===== */
 .op-title{margin-bottom:12px}
 .op-name{font-size:20px;font-weight:700;line-height:1.2;letter-spacing:-.01em}
@@ -377,7 +415,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.49</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.51</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2474,6 +2512,97 @@ function openIngredient(n){
   el("sheet").innerHTML=html;
   el("overlay").classList.add("on");
 }
+/* ===== RADIAL SEASONING SELECTOR =====
+   An arc of regions fanning out from the Season button. Sweep the pointer across
+   and items magnify by proximity (dock-style). Pick a region, its directions fan
+   out on an outer arc. */
+function openRadial(dirs, nm){
+  closeRadial();
+  const byRegion={};
+  dirs.forEach(o=>{ const r=o.region||"Other"; (byRegion[r]=byRegion[r]||[]).push(o); });
+  const ORDER=["Teochew","Hokkien/Klang","Chinese","Malay/Peranakan","SEA","Indian","Japanese","Korean","Western"];
+  const regions=ORDER.filter(r=>byRegion[r]);
+
+  const btn=el("season-btn");
+  const r0=btn?btn.getBoundingClientRect():{left:120,top:120,width:80,height:28};
+  const cx=r0.left+r0.width/2, cy=r0.top+r0.height/2;
+
+  const wrap=document.createElement("div"); wrap.className="radial"; wrap.id="radial";
+  wrap.onclick=(e)=>{ if(e.target===wrap) closeRadial(); };
+
+  const hub=document.createElement("div"); hub.className="rad-hub";
+  hub.style.left=cx+"px"; hub.style.top=cy+"px";
+  wrap.appendChild(hub);
+
+  // ---- inner arc: regions ----
+  const N=regions.length;
+  const SPAN=Math.PI*0.92;             // fan downward-right
+  const START=-Math.PI*0.46;
+  const R1=132;
+  const items=[];
+  regions.forEach((rg,i)=>{
+    const a=START + (N>1 ? (i/(N-1))*SPAN : SPAN/2);
+    const VW=window.innerWidth||1200, VH=window.innerHeight||800;
+    const x=Math.max(80, Math.min(VW-100, cx + Math.cos(a)*R1));
+    const y=Math.max(50, Math.min(VH-40,  cy + Math.sin(a)*R1));
+    const b=document.createElement("div"); b.className="rad-item rad-region";
+    b.style.left=x+"px"; b.style.top=y+"px";
+    b.innerHTML="<span class=\"ri-t\">"+rg+"</span><span class=\"ri-n\">"+byRegion[rg].length+"</span>";
+    b.onclick=(e)=>{ e.stopPropagation(); fanOut(rg, byRegion[rg], a, cx, cy, wrap, nm); };
+    b._cx=x; b._cy=y;
+    items.push(b); wrap.appendChild(b);
+  });
+
+  // Unseasoned sits at the hub end of the arc
+  const un=document.createElement("div"); un.className="rad-item rad-none"+(FLOW.potPath===null?" on":"");
+  const ua=START-0.30;
+  un.style.left=(cx+Math.cos(ua)*R1)+"px"; un.style.top=(cy+Math.sin(ua)*R1)+"px";
+  un.innerHTML="<span class=\"ri-t\">Unseasoned</span>";
+  un.onclick=(e)=>{ e.stopPropagation(); FLOW.potPath=null; closeRadial(); renderOnePot(); };
+  un._cx=cx+Math.cos(ua)*R1; un._cy=cy+Math.sin(ua)*R1;
+  items.push(un); wrap.appendChild(un);
+
+  // ---- dock magnification: scale by pointer proximity ----
+  wrap.addEventListener("pointermove",(e)=>{
+    const all=wrap.querySelectorAll(".rad-item");
+    all.forEach(it=>{
+      const dx=e.clientX-(it._cx||0), dy=e.clientY-(it._cy||0);
+      const d=Math.sqrt(dx*dx+dy*dy);
+      const s=1 + Math.max(0, 0.55*(1 - d/150));      // full scale within ~150px
+      it.style.transform="translate(-50%,-50%) scale("+s.toFixed(3)+")";
+      it.style.zIndex = String(100 - Math.round(d));
+    });
+  });
+
+  document.body.appendChild(wrap);
+  requestAnimationFrame(()=>wrap.classList.add("in"));
+}
+function fanOut(region, options, angle, cx, cy, wrap, nm){
+  wrap.querySelectorAll(".rad-sub").forEach(n=>n.remove&&n.remove());
+  wrap.querySelectorAll(".rad-region").forEach(n=>n.classList.remove("sel"));
+  const R2=232;
+  const m=options.length;
+  const SUBSPAN=Math.min(0.7, 0.24*m);
+  const VW=window.innerWidth||1200, VH=window.innerHeight||800;
+  options.forEach((o,j)=>{
+    const a=angle + (m>1 ? (j/(m-1)-0.5)*SUBSPAN : 0);
+    let x=cx+Math.cos(a)*R2, y=cy+Math.sin(a)*R2;
+    // keep every item on screen — an arc that would fly off the top/edge gets pulled back in
+    x=Math.max(90, Math.min(VW-110, x));
+    y=Math.max(56, Math.min(VH-46,  y));
+    const b=document.createElement("div");
+    b.className="rad-item rad-sub"+(FLOW.potPath===o.key?" on":"");
+    b.style.left=x+"px"; b.style.top=y+"px";
+    b._cx=x; b._cy=y;
+    b.innerHTML="<span class=\"ri-t\">"+o.label.replace(/ \u2014 .*/,"").replace(/ \(.*\)/,"")+"</span>"+
+                "<span class=\"ri-s\">"+o.note+"</span>";
+    b.onclick=(e)=>{ e.stopPropagation(); FLOW.potPath=o.key; closeRadial(); renderOnePot(); };
+    wrap.appendChild(b);
+    requestAnimationFrame(()=>b.classList.add("in"));
+  });
+}
+function closeRadial(){ const r=el("radial"); if(r&&r.remove) r.remove(); }
+
 function renderOnePot(){
   const box=el("recipes"); if(!box)return; box.innerHTML="";
   const ids=[...FLOW.active].filter(id=>measureTypeOf(REF.byId[id])!=="assumed");
@@ -2490,8 +2619,14 @@ function renderOnePot(){
 
   /* ============ 1. THE HEADLINE — what this pot is, in one line ============ */
   const title=document.createElement("div"); title.className="op-title";
-  const dishName = pathDir ? pathDir.label.replace(/ \(.*\)/,"") : "Your pot";
-  title.innerHTML="<div class=\"op-name\">"+dishName+"</div>"+
+  const seasonLabel = pathDir ? pathDir.label.replace(/ \u2014 .*/,"").replace(/ \(.*\)/,"") : "Season";
+  title.innerHTML=
+    "<div class=\"op-head\">"+
+      "<span class=\"op-name\">Your pot</span>"+
+      "<button class=\"op-season"+(pathDir?" on":"")+"\" id=\"season-btn\">"+
+        "<span class=\"os-dot\"></span>"+seasonLabel+
+      "</button>"+
+    "</div>"+
     "<div class=\"op-sub\">"+p.describe.replace(/^./,c=>c.toUpperCase())+
       (p.character?" \u00b7 built on "+p.character.baseName.toLowerCase():"")+"</div>";
   box.appendChild(title);
@@ -2540,40 +2675,9 @@ function renderOnePot(){
     }
   }
 
-  /* ============ 3. THE FORK — compact, collapsed until you open it ============ */
-  const fork=document.createElement("div"); fork.className="op-fold";
-  const fh=document.createElement("div"); fh.className="op-fold-h";
-  fh.innerHTML="<span>"+(pathDir?"Seasoned as <strong>"+dishName+"</strong>":"Season it \u2014 take it somewhere")+"</span><span class=\"op-x\">"+(FLOW.potForkOpen?"\u2212":"+")+"</span>";
-  fh.onclick=()=>{ FLOW.potForkOpen=!FLOW.potForkOpen; renderOnePot(); };
-  fork.appendChild(fh);
-  if(FLOW.potForkOpen){
-    const body=document.createElement("div"); body.className="op-fold-b";
-    const byRegion={};
-    dirs.forEach(o=>{ const r=o.region||"Other"; (byRegion[r]=byRegion[r]||[]).push(o); });
-    const ORDER=["Teochew","Hokkien/Klang","Chinese","Malay/Peranakan","SEA","Indian","Japanese","Korean","Western"];
-    const none=document.createElement("div");
-    none.className="pf-chip small"+(FLOW.potPath===null?" on":"");
-    none.innerHTML="<span class=\"pf-name\">Unseasoned</span>";
-    none.onclick=()=>{ FLOW.potPath=null; renderOnePot(); };
-    const row0=document.createElement("div"); row0.className="pf-row"; row0.appendChild(none);
-    body.appendChild(row0);
-    ORDER.filter(r=>byRegion[r]).forEach(rg=>{
-      const rl=document.createElement("div"); rl.className="pf-region"; rl.textContent=rg;
-      body.appendChild(rl);
-      const row=document.createElement("div"); row.className="pf-row";
-      byRegion[rg].forEach(o=>{
-        const c=document.createElement("div");
-        c.className="pf-chip small"+(FLOW.potPath===o.key?" on":"");
-        c.innerHTML="<span class=\"pf-name\">"+o.label.replace(/ \u2014 .*/,"").replace(/ \(.*\)/,"")+"</span>";
-        c.title=o.note;
-        c.onclick=()=>{ FLOW.potPath=(FLOW.potPath===o.key)?null:o.key; renderOnePot(); };
-        row.appendChild(c);
-      });
-      body.appendChild(row);
-    });
-    fork.appendChild(body);
-  }
-  box.appendChild(fork);
+  // the fork now lives in a RADIAL selector, opened from the Season button
+  const sb=el("season-btn");
+  if(sb) sb.onclick=(e)=>{ e.stopPropagation(); openRadial(dirs, nm); };
 
   /* ============ 4. ABOUT — everything else, folded away ============ */
   const about=document.createElement("div"); about.className="op-fold";
