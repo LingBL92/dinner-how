@@ -124,9 +124,15 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .rname{font-size:14px;font-weight:600;line-height:1.25}
 .rmeta{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;font-family:"Space Mono",monospace;font-size:11px;color:var(--muted)}
 .rchip{font-size:10px;padding:1px 7px;border-radius:999px;background:rgba(50,117,100,.12);color:var(--cool)}
-.ruses{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.rline{display:flex;gap:6px;margin-top:5px;align-items:flex-start}
+.rlab{font-family:"Space Mono",monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--muted);flex:none;padding-top:3px;width:52px;line-height:1.2}
+.rlab.buy{color:var(--gold)}
+.rchips{display:flex;flex-wrap:wrap;gap:4px;flex:1}
 .uchip{font-family:"Space Mono",monospace;font-size:9.5px;padding:2px 7px;border-radius:999px;
   background:rgba(50,117,100,.10);color:var(--cool);border:1px solid rgba(50,117,100,.22)}
+.bchip{font-family:"Space Mono",monospace;font-size:9.5px;padding:2px 7px;border-radius:999px;
+  background:rgba(168,114,24,.10);color:var(--gold);border:1px solid rgba(168,114,24,.25)}
 .combo-head{color:var(--cool)!important;border-bottom:1px solid rgba(50,117,100,.3);padding-bottom:4px}
 .combo-head.shop-head{color:var(--gold)!important;border-bottom-color:rgba(168,114,24,.3)}
 .pairinfo{margin-top:14px;padding:12px 14px;background:rgba(50,117,100,.06);border-radius:10px;
@@ -263,7 +269,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.33</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.34</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -1603,9 +1609,15 @@ function renderRecipes(){
     meta+= r.buy.length? "<span class=\"rbuy\">buy "+r.buy.length+"</span>" : "<span style=\"color:var(--cool)\">have it all</span>";
     let yours="";
     if(used.length){
-      yours="<div class=\"ruses\">"+used.map(id=>"<span class=\"uchip\">"+nameOf(id)+"</span>").join("")+"</div>";
+      yours="<div class=\"rline\"><span class=\"rlab\">uses yours</span>"+
+        "<span class=\"rchips\">"+used.map(id=>"<span class=\"uchip\">"+nameOf(id)+"</span>").join("")+"</span></div>";
     }
-    c.innerHTML="<div class=\"rname\">"+r.dish+"</div>"+yours+"<div class=\"rmeta\">"+meta+"</div>";
+    let shopping="";
+    if(r.buy.length){
+      shopping="<div class=\"rline\"><span class=\"rlab buy\">need to shop for</span>"+
+        "<span class=\"rchips\">"+r.buy.map(b=>"<span class=\"bchip\">"+b.item+"</span>").join("")+"</span></div>";
+    }
+    c.innerHTML="<div class=\"rname\">"+r.dish+"</div>"+yours+shopping+"<div class=\"rmeta\">"+meta+"</div>";
     c.id="rc-"+r.dish.replace(/[^a-zA-Z0-9]/g,"");
     return c;
   }
