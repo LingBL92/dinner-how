@@ -337,11 +337,40 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .meal-chip{display:flex;flex-direction:column;gap:2px;align-items:flex-start}
 .mc-buy,.mc-have{font-style:normal;font-family:"Space Mono",monospace;font-size:9.5px}
 .mc-buy{color:var(--gold)}
+.mc-sub{font-style:normal;font-family:"Space Mono",monospace;font-size:9.5px;color:var(--cool);display:block}
+.meal-chip.picked .mc-sub{color:rgba(255,255,255,.9)}
+.mc-open{border:none;background:none;font-family:"Space Mono",monospace;font-size:9px;
+  text-transform:uppercase;letter-spacing:.06em;color:var(--muted);cursor:pointer;padding:2px 0 0;
+  text-decoration:underline;text-underline-offset:2px}
+.mc-open:hover{color:var(--cool)}
+.meal-chip.picked .mc-open{color:rgba(255,255,255,.85)}
 .mc-have{color:var(--cool)}
 .meal-chip.picked .mc-buy,.meal-chip.picked .mc-have{color:rgba(255,255,255,.85)}
 .meal-chip.dimmed:hover{opacity:.75}
 .meal-empty{font-size:12px;color:var(--gold);font-style:italic;padding:6px 2px}
 .meal-sum{margin-top:14px;padding:12px 14px;background:rgba(50,117,100,.07);border-radius:10px;font-size:13px;line-height:1.5}
+.sched{margin-top:16px;padding-top:14px;border-top:2px solid var(--line)}
+.sc-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.sc-t{font-family:"Space Mono",monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.sc-w{font-size:26px;font-weight:700;color:var(--cool);line-height:1}
+.sc-w em{font-style:normal;font-size:12px;font-weight:400;color:var(--muted);margin-left:3px}
+.sc-ho{font-family:"Space Mono",monospace;font-size:11px;color:var(--gold);
+  background:rgba(168,114,24,.1);padding:3px 9px;border-radius:999px;margin-left:auto}
+.sc-rows{display:flex;flex-direction:column;gap:7px}
+.sc-row{display:flex;align-items:center;gap:9px}
+.sc-name{width:150px;flex:none;font-size:12.5px;font-weight:600;line-height:1.2}
+.sc-name em{display:block;font-style:normal;font-family:"Space Mono",monospace;font-size:8.5px;
+  color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:1px}
+.sc-track{flex:1;position:relative;height:20px;background:rgba(27,16,11,.04);border-radius:5px}
+.sc-bar{position:absolute;top:0;height:20px;border-radius:5px;background:rgba(50,117,100,.22);overflow:hidden}
+.sc-active{position:absolute;left:0;top:0;height:20px;background:var(--cool);border-radius:5px 0 0 5px}
+.sc-when{width:62px;flex:none;text-align:right;font-family:"Space Mono",monospace;font-size:10.5px;color:var(--cool);font-weight:700}
+.sc-key{display:flex;gap:14px;margin-top:8px;font-family:"Space Mono",monospace;font-size:9px;color:var(--muted)}
+.sc-key i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.sc-key .k-act{background:var(--cool)}
+.sc-key .k-off{background:rgba(50,117,100,.22)}
+.sc-note{margin-top:8px;padding:9px 12px;background:rgba(50,117,100,.06);border-left:3px solid var(--cool);
+  border-radius:7px;font-size:12.5px;line-height:1.5;color:var(--ink)}
 #grocery{margin-top:18px}
 .gro-head{display:flex;align-items:baseline;gap:8px;font-weight:700;font-size:14px;padding-bottom:8px;border-bottom:2px solid var(--line);margin-bottom:10px}
 .gro-sub{font-family:"Space Mono",monospace;font-size:10.5px;color:var(--muted);font-weight:400;margin-left:auto}
@@ -431,7 +460,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.60</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.62</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -1838,6 +1867,8 @@ const PANTRY_OFF=new Set(["brown_rice","noodles","udon"]);   // present in the p
 const PANTRY_ON=PANTRY_ITEMS.filter(id=>!PANTRY_OFF.has(id));
 const FLOW={comps:[],active:new Set(),pantry:new Set(PANTRY_ON),appl:new Set(["stovetop","oven"]),taste:new Set(),types:new Set(),compose:null,mode:"type",time:{total:null,active:null,cook:null},potPath:null,results:[]};
 let REF=null,DISHES=[],APPL={},APPL_DATA={},APPLIANCE_ORDER=[],AFF=null;
+let pax=4, burners=2;
+const owned=new Set();   // kept in step with FLOW.appl
 const TASTE_AXES=["sweet","sour","salty","umami","fat","heat"];
 const TASTE_LABEL={sweet:"sweet",sour:"sour",salty:"salty",umami:"umami",fat:"rich",heat:"spicy"};
 const TYPE_OPTS=[["soup","Soup"],["base","Rice & noodles"],["veg","Vegetable"],["meat","Meat"],["fish","Fish"],["dessert","Dessert"]];
@@ -1980,7 +2011,9 @@ function renderPantry(){
     });
   }
 }
-function toggleAppl(a){ FLOW.appl.has(a)?FLOW.appl.delete(a):FLOW.appl.add(a); renderAppl(); recompute(); }
+function toggleAppl(a){ FLOW.appl.has(a)?FLOW.appl.delete(a):FLOW.appl.add(a);
+  owned.clear(); FLOW.appl.forEach(x=>owned.add(x));
+  renderAppl(); recompute(); }
 function toggleTaste(t){ FLOW.taste.has(t)?FLOW.taste.delete(t):FLOW.taste.add(t); renderTaste(); recompute(); }
 function toggleType(t){ FLOW.types.has(t)?FLOW.types.delete(t):FLOW.types.add(t); renderType(); recompute(); }
 function renderType(){
@@ -2416,9 +2449,21 @@ function renderMealBuilder(){
         const chosen=FLOW.mealPick&&FLOW.mealPick[role]===it.r.dish;
         chip.className="meal-chip"+(chosen?" picked":(hasPick?" dimmed":""));
         const nb=it.r.buy.length;
-        chip.innerHTML="<span>"+it.r.dish+"</span>"+
-          (nb? "<em class=\"mc-buy\">buy "+nb+"</em>" : "<em class=\"mc-have\">have all</em>");
-        chip.onclick=()=>{ FLOW.mealPick=FLOW.mealPick||{}; FLOW.mealPick[role]= (FLOW.mealPick[role]===it.r.dish?null:it.r.dish); renderMealBuilder(); };
+        const subs=(it.r.subs||[]);
+        const subLine = subs.length
+          ? "<em class=\"mc-sub\">using "+subs.map(x=>x.use).join(", ")+" for "+subs.map(x=>x.need.toLowerCase()).join(", ")+"</em>"
+          : "";
+        chip.innerHTML="<span>"+it.r.dish+"</span>"+subLine+
+          (nb? "<em class=\"mc-buy\">buy "+nb+"</em>" : "<em class=\"mc-have\">have all</em>")+
+          "<button class=\"mc-open\" title=\"see the recipe\">recipe</button>";
+        chip.onclick=(e)=>{
+          if(e.target && e.target.classList && e.target.classList.contains("mc-open")){
+            e.stopPropagation(); openR(it.idx); return;
+          }
+          FLOW.mealPick=FLOW.mealPick||{};
+          FLOW.mealPick[role]=(FLOW.mealPick[role]===it.r.dish?null:it.r.dish);
+          renderMealBuilder();
+        };
         opts.appendChild(chip);
       });
     }
@@ -2429,17 +2474,73 @@ function renderMealBuilder(){
   // summary line: what the meal is, and what's missing (never dead-ends)
   const picks=FLOW.mealPick||{};
   const chosen=slots.map(([role,label])=>picks[role]).filter(Boolean);
-  // Only speak up when a slot CAN'T be filled from your ingredients, or when the meal is complete.
-  if(missing.length || chosen.length===slots.length){
+  // Only speak up when a slot CAN'T be filled from your ingredients.
+  if(missing.length){
     const sum=document.createElement("div"); sum.className="meal-sum";
-    if(missing.length){
-      sum.innerHTML="<strong>You\u2019d still need a "+missing.join(" and a ")+".</strong> Nothing in your ingredients fills that slot.";
-    } else {
-      sum.innerHTML="<strong>Your meal:</strong> "+chosen.join(" + ")+".";
-    }
+    sum.innerHTML="<strong>You\u2019d still need a "+missing.join(" and a ")+".</strong> Nothing in your ingredients fills that slot.";
     box.appendChild(sum);
   }
+
+  // ===== THE SCHEDULE: when to start each dish so they all finish together =====
+  if(chosen.length>=2){
+    const picked=chosen.map(n=>DISHES.find(x=>x.name===n)).filter(Boolean)
+      .filter(d=>ownedOptions(d).length);            // must be cookable on what you own
+    if(picked.length>=2){
+      let sc=null;
+      try{ sc=schedule(picked); }catch(err){ sc=null; }
+      if(sc) box.appendChild(renderSchedule(sc, picked));
+    }
+  }
   renderGrocery();
+}
+function renderSchedule(sc, picked){
+  const wrap=document.createElement("div"); wrap.className="sched";
+  const h=document.createElement("div"); h.className="sc-head";
+  h.innerHTML="<span class=\"sc-t\">All ready together in</span>"+
+    "<span class=\"sc-w\">"+sc.wall+"<em>min</em></span>"+
+    "<span class=\"sc-ho\">"+sc.handsOn+" min hands-on</span>";
+  wrap.appendChild(h);
+
+  // conflicts worth naming
+  const byAppl={};
+  sc.items.forEach(it=>{ (byAppl[it.ap]=byAppl[it.ap]||[]).push(it); });
+  const notes=[];
+  if(sc.cobake) notes.push("Both "+sc.cobake.names.join(" and ")+" go in the oven together at "+sc.cobake.temp+"\u00b0C"+(sc.cobake.saved?" \u2014 saves "+sc.cobake.saved+" min":"")+".");
+  if(sc.nShared) notes.push(sc.nShared+" ingredient"+(sc.nShared>1?"s are":" is")+" shared \u2014 prep once, up front.");
+  Object.keys(byAppl).forEach(ap=>{
+    const n=byAppl[ap].length;
+    const cap = ap==="stovetop"?burners : ap==="oven"?2 : 1;
+    if(n>cap) notes.push("You\u2019ve got "+n+" dishes on the "+(APPL[ap]||ap).toLowerCase()+" but room for "+cap+" \u2014 they\u2019ll have to queue.");
+  });
+
+  // a bar per dish, positioned on the shared clock
+  const W=Math.max(sc.wall,1);
+  const rows=document.createElement("div"); rows.className="sc-rows";
+  sc.items.slice().sort((a,b)=>a.start-b.start).forEach(it=>{
+    const row=document.createElement("div"); row.className="sc-row";
+    const pct=(v)=>(100*v/W).toFixed(2)+"%";
+    row.innerHTML=
+      "<div class=\"sc-name\">"+it.d.name+
+        "<em>"+(APPL[it.ap]||it.ap)+"</em></div>"+
+      "<div class=\"sc-track\">"+
+        "<div class=\"sc-bar\" style=\"left:"+pct(it.start)+";width:"+pct(Math.max(1,it.done-it.start))+"\">"+
+          "<span class=\"sc-active\" style=\"width:"+pct(it.fp+it.ac)+"\"></span>"+
+        "</div>"+
+      "</div>"+
+      "<div class=\"sc-when\">"+(it.start===0?"start now":"+"+it.start+"m")+"</div>";
+    rows.appendChild(row);
+  });
+  wrap.appendChild(rows);
+
+  const key=document.createElement("div"); key.className="sc-key";
+  key.innerHTML="<span><i class=\"k-act\"></i>hands-on</span><span><i class=\"k-off\"></i>walk away</span>";
+  wrap.appendChild(key);
+
+  notes.forEach(n=>{
+    const d=document.createElement("div"); d.className="sc-note"; d.textContent=n;
+    wrap.appendChild(d);
+  });
+  return wrap;
 }
 function renderGrocery(){
   const box=el("grocery"); if(!box)return; box.innerHTML="";
@@ -2700,6 +2801,102 @@ function iconKey(id){
   if(cat==="fruits")     return "dessert";
   return "soup";
 }
+
+/* ---- scheduler dependencies (ported) ---- */
+const COMP_CATS=["Meat & protein","Vegetables","Fruit"];
+const isComp=n=>COMP_CATS.includes((REF.GROC_CAT&&REF.GROC_CAT[n])||"");
+function ownedOptions(d){
+  return (d.appliance_options||[{appliance:d.appliance,time:d.time}])
+    .filter(o=>FLOW.appl.has(o.appliance)||o.appliance==="none");
+}
+/* ===== SCHEDULER — ported from the composer (index.html) =====
+   Assigns each dish an appliance, respects real capacity (burners, oven=2,
+   one pressure cooker), refuses two oven dishes at incompatible temperatures,
+   batches by volume, and places everything so it FINISHES TOGETHER — pulling
+   the quick and fresh dishes as late as possible so nothing goes cold.
+   Objective: minimise total wall time. */
+function prepPlan(list){
+  const compDishes={};
+  list.forEach(d=>(d.grocery_items||[]).map(g=>g.name).forEach(g=>{if(isComp(g)){(compDishes[g]=compDishes[g]||new Set()).add(d.name);}}));
+  const shared=Object.keys(compDishes).filter(g=>compDishes[g].size>=2);
+  const sharedPrep=shared.length?3+3*shared.length:0;
+  const finishing={},finishingList={}; list.forEach(d=>{const only=(d.grocery_items||[]).map(g=>g.name).filter(g=>isComp(g)&&compDishes[g].size<2);finishing[d.name]=only.length*3;finishingList[d.name]=only;});
+  return {sharedPrep,finishing,finishingList,shared,compDishes};
+}
+
+function schedule(list){
+  const pp=prepPlan(list);
+  const f=pax/4, pf=f<=1?Math.max(0.6,f):1+0.4*(f-1);
+  const sharedPrep=Math.round(pp.sharedPrep*pf);
+  const CAP={stovetop:burners,oven:2,rice_cooker:1,pressure_cooker:1,slow_cooker:1,air_fryer:1,none:99};
+  const VCAP={stovetop:4.5,rice_cooker:1.8,pressure_cooker:4,slow_cooker:4,air_fryer:1.8,oven:99,none:99};
+  const assignAppliances=(L)=>{
+    const CAPv={stovetop:burners,oven:2,rice_cooker:1,pressure_cooker:1,slow_cooker:1,air_fryer:1,none:99};
+    const loadv={};const chosen={};
+    const order=L.map((d,i)=>({d,i})).sort((a,b)=>{
+      const fa=a.d._forceAppliance?0:1,fb=b.d._forceAppliance?0:1;if(fa!==fb)return fa-fb;
+      const oa=ownedOptions(a.d).length,ob=ownedOptions(b.d).length;if(oa!==ob)return oa-ob;
+      return b.d.time.ready_in_min-a.d.time.ready_in_min;});
+    order.forEach(({d,i})=>{
+      const opts=ownedOptions(d);let pick;
+      if(d._forceAppliance){pick=opts.find(o=>o.appliance===d._forceAppliance)||opts[0];}
+      else{let best=opts[0],bc=Infinity;opts.forEach(o=>{const ap=o.appliance;const proj=(loadv[ap]||0)+o.time.ready_in_min+(ap==="stovetop"?0.4:0);if(proj<bc){bc=proj;best=o;}});pick=best;}
+      chosen[i]=pick;const ap=pick.appliance;loadv[ap]=(loadv[ap]||0)+pick.time.ready_in_min/(CAPv[ap]||1);});
+    return chosen;};
+  const placeWith=(assignMap)=>{
+    const items=list.map((d,mi)=>{const o=assignMap[mi];const ap=o.appliance;
+      let ac=Math.round(o.time.active_cook_min),off=Math.round(o.time.hands_off_min);
+      const vol=(d.base_volume||1.5)*f,cap=VCAP[ap]||99,batches=Math.max(1,Math.ceil(vol/cap-1e-9));
+      if(batches>1){if(d.fresh)ac=ac*batches; else if(ap==="rice_cooker"||ap==="pressure_cooker"||ap==="air_fryer")off=off*batches;}
+      return {d,mi,ap,temp:ap==="oven"?(d.oven_temp_c||190):null,fp:Math.round((pp.finishing[d.name]||0)*pf),ac,off,batches,fresh:!!d.fresh,start:null};});
+    const rebuild=exclude=>{const cook=[[0,sharedPrep]],appl={};items.forEach(it=>{if(it===exclude||it.start==null)return;cook.push([it.start,it.start+it.fp+it.ac]);(appl[it.ap]=appl[it.ap]||[]).push([it.cookStart,it.done,it.temp]);});return {cook,appl};};
+    const cf=(S,t,on)=>!S.cook.some(iv=>t<iv[1]&&t+on>iv[0]);
+    const af=(S,t,dur,ap,temp)=>{const over=(S.appl[ap]||[]).filter(iv=>t<iv[1]&&t+dur>iv[0]);if(ap==="oven"){if(over.some(iv=>Math.abs(iv[2]-temp)>10))return false;return over.length<2;}return over.length<(CAP[ap]||1);};
+    const fit=(S,it,t)=>cf(S,t,it.fp+it.ac)&&af(S,t+it.fp,it.ac+it.off,it.ap,it.temp);
+    const setPos=(it,t)=>{it.start=t;it.cookStart=t+it.fp;it.done=t+it.fp+it.ac+it.off;};
+    const ord=items.slice().sort((a,b)=>(b.fp+b.ac+b.off)-(a.fp+a.ac+a.off));
+    ord.forEach(it=>{const S=rebuild(it);let t=sharedPrep,g=0;while(!fit(S,it,t)&&g++<9000)t++;setPos(it,t);});
+    const W=Math.max(sharedPrep,...items.map(i=>i.done));
+    const pull=i=>i.fresh||i.d.role==="base"||i.ac<=3;
+    items.filter(pull).sort((a,b)=>a.off-b.off).forEach(it=>{const S=rebuild(it);let best=it.start;
+      for(let t=Math.max(sharedPrep,W-(it.fp+it.ac+it.off));t>=it.start;t--){if(fit(S,it,t)){best=t;break;}}
+      setPos(it,best);});
+    const minStart=items.length?Math.min(...items.map(i=>i.start)):sharedPrep;
+    const origin=minStart-sharedPrep;
+    if(origin>0)items.forEach(it=>{it.start-=origin;it.cookStart-=origin;it.done-=origin;});
+    const wall=Math.max(sharedPrep,...items.map(i=>i.done));
+    const handsOn=sharedPrep+items.reduce((s,i)=>s+i.fp+i.ac,0);
+    const ev=[];
+    pp.shared.forEach(g=>{const users=items.filter(it=>(it.d.grocery_items||[]).some(x=>x.name===g));const first=Math.min(...users.map(it=>it.cookStart));ev.push([sharedPrep,1]);ev.push([first,-1]);});
+    items.forEach(it=>{const only=(it.d.grocery_items||[]).map(g=>g.name).filter(g=>isComp(g)&&!pp.shared.includes(g)).length;if(only>0){ev.push([it.start,only]);ev.push([it.cookStart,-only]);}});
+    ev.sort((a,b)=>a[0]-b[0]||a[1]-b[1]); let cur=0,peak=0; ev.forEach(e=>{cur+=e[1];peak=Math.max(peak,cur);});
+    return {items,wall,handsOn,sharedPrep,nShared:pp.shared.length,holdingPeak:peak,sharedList:pp.shared,finishingList:pp.finishingList};
+  };
+  const baseAssign=assignAppliances(list);
+  const baseResult=placeWith(baseAssign);
+  let best=baseResult; const baseWall=baseResult.wall;
+  // co-bake search: rearrange dry-heat dishes across oven/air-fryer, keep the fastest (no scoring — strict time)
+  const dryIdx=[]; list.forEach((d,i)=>{if(d._forceAppliance)return;const aps=ownedOptions(d).map(o=>o.appliance);if((aps.includes("oven")||aps.includes("air_fryer"))&&(baseAssign[i].appliance==="oven"||baseAssign[i].appliance==="air_fryer"))dryIdx.push(i);});
+  if(dryIdx.length>=2&&dryIdx.length<=4){
+    const dryOpts=dryIdx.map(i=>ownedOptions(list[i]).filter(o=>o.appliance==="oven"||o.appliance==="air_fryer"));
+    let combos=[[]]; dryOpts.forEach(opts=>{const r=[];combos.forEach(prev=>opts.forEach(o=>r.push(prev.concat([o]))));combos=r;});
+    combos.forEach(combo=>{
+      const ovenD=[]; dryIdx.forEach((i,k)=>{if(combo[k].appliance==="oven")ovenD.push(list[i]);});
+      if(ovenD.length>2)return;
+      if(ovenD.length===2&&Math.abs((ovenD[0].oven_temp_c||190)-(ovenD[1].oven_temp_c||190))>10)return;
+      const alt=Object.assign({},baseAssign); dryIdx.forEach((i,k)=>alt[i]=combo[k]);
+      const res=placeWith(alt);
+      if(res.wall<best.wall)best=res;
+    });
+  }
+  // co-bake note (decision if it beat the greedy, else incidental)
+  const ov=best.items.filter(x=>x.ap==="oven"); let pair=null;
+  for(let a=0;a<ov.length;a++)for(let b=a+1;b<ov.length;b++){if(ov[a].cookStart<ov[b].done&&ov[b].cookStart<ov[a].done)pair=[ov[a],ov[b]];}
+  best.cobake=pair?{names:[pair[0].d.name,pair[1].d.name],temp:Math.round((pair[0].temp+pair[1].temp)/2),saved:Math.max(0,baseWall-best.wall)}:null;
+  return best;
+}
+
+
 function renderOnePot(){
   const box=el("recipes"); if(!box)return; box.innerHTML="";
   const ids=[...FLOW.active].filter(id=>measureTypeOf(REF.byId[id])!=="assumed");
@@ -3096,6 +3293,7 @@ async function boot(){
     (applData.appliances||[]).sort((a,b)=>a.order-b.order).forEach(a=>{APPL[a.id]=a.name;APPLIANCE_ORDER.push(a.id);APPL_DATA[a.id]=a;});
     DISHES=hydrate(dishData.dishes,R,methodData);
     AFF=buildAffinity(DISHES,R);
+    owned.clear(); FLOW.appl.forEach(x=>owned.add(x));
     renderPantry(); renderAppl(); renderType(); renderTaste(); renderTime(); renderIngTags(); renderRecipes();
     setupCollapse();
     const s=el("search");
