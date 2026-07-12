@@ -3139,6 +3139,273 @@
    "serves": 4,
    "base_volume": 1.5,
    "fresh": true
+  },
+  {
+   "name": "Sukiyaki",
+   "role": "soup",
+   "cuisine": "japanese",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "400 g beef slices",
+    "1 block tofu",
+    "200 g napa cabbage",
+    "100 g enoki mushroom",
+    "1 bundle shirataki noodles",
+    "2 scallion",
+    "4 tablespoons soy sauce",
+    "3 tablespoons mirin",
+    "2 tablespoons white sugar",
+    "1 cup dashi",
+    "1 tablespoon vegetable oil"
+   ],
+   "steps": [
+    "Make the warishita: combine the soy sauce, mirin, sugar and dashi, and stir until the sugar dissolves.",
+    "Heat a shallow pot and oil it lightly.",
+    "Sear a few beef slices briefly on one side to catch some colour.",
+    "Pour in the warishita and bring to a gentle simmer.",
+    "Add the napa cabbage and shirataki at one side of the pot and simmer for 6 minutes.",
+    "Add the tofu and enoki and simmer for 4 minutes more.",
+    "Add the remaining beef slices and cook for 1 minute, just until they lose their pink.",
+    "Scatter the scallion over and eat straight from the pot."
+   ],
+   "handson_action": "tending the pot at the table",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": true
+  },
+  {
+   "name": "Shabu-Shabu",
+   "role": "soup",
+   "cuisine": "japanese",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "400 g beef slices",
+    "1 piece kombu",
+    "1 block tofu",
+    "200 g napa cabbage",
+    "100 g enoki mushroom",
+    "2 carrot",
+    "8 cups water",
+    "1 teaspoon salt"
+   ],
+   "steps": [
+    "Wipe the kombu and steep it in the water for 20 minutes.",
+    "Bring the pot to a bare simmer and lift out the kombu before it boils.",
+    "Season the broth lightly with salt.",
+    "Add the carrot and simmer gently for 10 minutes.",
+    "Add the napa cabbage, tofu and enoki and simmer for 4 minutes.",
+    "Swish each beef slice through the broth for a few seconds, until it just turns colour, and eat as you go."
+   ],
+   "handson_action": "cooking each piece at the table",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": true
+  },
+  {
+   "name": "Milky Pork Bone Broth",
+   "role": "soup",
+   "cuisine": "japanese",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop",
+    "pressure_cooker"
+   ],
+   "ingredients": [
+    "1200 g pork ribs",
+    "1 onion",
+    "6 clove garlic",
+    "3 slice ginger",
+    "2 scallion",
+    "10 cups water",
+    "1 teaspoon salt"
+   ],
+   "steps": [
+    "Blanch the pork bones in boiling water for 5 minutes, then drain and rinse away the scum.",
+    "Return the bones to a clean pot with the water, onion, garlic and ginger.",
+    "Bring to a rolling boil and keep it boiling hard for 3 hours, topping up the water as it drops.",
+    "The hard boil is the point: it emulsifies the fat and collagen into the water and turns the broth opaque and milky.",
+    "Strain, season with salt, and finish with scallion."
+   ],
+   "handson_action": "topping up the water",
+   "serves": 6,
+   "base_volume": 0,
+   "fresh": false
+  },
+  {
+   "name": "Tom Yum Goong",
+   "role": "soup",
+   "cuisine": "thai",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "400 g prawn",
+    "200 g mushroom",
+    "2 stalk lemongrass",
+    "4 slice galangal",
+    "6 kaffir lime leaves",
+    "3 chilli",
+    "2 tomato",
+    "4 cups water",
+    "3 tablespoons fish sauce",
+    "3 tablespoons lime juice",
+    "1 teaspoon white sugar"
+   ],
+   "steps": [
+    "Bruise the lemongrass and slice the galangal.",
+    "Bring the water to a simmer with the lemongrass, galangal and kaffir lime leaves and steep for 8 minutes.",
+    "Add the mushroom and tomato and simmer for 4 minutes.",
+    "Add the prawns and cook for 3 minutes, until they curl and turn opaque.",
+    "Take the pot off the heat.",
+    "Season off the heat with fish sauce, lime juice and sugar, so the lime stays sharp.",
+    "Add the chilli to taste."
+   ],
+   "handson_action": "balancing the sour and the heat",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": true
+  },
+  {
+   "name": "Teochew Bak Kut Teh",
+   "role": "soup",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop",
+    "pressure_cooker",
+    "slow_cooker"
+   ],
+   "ingredients": [
+    "800 g pork ribs",
+    "2 bulb garlic",
+    "2 tablespoons white peppercorns",
+    "8 cups water",
+    "1 teaspoon salt"
+   ],
+   "steps": [
+    "Blanch the pork ribs in boiling water for 3 minutes, then drain.",
+    "Lightly crush the whole garlic bulbs, skin and all.",
+    "Crack the white peppercorns coarsely.",
+    "Put the ribs, garlic and peppercorns in a pot with the water.",
+    "Bring to a boil, then reduce the heat and simmer gently for 90 minutes, skimming as it goes.",
+    "Season with salt. The broth should stay clear and taste of pepper and garlic \u2014 nothing else."
+   ],
+   "handson_action": "skimming the broth",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": false
+  },
+  {
+   "name": "Laksa Lemak",
+   "role": "soup",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "300 g prawn",
+    "200 g fish cake",
+    "3 tablespoons laksa paste",
+    "1 can coconut milk",
+    "4 cups water",
+    "200 g beansprouts",
+    "200 g noodles",
+    "2 laksa leaf",
+    "2 tablespoons vegetable oil",
+    "1 teaspoon salt"
+   ],
+   "steps": [
+    "Fry the laksa paste in the oil over medium heat for 4 minutes, until it darkens and smells fragrant.",
+    "Pour in the water and bring to a simmer.",
+    "Stir in the coconut milk and simmer gently for 10 minutes \u2014 do not let it boil hard or it will split.",
+    "Add the fish cake and simmer for 3 minutes.",
+    "Add the prawns and cook for 3 minutes.",
+    "Blanch the noodles and beansprouts separately and put them in the bowls.",
+    "Ladle the gravy over and finish with torn laksa leaf."
+   ],
+   "handson_action": "frying the rempah",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": true
+  },
+  {
+   "name": "Sundubu Jjigae",
+   "role": "soup",
+   "cuisine": "korean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "1 block tofu",
+    "150 g kimchi",
+    "150 g pork belly",
+    "2 tablespoons gochugaru",
+    "1 tablespoon gochujang",
+    "3 clove garlic",
+    "1 onion",
+    "2 scallion",
+    "1 egg",
+    "3 cups water",
+    "1 tablespoon sesame oil",
+    "1 tablespoon soy sauce"
+   ],
+   "steps": [
+    "Fry the pork belly in the sesame oil until the fat renders.",
+    "Add the kimchi, garlic and onion and fry for 3 minutes.",
+    "Stir in the gochugaru and gochujang and fry for 1 minute, until the oil turns red.",
+    "Pour in the water and bring to a boil.",
+    "Simmer for 10 minutes.",
+    "Spoon in the soft tofu in large curds and simmer for 3 minutes.",
+    "Crack the egg into the middle, scatter the scallion, and serve bubbling."
+   ],
+   "handson_action": "frying the kimchi",
+   "serves": 2,
+   "base_volume": 0,
+   "fresh": true
+  },
+  {
+   "name": "Century Egg Congee",
+   "role": "soup",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop",
+    "rice_cooker",
+    "slow_cooker"
+   ],
+   "ingredients": [
+    "1 cup rice",
+    "2 century egg",
+    "200 g chicken thigh",
+    "3 slice ginger",
+    "2 scallion",
+    "10 cups water",
+    "1 teaspoon salt",
+    "1 teaspoon sesame oil",
+    "1 teaspoon pepper"
+   ],
+   "steps": [
+    "Rinse the rice and stir a little oil and salt through it \u2014 it helps the grains break down.",
+    "Bring the water to a boil with the ginger.",
+    "Add the rice, lower the heat, and simmer gently for 60 minutes, stirring now and then so it does not catch.",
+    "The rice should collapse into a thick, silky porridge.",
+    "Add the chicken and simmer for 12 minutes.",
+    "Dice the century eggs and stir them through for the last 3 minutes.",
+    "Season with salt, pepper and sesame oil, and finish with scallion."
+   ],
+   "handson_action": "stirring so it doesn't catch",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": false
   }
  ]
 }

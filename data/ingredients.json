@@ -83,7 +83,8 @@
     "beef"
    ],
    "provides": [
-    "protein"
+    "protein",
+    "umami"
    ],
    "aisle": "Meat & protein",
    "prep_verb": "cut into pieces",
@@ -102,7 +103,8 @@
    "provides": [
     "collagen_rich",
     "fat_solid",
-    "protein"
+    "protein",
+    "umami"
    ],
    "aisle": "Meat & protein",
    "prep_verb": "cut into pieces",
@@ -121,7 +123,8 @@
    "provides": [
     "collagen_rich",
     "fat_solid",
-    "protein"
+    "protein",
+    "umami"
    ],
    "aisle": "Meat & protein",
    "prep_verb": "cut into pieces",
@@ -142,7 +145,8 @@
    "provides": [
     "collagen_rich",
     "fat_solid",
-    "protein"
+    "protein",
+    "umami"
    ],
    "aisle": "Meat & protein",
    "prep_verb": "cut into pieces",
@@ -163,7 +167,8 @@
    ],
    "provides": [
     "fat_solid",
-    "protein"
+    "protein",
+    "umami"
    ],
    "aisle": "Meat & protein",
    "prep_verb": "cut into pieces",
@@ -230,7 +235,8 @@
     "pork"
    ],
    "provides": [
-    "protein"
+    "protein",
+    "umami"
    ],
    "aisle": "Meat & protein",
    "prep_verb": "cut into pieces",
@@ -247,7 +253,8 @@
    "provides": [
     "collagen_rich",
     "fat_solid",
-    "protein"
+    "protein",
+    "umami"
    ],
    "aisle": "Meat & protein",
    "prep_verb": "cut into pieces",
@@ -268,7 +275,8 @@
    "provides": [
     "collagen_rich",
     "fat_solid",
-    "protein"
+    "protein",
+    "umami"
    ],
    "aisle": "Meat & protein",
    "prep_verb": "cut into pieces",
@@ -287,7 +295,8 @@
    "provides": [
     "collagen_rich",
     "fat_solid",
-    "protein"
+    "protein",
+    "umami"
    ],
    "aisle": "Meat & protein",
    "prep_verb": "cut into pieces",
@@ -308,7 +317,8 @@
     "pork fillet"
    ],
    "provides": [
-    "protein"
+    "protein",
+    "umami"
    ],
    "aisle": "Meat & protein",
    "prep_verb": "cut into pieces",
@@ -327,7 +337,8 @@
    ],
    "provides": [
     "fish_family",
-    "protein"
+    "protein",
+    "umami"
    ],
    "aisle": "Fish & seafood",
    "prep_verb": "cut into pieces",
@@ -430,7 +441,8 @@
    ],
    "provides": [
     "protein",
-    "salt"
+    "salt",
+    "umami"
    ],
    "aisle": "Fish & seafood",
    "prep_verb": "cut into pieces",
@@ -464,7 +476,8 @@
     "shrimp"
    ],
    "provides": [
-    "protein"
+    "protein",
+    "umami"
    ],
    "aisle": "Fish & seafood",
    "prep_verb": "cut into pieces",
@@ -479,7 +492,8 @@
     "oyster"
    ],
    "provides": [
-    "protein"
+    "protein",
+    "umami"
    ],
    "aisle": "Fish & seafood",
    "prep_verb": "cut into pieces",
@@ -495,7 +509,8 @@
     "calamari"
    ],
    "provides": [
-    "protein"
+    "protein",
+    "umami"
    ],
    "aisle": "Fish & seafood",
    "prep_verb": "cut into pieces",
@@ -511,7 +526,74 @@
    ],
    "provides": [
     "fish_family",
+    "protein",
+    "umami"
+   ],
+   "aisle": "Fish & seafood",
+   "prep_verb": "cut into pieces",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "beef_slices",
+   "name": "Beef Slices",
+   "aliases": [
+    "sliced beef",
+    "thin beef",
+    "shabu beef"
+   ],
+   "provides": [
+    "fat_solid",
     "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "have it sliced thin",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "century_egg",
+   "name": "Century Egg",
+   "aliases": [
+    "century egg",
+    "preserved egg"
+   ],
+   "provides": [
+    "protein",
+    "umami"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "cut into pieces",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "kimchi",
+   "name": "Kimchi",
+   "aliases": [
+    "kimchi"
+   ],
+   "provides": [
+    "acid",
+    "heat",
+    "protein",
+    "umami"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "cut into pieces",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "fish_cake",
+   "name": "Fish Cake",
+   "aliases": [
+    "fish cake",
+    "fishcake"
+   ],
+   "provides": [
+    "protein",
+    "umami"
    ],
    "aisle": "Fish & seafood",
    "prep_verb": "cut into pieces",
@@ -914,6 +996,7 @@
     "root_veg",
     "starch",
     "starchy",
+    "sugar",
     "sweet"
    ],
    "aisle": "Rice, grains & bread",
@@ -1152,6 +1235,7 @@
    ],
    "provides": [
     "acid",
+    "umami",
     "water"
    ],
    "aisle": "Vegetables",
@@ -1207,6 +1291,7 @@
     "mushrooms"
    ],
    "provides": [
+    "umami",
     "water"
    ],
    "aisle": "Vegetables",
@@ -1599,6 +1684,7 @@
     "seaweed sheets"
    ],
    "provides": [
+    "umami",
     "water"
    ],
    "aisle": "Vegetables",
@@ -1615,6 +1701,7 @@
     "dried seaweed"
    ],
    "provides": [
+    "umami",
     "water"
    ],
    "aisle": "Vegetables",
@@ -1650,6 +1737,7 @@
    "provides": [
     "holds_shape",
     "starchy",
+    "sugar",
     "sweet",
     "water"
    ],
@@ -1658,6 +1746,60 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "root"
+  },
+  {
+   "id": "enoki",
+   "name": "Enoki Mushroom",
+   "aliases": [
+    "enoki"
+   ],
+   "provides": [],
+   "aisle": "Vegetables",
+   "prep_verb": "wash and chop",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "napa_cabbage",
+   "name": "Napa Cabbage",
+   "aliases": [
+    "napa cabbage",
+    "chinese cabbage",
+    "wombok"
+   ],
+   "provides": [
+    "leafy"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "wash and chop",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "shirataki",
+   "name": "Shirataki Noodles",
+   "aliases": [
+    "shirataki",
+    "konjac noodles"
+   ],
+   "provides": [],
+   "aisle": "Vegetables",
+   "prep_verb": "wash and chop",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "laksa_leaf",
+   "name": "Laksa Leaf",
+   "aliases": [
+    "laksa leaf",
+    "daun kesum"
+   ],
+   "provides": [],
+   "aisle": "Vegetables",
+   "prep_verb": "wash and chop",
+   "parent": "vegetables",
+   "category": "vegetables"
   },
   {
    "id": "sweeteners",
@@ -1783,6 +1925,7 @@
    ],
    "provides": [
     "acid",
+    "heat",
     "water"
    ],
    "aisle": "Condiments & sauces",
@@ -1858,7 +2001,8 @@
     "pepper"
    ],
    "provides": [
-    "aromatic"
+    "aromatic",
+    "heat"
    ],
    "aisle": "Herbs & spices",
    "prep_verb": "measure",
@@ -2147,7 +2291,8 @@
     "chillis"
    ],
    "provides": [
-    "aromatic"
+    "aromatic",
+    "heat"
    ],
    "aisle": "Herbs & spices",
    "prep_verb": "measure",
@@ -2338,6 +2483,84 @@
    "category": "seasonings"
   },
   {
+   "id": "kaffir_lime",
+   "name": "Kaffir Lime Leaves",
+   "aliases": [
+    "kaffir lime",
+    "makrut"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "gochugaru",
+   "name": "Gochugaru",
+   "aliases": [
+    "korean chilli flakes",
+    "gochugaru"
+   ],
+   "provides": [
+    "aromatic",
+    "heat"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "candlenut",
+   "name": "Candlenut",
+   "aliases": [
+    "candlenut",
+    "buah keras"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "shiitake_dried",
+   "name": "Dried Shiitake",
+   "aliases": [
+    "dried shiitake",
+    "dried mushroom"
+   ],
+   "provides": [
+    "aromatic",
+    "umami"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "bonito",
+   "name": "Bonito Flakes",
+   "aliases": [
+    "bonito",
+    "katsuobushi"
+   ],
+   "provides": [
+    "aromatic",
+    "umami"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
    "id": "condiments",
    "name": "Condiments",
    "aliases": [],
@@ -2354,6 +2577,7 @@
    ],
    "provides": [
     "salt",
+    "umami",
     "water"
    ],
    "aisle": "Condiments & sauces",
@@ -2411,6 +2635,7 @@
    ],
    "provides": [
     "salt",
+    "umami",
     "water"
    ],
    "aisle": "Condiments & sauces",
@@ -2425,7 +2650,8 @@
     "oyster sauce"
    ],
    "provides": [
-    "salt"
+    "salt",
+    "umami"
    ],
    "aisle": "Condiments & sauces",
    "prep_verb": "measure",
@@ -2455,7 +2681,8 @@
    ],
    "provides": [
     "salt",
-    "sugar"
+    "sugar",
+    "umami"
    ],
    "aisle": "Condiments & sauces",
    "prep_verb": "measure",
@@ -2469,7 +2696,8 @@
     "fish sauce"
    ],
    "provides": [
-    "salt"
+    "salt",
+    "umami"
    ],
    "aisle": "Condiments & sauces",
    "prep_verb": "measure",
@@ -2485,7 +2713,8 @@
     "chili paste"
    ],
    "provides": [
-    "aromatic"
+    "aromatic",
+    "heat"
    ],
    "aisle": "Condiments & sauces",
    "prep_verb": "measure",
@@ -2687,7 +2916,8 @@
     "miso"
    ],
    "provides": [
-    "salt"
+    "salt",
+    "umami"
    ],
    "aisle": "Condiments & sauces",
    "prep_verb": "measure",
@@ -2740,6 +2970,81 @@
     "salt",
     "sugar"
    ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "kombu",
+   "name": "Kombu",
+   "aliases": [
+    "kombu",
+    "kelp"
+   ],
+   "provides": [
+    "umami"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "gochujang",
+   "name": "Gochujang",
+   "aliases": [
+    "gochujang",
+    "korean chilli paste"
+   ],
+   "provides": [
+    "heat",
+    "umami"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "laksa_paste",
+   "name": "Laksa Paste",
+   "aliases": [
+    "laksa paste",
+    "rempah"
+   ],
+   "provides": [
+    "heat",
+    "umami"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "tom_yum_paste",
+   "name": "Tom Yum Paste",
+   "aliases": [
+    "tom yum paste"
+   ],
+   "provides": [
+    "heat",
+    "umami"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "shaoxing",
+   "name": "Shaoxing Wine",
+   "aliases": [
+    "shaoxing",
+    "chinese cooking wine"
+   ],
+   "provides": [],
    "aisle": "Condiments & sauces",
    "prep_verb": "measure",
    "parent": "condiments",
