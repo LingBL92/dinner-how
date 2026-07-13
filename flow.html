@@ -357,6 +357,34 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .ps-why{font-family:"Space Mono",monospace;font-size:9.5px;color:var(--muted);margin-top:1px}
 .pot-done{font-size:13px;color:var(--muted);padding:8px 0 4px;margin-left:46px}
 .pd-t{color:var(--cool);font-weight:700;font-family:"Space Mono",monospace}
+.pot-pick{margin-bottom:12px;border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.pp-lab{font-family:"Space Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--muted);padding:8px 12px;background:rgba(50,117,100,.05);border-bottom:1px solid var(--line)}
+.pp-row{display:flex;align-items:center;gap:9px;padding:9px 12px;cursor:pointer;user-select:none;border-top:1px solid var(--line)}
+.pp-row:first-of-type{border-top:none}
+.pp-row:hover{background:rgba(50,117,100,.03)}
+.pp-i{width:16px;height:16px;flex:none;display:flex;align-items:center;color:var(--muted);opacity:.55}
+.pp-i svg{width:16px;height:16px}
+.pp-row.on .pp-i{color:var(--cool);opacity:1}
+.pp-t{flex:1;display:flex;flex-direction:column;gap:1px}
+.pp-n{font-size:13px;font-weight:600;line-height:1.2}
+.pp-d{font-size:10.5px;color:var(--muted);line-height:1.3}
+.pp-row.on .pp-n{color:var(--cool);font-weight:700}
+.pp-row .dot{width:11px;height:11px;border-radius:50%;border:2px solid var(--muted);flex:none}
+.pp-row.on .dot{background:var(--cool);border-color:var(--cool)}
+.pot-swap{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:-2px 0 12px}
+.ps-l{font-family:"Space Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.ps-c{padding:3px 11px;border-radius:999px;border:1px solid var(--line);background:var(--panel);
+  font-size:11.5px;cursor:pointer;color:var(--muted);transition:.12s;user-select:none}
+.ps-c:hover{border-color:var(--cool);color:var(--cool)}
+.ps-c.on{background:rgba(50,117,100,.12);border-color:var(--cool);color:var(--cool);font-weight:600}
+.pot-out{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px;font-size:12px;line-height:2}
+.po-l{font-family:"Space Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.po-c{padding:3px 10px;border-radius:999px;background:rgba(27,16,11,.05);color:var(--muted);font-size:11.5px}
+.po-w{font-family:"Space Mono",monospace;font-size:9.5px;color:var(--muted);opacity:.75}
+.pot-unc{margin-top:8px;padding:9px 12px;background:rgba(168,114,24,.07);border-left:3px solid var(--gold);
+  border-radius:7px;font-size:12px;line-height:1.5;color:var(--muted)}
+.pot-unc strong{color:var(--gold)}
 .pot-gap{margin-top:8px;padding:10px 12px;background:rgba(168,114,24,.08);border-radius:9px;
   font-size:12.5px;line-height:1.5;color:var(--muted)}
 .pot-gap strong{color:var(--gold)}
@@ -517,7 +545,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.81</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.83</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2164,6 +2192,42 @@ function potCandidates(ingIds, R, dishes, AFF){
   const bySpecies={};
   proteins.forEach(id=>{ const sp=speciesOf(id); (bySpecies[sp]=bySpecies[sp]||[]).push(id); });
 
+  /* Cuts of one animal are ALTERNATIVES, not a combination. You do not put a thigh,
+     a breast AND a whole chicken in the same pot — that is three chickens. Pick the
+     one that best leads the broth (most body + depth), and offer the rest as swaps.
+     (Pork ribs + pork belly IS a real pairing, but a whole bird excludes its own parts,
+     and stacking two lean cuts adds nothing. So: one lead cut per species.) */
+  Object.keys(bySpecies).forEach(sp=>{
+    let cuts=bySpecies[sp];
+    if(cuts.length<2) return;
+    cuts=cuts.slice().sort((a,b)=>{
+      const A=BROTH_BASE[a]||{}, B=BROTH_BASE[b]||{};
+      return ((B.body||0)+(B.depth||0)) - ((A.body||0)+(A.depth||0));
+    });
+    /* A WHOLE animal excludes its own parts — you don't add a thigh to a whole chicken.
+       Otherwise, cuts CAN combine if they bring different things (ribs for body, belly
+       for fat), but two cuts of the same character add nothing: pick the better one. */
+    const whole=cuts.find(id=>/_whole$/.test(id));
+    if(whole){
+      bySpecies[sp]=[whole];
+      bySpecies[sp].alternatives=cuts.filter(id=>id!==whole);
+      return;
+    }
+    const keep=[]; const alts=[];
+    cuts.forEach(id=>{
+      const c=BROTH_BASE[id]||{};
+      // does it add something the kept cuts don't already have?
+      const adds = !keep.some(k=>{
+        const K=BROTH_BASE[k]||{};
+        return Math.abs((K.body||0)-(c.body||0))<=1 && Math.abs((K.depth||0)-(c.depth||0))<=1
+            && Math.abs((K.sweetness||0)-(c.sweetness||0))<=1;
+      });
+      if(!keep.length || adds) keep.push(id); else alts.push(id);
+    });
+    bySpecies[sp]=keep.slice(0,2);           // at most two cuts in one pot
+    bySpecies[sp].alternatives=alts.concat(keep.slice(2));
+  });
+
   const pots=Object.entries(bySpecies).map(([sp,ids])=>{
     // which of your OTHER ingredients belong in THIS pot?
     const belongs=[], uncertain=[];
@@ -2184,10 +2248,13 @@ function potCandidates(ingIds, R, dishes, AFF){
 
     const contents=ids.concat(belongs.map(x=>x.id));
     const ch=brothCharacter(contents,R);
+    const alts = ids.alternatives || [];
     return {
       species: sp,
       base: ids,
       baseNames: ids.map(id=>(R.byId[id]||{}).name||id),
+      alternatives: alts,
+      altNames: alts.map(id=>(R.byId[id]||{}).name||id),
       belongs, uncertain,
       contents,
       character: ch,
@@ -3447,21 +3514,42 @@ function renderOnePot(){
   if(cands.length>1){
     if(!FLOW.potBase || !cands.some(c=>c.species===FLOW.potBase)) FLOW.potBase=cands[0].species;
     const pick=document.createElement("div"); pick.className="pot-pick";
-    pick.innerHTML="<div class=\"pp-lab\">You\u2019ve got more than one protein \u2014 which pot?</div>";
-    const prow=document.createElement("div"); prow.className="pp-row";
+    const pl=document.createElement("div"); pl.className="pp-lab";
+    pl.textContent="You\u2019ve got more than one protein \u2014 which pot?";
+    pick.appendChild(pl);
     cands.forEach(c=>{
-      const b=document.createElement("div");
-      b.className="pp-chip"+(FLOW.potBase===c.species?" on":"");
-      b.innerHTML="<span class=\"pp-n\">"+c.baseNames.join(" + ")+"</span>"+
-                  "<span class=\"pp-d\">"+c.describe+"</span>";
-      b.onclick=()=>{ FLOW.potBase=c.species; renderOnePot(); };
-      prow.appendChild(b);
+      const on=FLOW.potBase===c.species;
+      const r=document.createElement("div"); r.className="pp-row"+(on?" on":"");
+      const isFish=["fish","prawn","squid","oyster"].includes(c.species);
+      r.innerHTML=
+        "<span class=\"pp-i\">"+(ROLE_ICON[isFish?"fish":"meat"]||"")+"</span>"+
+        "<span class=\"pp-t\"><span class=\"pp-n\">"+c.baseNames.join(" + ")+"</span>"+
+          "<span class=\"pp-d\">"+c.describe+"</span></span>"+
+        "<span class=\"dot\"></span>";
+      r.onclick=()=>{ FLOW.potBase=c.species; FLOW.potCut=null; renderOnePot(); };
+      pick.appendChild(r);
     });
-    pick.appendChild(prow);
     box.appendChild(pick);
   }
   const chosen = cands.find(c=>c.species===FLOW.potBase) || cands[0];
-  const potIngredients = chosen ? chosen.contents : ids;
+
+  // SWAP THE CUT: whole chicken → thigh, pork ribs → belly, and so on.
+  let potIngredients = chosen ? chosen.contents : ids;
+  if(chosen && chosen.alternatives && chosen.alternatives.length){
+    const swapTo = (FLOW.potCut && chosen.alternatives.includes(FLOW.potCut)) ? FLOW.potCut : null;
+    if(swapTo) potIngredients = chosen.contents.map(id=>chosen.base.includes(id)?swapTo:id);
+    const lead = swapTo || chosen.base[0];
+    const sw=document.createElement("div"); sw.className="pot-swap";
+    sw.innerHTML="<span class=\"ps-l\">cut</span>";
+    [chosen.base[0]].concat(chosen.alternatives).forEach(id=>{
+      const b=document.createElement("span");
+      b.className="ps-c"+(id===lead?" on":"");
+      b.textContent=nm(id);
+      b.onclick=()=>{ FLOW.potCut = (id===chosen.base[0]) ? null : id; renderOnePot(); };
+      sw.appendChild(b);
+    });
+    box.appendChild(sw);
+  }
 
   const seen=new Set(); const dirs=[];
   SEASONING_DIRS.forEach(x=>{ if(x.key==="clear"||seen.has(x.key))return; seen.add(x.key); dirs.push(x); });
@@ -3629,12 +3717,30 @@ function renderOnePot(){
 
   // what's NOT in this pot, and what has no precedent with the base
   if(chosen){
-    const leftOut = ids.filter(id=>!chosen.contents.includes(id));
+    // compare against what's ACTUALLY in the pot (after any cut swap), and never list
+    // the alternative cuts — they're offered as swaps above, not "left out".
+    /* Only name what plausibly belonged in THIS pot — not your whole pantry.
+       Other proteins are their own pots. Alternative cuts are swaps, shown above. */
+    const altSet=new Set(chosen.alternatives||[]);
+    const otherProt=new Set();
+    cands.forEach(c=>{ if(c!==chosen){ (c.base||[]).forEach(x=>otherProt.add(x)); (c.alternatives||[]).forEach(x=>otherProt.add(x)); } });
+    const leftOut = ids.filter(id=>
+      !potIngredients.includes(id) && !altSet.has(id) && !chosen.base.includes(id) &&
+      !otherProt.has(id) && (REF.byId[id]||{}).category!=="proteins");
     if(leftOut.length){
       const o=document.createElement("div"); o.className="pot-out";
-      o.innerHTML="<span class=\"po-l\">not in this pot</span>"+
-        leftOut.map(id=>"<span class=\"po-c\">"+nm(id)+"</span>").join("")+
-        "<span class=\"po-w\">save "+(leftOut.length>1?"them":"it")+" for another dish</span>";
+      const lab=document.createElement("span"); lab.className="po-l"; lab.textContent="not in this pot";
+      o.appendChild(lab);
+      leftOut.slice(0,8).forEach(id=>{
+        const c=document.createElement("span"); c.className="po-c"; c.textContent=nm(id); o.appendChild(c);
+      });
+      if(leftOut.length>8){
+        const m2=document.createElement("span"); m2.className="po-c";
+        m2.textContent="+"+(leftOut.length-8)+" more"; o.appendChild(m2);
+      }
+      const w=document.createElement("span"); w.className="po-w";
+      w.textContent="no precedent with "+chosen.baseNames.join(" or ").toLowerCase()+" yet";
+      o.appendChild(w);
       box.appendChild(o);
     }
     if(chosen.uncertain && chosen.uncertain.length){

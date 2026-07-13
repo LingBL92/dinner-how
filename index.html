@@ -1881,6 +1881,42 @@ function potCandidates(ingIds, R, dishes, AFF){
   const bySpecies={};
   proteins.forEach(id=>{ const sp=speciesOf(id); (bySpecies[sp]=bySpecies[sp]||[]).push(id); });
 
+  /* Cuts of one animal are ALTERNATIVES, not a combination. You do not put a thigh,
+     a breast AND a whole chicken in the same pot — that is three chickens. Pick the
+     one that best leads the broth (most body + depth), and offer the rest as swaps.
+     (Pork ribs + pork belly IS a real pairing, but a whole bird excludes its own parts,
+     and stacking two lean cuts adds nothing. So: one lead cut per species.) */
+  Object.keys(bySpecies).forEach(sp=>{
+    let cuts=bySpecies[sp];
+    if(cuts.length<2) return;
+    cuts=cuts.slice().sort((a,b)=>{
+      const A=BROTH_BASE[a]||{}, B=BROTH_BASE[b]||{};
+      return ((B.body||0)+(B.depth||0)) - ((A.body||0)+(A.depth||0));
+    });
+    /* A WHOLE animal excludes its own parts — you don't add a thigh to a whole chicken.
+       Otherwise, cuts CAN combine if they bring different things (ribs for body, belly
+       for fat), but two cuts of the same character add nothing: pick the better one. */
+    const whole=cuts.find(id=>/_whole$/.test(id));
+    if(whole){
+      bySpecies[sp]=[whole];
+      bySpecies[sp].alternatives=cuts.filter(id=>id!==whole);
+      return;
+    }
+    const keep=[]; const alts=[];
+    cuts.forEach(id=>{
+      const c=BROTH_BASE[id]||{};
+      // does it add something the kept cuts don't already have?
+      const adds = !keep.some(k=>{
+        const K=BROTH_BASE[k]||{};
+        return Math.abs((K.body||0)-(c.body||0))<=1 && Math.abs((K.depth||0)-(c.depth||0))<=1
+            && Math.abs((K.sweetness||0)-(c.sweetness||0))<=1;
+      });
+      if(!keep.length || adds) keep.push(id); else alts.push(id);
+    });
+    bySpecies[sp]=keep.slice(0,2);           // at most two cuts in one pot
+    bySpecies[sp].alternatives=alts.concat(keep.slice(2));
+  });
+
   const pots=Object.entries(bySpecies).map(([sp,ids])=>{
     // which of your OTHER ingredients belong in THIS pot?
     const belongs=[], uncertain=[];
@@ -1901,10 +1937,13 @@ function potCandidates(ingIds, R, dishes, AFF){
 
     const contents=ids.concat(belongs.map(x=>x.id));
     const ch=brothCharacter(contents,R);
+    const alts = ids.alternatives || [];
     return {
       species: sp,
       base: ids,
       baseNames: ids.map(id=>(R.byId[id]||{}).name||id),
+      alternatives: alts,
+      altNames: alts.map(id=>(R.byId[id]||{}).name||id),
       belongs, uncertain,
       contents,
       character: ch,
