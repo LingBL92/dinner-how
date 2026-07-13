@@ -297,15 +297,25 @@ function analyzeRecipe(ingStrings,steps,appliance,R,M,nativeSteps){
   const declared=new Set(ings.filter(i=>i.id).map(i=>i.id));
   const stepsText=steps.join(" ").replace(/([.!?])\s+/g,"$1\u0000").split("\u0000").map(s=>s.trim()).filter(Boolean);
 
-  let nComp=0;
-  ings.forEach(i=>{if(!i.id)return;
-    const a=new Set(R.anc[i.id]||[]); a.add(i.id);
-    for(const c of a){if(PREP_COMP_CATS.has(c)){nComp++;break;}}});
-
-  const prep=TM.prep.base_minutes+TM.prep.minutes_per_ingredient*nComp;
+  /* PREP is not "2 minutes per ingredient". You don't spend two minutes prepping soy
+     sauce. Charge only for ingredients that need real knife-work, and charge the small
+     ones (a clove of garlic) less than the big ones (jointing a chicken). */
+  const NO_PREP=/^(measure|pour|prep|squeeze)$/i;   // pantry pours, seasoning: no knife work
+  const LIGHT=/^(rinse|wash|pat dry|zest|crush)/i;
+  let prepUnits=0;
+  ings.forEach(i=>{
+    if(!i.id) return;
+    const ing=R.byId[i.id]||{};
+    const verb=(ing.prep_verb||"").trim();
+    if(!verb || NO_PREP.test(verb)) return;          // nothing to do
+    if(measureTypeOf(ing)==="assumed") { prepUnits+=0.25; return; }   // mince a clove: quick
+    prepUnits += LIGHT.test(verb) ? 0.5 : 1;
+  });
+  const prep=Math.round(TM.prep.base_minutes+TM.prep.minutes_per_ingredient*prepUnits);
   let total=prep, beThere=prep, handsOff=0, makeahead=0;
   const mult=(TM.appliance_time_multiplier[appliance]!==undefined)?TM.appliance_time_multiplier[appliance]:1.0;
   let hasLiquid=false, noCookCharged=false, active=new Set();
+  let lastUntimedMethod=null;
   const allR=new Set(), stepRecs=[];
 
   stepsText.forEach(text=>{
@@ -329,11 +339,21 @@ function analyzeRecipe(ingStrings,steps,appliance,R,M,nativeSteps){
     fired.forEach(r=>allR.add(r));
     mids.forEach(mid=>{
       // Assembling a dish is one activity, however many sentences describe it.
-      if(mid==="no_cook"){ if(noCookCharged)return; noCookCharged=true; }
+      if(mid==="no_cook"){ if(noCookCharged)return; noCookCharged=true; }   // once per dish, not per step
       const mt=M.methods[mid].timing;
       let att=mt.attention;
       const exp=explicitMinutes(text);
       let mins=exp||mt.minutes;
+      /* CONTINUOUS ACTION. "Scramble the eggs" then "stir-fry the tomatoes" then "return
+         the eggs" is ONE stint at the wok, not three. Charging each un-timed step the
+         method's full default turned a 6-minute stir-fry into a 17-minute one.
+         So: the first un-timed step of a run costs full; each further one costs a little. */
+      if(!exp){
+        if(lastUntimedMethod===mid){ mins=Math.max(1, Math.round(mt.minutes*0.35)); }
+        lastUntimedMethod=mid;
+      } else {
+        lastUntimedMethod=null;
+      }
       if(mid==="simmer_reduce"&&!exp&&BRIEF.some(b=>low.includes(b))){att="active";mins=2;}
       if(att==="semi_active"&&SET_FORGET.has(appliance))att="passive";
       const scale=(!exp||(RESCALE_STATED.has(appliance)&&!nativeSteps))?mult:1;
@@ -1302,7 +1322,7 @@ const SEASONING_DIRS=[
    note:"boiled hard until the fat emulsifies \u2014 opaque and rich"},
   // --- Malay / Peranakan ---
   {key:"rempah",      label:"Rempah (Malay/Peranakan)", region:"Malay/Peranakan",
-   markers:["belacan","candlenut","laksa_paste","laksa_leaf","lemongrass","galangal","kaffir_lime"], need:1,
+   markers:["belacan","candlenut","laksa_paste","sambal","laksa_leaf","lemongrass","galangal","kaffir_lime"], need:1,
    also:["turmeric","chilli","shallot","coconut_milk"],
    note:"pounded spice paste \u2014 belacan, lemongrass, galangal"},
   {key:"assam",       label:"Sour-hot (assam / tom yum)", region:"SEA",

@@ -380,6 +380,9 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   padding-left:10px;position:relative}
 .st-job::before{content:"\2022";position:absolute;left:0;color:#8fd0bd}
 .sc-bar.prep{background:rgba(168,114,24,.22)}
+.sc-early .sc-name em{color:var(--gold)}
+.sc-early .sc-bar{background:rgba(168,114,24,.18)}
+.sc-early .sc-active{background:var(--gold)}
 .sc-bar.prep .sc-active{background:var(--gold)}
 .sc-prep .sc-name{color:var(--gold)}
 .sc-prep .sc-name em{color:var(--gold);opacity:.75}
@@ -481,7 +484,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.67</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.71</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -840,15 +843,25 @@ function analyzeRecipe(ingStrings,steps,appliance,R,M,nativeSteps){
   const declared=new Set(ings.filter(i=>i.id).map(i=>i.id));
   const stepsText=steps.join(" ").replace(/([.!?])\s+/g,"$1\u0000").split("\u0000").map(s=>s.trim()).filter(Boolean);
 
-  let nComp=0;
-  ings.forEach(i=>{if(!i.id)return;
-    const a=new Set(R.anc[i.id]||[]); a.add(i.id);
-    for(const c of a){if(PREP_COMP_CATS.has(c)){nComp++;break;}}});
-
-  const prep=TM.prep.base_minutes+TM.prep.minutes_per_ingredient*nComp;
+  /* PREP is not "2 minutes per ingredient". You don't spend two minutes prepping soy
+     sauce. Charge only for ingredients that need real knife-work, and charge the small
+     ones (a clove of garlic) less than the big ones (jointing a chicken). */
+  const NO_PREP=/^(measure|pour|prep|squeeze)$/i;   // pantry pours, seasoning: no knife work
+  const LIGHT=/^(rinse|wash|pat dry|zest|crush)/i;
+  let prepUnits=0;
+  ings.forEach(i=>{
+    if(!i.id) return;
+    const ing=R.byId[i.id]||{};
+    const verb=(ing.prep_verb||"").trim();
+    if(!verb || NO_PREP.test(verb)) return;          // nothing to do
+    if(measureTypeOf(ing)==="assumed") { prepUnits+=0.25; return; }   // mince a clove: quick
+    prepUnits += LIGHT.test(verb) ? 0.5 : 1;
+  });
+  const prep=Math.round(TM.prep.base_minutes+TM.prep.minutes_per_ingredient*prepUnits);
   let total=prep, beThere=prep, handsOff=0, makeahead=0;
   const mult=(TM.appliance_time_multiplier[appliance]!==undefined)?TM.appliance_time_multiplier[appliance]:1.0;
   let hasLiquid=false, noCookCharged=false, active=new Set();
+  let lastUntimedMethod=null;
   const allR=new Set(), stepRecs=[];
 
   stepsText.forEach(text=>{
@@ -872,11 +885,21 @@ function analyzeRecipe(ingStrings,steps,appliance,R,M,nativeSteps){
     fired.forEach(r=>allR.add(r));
     mids.forEach(mid=>{
       // Assembling a dish is one activity, however many sentences describe it.
-      if(mid==="no_cook"){ if(noCookCharged)return; noCookCharged=true; }
+      if(mid==="no_cook"){ if(noCookCharged)return; noCookCharged=true; }   // once per dish, not per step
       const mt=M.methods[mid].timing;
       let att=mt.attention;
       const exp=explicitMinutes(text);
       let mins=exp||mt.minutes;
+      /* CONTINUOUS ACTION. "Scramble the eggs" then "stir-fry the tomatoes" then "return
+         the eggs" is ONE stint at the wok, not three. Charging each un-timed step the
+         method's full default turned a 6-minute stir-fry into a 17-minute one.
+         So: the first un-timed step of a run costs full; each further one costs a little. */
+      if(!exp){
+        if(lastUntimedMethod===mid){ mins=Math.max(1, Math.round(mt.minutes*0.35)); }
+        lastUntimedMethod=mid;
+      } else {
+        lastUntimedMethod=null;
+      }
       if(mid==="simmer_reduce"&&!exp&&BRIEF.some(b=>low.includes(b))){att="active";mins=2;}
       if(att==="semi_active"&&SET_FORGET.has(appliance))att="passive";
       const scale=(!exp||(RESCALE_STATED.has(appliance)&&!nativeSteps))?mult:1;
@@ -1845,7 +1868,7 @@ const SEASONING_DIRS=[
    note:"boiled hard until the fat emulsifies \u2014 opaque and rich"},
   // --- Malay / Peranakan ---
   {key:"rempah",      label:"Rempah (Malay/Peranakan)", region:"Malay/Peranakan",
-   markers:["belacan","candlenut","laksa_paste","laksa_leaf","lemongrass","galangal","kaffir_lime"], need:1,
+   markers:["belacan","candlenut","laksa_paste","sambal","laksa_leaf","lemongrass","galangal","kaffir_lime"], need:1,
    also:["turmeric","chilli","shallot","coconut_milk"],
    note:"pounded spice paste \u2014 belacan, lemongrass, galangal"},
   {key:"assam",       label:"Sour-hot (assam / tom yum)", region:"SEA",
@@ -2072,14 +2095,14 @@ function renderType(){
   const m1=document.createElement("div"); m1.className="tmode"+(composing?"":" open");
   const h1=document.createElement("div"); h1.className="tmode-head";
   h1.innerHTML="<span class=\"tm-t\">Select dish type</span><span class=\"tm-x\"></span>";
-  h1.onclick=()=>{ if(FLOW.mode!=="type"){ FLOW.mode="type"; FLOW.compose=null; FLOW.mealPick=null; renderType(); recompute(); } };
+  h1.onclick=()=>{ if(FLOW.mode!=="type"){ FLOW.mode="type"; FLOW.compose=null; FLOW.mealPick=null; clearGrocery(); renderType(); recompute(); } };
   m1.appendChild(h1);
   const body1=document.createElement("div"); body1.className="tmode-body";
   TYPE_OPTS.forEach(([id,label])=>{
     const t=document.createElement("div"); t.className="tgl"+(FLOW.types.has(id)?" on":"");
     t.setAttribute("data-type",id);
     t.innerHTML="<span>"+label+"</span><span class=\"dot\" data-typedot=\""+id+"\"></span>";
-    t.onclick=()=>{ FLOW.mode="type"; FLOW.compose=null; FLOW.mealPick=null; toggleType(id); };
+    t.onclick=()=>{ FLOW.mode="type"; FLOW.compose=null; FLOW.mealPick=null; clearGrocery(); toggleType(id); };
     body1.appendChild(t);
   });
   m1.appendChild(body1);
@@ -2102,10 +2125,12 @@ function renderType(){
   m2.appendChild(body2);
   box.appendChild(m2);
 }
+function clearGrocery(){ const g=el("grocery"); if(g) g.innerHTML=""; }
 function toggleCompose(id){
   FLOW.mode="compose";
   if(FLOW.compose===id){ FLOW.compose=null; FLOW.mealPick=null; }   // deselect the template, stay in compose
-  else { FLOW.compose=id; FLOW.mealPick=null; FLOW.types.clear(); }
+  else { FLOW.compose=id; FLOW.mealPick=null; FLOW.potPath=null; FLOW.types.clear(); }
+  clearGrocery();          // the old list belongs to the mode you just left
   renderType(); recompute();
 }
 
@@ -2239,7 +2264,7 @@ function renderRecipes(){
 
   // ===== COMPOSE MODE: build a meal from slots (e.g. family meal = rice + meat + veg) =====
   if(FLOW.compose==="family_meal"){ renderMealBuilder(); return; }
-  if(FLOW.compose==="onepot"){ renderOnePot(); return; }
+  if(FLOW.compose==="onepot"){ clearGrocery(); renderOnePot(); return; }
 
   // which of MY ingredients does a result use (dish has it, or a sub maps to it)
   function usesOf(r){
@@ -2571,6 +2596,15 @@ function renderSchedule(sc, picked){
   const byAppl={};
   sc.items.forEach(it=>{ (byAppl[it.ap]=byAppl[it.ap]||[]).push(it); });
   const notes=[];
+  // A dish that finishes well before the meal isn't a scheduling failure — it means
+  // YOU are the bottleneck. Say so plainly rather than leaving a bar hanging.
+  const early=sc.items.filter(it=>sc.wall-it.done>5).sort((a,b)=>(sc.wall-b.done)-(sc.wall-a.done));
+  if(early.length){
+    const totalActive=sc.items.reduce((n,it)=>n+it.fp+it.ac,0)+sc.sharedPrep;
+    notes.push(early.map(it=>it.d.name).join(" and ")+" finish"+(early.length>1?"":"es")+" early \u2014 "+
+      "you can only cook one thing at a time, and these dishes need "+totalActive+" min of your hands in a "+
+      sc.wall+" min meal. Keep "+(early.length>1?"them":"it")+" warm, or reheat briefly before serving.");
+  }
   if(sc.cobake) notes.push("Both "+sc.cobake.names.join(" and ")+" go in the oven together at "+sc.cobake.temp+"\u00b0C"+(sc.cobake.saved?" \u2014 saves "+sc.cobake.saved+" min":"")+".");
   if(sc.holdingPeak>=3) notes.push("At the busiest point you\u2019ll have "+sc.holdingPeak+" piles of prepped ingredients waiting \u2014 clear some bench space.");
   Object.keys(byAppl).forEach(ap=>{
@@ -2626,9 +2660,11 @@ function renderSchedule(sc, picked){
     if(off) jobs.push("Then leave it \u2014 "+off+" min hands-off.");
     row.title=it.d.name+" \u2014 "+(APPL[it.ap]||it.ap).toLowerCase()+"\n"+
       (it.start===0?"Start straight away":"Start "+it.start+" min in")+"\n"+jobs.join("\n");
+    const isEarly = (sc.wall-it.done)>5;
+    if(isEarly) row.className+=" sc-early";
     row.innerHTML=
       "<div class=\"sc-name\">"+it.d.name+
-        "<em>"+(APPL[it.ap]||it.ap)+"</em></div>"+
+        "<em>"+(APPL[it.ap]||it.ap)+(isEarly?" \u00b7 keep warm":"")+"</em></div>"+
       "<div class=\"sc-track\">"+
         "<div class=\"sc-bar\" style=\"left:"+pct(it.start)+";width:"+pct(Math.max(1,dur))+"\">"+
           "<span class=\"sc-active\" style=\"width:"+pct(active)+"\"></span>"+
@@ -2972,10 +3008,27 @@ function schedule(list){
     const ord=items.slice().sort((a,b)=>(b.fp+b.ac+b.off)-(a.fp+a.ac+a.off));
     ord.forEach(it=>{const S=rebuild(it);let t=sharedPrep,g=0;while(!fit(S,it,t)&&g++<9000)t++;setPos(it,t);});
     const W=Math.max(sharedPrep,...items.map(i=>i.done));
-    const pull=i=>i.fresh||i.d.role==="base"||i.ac<=3;
-    items.filter(pull).sort((a,b)=>a.off-b.off).forEach(it=>{const S=rebuild(it);let best=it.start;
-      for(let t=Math.max(sharedPrep,W-(it.fp+it.ac+it.off));t>=it.start;t--){if(fit(S,it,t)){best=t;break;}}
-      setPos(it,best);});
+    /* Pull EVERY dish as late as it will fit. A dish that finishes early just sits
+       there going cold. Only a dish with real hands-off time (a braise you must start
+       early) has any reason to finish ahead — and even then, later is better.
+       Previously this only pulled "fresh" or tiny dishes, so a 17-minute stir-fry was
+       scheduled first and sat for 18 minutes before dinner. */
+    const pull=i=>true;
+    /* Pull every dish AS LATE AS IT WILL GO. The greedy pass places the longest dish
+       first; without this, a 22-minute stir-fry stays at the front and sits cold for
+       18 minutes. Search from the latest feasible slot backwards, and let a dish move
+       LATER than the greedy pass put it — that was the bug. */
+    const wallNow=()=>Math.max(sharedPrep,...items.map(i=>i.done));
+    items.filter(pull)
+      .sort((a,b)=>(a.off-b.off)||((a.fp+a.ac)-(b.fp+b.ac)))   // least hands-off, shortest first
+      .forEach(it=>{
+        const S=rebuild(it);
+        const W2=wallNow();
+        const latest=Math.max(sharedPrep, W2-(it.fp+it.ac+it.off));
+        let best=null;
+        for(let t=latest;t>=sharedPrep;t--){ if(fit(S,it,t)){ best=t; break; } }
+        setPos(it, best!=null?best:it.start);
+      });
     const minStart=items.length?Math.min(...items.map(i=>i.start)):sharedPrep;
     const origin=minStart-sharedPrep;
     if(origin>0)items.forEach(it=>{it.start-=origin;it.cookStart-=origin;it.done-=origin;});
