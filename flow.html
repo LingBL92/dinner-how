@@ -196,10 +196,20 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .tgl.big span em{display:block;font-style:normal;font-size:10px;color:var(--muted);font-family:"Space Mono",monospace;margin-top:3px;letter-spacing:.02em}
 .tgl.big.on span em{color:var(--cool);opacity:.85}
 .meal-intro{font-size:12.5px;color:var(--muted);margin-bottom:10px}
-.meal-shape{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
-.ms-chip{display:flex;align-items:center;gap:5px;padding:5px 8px;border-radius:9px;
-  border:1px solid var(--line);background:var(--panel);opacity:.5;transition:.13s}
-.ms-chip.on{opacity:1;border-color:var(--cool)}
+/* the meal shape, nested under Family meal in the Type panel */
+.ms-nest{margin:3px 0 6px 10px;padding-left:10px;border-left:2px solid rgba(50,117,100,.22)}
+.ms-line{display:flex;align-items:center;gap:6px;padding:2.5px 0;font-size:11.5px;color:var(--muted)}
+.ms-line.on{color:var(--ink)}
+.ms-i{width:13px;height:13px;display:flex;align-items:center;color:var(--muted);opacity:.45;flex:none}
+.ms-i svg{width:13px;height:13px}
+.ms-line.on .ms-i{color:var(--cool);opacity:1}
+.ms-l{flex:1;line-height:1.2}
+.ms-b{width:16px;height:16px;border:1px solid var(--line);background:var(--panel);border-radius:4px;
+  font-size:11px;line-height:1;cursor:pointer;color:var(--muted);display:flex;align-items:center;
+  justify-content:center;padding:0;flex:none;font-family:inherit}
+.ms-b:hover{border-color:var(--cool);color:var(--cool)}
+.ms-n{font-family:"Space Mono",monospace;font-size:10.5px;min-width:11px;text-align:center;flex:none}
+.ms-line.on .ms-n{color:var(--cool);font-weight:700}
 .ms-i{width:15px;height:15px;color:var(--cool);display:flex;align-items:center}
 .ms-i svg{width:15px;height:15px}
 .ms-l{font-size:12px;font-weight:600}
@@ -498,7 +508,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.75</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.76</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2282,10 +2292,42 @@ function renderType(){
   const body2=document.createElement("div"); body2.className="tmode-body";
   COMPOSE_OPTS.forEach(([id,label])=>{
     const t=document.createElement("div"); t.className="tgl big"+(FLOW.compose===id?" on":"");
-    const hint = id==="family_meal" ? "1 rice \u00b7 1 meat \u00b7 1 veg" : "single-vessel dishes";
+    const shp=FLOW.mealShape||MEAL_DEFAULT;
+    const hint = id==="family_meal"
+      ? (MEAL_ROLES.filter(([r])=>shp[r]).map(([r,l])=>shp[r]+" "+l.toLowerCase()).join(" \u00b7 ")||"nothing on the table")
+      : "single-vessel dishes";
     t.innerHTML="<span>"+label+"<em>"+hint+"</em></span><span class=\"dot\"></span>";
     t.onclick=()=>toggleCompose(id);
     body2.appendChild(t);
+
+    // THE MEAL SHAPE lives here — indented under Family meal, because choosing what's
+    // on the table is part of choosing the meal, not part of reading the result.
+    if(id==="family_meal" && FLOW.compose==="family_meal"){
+      if(!FLOW.mealShape) FLOW.mealShape={...MEAL_DEFAULT};
+      const sh=FLOW.mealShape;
+      const nest=document.createElement("div"); nest.className="ms-nest";
+      MEAL_ROLES.forEach(([role,rl])=>{
+        const n=sh[role]||0;
+        const line=document.createElement("div"); line.className="ms-line"+(n?" on":"");
+        line.innerHTML=
+          "<span class=\"ms-i\">"+(ROLE_ICON[role]||"")+"</span>"+
+          "<span class=\"ms-l\">"+rl+"</span>"+
+          "<button class=\"ms-b\" data-d=\"-1\">\u2212</button>"+
+          "<span class=\"ms-n\">"+n+"</span>"+
+          "<button class=\"ms-b\" data-d=\"1\">+</button>";
+        line.onclick=(e)=>{
+          const b=e.target&&e.target.closest?e.target.closest(".ms-b"):null;
+          if(!b) return;
+          e.stopPropagation();
+          const d=parseInt(b.getAttribute("data-d"),10);
+          sh[role]=Math.max(0,Math.min(3,(sh[role]||0)+d));
+          FLOW.mealPick=null;
+          renderType(); recompute();
+        };
+        nest.appendChild(line);
+      });
+      body2.appendChild(nest);
+    }
   });
   m2.appendChild(body2);
   box.appendChild(m2);
@@ -2675,28 +2717,6 @@ function renderMealBuilder(){
   intro.innerHTML="Build a family meal &mdash; pick one from each row.";
   box.appendChild(intro);
 
-  // --- what shape of meal? (matches the composer: 1 rice, 1 veg, 1 meat by default) ---
-  const shapeBox=document.createElement("div"); shapeBox.className="meal-shape";
-  MEAL_ROLES.forEach(([role,label])=>{
-    const n=shape[role]||0;
-    const chip=document.createElement("div"); chip.className="ms-chip"+(n?" on":"");
-    chip.innerHTML="<span class=\"ms-i\">"+(ROLE_ICON[role]||"")+"</span>"+
-      "<span class=\"ms-l\">"+label+"</span>"+
-      "<button class=\"ms-b\" data-d=\"-1\">\u2212</button>"+
-      "<span class=\"ms-n\">"+n+"</span>"+
-      "<button class=\"ms-b\" data-d=\"1\">+</button>";
-    chip.onclick=(e)=>{
-      const b=e.target.closest?e.target.closest(".ms-b"):null;
-      if(!b) return;
-      e.stopPropagation();
-      const d=parseInt(b.getAttribute("data-d"),10);
-      FLOW.mealShape[role]=Math.max(0,Math.min(3,(FLOW.mealShape[role]||0)+d));
-      FLOW.mealPick=null;
-      renderMealBuilder();
-    };
-    shapeBox.appendChild(chip);
-  });
-  box.appendChild(shapeBox);
 
   const missing=[];
   slots.forEach(([role,label,slotIdx])=>{
