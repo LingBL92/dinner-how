@@ -178,6 +178,25 @@
    "cut": "Steak/Sirloin"
   },
   {
+   "id": "beef_mince",
+   "name": "Minced Beef",
+   "aliases": [
+    "minced beef",
+    "beef mince",
+    "ground beef"
+   ],
+   "provides": [
+    "fat_solid",
+    "protein",
+    "umami"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "none needed",
+   "parent": "beef",
+   "category": "proteins",
+   "form": "mince"
+  },
+  {
    "id": "chicken",
    "name": "Chicken",
    "aliases": [
@@ -288,6 +307,24 @@
    "cut_note": "the whole bird \u2014 poach, roast or braise"
   },
   {
+   "id": "chicken_mince",
+   "name": "Minced Chicken",
+   "aliases": [
+    "minced chicken",
+    "chicken mince",
+    "ground chicken"
+   ],
+   "provides": [
+    "fat_solid",
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "none needed",
+   "parent": "chicken",
+   "category": "proteins",
+   "form": "mince"
+  },
+  {
    "id": "pork",
    "name": "Pork",
    "aliases": [
@@ -385,6 +422,25 @@
    "category": "proteins",
    "cut_role": "quick",
    "cut": "Loin/Chop"
+  },
+  {
+   "id": "pork_mince",
+   "name": "Minced Pork",
+   "aliases": [
+    "minced pork",
+    "pork mince",
+    "ground pork"
+   ],
+   "provides": [
+    "fat_solid",
+    "protein",
+    "umami"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "none needed",
+   "parent": "pork",
+   "category": "proteins",
+   "form": "mince"
   },
   {
    "id": "fish",
