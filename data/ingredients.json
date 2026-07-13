@@ -1457,6 +1457,21 @@
    "category": "starches"
   },
   {
+   "id": "shirataki",
+   "name": "Shirataki Noodles",
+   "aliases": [
+    "shirataki",
+    "konjac noodles"
+   ],
+   "provides": [
+    "starch"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "rinse",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
    "id": "vegetables",
    "name": "Vegetables",
    "aliases": [],
@@ -2050,7 +2065,8 @@
    "aisle": "Vegetables",
    "prep_verb": "trim",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "fungi"
   },
   {
    "id": "napa_cabbage",
@@ -2066,20 +2082,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
-  },
-  {
-   "id": "shirataki",
-   "name": "Shirataki Noodles",
-   "aliases": [
-    "shirataki",
-    "konjac noodles"
-   ],
-   "provides": [],
-   "aisle": "Vegetables",
-   "prep_verb": "rinse",
-   "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "leafy"
   },
   {
    "id": "laksa_leaf",
@@ -2092,7 +2096,8 @@
    "aisle": "Vegetables",
    "prep_verb": "wash and chop",
    "parent": "vegetables",
-   "category": "vegetables"
+   "category": "vegetables",
+   "group": "aromatic"
   },
   {
    "id": "sweeteners",
