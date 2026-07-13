@@ -894,6 +894,23 @@
    "category": "proteins"
   },
   {
+   "id": "salted_fish",
+   "name": "Salted Fish",
+   "aliases": [
+    "salted fish",
+    "ikan masin"
+   ],
+   "provides": [
+    "protein",
+    "salt",
+    "umami"
+   ],
+   "aisle": "Fish & seafood",
+   "prep_verb": "cut into pieces",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
    "id": "dairy",
    "name": "Dairy",
    "aliases": [],
@@ -1714,7 +1731,7 @@
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "wash and chop",
+   "prep_verb": "cut into batons",
    "parent": "vegetables",
    "category": "vegetables",
    "group": "fruiting"
@@ -1892,7 +1909,7 @@
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "wash and chop",
+   "prep_verb": "wash well",
    "parent": "vegetables",
    "category": "vegetables",
    "group": "leafy"
@@ -1941,7 +1958,7 @@
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "wash and chop",
+   "prep_verb": "trim",
    "parent": "vegetables",
    "category": "vegetables",
    "group": "fruiting"
@@ -2031,7 +2048,7 @@
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "wash and chop",
+   "prep_verb": "peel and slice",
    "parent": "vegetables",
    "category": "vegetables",
    "group": "root"
@@ -2098,6 +2115,24 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "aromatic"
+  },
+  {
+   "id": "chye_sim",
+   "name": "Chye Sim",
+   "aliases": [
+    "chye sim",
+    "choy sum",
+    "cai xin"
+   ],
+   "provides": [
+    "leafy",
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "wash and trim",
+   "parent": "vegetables",
+   "category": "vegetables",
+   "group": "leafy"
   },
   {
    "id": "sweeteners",
@@ -2895,6 +2930,42 @@
    "category": "seasonings"
   },
   {
+   "id": "wolfberry",
+   "name": "Wolfberry",
+   "aliases": [
+    "wolfberry",
+    "goji",
+    "goji berry",
+    "kei chi"
+   ],
+   "provides": [
+    "aromatic",
+    "sugar"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "fermented_beancurd",
+   "name": "Fermented Beancurd",
+   "aliases": [
+    "fermented beancurd",
+    "fu yu",
+    "nam yu"
+   ],
+   "provides": [
+    "aromatic",
+    "salt",
+    "umami"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
    "id": "condiments",
    "name": "Condiments",
    "aliases": [],
@@ -3390,6 +3461,23 @@
    "aliases": [
     "light soy sauce",
     "light soy"
+   ],
+   "provides": [
+    "salt",
+    "umami"
+   ],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "shrimp_paste",
+   "name": "Shrimp Paste",
+   "aliases": [
+    "shrimp paste",
+    "hae ko",
+    "petis"
    ],
    "provides": [
     "salt",

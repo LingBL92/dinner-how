@@ -3510,6 +3510,317 @@
    "serves": 3,
    "base_volume": 0,
    "fresh": true
+  },
+  {
+   "name": "Stir-Fried Beansprouts with Salted Fish",
+   "role": "veg",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "300 g beansprouts",
+    "30 g salted fish",
+    "3 clove garlic",
+    "2 chilli",
+    "1 scallion",
+    "2 tablespoons vegetable oil",
+    "1 teaspoon light soy sauce"
+   ],
+   "steps": [
+    "Rinse the beansprouts and pick off the straggly tails if you can be bothered.",
+    "Fry the diced salted fish in oil over medium heat until it is crisp and smells strong, then lift it out.",
+    "Turn the heat to high and fry the garlic and chilli for 20 seconds.",
+    "Throw in the beansprouts and toss hard for 90 seconds \u2014 they should stay squeaky, not go limp.",
+    "Return the salted fish, season with soy, and take it straight off the heat."
+   ],
+   "handson_action": "tossing over high heat",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": true
+  },
+  {
+   "name": "Braised Napa Cabbage with Dried Shrimp",
+   "role": "veg",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "500 g napa cabbage",
+    "2 tablespoons dried shrimp",
+    "4 clove garlic",
+    "2 dried shiitake",
+    "1 tablespoon oyster sauce",
+    "1 cup water",
+    "2 tablespoons vegetable oil",
+    "1 teaspoon sesame oil"
+   ],
+   "steps": [
+    "Soak the dried shrimp and shiitake in warm water for 15 minutes, then slice the mushrooms. Keep the soaking water.",
+    "Fry the garlic and dried shrimp in oil until fragrant.",
+    "Add the cabbage and toss until it begins to wilt.",
+    "Pour in the mushroom water and oyster sauce, cover, and simmer for 12 minutes until the cabbage is soft and sweet.",
+    "Finish with sesame oil."
+   ],
+   "handson_action": "stirring occasionally",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": false
+  },
+  {
+   "name": "Sambal Okra",
+   "role": "veg",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "300 g okra",
+    "2 tablespoons sambal",
+    "1 tablespoon dried shrimp",
+    "3 shallots",
+    "1 tablespoon tamarind",
+    "2 tablespoons vegetable oil",
+    "1 teaspoon white sugar",
+    "1 teaspoon salt"
+   ],
+   "steps": [
+    "Trim the okra but leave them whole \u2014 cutting them makes them slimy.",
+    "Blanch the okra for 2 minutes and drain well.",
+    "Pound the shallots and dried shrimp to a rough paste.",
+    "Fry the paste and sambal in oil for 4 minutes until the oil separates and it smells sweet.",
+    "Stir in the tamarind and sugar.",
+    "Fold the okra through the sambal for 1 minute, just to coat.",
+    "Season and serve."
+   ],
+   "handson_action": "frying the sambal",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": true
+  },
+  {
+   "name": "Chye Sim with Oyster Sauce",
+   "role": "veg",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "400 g chye sim",
+    "4 clove garlic",
+    "2 tablespoons oyster sauce",
+    "1 teaspoon sesame oil",
+    "1 tablespoon vegetable oil",
+    "1 teaspoon white sugar"
+   ],
+   "steps": [
+    "Bring a pot of water to a rolling boil with a splash of oil and a pinch of salt.",
+    "Blanch the chye sim for 60 seconds \u2014 it should still have a snap.",
+    "Drain it well and lay it out on the plate.",
+    "Fry the sliced garlic in oil until it just turns gold.",
+    "Stir the oyster sauce, sugar and sesame oil into the hot garlic oil.",
+    "Pour the sauce over the greens and serve at once."
+   ],
+   "handson_action": "blanching and dressing",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": true
+  },
+  {
+   "name": "Steamed Eggplant with Garlic and Soy",
+   "role": "veg",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "2 eggplant",
+    "6 clove garlic",
+    "2 scallion",
+    "1 chilli",
+    "2 tablespoons light soy sauce",
+    "1 tablespoon sesame oil",
+    "1 teaspoon white sugar",
+    "1 tablespoon vegetable oil"
+   ],
+   "steps": [
+    "Cut the eggplant into long batons and lay them on a heatproof plate.",
+    "Steam for 10 minutes, until a chopstick slides through with no resistance.",
+    "Tip away the water that collects on the plate \u2014 it will make the dish watery.",
+    "Fry the minced garlic and chilli in oil over low heat until pale gold; do not let it brown.",
+    "Stir in the soy, sugar and sesame oil.",
+    "Pour the garlic dressing over the eggplant and scatter the scallion."
+   ],
+   "handson_action": "steaming and dressing",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": false
+  },
+  {
+   "name": "Watercress and Wolfberry Soup",
+   "role": "veg",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop",
+    "slow_cooker"
+   ],
+   "ingredients": [
+    "300 g watercress",
+    "2 tablespoons wolfberry",
+    "4 dried shiitake",
+    "3 slice ginger",
+    "6 cups water",
+    "1 teaspoon salt"
+   ],
+   "steps": [
+    "Wash the watercress well \u2014 grit hides in the stems.",
+    "Bring the water to a boil with the ginger and soaked shiitake.",
+    "Add the watercress and simmer gently for 20 minutes, until it collapses and the broth turns green and sweet.",
+    "Add the wolfberries for the last 5 minutes.",
+    "Season with salt."
+   ],
+   "handson_action": "washing the greens",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": false
+  },
+  {
+   "name": "Braised Daikon with Mushroom",
+   "role": "veg",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop",
+    "pressure_cooker"
+   ],
+   "ingredients": [
+    "1 daikon",
+    "4 dried shiitake",
+    "3 clove garlic",
+    "2 slice ginger",
+    "1 scallion",
+    "1 tablespoon light soy sauce",
+    "1 tablespoon oyster sauce",
+    "2 cups water",
+    "1 tablespoon vegetable oil"
+   ],
+   "steps": [
+    "Peel the daikon and cut it into thick rounds.",
+    "Soak the shiitake and slice them, keeping the water.",
+    "Fry the garlic and ginger in oil until fragrant.",
+    "Add the daikon and mushrooms and toss for 2 minutes.",
+    "Pour in the mushroom water and the sauces, cover, and simmer for 30 minutes until the daikon is translucent and soft.",
+    "Finish with scallion."
+   ],
+   "handson_action": "simmering",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": false
+  },
+  {
+   "name": "Stir-Fried Pumpkin with Egg",
+   "role": "veg",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "500 g pumpkin",
+    "2 egg",
+    "4 clove garlic",
+    "1 scallion",
+    "2 tablespoons vegetable oil",
+    "1 teaspoon salt",
+    "1 teaspoon white pepper",
+    "3 tablespoons water"
+   ],
+   "steps": [
+    "Peel the pumpkin and slice it thin so it cooks fast.",
+    "Fry the garlic in oil until fragrant.",
+    "Add the pumpkin and toss, then add the water, cover, and let it steam for 5 minutes until just tender.",
+    "Push the pumpkin aside, pour in the beaten egg, and let it set before folding it through.",
+    "Season with salt and white pepper and finish with scallion."
+   ],
+   "handson_action": "stir-frying",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": true
+  },
+  {
+   "name": "Sayur Lodeh",
+   "role": "veg",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "200 g cabbage",
+    "2 carrot",
+    "1 eggplant",
+    "100 g long beans",
+    "1 block tofu",
+    "3 tablespoons laksa paste",
+    "1 can coconut milk",
+    "2 cups water",
+    "2 stalk lemongrass",
+    "2 tablespoons vegetable oil",
+    "1 teaspoon salt"
+   ],
+   "steps": [
+    "Fry the laksa paste and bruised lemongrass in oil for 4 minutes until it darkens.",
+    "Pour in the water and bring to a simmer.",
+    "Add the carrot and simmer for 8 minutes.",
+    "Add the cabbage, eggplant and long beans and simmer for 6 minutes.",
+    "Stir in the coconut milk and the tofu and simmer gently for 5 minutes \u2014 do not boil it hard or it will split.",
+    "Season with salt."
+   ],
+   "handson_action": "frying the rempah",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": false
+  },
+  {
+   "name": "Chap Chye",
+   "role": "veg",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "300 g napa cabbage",
+    "4 dried shiitake",
+    "2 tablespoons dried shrimp",
+    "1 block tofu",
+    "50 g shirataki",
+    "2 tablespoons fermented beancurd",
+    "4 clove garlic",
+    "1 tablespoon oyster sauce",
+    "2 cups water",
+    "2 tablespoons vegetable oil"
+   ],
+   "steps": [
+    "Soak the shiitake and dried shrimp; keep the water.",
+    "Mash the fermented beancurd with a little of the soaking water.",
+    "Fry the garlic and dried shrimp in oil until fragrant.",
+    "Stir in the fermented beancurd and fry for 1 minute \u2014 this is the backbone of the dish.",
+    "Add the cabbage, mushrooms and shirataki, then the soaking water and oyster sauce.",
+    "Cover and simmer for 20 minutes, until the cabbage is meltingly soft.",
+    "Add the tofu for the last 5 minutes."
+   ],
+   "handson_action": "simmering",
+   "serves": 6,
+   "base_volume": 0,
+   "fresh": false
   }
  ]
 }
