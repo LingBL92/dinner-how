@@ -382,6 +382,15 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .po-l{font-family:"Space Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .po-c{padding:3px 10px;border-radius:999px;background:rgba(27,16,11,.05);color:var(--muted);font-size:11.5px}
 .po-w{font-family:"Space Mono",monospace;font-size:9.5px;color:var(--muted);opacity:.75}
+.pot-sug{margin-top:12px;padding:11px 13px;background:rgba(50,117,100,.06);border-radius:10px;
+  border-left:3px solid var(--cool)}
+.ps-lab{font-family:"Space Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--cool);margin-bottom:7px}
+.ps-row{display:flex;flex-wrap:wrap;gap:6px}
+.ps-chip{display:inline-flex;flex-direction:column;gap:1px;padding:5px 11px;border-radius:9px;
+  background:var(--panel);border:1px solid rgba(50,117,100,.25);font-size:12.5px;color:var(--ink)}
+.ps-chip em{font-style:normal;font-family:"Space Mono",monospace;font-size:8.5px;color:var(--muted)}
+.ps-note{font-family:"Space Mono",monospace;font-size:9.5px;color:var(--muted);margin-top:7px;opacity:.85}
 .pot-unc{margin-top:8px;padding:9px 12px;background:rgba(168,114,24,.07);border-left:3px solid var(--gold);
   border-radius:7px;font-size:12px;line-height:1.5;color:var(--muted)}
 .pot-unc strong{color:var(--gold)}
@@ -545,7 +554,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.83</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.84</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -1258,7 +1267,13 @@ function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}
               const ctx=contextOf(d);
               const others=(d.grocery_items||[]).map(x=>x.id)
                 .filter(x=>x!==g.id && measureTypeOf(R.byId[x])!=="assumed" && x!=="water");
-              uncharted = !others.some(o=>precedentFor(sub.id,o,ctx,AFFINITY).n>0);
+              /* NB: no kin-pooling here. Chicken wing inherits chicken's precedent for
+               SUGGESTIONS, but that does not make it belong in a beef curry — the
+               question is whether THIS ingredient has been cooked with THESE ones. */
+            uncharted = !others.some(o=>{
+              const [p,q]=[sub.id,o].sort();
+              return !!AFFINITY.pairs[ctx+"|"+p+"+"+q];
+            });
             }
             sourceId=sub.id;
             subs.push({need:g.name,use:sub.name,flag:sub.flag,rename:sub.rename,uncharted});
@@ -1506,13 +1521,34 @@ function affinityFor(id, ctx, AFF, R, limit=5){
   out.sort((x,y)=>y.n-x.n);
   return out.slice(0,limit);
 }
-/* has this exact pairing been done before, in this context? */
-function precedentFor(a, b, ctx, AFF){
-  const [x,y]=[a,b].sort();
-  const hit=AFF.pairs[ctx+"|"+x+"+"+y];
-  if(!hit) return {n:0, level:"none", text:"no precedent \u2014 nothing in the recipes pairs these", dishes:[]};
-  if(hit.n===1) return {n:1, level:"thin", text:"seen once", dishes:hit.dishes};
-  return {n:hit.n, level:"solid", text:"seen "+hit.n+"\u00d7", dishes:hit.dishes};
+/* Has this pairing been done before, in this context?
+   Precedent POOLS ACROSS CUTS: if chicken breast has been cooked with carrot, that is
+   precedent for chicken-and-carrot. A whole chicken does not stop being chicken. Without
+   this, the graph fragments its knowledge across cuts and reports "no precedent" for
+   pairings it has actually seen. */
+function kinOf(id, R){
+  if(!R) return [id];
+  const out=new Set([id]);
+  const anc=R.anc[id]||new Set();
+  const SPECIES=["beef","pork","chicken","mutton","fish","prawn","squid","oyster"];
+  const sp=SPECIES.find(k=>anc.has(k)||id===k);
+  if(sp){
+    out.add(sp);
+    R.list.forEach(i=>{ const a=R.anc[i.id]||new Set(); if(a.has(sp)||i.id===sp) out.add(i.id); });
+  }
+  return [...out];
+}
+function precedentFor(a, b, ctx, AFF, R){
+  const A=kinOf(a,R), B=kinOf(b,R);
+  let n=0; const dishes=new Set();
+  A.forEach(x=>B.forEach(y=>{
+    const [p,q]=[x,y].sort();
+    const hit=AFF.pairs[ctx+"|"+p+"+"+q];
+    if(hit){ n+=hit.n; hit.dishes.forEach(d=>dishes.add(d)); }
+  }));
+  if(!n) return {n:0, level:"none", text:"no precedent \u2014 nothing in the recipes pairs these", dishes:[]};
+  if(n===1) return {n:1, level:"thin", text:"seen once", dishes:[...dishes]};
+  return {n, level:"solid", text:"seen "+n+"\u00d7", dishes:[...dishes]};
 }
 
 /* ============================================================
@@ -2177,6 +2213,36 @@ function seasoningStep(key){ return SEASON_TIMING[key]||null; }
    So: propose a pot per plausible base, then decide what else belongs in it \u2014
    using affinity (has anyone cooked these together?) and physics (does it survive?).
    ============================================================ */
+function potSuggestions(baseIds, ctx, R, AFF, {have=[], limit=5}={}){
+  const seen={};                       // ingredient id -> total precedent with the base
+  baseIds.forEach(b=>{
+    kinOf(b,R).forEach(k=>{
+      Object.keys(AFF.pairs).forEach(key=>{
+        if(key.indexOf(ctx+"|")!==0) return;
+        const body=key.slice(ctx.length+1);
+        const [x,y]=body.split("+");
+        let other=null;
+        if(x===k) other=y; else if(y===k) other=x;
+        if(!other) return;
+        const ing=R.byId[other]||{};
+        if(ing.category==="proteins") return;            // a pot has one protein identity
+        if(measureTypeOf(ing)==="assumed") return;       // aromatics are a given
+        seen[other]=(seen[other]||0)+AFF.pairs[key].n;
+      });
+    });
+  });
+  const haveSet=new Set(have);
+  const all=Object.entries(seen)
+    .map(([id,n])=>({id, name:(R.byId[id]||{}).name||id, n, owned:haveSet.has(id)}))
+    .sort((a,b)=>(b.owned-a.owned)||(b.n-a.n));
+  return {
+    // things you already have that go with this base — you might have forgotten them
+    yours: all.filter(x=>x.owned).slice(0,limit),
+    // things you'd have to buy, but that genuinely belong
+    buy:   all.filter(x=>!x.owned).slice(0,limit)
+  };
+}
+
 function potCandidates(ingIds, R, dishes, AFF){
   const real=ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed");
   const proteins=real.filter(id=>(R.byId[id]||{}).category==="proteins" && BROTH_BASE[id]);
@@ -2230,14 +2296,16 @@ function potCandidates(ingIds, R, dishes, AFF){
 
   const pots=Object.entries(bySpecies).map(([sp,ids])=>{
     // which of your OTHER ingredients belong in THIS pot?
+    /* Everything you own goes in the pot — physics permitting. A pot is forgiving:
+       spinach in a chicken soup is fine whether or not a recipe in our thin catalogue
+       happens to pair them. What affinity gives us is not a VETO but a CONFIDENCE:
+       which additions are well-trodden, and which are your own invention. */
     const belongs=[], uncertain=[];
     others.forEach(o=>{
-      // physics: will it survive alongside this base? (leafy + a 90-min braise is fine \u2014
-      // it goes in at the end. so physics rarely vetoes. affinity is the real test.)
       let seen=0;
       ids.forEach(p=>{
         ["soup","braise"].forEach(ctx=>{
-          const pr=AFF?precedentFor(p,o,ctx,AFF):{n:0};
+          const pr=AFF?precedentFor(p,o,ctx,AFF,R):{n:0};
           seen=Math.max(seen,pr.n);
         });
       });
@@ -2246,7 +2314,8 @@ function potCandidates(ingIds, R, dishes, AFF){
     });
     belongs.sort((a,b)=>b.n-a.n);
 
-    const contents=ids.concat(belongs.map(x=>x.id));
+    // the pot holds EVERYTHING you own — the well-trodden and the uncharted alike
+    const contents=ids.concat(belongs.map(x=>x.id)).concat(uncertain.map(x=>x.id));
     const ch=brothCharacter(contents,R);
     const alts = ids.alternatives || [];
     return {
@@ -2260,6 +2329,7 @@ function potCandidates(ingIds, R, dishes, AFF){
       character: ch,
       describe: ch?describeBroth(ch):"a light vegetable pot",
       reminds: dishes ? brothLikeDishes(contents,R,dishes.filter(hasBroth),2) : [],
+      suggest: AFF ? potSuggestions(ids, "soup", R, AFF, {have:real}) : {yours:[],buy:[]},
       // a pot is stronger when the things in it have precedent together
       strength: belongs.reduce((n,b)=>n+b.n,0)
     };
@@ -2268,6 +2338,14 @@ function potCandidates(ingIds, R, dishes, AFF){
   pots.sort((a,b)=>b.strength-a.strength);
   return pots;
 }
+
+
+/* ============================================================
+   WHAT WOULD GO WELL IN THIS POT?
+   The affinity graph knows what has been cooked with this base before. Use it to
+   SUGGEST — both from what you own (things you might have forgotten) and from what
+   you don't (a shopping nudge). This is the graph being generous rather than gatekeeping.
+   ============================================================ */
 
 
 /* ================= FLOW STATE ================= */
@@ -3719,37 +3797,36 @@ function renderOnePot(){
   if(chosen){
     // compare against what's ACTUALLY in the pot (after any cut swap), and never list
     // the alternative cuts — they're offered as swaps above, not "left out".
-    /* Only name what plausibly belonged in THIS pot — not your whole pantry.
-       Other proteins are their own pots. Alternative cuts are swaps, shown above. */
-    const altSet=new Set(chosen.alternatives||[]);
-    const otherProt=new Set();
-    cands.forEach(c=>{ if(c!==chosen){ (c.base||[]).forEach(x=>otherProt.add(x)); (c.alternatives||[]).forEach(x=>otherProt.add(x)); } });
-    const leftOut = ids.filter(id=>
-      !potIngredients.includes(id) && !altSet.has(id) && !chosen.base.includes(id) &&
-      !otherProt.has(id) && (REF.byId[id]||{}).category!=="proteins");
-    if(leftOut.length){
-      const o=document.createElement("div"); o.className="pot-out";
-      const lab=document.createElement("span"); lab.className="po-l"; lab.textContent="not in this pot";
+    /* The pot now holds everything you own. So the useful thing to say is not
+       "what's missing" but "what would go well" — the affinity graph being generous. */
+    const sug=chosen.suggest||{yours:[],buy:[]};
+    if(sug.buy.length){
+      const o=document.createElement("div"); o.className="pot-sug";
+      const lab=document.createElement("div"); lab.className="ps-lab";
+      lab.textContent="Goes well with "+chosen.baseNames.join(" or ").toLowerCase();
       o.appendChild(lab);
-      leftOut.slice(0,8).forEach(id=>{
-        const c=document.createElement("span"); c.className="po-c"; c.textContent=nm(id); o.appendChild(c);
+      const row=document.createElement("div"); row.className="ps-row";
+      sug.buy.slice(0,5).forEach(x=>{
+        const c=document.createElement("span"); c.className="ps-chip";
+        c.innerHTML=x.name+"<em>"+(x.n>1?"seen "+x.n+"\u00d7":"seen once")+"</em>";
+        row.appendChild(c);
       });
-      if(leftOut.length>8){
-        const m2=document.createElement("span"); m2.className="po-c";
-        m2.textContent="+"+(leftOut.length-8)+" more"; o.appendChild(m2);
-      }
-      const w=document.createElement("span"); w.className="po-w";
-      w.textContent="no precedent with "+chosen.baseNames.join(" or ").toLowerCase()+" yet";
-      o.appendChild(w);
+      o.appendChild(row);
+      const note=document.createElement("div"); note.className="ps-note";
+      note.textContent="From our recipes \u2014 you\u2019d need to buy "+(sug.buy.length>1?"these":"this")+".";
+      o.appendChild(note);
       box.appendChild(o);
     }
+    // which of YOUR additions are well-trodden, and which are your own invention?
     if(chosen.uncertain && chosen.uncertain.length){
       const u=document.createElement("div"); u.className="pot-unc";
       u.innerHTML="<strong>"+chosen.uncertain.map(x=>nm(x.id)).join(", ")+"</strong> "+
-        (chosen.uncertain.length>1?"have":"has")+" no precedent with "+
-        chosen.baseNames.join(" or ").toLowerCase()+" in our recipes \u2014 physically fine, just uncharted.";
+        (chosen.uncertain.length>1?"are":"is")+" in the pot, but nothing in our recipes pairs "+
+        (chosen.uncertain.length>1?"them":"it")+" with "+chosen.baseNames.join(" or ").toLowerCase()+
+        ". Physically fine \u2014 it\u2019s your own combination.";
       box.appendChild(u);
     }
+
   }
 
   /* ============ 5. GAPS — only if there's something honest to say ============ */

@@ -947,7 +947,13 @@ function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}
               const ctx=contextOf(d);
               const others=(d.grocery_items||[]).map(x=>x.id)
                 .filter(x=>x!==g.id && measureTypeOf(R.byId[x])!=="assumed" && x!=="water");
-              uncharted = !others.some(o=>precedentFor(sub.id,o,ctx,AFFINITY).n>0);
+              /* NB: no kin-pooling here. Chicken wing inherits chicken's precedent for
+               SUGGESTIONS, but that does not make it belong in a beef curry — the
+               question is whether THIS ingredient has been cooked with THESE ones. */
+            uncharted = !others.some(o=>{
+              const [p,q]=[sub.id,o].sort();
+              return !!AFFINITY.pairs[ctx+"|"+p+"+"+q];
+            });
             }
             sourceId=sub.id;
             subs.push({need:g.name,use:sub.name,flag:sub.flag,rename:sub.rename,uncharted});
@@ -1195,13 +1201,34 @@ function affinityFor(id, ctx, AFF, R, limit=5){
   out.sort((x,y)=>y.n-x.n);
   return out.slice(0,limit);
 }
-/* has this exact pairing been done before, in this context? */
-function precedentFor(a, b, ctx, AFF){
-  const [x,y]=[a,b].sort();
-  const hit=AFF.pairs[ctx+"|"+x+"+"+y];
-  if(!hit) return {n:0, level:"none", text:"no precedent \u2014 nothing in the recipes pairs these", dishes:[]};
-  if(hit.n===1) return {n:1, level:"thin", text:"seen once", dishes:hit.dishes};
-  return {n:hit.n, level:"solid", text:"seen "+hit.n+"\u00d7", dishes:hit.dishes};
+/* Has this pairing been done before, in this context?
+   Precedent POOLS ACROSS CUTS: if chicken breast has been cooked with carrot, that is
+   precedent for chicken-and-carrot. A whole chicken does not stop being chicken. Without
+   this, the graph fragments its knowledge across cuts and reports "no precedent" for
+   pairings it has actually seen. */
+function kinOf(id, R){
+  if(!R) return [id];
+  const out=new Set([id]);
+  const anc=R.anc[id]||new Set();
+  const SPECIES=["beef","pork","chicken","mutton","fish","prawn","squid","oyster"];
+  const sp=SPECIES.find(k=>anc.has(k)||id===k);
+  if(sp){
+    out.add(sp);
+    R.list.forEach(i=>{ const a=R.anc[i.id]||new Set(); if(a.has(sp)||i.id===sp) out.add(i.id); });
+  }
+  return [...out];
+}
+function precedentFor(a, b, ctx, AFF, R){
+  const A=kinOf(a,R), B=kinOf(b,R);
+  let n=0; const dishes=new Set();
+  A.forEach(x=>B.forEach(y=>{
+    const [p,q]=[x,y].sort();
+    const hit=AFF.pairs[ctx+"|"+p+"+"+q];
+    if(hit){ n+=hit.n; hit.dishes.forEach(d=>dishes.add(d)); }
+  }));
+  if(!n) return {n:0, level:"none", text:"no precedent \u2014 nothing in the recipes pairs these", dishes:[]};
+  if(n===1) return {n:1, level:"thin", text:"seen once", dishes:[...dishes]};
+  return {n, level:"solid", text:"seen "+n+"\u00d7", dishes:[...dishes]};
 }
 
 /* ============================================================
@@ -1866,6 +1893,36 @@ function seasoningStep(key){ return SEASON_TIMING[key]||null; }
    So: propose a pot per plausible base, then decide what else belongs in it \u2014
    using affinity (has anyone cooked these together?) and physics (does it survive?).
    ============================================================ */
+function potSuggestions(baseIds, ctx, R, AFF, {have=[], limit=5}={}){
+  const seen={};                       // ingredient id -> total precedent with the base
+  baseIds.forEach(b=>{
+    kinOf(b,R).forEach(k=>{
+      Object.keys(AFF.pairs).forEach(key=>{
+        if(key.indexOf(ctx+"|")!==0) return;
+        const body=key.slice(ctx.length+1);
+        const [x,y]=body.split("+");
+        let other=null;
+        if(x===k) other=y; else if(y===k) other=x;
+        if(!other) return;
+        const ing=R.byId[other]||{};
+        if(ing.category==="proteins") return;            // a pot has one protein identity
+        if(measureTypeOf(ing)==="assumed") return;       // aromatics are a given
+        seen[other]=(seen[other]||0)+AFF.pairs[key].n;
+      });
+    });
+  });
+  const haveSet=new Set(have);
+  const all=Object.entries(seen)
+    .map(([id,n])=>({id, name:(R.byId[id]||{}).name||id, n, owned:haveSet.has(id)}))
+    .sort((a,b)=>(b.owned-a.owned)||(b.n-a.n));
+  return {
+    // things you already have that go with this base — you might have forgotten them
+    yours: all.filter(x=>x.owned).slice(0,limit),
+    // things you'd have to buy, but that genuinely belong
+    buy:   all.filter(x=>!x.owned).slice(0,limit)
+  };
+}
+
 function potCandidates(ingIds, R, dishes, AFF){
   const real=ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed");
   const proteins=real.filter(id=>(R.byId[id]||{}).category==="proteins" && BROTH_BASE[id]);
@@ -1919,14 +1976,16 @@ function potCandidates(ingIds, R, dishes, AFF){
 
   const pots=Object.entries(bySpecies).map(([sp,ids])=>{
     // which of your OTHER ingredients belong in THIS pot?
+    /* Everything you own goes in the pot — physics permitting. A pot is forgiving:
+       spinach in a chicken soup is fine whether or not a recipe in our thin catalogue
+       happens to pair them. What affinity gives us is not a VETO but a CONFIDENCE:
+       which additions are well-trodden, and which are your own invention. */
     const belongs=[], uncertain=[];
     others.forEach(o=>{
-      // physics: will it survive alongside this base? (leafy + a 90-min braise is fine \u2014
-      // it goes in at the end. so physics rarely vetoes. affinity is the real test.)
       let seen=0;
       ids.forEach(p=>{
         ["soup","braise"].forEach(ctx=>{
-          const pr=AFF?precedentFor(p,o,ctx,AFF):{n:0};
+          const pr=AFF?precedentFor(p,o,ctx,AFF,R):{n:0};
           seen=Math.max(seen,pr.n);
         });
       });
@@ -1935,7 +1994,8 @@ function potCandidates(ingIds, R, dishes, AFF){
     });
     belongs.sort((a,b)=>b.n-a.n);
 
-    const contents=ids.concat(belongs.map(x=>x.id));
+    // the pot holds EVERYTHING you own — the well-trodden and the uncharted alike
+    const contents=ids.concat(belongs.map(x=>x.id)).concat(uncertain.map(x=>x.id));
     const ch=brothCharacter(contents,R);
     const alts = ids.alternatives || [];
     return {
@@ -1949,6 +2009,7 @@ function potCandidates(ingIds, R, dishes, AFF){
       character: ch,
       describe: ch?describeBroth(ch):"a light vegetable pot",
       reminds: dishes ? brothLikeDishes(contents,R,dishes.filter(hasBroth),2) : [],
+      suggest: AFF ? potSuggestions(ids, "soup", R, AFF, {have:real}) : {yours:[],buy:[]},
       // a pot is stronger when the things in it have precedent together
       strength: belongs.reduce((n,b)=>n+b.n,0)
     };
@@ -1957,6 +2018,14 @@ function potCandidates(ingIds, R, dishes, AFF){
   pots.sort((a,b)=>b.strength-a.strength);
   return pots;
 }
+
+
+/* ============================================================
+   WHAT WOULD GO WELL IN THIS POT?
+   The affinity graph knows what has been cooked with this base before. Use it to
+   SUGGEST — both from what you own (things you might have forgotten) and from what
+   you don't (a shopping nudge). This is the graph being generous rather than gatekeeping.
+   ============================================================ */
 
 function prepVerb(d,n){return (d&&d.prep_overrides&&d.prep_overrides[n])||PREP_VERB[n]||"prep";}
 ;
