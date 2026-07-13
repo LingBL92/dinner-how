@@ -3406,6 +3406,110 @@
    "serves": 4,
    "base_volume": 0,
    "fresh": false
+  },
+  {
+   "name": "Teochew Steamed Pomfret",
+   "role": "fish",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "1 whole pomfret",
+    "4 slice ginger",
+    "2 scallion",
+    "2 tomato",
+    "1 tablespoon salted vegetable",
+    "2 dried shiitake",
+    "1 tablespoon light soy sauce",
+    "1 teaspoon sesame oil",
+    "1 tablespoon shaoxing wine"
+   ],
+   "steps": [
+    "Scale and gut the pomfret, then score it twice on each side so the heat gets in.",
+    "Lay the ginger under and over the fish on a heatproof plate.",
+    "Scatter the tomato, salted vegetable and soaked shiitake around it.",
+    "Sprinkle over the shaoxing wine and soy sauce.",
+    "Steam over rapidly boiling water for 10 minutes \u2014 the flesh should just flake at the bone.",
+    "Take it off the heat the moment it is done; a minute too long and it turns woolly.",
+    "Finish with scallion and a spoonful of hot sesame oil."
+   ],
+   "handson_action": "watching the steamer",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": true
+  },
+  {
+   "name": "Fish Head Curry",
+   "role": "fish",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "1 kg snapper",
+    "3 tablespoons curry powder",
+    "1 can coconut milk",
+    "2 tomato",
+    "4 okra",
+    "1 eggplant",
+    "6 shallots",
+    "4 clove garlic",
+    "3 slice ginger",
+    "2 stalk lemongrass",
+    "1 tablespoon tamarind",
+    "10 curry leaves",
+    "3 tablespoons vegetable oil",
+    "1 teaspoon salt",
+    "2 cups water"
+   ],
+   "steps": [
+    "Pound the shallots, garlic, ginger and lemongrass to a rough paste.",
+    "Fry the paste in oil over medium heat for 5 minutes until it darkens and smells fragrant.",
+    "Stir in the curry powder and curry leaves and fry for 1 minute.",
+    "Add the water and tamarind and bring to a simmer.",
+    "Add the eggplant and okra and simmer for 8 minutes.",
+    "Stir in the coconut milk and simmer gently \u2014 do not let it boil hard or it will split.",
+    "Slide in the fish head and tomato and simmer for 12 minutes, spooning the gravy over.",
+    "Season with salt and rest it for a few minutes before serving."
+   ],
+   "handson_action": "frying the rempah",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": true
+  },
+  {
+   "name": "Sambal Grilled Mackerel",
+   "role": "fish",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop",
+    "oven",
+    "air_fryer"
+   ],
+   "ingredients": [
+    "600 g mackerel",
+    "3 tablespoons sambal",
+    "1 tablespoon tamarind",
+    "1 lime",
+    "2 tablespoons vegetable oil",
+    "1 teaspoon salt"
+   ],
+   "steps": [
+    "Pat the mackerel dry and score the thickest part so it cooks evenly.",
+    "Mix the sambal with the tamarind and a little oil.",
+    "Spread the sambal over both sides of the fish and leave it for 15 minutes.",
+    "Grill over high heat for 6 minutes on the first side.",
+    "Turn once and grill for 4 minutes more, until the skin chars and the flesh flakes.",
+    "Squeeze the lime over and serve straight away."
+   ],
+   "handson_action": "turning the fish",
+   "serves": 3,
+   "base_volume": 0,
+   "fresh": true
   }
  ]
 }

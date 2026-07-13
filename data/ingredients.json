@@ -405,6 +405,184 @@
    "category": "proteins"
   },
   {
+   "id": "pomfret",
+   "name": "Pomfret",
+   "aliases": [
+    "pomfret",
+    "white pomfret",
+    "black pomfret",
+    "bawal"
+   ],
+   "provides": [
+    "fish_family",
+    "protein",
+    "umami"
+   ],
+   "aisle": "Fish & seafood",
+   "prep_verb": "scale and gut",
+   "parent": "fish",
+   "category": "proteins",
+   "cut_note": "steam whole \u2014 sweet, delicate white flesh"
+  },
+  {
+   "id": "snapper",
+   "name": "Red Snapper",
+   "aliases": [
+    "snapper",
+    "red snapper",
+    "ikan merah"
+   ],
+   "provides": [
+    "fish_family",
+    "protein",
+    "umami"
+   ],
+   "aisle": "Fish & seafood",
+   "prep_verb": "scale and gut",
+   "parent": "fish",
+   "category": "proteins",
+   "cut_note": "firm white flesh \u2014 the fish-head-curry fish"
+  },
+  {
+   "id": "mackerel",
+   "name": "Mackerel",
+   "aliases": [
+    "mackerel",
+    "batang",
+    "ikan kembung",
+    "tenggiri"
+   ],
+   "provides": [
+    "fat_solid",
+    "fish_family",
+    "protein",
+    "umami"
+   ],
+   "aisle": "Fish & seafood",
+   "prep_verb": "pat dry",
+   "parent": "fish",
+   "category": "proteins",
+   "cut_note": "oily and robust \u2014 stands up to sambal and grilling"
+  },
+  {
+   "id": "seabass",
+   "name": "Sea Bass",
+   "aliases": [
+    "seabass",
+    "sea bass",
+    "barramundi",
+    "siakap"
+   ],
+   "provides": [
+    "fish_family",
+    "protein",
+    "umami"
+   ],
+   "aisle": "Fish & seafood",
+   "prep_verb": "scale and gut",
+   "parent": "fish",
+   "category": "proteins",
+   "cut_note": "clean white flesh \u2014 steams beautifully"
+  },
+  {
+   "id": "threadfin",
+   "name": "Threadfin",
+   "aliases": [
+    "threadfin",
+    "ikan kurau",
+    "kurau"
+   ],
+   "provides": [
+    "fish_family",
+    "protein",
+    "umami"
+   ],
+   "aisle": "Fish & seafood",
+   "prep_verb": "scale and gut",
+   "parent": "fish",
+   "category": "proteins",
+   "cut_note": "prized for steaming \u2014 sweet and tender"
+  },
+  {
+   "id": "grouper",
+   "name": "Grouper",
+   "aliases": [
+    "grouper",
+    "garoupa",
+    "kerapu"
+   ],
+   "provides": [
+    "collagen_rich",
+    "fish_family",
+    "protein",
+    "umami"
+   ],
+   "aisle": "Fish & seafood",
+   "prep_verb": "scale and gut",
+   "parent": "fish",
+   "category": "proteins",
+   "cut_note": "meaty and gelatinous \u2014 good for soup and steaming"
+  },
+  {
+   "id": "cod",
+   "name": "Cod",
+   "aliases": [
+    "cod",
+    "codfish",
+    "black cod"
+   ],
+   "provides": [
+    "fat_solid",
+    "fish_family",
+    "protein",
+    "umami"
+   ],
+   "aisle": "Fish & seafood",
+   "prep_verb": "pat dry",
+   "parent": "fish",
+   "category": "proteins",
+   "cut_note": "buttery, flaky \u2014 forgiving"
+  },
+  {
+   "id": "tuna",
+   "name": "Tuna",
+   "aliases": [
+    "tuna",
+    "ahi"
+   ],
+   "provides": [
+    "fish_family",
+    "protein",
+    "umami"
+   ],
+   "aisle": "Fish & seafood",
+   "prep_verb": "pat dry",
+   "parent": "fish",
+   "category": "proteins",
+   "cut_note": "firm and steak-like \u2014 sear it, don't overcook"
+  },
+  {
+   "id": "sardine",
+   "name": "Sardine",
+   "aliases": [
+    "sardine",
+    "sardines",
+    "ikan bilis"
+   ],
+   "provides": [
+    "fat_solid",
+    "fish_family",
+    "protein",
+    "salt",
+    "umami"
+   ],
+   "aisle": "Fish & seafood",
+   "prep_verb": "pat dry",
+   "parent": "fish",
+   "category": "proteins",
+   "cut_note": "small, oily, intensely savoury"
+  },
+  {
    "id": "egg",
    "name": "Egg",
    "aliases": [
@@ -418,7 +596,7 @@
     "water"
    ],
    "aisle": "Meat & protein",
-   "prep_verb": "cut into pieces",
+   "prep_verb": "crack",
    "parent": "proteins",
    "category": "proteins"
   },
@@ -622,7 +800,7 @@
     "umami"
    ],
    "aisle": "Meat & protein",
-   "prep_verb": "cut into pieces",
+   "prep_verb": "peel and dice",
    "parent": "proteins",
    "category": "proteins"
   },
@@ -639,7 +817,7 @@
     "umami"
    ],
    "aisle": "Meat & protein",
-   "prep_verb": "cut into pieces",
+   "prep_verb": "chop",
    "parent": "proteins",
    "category": "proteins"
   },
@@ -1354,7 +1532,7 @@
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "wash and chop",
+   "prep_verb": "slice",
    "parent": "vegetables",
    "category": "vegetables",
    "group": "fungi"
@@ -1729,7 +1907,7 @@
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "wash and chop",
+   "prep_verb": "rinse",
    "parent": "vegetables",
    "category": "vegetables",
    "group": "pods"
@@ -1814,7 +1992,7 @@
    ],
    "provides": [],
    "aisle": "Vegetables",
-   "prep_verb": "wash and chop",
+   "prep_verb": "trim",
    "parent": "vegetables",
    "category": "vegetables"
   },
@@ -1843,7 +2021,7 @@
    ],
    "provides": [],
    "aisle": "Vegetables",
-   "prep_verb": "wash and chop",
+   "prep_verb": "rinse",
    "parent": "vegetables",
    "category": "vegetables"
   },
@@ -2620,6 +2798,42 @@
    "category": "seasonings"
   },
   {
+   "id": "salted_vegetable",
+   "name": "Salted Vegetable",
+   "aliases": [
+    "salted vegetable",
+    "preserved vegetable",
+    "kiam chai"
+   ],
+   "provides": [
+    "aromatic",
+    "salt",
+    "umami"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "curry_powder",
+   "name": "Curry Powder",
+   "aliases": [
+    "curry powder",
+    "fish curry powder",
+    "meat curry powder"
+   ],
+   "provides": [
+    "aromatic",
+    "heat",
+    "umami"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
    "id": "condiments",
    "name": "Condiments",
    "aliases": [],
@@ -3104,6 +3318,22 @@
     "chinese cooking wine"
    ],
    "provides": [],
+   "aisle": "Condiments & sauces",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "light_soy_sauce",
+   "name": "Light Soy Sauce",
+   "aliases": [
+    "light soy sauce",
+    "light soy"
+   ],
+   "provides": [
+    "salt",
+    "umami"
+   ],
    "aisle": "Condiments & sauces",
    "prep_verb": "measure",
    "parent": "condiments",
