@@ -701,11 +701,15 @@ function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}
    its own `measure_type` to override. */
 const MT_ASSUMED=new Set(["garlic","ginger","chilli","lemongrass","galangal","scallion","curry_leaves",
   "pandan","dried_orange_peel","dang_gui","dried_shrimp","belacan"]);
-const MT_COUNT=new Set(["egg","onion","potato","sweet_potato","tomato","carrot","cucumber","bell_pepper",
-  "eggplant","zucchini","corn","tofu","lemon","lime","apple","banana","pineapple","okra","daikon","shallot"]);
+const MT_COUNT=new Set(["egg","century_egg","onion","potato","sweet_potato","tomato","carrot","cucumber",
+  "bell_pepper","eggplant","zucchini","corn","tofu","lemon","lime","apple","banana","pineapple","okra","daikon",
+  "pumpkin","yam"]);   // whole things you buy and use by the piece
 function measureTypeOf(ing){
   if(!ing) return "assumed";
   if(ing.measure_type) return ing.measure_type;                 // authored override
+  // a whole fish is bought by the piece; a fillet by weight. The recipe line decides,
+  // but by default a named fish is a whole fish at the market.
+  if(ing.id==="chicken_whole") return "count";
   const cat=ing.category, id=ing.id;
   if(MT_ASSUMED.has(id)) return "assumed";
   if(["seasonings","condiments","fats_oils","sweeteners","acids","leaveners"].includes(cat)) return "assumed";
@@ -1195,13 +1199,23 @@ const POT_CLASS=[
 ];
 const POT_MINS={}; POT_CLASS.forEach(c=>POT_MINS[c.key]=c.mins);
 
+/* Seafood is DERIVED, not listed. A hardcoded list of fish goes stale the moment a
+   fish is added — and a pomfret miscategorised as a "quick protein" gets 8 minutes in
+   the pot instead of 4, and overcooks. */
+const SEAFOOD_ROOTS_D=["fish","prawn","squid","oyster","salmon","dried_shrimp"];
+function isSeafoodId(id,R){
+  if(SEAFOOD_ROOTS_D.includes(id)) return true;
+  const anc=R.anc[id]||new Set();
+  return SEAFOOD_ROOTS_D.some(r=>anc.has(r));
+}
 function potClassOf(id,R){
   const i=R.byId[id]; if(!i) return null;
   const p=new Set(i.provides||[]);
   const cat=i.category;
   if(p.has("leafy")) return "leafy";
   if(cat==="proteins"){
-    if(["fish","salmon","prawn","squid","oyster"].includes(id)) return "delicate";
+    if(i.form==="mince") return "quick_prot";          // mince cooks fast, breaks up
+    if(isSeafoodId(id,R)) return "delicate";           // ALL fish and shellfish overcook fast
     if(p.has("collagen_rich")) return "collagen";
     if(id==="tofu"||id==="egg") return "soft";
     return "quick_prot";
@@ -1417,4 +1431,49 @@ function seasoningMatch(aIds,bIds){
   const b=seasoningOf(bIds).map(x=>x.key);
   const shared=a.filter(k=>b.includes(k));
   return {shared, aDirs:a, bDirs:b, same: shared.length>0};
+}
+
+
+/* ============================================================
+   DATA/CODE DRIFT AUDIT
+   Three separate bugs in this project came from the same cause: a list written by
+   hand in the code, which silently went stale when new ingredients were added to the
+   taxonomy. A pomfret classed as a "quick protein" gets 8 minutes in a pot instead of
+   4, and overcooks — and nothing warns you.
+
+   So: at load, check that every ingredient the engine must classify actually GETS
+   classified. Anything that falls through to a default is reported.
+   ============================================================ */
+function auditDrift(R, dishes){
+  const problems=[];
+
+  // 1. every protein must land in a pot class that isn't the catch-all
+  R.list.filter(i=>i.category==="proteins" && R.isLeaf(i.id)).forEach(i=>{
+    const k=potClassOf(i.id,R);
+    if(!k) problems.push({kind:"pot-class", id:i.id, msg:i.name+" has no pot class — it cannot be staged in a one-pot"});
+  });
+
+  // 2. every vegetable should have a browse group, or it lands in "Other"
+  R.list.filter(i=>i.category==="vegetables" && R.isLeaf(i.id)).forEach(i=>{
+    if(!i.group) problems.push({kind:"group", id:i.id, msg:i.name+" has no group — it will show under \"Other\""});
+  });
+
+  // 3. every recipe ingredient must resolve to a taxonomy node
+  (dishes||[]).forEach(d=>{
+    (d.ingredients||[]).forEach(line=>{
+      if(!R.match(line)) problems.push({kind:"unresolved", id:d.name, msg:d.name+': "'+line+'" does not resolve'});
+    });
+  });
+
+  // 4. a fish that isn't recognised as seafood will be timed as a land animal
+  R.list.filter(i=>R.isLeaf(i.id) && (R.anc[i.id]||new Set()).has("fish")).forEach(i=>{
+    if(potClassOf(i.id,R)!=="delicate")
+      problems.push({kind:"seafood", id:i.id, msg:i.name+" is a fish but is not classed delicate — it will be overcooked"});
+  });
+
+  if(problems.length && typeof console!=="undefined"){
+    console.warn("[Dinner How?] "+problems.length+" data/code drift issue(s) — the taxonomy has grown past what the code classifies:");
+    problems.slice(0,12).forEach(p=>console.warn("   "+p.msg));
+  }
+  return problems;
 }

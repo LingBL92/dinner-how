@@ -484,7 +484,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.71</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.73</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -1247,11 +1247,15 @@ function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}
    its own `measure_type` to override. */
 const MT_ASSUMED=new Set(["garlic","ginger","chilli","lemongrass","galangal","scallion","curry_leaves",
   "pandan","dried_orange_peel","dang_gui","dried_shrimp","belacan"]);
-const MT_COUNT=new Set(["egg","onion","potato","sweet_potato","tomato","carrot","cucumber","bell_pepper",
-  "eggplant","zucchini","corn","tofu","lemon","lime","apple","banana","pineapple","okra","daikon","shallot"]);
+const MT_COUNT=new Set(["egg","century_egg","onion","potato","sweet_potato","tomato","carrot","cucumber",
+  "bell_pepper","eggplant","zucchini","corn","tofu","lemon","lime","apple","banana","pineapple","okra","daikon",
+  "pumpkin","yam"]);   // whole things you buy and use by the piece
 function measureTypeOf(ing){
   if(!ing) return "assumed";
   if(ing.measure_type) return ing.measure_type;                 // authored override
+  // a whole fish is bought by the piece; a fillet by weight. The recipe line decides,
+  // but by default a named fish is a whole fish at the market.
+  if(ing.id==="chicken_whole") return "count";
   const cat=ing.category, id=ing.id;
   if(MT_ASSUMED.has(id)) return "assumed";
   if(["seasonings","condiments","fats_oils","sweeteners","acids","leaveners"].includes(cat)) return "assumed";
@@ -1741,13 +1745,23 @@ const POT_CLASS=[
 ];
 const POT_MINS={}; POT_CLASS.forEach(c=>POT_MINS[c.key]=c.mins);
 
+/* Seafood is DERIVED, not listed. A hardcoded list of fish goes stale the moment a
+   fish is added — and a pomfret miscategorised as a "quick protein" gets 8 minutes in
+   the pot instead of 4, and overcooks. */
+const SEAFOOD_ROOTS_D=["fish","prawn","squid","oyster","salmon","dried_shrimp"];
+function isSeafoodId(id,R){
+  if(SEAFOOD_ROOTS_D.includes(id)) return true;
+  const anc=R.anc[id]||new Set();
+  return SEAFOOD_ROOTS_D.some(r=>anc.has(r));
+}
 function potClassOf(id,R){
   const i=R.byId[id]; if(!i) return null;
   const p=new Set(i.provides||[]);
   const cat=i.category;
   if(p.has("leafy")) return "leafy";
   if(cat==="proteins"){
-    if(["fish","salmon","prawn","squid","oyster"].includes(id)) return "delicate";
+    if(i.form==="mince") return "quick_prot";          // mince cooks fast, breaks up
+    if(isSeafoodId(id,R)) return "delicate";           // ALL fish and shellfish overcook fast
     if(p.has("collagen_rich")) return "collagen";
     if(id==="tofu"||id==="egg") return "soft";
     return "quick_prot";
@@ -1966,6 +1980,51 @@ function seasoningMatch(aIds,bIds){
 }
 
 
+/* ============================================================
+   DATA/CODE DRIFT AUDIT
+   Three separate bugs in this project came from the same cause: a list written by
+   hand in the code, which silently went stale when new ingredients were added to the
+   taxonomy. A pomfret classed as a "quick protein" gets 8 minutes in a pot instead of
+   4, and overcooks — and nothing warns you.
+
+   So: at load, check that every ingredient the engine must classify actually GETS
+   classified. Anything that falls through to a default is reported.
+   ============================================================ */
+function auditDrift(R, dishes){
+  const problems=[];
+
+  // 1. every protein must land in a pot class that isn't the catch-all
+  R.list.filter(i=>i.category==="proteins" && R.isLeaf(i.id)).forEach(i=>{
+    const k=potClassOf(i.id,R);
+    if(!k) problems.push({kind:"pot-class", id:i.id, msg:i.name+" has no pot class — it cannot be staged in a one-pot"});
+  });
+
+  // 2. every vegetable should have a browse group, or it lands in "Other"
+  R.list.filter(i=>i.category==="vegetables" && R.isLeaf(i.id)).forEach(i=>{
+    if(!i.group) problems.push({kind:"group", id:i.id, msg:i.name+" has no group — it will show under \"Other\""});
+  });
+
+  // 3. every recipe ingredient must resolve to a taxonomy node
+  (dishes||[]).forEach(d=>{
+    (d.ingredients||[]).forEach(line=>{
+      if(!R.match(line)) problems.push({kind:"unresolved", id:d.name, msg:d.name+': "'+line+'" does not resolve'});
+    });
+  });
+
+  // 4. a fish that isn't recognised as seafood will be timed as a land animal
+  R.list.filter(i=>R.isLeaf(i.id) && (R.anc[i.id]||new Set()).has("fish")).forEach(i=>{
+    if(potClassOf(i.id,R)!=="delicate")
+      problems.push({kind:"seafood", id:i.id, msg:i.name+" is a fish but is not classed delicate — it will be overcooked"});
+  });
+
+  if(problems.length && typeof console!=="undefined"){
+    console.warn("[Dinner How?] "+problems.length+" data/code drift issue(s) — the taxonomy has grown past what the code classifies:");
+    problems.slice(0,12).forEach(p=>console.warn("   "+p.msg));
+  }
+  return problems;
+}
+
+
 /* ================= FLOW STATE ================= */
 const PANTRY_ITEMS=["garlic","onion","ginger","egg","scallion","chilli","rice","brown_rice","noodles","udon","salt","pepper","white_sugar","vegetable_oil","sesame_oil","soy_sauce","oyster_sauce","ketchup"];
 const PANTRY_OFF=new Set(["brown_rice","noodles","udon"]);   // present in the pantry but unchecked by default
@@ -2009,6 +2068,11 @@ const TOP_CATS=new Set(["proteins","vegetables","fruits","starches","dairy","fat
 
 function findLeaf(q){
   q=q.toLowerCase().trim(); if(!q)return null;
+  // an exact name/alias match wins even on a non-leaf node ("fish" is a real thing to own,
+  // and it stopped being a leaf when the varieties were added)
+  const exact=REF.list.find(i=>i.name.toLowerCase()===q) ||
+              REF.list.find(i=>(i.aliases||[]).some(a=>a.toLowerCase()===q));
+  if(exact) return exact;
   const leaves=REF.list.filter(i=>REF.isLeaf(i.id));
   let hit=leaves.find(i=>i.name.toLowerCase()===q)||
           leaves.find(i=>(i.aliases||[]).some(a=>a.toLowerCase()===q))||
@@ -2017,11 +2081,20 @@ function findLeaf(q){
           leaves.find(i=>(i.aliases||[]).some(a=>a.toLowerCase().includes(q)));
   return hit||null;
 }
-const SEAFOOD_FAM=new Set(["fish","salmon","prawn","squid","oyster","dried_shrimp"]);
+/* Seafood is DERIVED from the taxonomy, not hardcoded — a hardcoded list goes stale the
+   moment a fish is added, which is exactly what happened when pomfret arrived. */
+const SEAFOOD_ROOTS=["fish","prawn","squid","oyster","dried_shrimp","salmon","fish_cake"];
+function isSeafood(id){
+  if(SEAFOOD_ROOTS.includes(id)) return true;
+  const anc=REF.anc[id]||new Set();
+  return SEAFOOD_ROOTS.some(r=>anc.has(r));      // pomfret's ancestor is "fish"
+}
+function seafoodLeaves(){
+  return REF.list.filter(x=>REF.isLeaf(x.id) && isSeafood(x.id));
+}
 function groupFor(ing){
-  if(SEAFOOD_FAM.has(ing.id)){
-    return {key:"seafood", title:"Seafood",
-      leaves:REF.list.filter(x=>SEAFOOD_FAM.has(x.id)&&REF.isLeaf(x.id))};
+  if(isSeafood(ing.id)){
+    return {key:"seafood", title:"Seafood", leaves:seafoodLeaves()};
   }
   const pid=ing.parent;
   let leaves, title;
@@ -2053,7 +2126,7 @@ function spawn(q){
   renderComps(); recompute();
   return ing.id;
 }
-const ING_TAGS=[["chicken_thigh","Chicken"],["pork_belly","Pork"],["beef_chuck","Beef"],["fish","Seafood"],["carrot","Vegetables"]];
+const ING_TAGS=[["chicken_thigh","Chicken"],["pork_belly","Pork"],["beef_chuck","Beef"],["pomfret","Seafood"],["carrot","Vegetables"]];
 function renderIngTags(){
   const box=el("ingtags"); if(!box)return; box.innerHTML="";
   ING_TAGS.forEach(([seed,label])=>{
@@ -3496,6 +3569,7 @@ async function boot(){
     DISHES=hydrate(dishData.dishes,R,methodData);
     AFF=buildAffinity(DISHES,R);
     setAffinity(AFF);   // so substitutions can be checked for precedent
+    auditDrift(R, DISHES);   // warn if the taxonomy has outgrown the code's lists
     owned.clear(); FLOW.appl.forEach(x=>owned.add(x));
     renderPantry(); renderAppl(); renderType(); renderTaste(); renderTime(); renderIngTags(); renderRecipes();
     setupCollapse();
