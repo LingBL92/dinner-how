@@ -65,10 +65,11 @@ function groceryItems(ings,R,misses){
     let name=R.byId[id].name;
     // "mince" is a FORM, not a node: derive the shopping name for minced meat
     const ing=R.byId[id];
+    const form=detectForm(raw);                       // whole / mince / slice / dice / cube...
     if(ing.category==="proteins" && /\b(minced|ground)\b/.test(raw.toLowerCase()) && !/^minced/i.test(name)){
       name="Minced "+name.toLowerCase();
     }
-    out.push({name,id,qty:q.qty,unit:q.unit});});
+    out.push({name,id,qty:q.qty,unit:q.unit,form});});
   return out;
 }
 function bucket(x){return x<=0?0:(x<1.5?1:(x<2.5?2:3));}
@@ -540,6 +541,11 @@ function subScore(aId,bId,R){
      not a dish. Staying within a species is a far safer swap than crossing one, and the
      scorer was treating them as near-equal. */
   if(A.category==="proteins" && B.category==="proteins"){
+    /* FORM IS ABSOLUTE. Mince is a different ingredient from a slab — you cannot make
+       a mince dish with a belly, or a braise with mince. No score, ever. */
+    const isMinceNode=(x)=>x.form==="mince";
+    if(isMinceNode(A)!==isMinceNode(B)) return 0;
+
     const sp=(id)=>{ const anc=R.anc[id]||new Set();
       for(const k of ["beef","pork","chicken","mutton","fish","prawn"]) if(anc.has(k)||id===k) return k;
       return id; };
@@ -598,8 +604,36 @@ function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}
     comps.forEach(g=>{
       const mt=measureTypeOf(R.byId[g.id]);
       // --- do we have it at all? (self, or an on-hand substitute) ---
+      /* FORM IS A HARD CONSTRAINT. "300 g minced pork" is not satisfied by a pork belly
+         slab, however well they match on collagen and fat — mince is a different
+         ingredient in every way that matters to a recipe. Mince only swaps for mince. */
+      const needsMince = g.form==="mince";
+      const isMince = (id)=>{
+        // a pantry item is "mince" only if the cook actually has mince — we cannot know
+        // that from a bare id, so treat a generic species node as ambiguous and allow it,
+        // but never accept a specific whole cut (pork belly, chicken thigh, beef chuck).
+        const ing=R.byId[id]||{};
+        if(ing.category!=="proteins") return false;
+        if(ing.form==="mince") return true;                // an actual mince node
+        return !R.isLeaf(id);                              // generic species: could be mince
+      };
       let sourceId=null;
       if(have.has(g.id)) sourceId=g.id;
+      else if(needsMince){
+        // First: the same species, in mince form (or a generic node that could be mince).
+        let kin=[...have].find(hid=>((R.anc[hid]||new Set()).has(g.id)||hid===g.id) && isMince(hid));
+        // Then: ANOTHER mince. Beef mince for pork mince is a real swap — a slab never is.
+        if(!kin) kin=[...have].find(hid=>(R.byId[hid]||{}).form==="mince");
+        if(kin){
+          sourceId=kin;
+          if(kin!==g.id){
+            const cross=!((R.anc[kin]||new Set()).has(g.id));
+            subs.push({need:g.name,use:(R.byId[kin]||{}).name||kin,
+              flag: cross ? "a different meat, but the right form" : null, rename:null});
+          }
+        }
+        // no whole-cut fallback: a slab is not mince
+      }
       else {
         // OWNING A SPECIFIC CUT SATISFIES A GENERIC REQUIREMENT.
         // "300g chicken" is covered by chicken thigh; "beef" by beef chuck; etc.
