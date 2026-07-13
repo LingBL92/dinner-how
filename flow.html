@@ -113,6 +113,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .ac-b:hover{border-color:var(--cool);color:var(--cool)}
 .ac-n{font-family:"Space Mono",monospace;font-size:11px;color:var(--cool);font-weight:700;min-width:10px;text-align:center}
 .ac-h{font-family:"Space Mono",monospace;font-size:8.5px;opacity:.7}
+.ac-h em{font-style:normal;color:var(--gold);opacity:.9}
 .tfilter{padding:8px 12px;border-bottom:1px solid var(--line)}
 .tfilter:last-child{border-bottom:none}
 .tf-top{display:flex;align-items:baseline;gap:6px}
@@ -516,7 +517,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.79</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.80</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2111,7 +2112,9 @@ let pax=4;
 /* How many dishes each vessel can run at once. Kitchens differ — two burners is common,
    but a stacked steamer might take three tiers. The scheduler already reasons about
    capacity; this just lets you tell it the truth about your kitchen. */
-const APPL_CAP={stovetop:2, steamer:2};
+const APPL_CAP={stovetop:2, steamer:2, oven:2};
+const CAP_LABEL={stovetop:"burners", steamer:"tiers", oven:"racks"};
+const CAP_NOTE ={oven:"\u2014 only if they share a temperature"};
 const owned=new Set();   // kept in step with FLOW.appl
 const TASTE_AXES=["sweet","sour","salty","umami","fat","heat"];
 const TASTE_LABEL={sweet:"sweet",sour:"sour",salty:"salty",umami:"umami",fat:"rich",heat:"spicy"};
@@ -2439,11 +2442,12 @@ function renderAppl(){
       const n=APPL_CAP[a];
       const cap=document.createElement("div"); cap.className="ac-line";
       cap.innerHTML=
-        "<span class=\"ac-l\">"+(a==="stovetop"?"burners":"tiers")+"</span>"+
+        "<span class=\"ac-l\">"+(CAP_LABEL[a]||"slots")+"</span>"+
         "<button class=\"ac-b\" data-d=\"-1\">\u2212</button>"+
         "<span class=\"ac-n\">"+n+"</span>"+
         "<button class=\"ac-b\" data-d=\"1\">+</button>"+
-        "<span class=\"ac-h\">dish"+(n===1?"":"es")+" at once</span>";
+        "<span class=\"ac-h\">dish"+(n===1?"":"es")+" at once"+
+          (CAP_NOTE[a]&&n>1?" <em>"+CAP_NOTE[a]+"</em>":"")+"</span>";
       cap.onclick=(e)=>{
         const b=e.target&&e.target.closest?e.target.closest(".ac-b"):null;
         if(!b)return;
@@ -2858,7 +2862,7 @@ function renderSchedule(sc, picked){
   if(sc.holdingPeak>=3) notes.push("At the busiest point you\u2019ll have "+sc.holdingPeak+" piles of prepped ingredients waiting \u2014 clear some bench space.");
   Object.keys(byAppl).forEach(ap=>{
     const n=byAppl[ap].length;
-    const cap = ap==="stovetop"?APPL_CAP.stovetop : ap==="steamer"?APPL_CAP.steamer : ap==="oven"?2 : 1;
+    const cap = APPL_CAP[ap]!==undefined ? APPL_CAP[ap] : 1;
     if(n>cap) notes.push("You\u2019ve got "+n+" dishes on the "+(APPL[ap]||ap).toLowerCase()+" but room for "+cap+" \u2014 they\u2019ll have to queue.");
   });
 
@@ -3228,11 +3232,11 @@ function schedule(list){
   const pp=prepPlan(list);
   const f=pax/4, pf=f<=1?Math.max(0.6,f):1+0.4*(f-1);
   const sharedPrep=Math.round(pp.sharedPrep*pf);
-  const CAP={stovetop:APPL_CAP.stovetop, oven:2, steamer:APPL_CAP.steamer,
+  const CAP={stovetop:APPL_CAP.stovetop, oven:APPL_CAP.oven, steamer:APPL_CAP.steamer,
       rice_cooker:1, pressure_cooker:1, slow_cooker:1, air_fryer:1, none:99};
   const VCAP={stovetop:4.5,rice_cooker:1.8,pressure_cooker:4,slow_cooker:4,air_fryer:1.8,oven:99,none:99};
   const assignAppliances=(L)=>{
-    const CAPv={stovetop:APPL_CAP.stovetop, oven:2, steamer:APPL_CAP.steamer,
+    const CAPv={stovetop:APPL_CAP.stovetop, oven:APPL_CAP.oven, steamer:APPL_CAP.steamer,
       rice_cooker:1, pressure_cooker:1, slow_cooker:1, air_fryer:1, none:99};
     const loadv={};const chosen={};
     const order=L.map((d,i)=>({d,i})).sort((a,b)=>{
@@ -3253,7 +3257,14 @@ function schedule(list){
       return {d,mi,ap,temp:ap==="oven"?(d.oven_temp_c||190):null,fp:Math.round((pp.finishing[d.name]||0)*pf),ac,off,batches,fresh:!!d.fresh,start:null};});
     const rebuild=exclude=>{const cook=[[0,sharedPrep]],appl={};items.forEach(it=>{if(it===exclude||it.start==null)return;cook.push([it.start,it.start+it.fp+it.ac]);(appl[it.ap]=appl[it.ap]||[]).push([it.cookStart,it.done,it.temp]);});return {cook,appl};};
     const cf=(S,t,on)=>!S.cook.some(iv=>t<iv[1]&&t+on>iv[0]);
-    const af=(S,t,dur,ap,temp)=>{const over=(S.appl[ap]||[]).filter(iv=>t<iv[1]&&t+dur>iv[0]);if(ap==="oven"){if(over.some(iv=>Math.abs(iv[2]-temp)>10))return false;return over.length<2;}return over.length<(CAP[ap]||1);};
+    const af=(S,t,dur,ap,temp)=>{
+      const over=(S.appl[ap]||[]).filter(iv=>t<iv[1]&&t+dur>iv[0]);
+      const cap=CAP[ap]||1;
+      // an oven has racks AND a single temperature: BOTH must allow it. Capacity is
+      // necessary, not sufficient — two dishes at different temperatures never share.
+      if(ap==="oven" && over.some(iv=>Math.abs(iv[2]-temp)>10)) return false;
+      return over.length<cap;
+    };
     const fit=(S,it,t)=>cf(S,t,it.fp+it.ac)&&af(S,t+it.fp,it.ac+it.off,it.ap,it.temp);
     const setPos=(it,t)=>{it.start=t;it.cookStart=t+it.fp;it.done=t+it.fp+it.ac+it.off;};
     const ord=items.slice().sort((a,b)=>(b.fp+b.ac+b.off)-(a.fp+a.ac+a.off));
