@@ -1477,3 +1477,42 @@ function auditDrift(R, dishes){
   }
   return problems;
 }
+
+
+/* ============================================================
+   SEASONING TIMING — when the flavour goes into the pot.
+   AUTHORED. This is cook's knowledge: a rempah is fried before anything else touches
+   the pan; dang gui infuses for the whole simmer; lime juice goes in off the heat or
+   it turns bitter. Getting this wrong ruins the dish, so it belongs in the timeline.
+   ============================================================ */
+const SEASON_TIMING={
+  rempah:      {when:"before", mins:5,  label:"Fry the rempah",
+                why:"fry the paste in oil until it darkens — before anything else goes in"},
+  masala:      {when:"before", mins:3,  label:"Toast the spices",
+                why:"bloom the whole spices in oil first, or they taste raw"},
+  jp_curry:    {when:"end",    mins:5,  label:"Stir in the curry roux",
+                why:"add the roux near the end and let it thicken"},
+  korean:      {when:"before", mins:3,  label:"Fry the gochujang",
+                why:"fry the chilli paste until the oil turns red"},
+  hong_shao:   {when:"start",  mins:0,  label:"Add the soy and sugar",
+                why:"in with the liquid — it needs the whole braise to glaze"},
+  bkt_hokkien: {when:"start",  mins:0,  label:"Add the herbs",
+                why:"dang gui and spices go in with the water and infuse throughout"},
+  bkt_teochew: {when:"start",  mins:0,  label:"Add garlic and white pepper",
+                why:"in from the start — the broth takes its whole character from them"},
+  clear_chinese:{when:"start", mins:0,  label:"Add ginger and scallion",
+                why:"in with the water"},
+  milky_bone:  {when:"start",  mins:0,  label:"Aromatics in",
+                why:"in from the start, then boil hard"},
+  dashi_miso:  {when:"off",    mins:2,  label:"Whisk in the miso",
+                why:"OFF the heat — boiling miso kills its aroma"},
+  dashi_shoyu: {when:"end",    mins:2,  label:"Season with soy and mirin",
+                why:"near the end, so it stays clean"},
+  assam:       {when:"off",    mins:2,  label:"Lime, fish sauce, sugar",
+                why:"OFF the heat — boiled lime juice turns bitter"},
+  western_herb:{when:"start",  mins:0,  label:"Herbs and stock",
+                why:"in with the liquid"}
+};
+function seasoningStep(key){ return SEASON_TIMING[key]||null; }
+
+
