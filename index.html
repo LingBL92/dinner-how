@@ -1297,7 +1297,21 @@ const BROTH_BASE={
   wakame:         {body:0, sweetness:0, depth:1, clean:3, marine:3, note:"clean oceanic umami, no fat"},
   nori:           {body:0, sweetness:0, depth:1, clean:2, marine:3, note:"oceanic, toasty"},
   tofu:           {body:1, sweetness:0, depth:0, clean:3, marine:0, note:"a carrier \u2014 takes the broth's character"},
-  mutton:         {body:3, sweetness:0, depth:3, clean:0, marine:0, gamey:2, note:"strong, gamey, assertive"}
+  mutton:         {body:3, sweetness:0, depth:3, clean:0, marine:0, gamey:2, note:"strong, gamey, assertive"},
+  pomfret:        {body:1, sweetness:2, depth:1, clean:3, marine:2, note:"sweet, delicate white flesh"},
+  seabass:        {body:1, sweetness:1, depth:1, clean:3, marine:2, note:"clean and mild"},
+  threadfin:      {body:1, sweetness:2, depth:1, clean:3, marine:2, note:"sweet and tender"},
+  snapper:        {body:2, sweetness:1, depth:2, clean:2, marine:2, note:"firm white flesh, holds together"},
+  grouper:        {body:2, sweetness:1, depth:2, clean:2, marine:2, note:"gelatinous \u2014 gives the broth real body"},
+  mackerel:       {body:2, sweetness:1, depth:2, clean:1, marine:3, note:"oily and assertive"},
+  sardine:        {body:1, sweetness:0, depth:3, clean:0, marine:3, note:"small, oily, intensely savoury"},
+  cod:            {body:2, sweetness:1, depth:1, clean:2, marine:2, note:"buttery and forgiving"},
+  tuna:           {body:2, sweetness:0, depth:2, clean:1, marine:2, note:"firm and steak-like"},
+  chicken_wing:   {body:3, sweetness:1, depth:1, clean:1, marine:0, note:"skin and collagen \u2014 gives a rich, gelatinous broth"},
+  chicken_drumstick:{body:2, sweetness:1, depth:1, clean:2, marine:0, note:"dark meat on the bone \u2014 clean and savoury"},
+  chicken_whole:  {body:3, sweetness:1, depth:2, clean:2, marine:0, note:"the whole bird \u2014 the classic clear broth"},
+  beef_steak:     {body:1, sweetness:1, depth:2, clean:1, marine:0, note:"lean \u2014 not really a broth cut"},
+  pork_loin:      {body:1, sweetness:2, depth:1, clean:2, marine:0, note:"lean \u2014 a light, clean broth"}
 };
 const BROTH_AXES=["body","sweetness","depth","clean","marine","gamey"];
 
@@ -1484,14 +1498,26 @@ function hasBroth(d){
    a cook's estimate of how long each class needs in a simmering pot. A chef
    should own and correct these numbers.
    ============================================================ */
+/* A simmering pot is FORGIVING. Carrots do not have a moment — they have a window.
+   Claiming a carrot goes in at "+38m" and corn at "+30m" asserts an 8-minute distinction
+   the physics does not support, and dresses an estimate up as a schedule.
+   So each class carries a WINDOW (min..max) and a flag saying whether the timing
+   genuinely MATTERS. The greens and the fish matter. The roots do not. */
 const POT_CLASS=[
-  {key:"collagen",  label:"Tough cuts",        mins:50, why:"needs time for the collagen to soften"},
-  {key:"dense_root",label:"Dense roots",       mins:20, why:"dense \u2014 needs a good while to soften"},
-  {key:"firm_veg",  label:"Firm vegetables",   mins:12, why:"holds its shape"},
-  {key:"quick_prot",label:"Quick proteins",    mins:8,  why:"cooks through fast"},
-  {key:"soft",      label:"Soft additions",    mins:5,  why:"just needs heating through"},
-  {key:"delicate",  label:"Delicate seafood",  mins:4,  why:"overcooks in moments"},
-  {key:"leafy",     label:"Leafy greens",      mins:1,  why:"wilts almost instantly \u2014 in at the very end"}
+  {key:"collagen",  label:"Tough cuts",       mins:50, lo:40, hi:90, critical:false,
+   why:"needs the full time \u2014 the collagen has to soften"},
+  {key:"dense_root",label:"Dense vegetables", mins:20, lo:15, hi:30, critical:false,
+   why:"anywhere in this window is fine \u2014 they just need to soften"},
+  {key:"firm_veg",  label:"Firm vegetables",  mins:12, lo:8,  hi:18, critical:false,
+   why:"forgiving \u2014 they hold their shape"},
+  {key:"quick_prot",label:"Quick proteins",   mins:8,  lo:6,  hi:12, critical:false,
+   why:"cooks through fast"},
+  {key:"soft",      label:"Soft additions",   mins:5,  lo:3,  hi:8,  critical:false,
+   why:"just needs heating through"},
+  {key:"delicate",  label:"Fish and seafood", mins:4,  lo:3,  hi:5,  critical:true,
+   why:"THIS ONE MATTERS \u2014 a minute too long and it goes woolly"},
+  {key:"leafy",     label:"Leafy greens",     mins:1,  lo:1,  hi:2,  critical:true,
+   why:"THIS ONE MATTERS \u2014 in at the very last minute, or it collapses"}
 ];
 const POT_MINS={}; POT_CLASS.forEach(c=>POT_MINS[c.key]=c.mins);
 
@@ -1566,9 +1592,16 @@ function buildOnePot(ingIds, R, dishes, opts){
     .map(c=>{
       const mins=scaled(c.key);
       const faster = mins<c.mins, slower = mins>c.mins;
+      const scaleW=(v)=>{ if(mult===1||!["collagen","dense_root"].includes(c.key)) return v;
+        let x=Math.round(v*mult); if(cap!=null) x=Math.min(x,cap); return Math.max(1,x); };
+      const lo=scaleW(c.lo), hi=scaleW(c.hi);
       return {
         at: Math.max(0, total-mins),
+        // the honest window: earliest and latest you could add it
+        from: Math.max(0, total-hi),
+        to:   Math.max(0, total-lo),
         cooks: mins,
+        critical: !!c.critical,
         label: c.label,
         why: c.why + ((faster||slower) && APP ? " \u00b7 " + (faster?"much faster":"slower") + " in the " + APP.replace(/_/g," ") : ""),
         items: staged[c.key]
@@ -1767,6 +1800,18 @@ function auditDrift(R, dishes){
       problems.push({kind:"seafood", id:i.id, msg:i.name+" is a fish but is not classed delicate — it will be overcooked"});
   });
 
+  // 5. every protein that could lead a pot needs a broth character — this is exactly
+  //    how the nine new fish went missing.
+  const LEADS=["beef","pork","chicken","mutton","fish","prawn","squid","oyster"];
+  R.list.filter(i=>{
+    if(i.category!=="proteins"||!R.isLeaf(i.id)||i.form==="mince") return false;
+    const anc=R.anc[i.id]||new Set();
+    return LEADS.some(k=>anc.has(k)||i.id===k);      // only meat and fish lead a pot
+  }).forEach(i=>{
+    if(!BROTH_BASE[i.id])
+      problems.push({kind:"broth-base", id:i.id, msg:i.name+" has no broth character — it cannot lead a one-pot"});
+  });
+
   if(problems.length && typeof console!=="undefined"){
     console.warn("[Dinner How?] "+problems.length+" data/code drift issue(s) — the taxonomy has grown past what the code classifies:");
     problems.slice(0,12).forEach(p=>console.warn("   "+p.msg));
@@ -1812,6 +1857,67 @@ const SEASON_TIMING={
 function seasoningStep(key){ return SEASON_TIMING[key]||null; }
 
 
+
+/* ============================================================
+   WHICH POT? \u2014 you own pork AND fish; that does not mean you want a pork-and-fish pot.
+   A pot has ONE protein identity. Throwing everything in is a category error: the
+   engine should be choosing which pot to make, not making one pot out of everything.
+
+   So: propose a pot per plausible base, then decide what else belongs in it \u2014
+   using affinity (has anyone cooked these together?) and physics (does it survive?).
+   ============================================================ */
+function potCandidates(ingIds, R, dishes, AFF){
+  const real=ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed");
+  const proteins=real.filter(id=>(R.byId[id]||{}).category==="proteins" && BROTH_BASE[id]);
+  const others  =real.filter(id=>!proteins.includes(id));
+
+  // group the proteins by species \u2014 a pork pot, a fish pot, a beef pot
+  const speciesOf=(id)=>{
+    const anc=R.anc[id]||new Set();
+    for(const k of ["beef","pork","chicken","mutton","fish","prawn","squid","oyster"])
+      if(anc.has(k)||id===k) return k;
+    return id;
+  };
+  const bySpecies={};
+  proteins.forEach(id=>{ const sp=speciesOf(id); (bySpecies[sp]=bySpecies[sp]||[]).push(id); });
+
+  const pots=Object.entries(bySpecies).map(([sp,ids])=>{
+    // which of your OTHER ingredients belong in THIS pot?
+    const belongs=[], uncertain=[];
+    others.forEach(o=>{
+      // physics: will it survive alongside this base? (leafy + a 90-min braise is fine \u2014
+      // it goes in at the end. so physics rarely vetoes. affinity is the real test.)
+      let seen=0;
+      ids.forEach(p=>{
+        ["soup","braise"].forEach(ctx=>{
+          const pr=AFF?precedentFor(p,o,ctx,AFF):{n:0};
+          seen=Math.max(seen,pr.n);
+        });
+      });
+      if(seen>0) belongs.push({id:o, n:seen});
+      else uncertain.push({id:o, n:0});
+    });
+    belongs.sort((a,b)=>b.n-a.n);
+
+    const contents=ids.concat(belongs.map(x=>x.id));
+    const ch=brothCharacter(contents,R);
+    return {
+      species: sp,
+      base: ids,
+      baseNames: ids.map(id=>(R.byId[id]||{}).name||id),
+      belongs, uncertain,
+      contents,
+      character: ch,
+      describe: ch?describeBroth(ch):"a light vegetable pot",
+      reminds: dishes ? brothLikeDishes(contents,R,dishes.filter(hasBroth),2) : [],
+      // a pot is stronger when the things in it have precedent together
+      strength: belongs.reduce((n,b)=>n+b.n,0)
+    };
+  });
+
+  pots.sort((a,b)=>b.strength-a.strength);
+  return pots;
+}
 
 function prepVerb(d,n){return (d&&d.prep_overrides&&d.prep_overrides[n])||PREP_VERB[n]||"prep";}
 ;
