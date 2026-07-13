@@ -554,7 +554,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.84</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.85</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -1900,6 +1900,7 @@ function potClassOf(id,R){
 
 /* Build the pot: a base, a staged schedule, and honest gaps. */
 function buildOnePot(ingIds, R, dishes, opts){
+  ingIds=[...new Set(ingIds||[])];        // a pot can never hold the same thing twice
   // STAGING only cares about things you physically add and time (not seasonings).
   // REASONING (broth character, seasoning direction, similarity) needs the FULL list —
   // otherwise the star anise you added never reaches "what does this remind me of".
@@ -2315,7 +2316,7 @@ function potCandidates(ingIds, R, dishes, AFF){
     belongs.sort((a,b)=>b.n-a.n);
 
     // the pot holds EVERYTHING you own — the well-trodden and the uncharted alike
-    const contents=ids.concat(belongs.map(x=>x.id)).concat(uncertain.map(x=>x.id));
+    const contents=[...new Set(ids.concat(belongs.map(x=>x.id)).concat(uncertain.map(x=>x.id)))];
     const ch=brothCharacter(contents,R);
     const alts = ids.alternatives || [];
     return {
@@ -3612,10 +3613,22 @@ function renderOnePot(){
   const chosen = cands.find(c=>c.species===FLOW.potBase) || cands[0];
 
   // SWAP THE CUT: whole chicken → thigh, pork ribs → belly, and so on.
-  let potIngredients = chosen ? chosen.contents : ids;
+  let potIngredients = chosen ? chosen.contents.slice() : ids.slice();
   if(chosen && chosen.alternatives && chosen.alternatives.length){
     const swapTo = (FLOW.potCut && chosen.alternatives.includes(FLOW.potCut)) ? FLOW.potCut : null;
-    if(swapTo) potIngredients = chosen.contents.map(id=>chosen.base.includes(id)?swapTo:id);
+    if(swapTo){
+      /* BUG WAS HERE. The old code did:
+             contents.map(id => base.includes(id) ? swapTo : id)
+         With TWO cuts in the base (pork ribs + pork belly, which the engine allows for
+         complementary cuts), BOTH mapped to the same swap — producing pork_shoulder
+         twice. Replace only the LEAD cut; drop any other base cuts; then dedupe. */
+      const leadCut = chosen.base[0];
+      potIngredients = chosen.contents
+        .filter(id => !chosen.base.includes(id) || id===leadCut)   // keep only the lead
+        .map(id => id===leadCut ? swapTo : id);
+    }
+    // belt and braces: a pot can never contain the same ingredient twice
+    potIngredients = [...new Set(potIngredients)];
     const lead = swapTo || chosen.base[0];
     const sw=document.createElement("div"); sw.className="pot-swap";
     sw.innerHTML="<span class=\"ps-l\">cut</span>";

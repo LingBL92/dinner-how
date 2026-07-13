@@ -1580,6 +1580,7 @@ function potClassOf(id,R){
 
 /* Build the pot: a base, a staged schedule, and honest gaps. */
 function buildOnePot(ingIds, R, dishes, opts){
+  ingIds=[...new Set(ingIds||[])];        // a pot can never hold the same thing twice
   // STAGING only cares about things you physically add and time (not seasonings).
   // REASONING (broth character, seasoning direction, similarity) needs the FULL list —
   // otherwise the star anise you added never reaches "what does this remind me of".
@@ -1995,7 +1996,7 @@ function potCandidates(ingIds, R, dishes, AFF){
     belongs.sort((a,b)=>b.n-a.n);
 
     // the pot holds EVERYTHING you own — the well-trodden and the uncharted alike
-    const contents=ids.concat(belongs.map(x=>x.id)).concat(uncertain.map(x=>x.id));
+    const contents=[...new Set(ids.concat(belongs.map(x=>x.id)).concat(uncertain.map(x=>x.id)))];
     const ch=brothCharacter(contents,R);
     const alts = ids.alternatives || [];
     return {
