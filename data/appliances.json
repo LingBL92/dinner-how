@@ -47,9 +47,18 @@
    ]
   },
   {
+   "id": "steamer",
+   "name": "Steamer",
+   "order": 3,
+   "passive_multiplier": 1.0,
+   "capacity": 2,
+   "passive_cap_min": null,
+   "volume_l": 6
+  },
+  {
    "id": "rice_cooker",
    "name": "Rice cooker",
-   "order": 3,
+   "order": 4,
    "capacity": 1,
    "volume_litres": 1.8,
    "passive_multiplier": 1.0
@@ -57,7 +66,7 @@
   {
    "id": "pressure_cooker",
    "name": "Pressure cooker",
-   "order": 4,
+   "order": 5,
    "capacity": 1,
    "volume_litres": 4,
    "passive_multiplier": 0.35,
@@ -75,7 +84,7 @@
   {
    "id": "slow_cooker",
    "name": "Slow cooker",
-   "order": 5,
+   "order": 6,
    "capacity": 1,
    "volume_litres": 4,
    "passive_multiplier": 4.0,
@@ -91,7 +100,7 @@
   {
    "id": "air_fryer",
    "name": "Air fryer",
-   "order": 6,
+   "order": 7,
    "capacity": 1,
    "volume_litres": 1.8,
    "passive_multiplier": 0.7,

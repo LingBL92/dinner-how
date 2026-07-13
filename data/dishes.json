@@ -567,7 +567,8 @@
    "appliances": [
     "stovetop",
     "rice_cooker",
-    "oven"
+    "oven",
+    "steamer"
    ],
    "ingredients": [
     "2 cups jasmine rice",
@@ -789,7 +790,8 @@
    "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
-    "stovetop"
+    "stovetop",
+    "steamer"
    ],
    "ingredients": [
     "1 whole fish or 2 fillets",
@@ -2062,7 +2064,8 @@
    "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
-    "stovetop"
+    "stovetop",
+    "steamer"
    ],
    "ingredients": [
     "4 eggs",
@@ -3413,7 +3416,8 @@
    "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
-    "stovetop"
+    "stovetop",
+    "steamer"
    ],
    "ingredients": [
     "1 whole pomfret",
@@ -3637,7 +3641,8 @@
    "cuisine": "singaporean",
    "appliance": "stovetop",
    "appliances": [
-    "stovetop"
+    "stovetop",
+    "steamer"
    ],
    "ingredients": [
     "2 eggplant",
