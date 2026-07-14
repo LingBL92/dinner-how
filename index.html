@@ -1313,7 +1313,7 @@ const BROTH_BASE={
   beef_short_rib: {body:3, sweetness:1, depth:3, clean:0, marine:0, note:"very rich, unctuous"},
   beef:           {body:2, sweetness:1, depth:3, clean:0, marine:0, note:"deep and savoury"},
   chicken_thigh:  {body:2, sweetness:1, depth:1, clean:2, marine:0, note:"clean, light, gently savoury"},
-  chicken_breast: {body:1, sweetness:1, depth:1, clean:3, marine:0, note:"very clean and light"},
+  chicken_breast: {body:1, sweetness:1, depth:1, clean:3, marine:0, noBroth:true, note:"lean \u2014 fine as an addition, but it can\u2019t carry a broth"},
   chicken:        {body:2, sweetness:1, depth:1, clean:2, marine:0, note:"clean and comforting"},
   fish:           {body:1, sweetness:1, depth:1, clean:3, marine:2, note:"delicate; goes in late"},
   salmon:         {body:1, sweetness:1, depth:2, clean:2, marine:2, note:"oily, distinctly marine"},
@@ -1337,8 +1337,8 @@ const BROTH_BASE={
   chicken_wing:   {body:3, sweetness:1, depth:1, clean:1, marine:0, note:"skin and collagen \u2014 gives a rich, gelatinous broth"},
   chicken_drumstick:{body:2, sweetness:1, depth:1, clean:2, marine:0, note:"dark meat on the bone \u2014 clean and savoury"},
   chicken_whole:  {body:3, sweetness:1, depth:2, clean:2, marine:0, note:"the whole bird \u2014 the classic clear broth"},
-  beef_steak:     {body:1, sweetness:1, depth:2, clean:1, marine:0, note:"lean \u2014 not really a broth cut"},
-  pork_loin:      {body:1, sweetness:2, depth:1, clean:2, marine:0, note:"lean \u2014 a light, clean broth"}
+  beef_steak:     {body:1, sweetness:1, depth:2, clean:1, marine:0, noBroth:true, note:"a dry-heat cut \u2014 sear it, don\u2019t simmer it"},
+  pork_loin:      {body:1, sweetness:2, depth:1, clean:2, marine:0, noBroth:true, note:"lean \u2014 goes dry and stringy in a pot"}
 };
 const BROTH_AXES=["body","sweetness","depth","clean","marine","gamey"];
 
@@ -1926,8 +1926,17 @@ function potSuggestions(baseIds, ctx, R, AFF, {have=[], limit=5}={}){
 
 function potCandidates(ingIds, R, dishes, AFF){
   const real=ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed");
-  const proteins=real.filter(id=>(R.byId[id]||{}).category==="proteins" && BROTH_BASE[id]);
-  const others  =real.filter(id=>!proteins.includes(id));
+  // a lean dry-heat cut (steak, loin, breast) can go IN a pot but can never LEAD one
+  const canLead=(id)=> !!BROTH_BASE[id] && !BROTH_BASE[id].noBroth;
+  const proteins=real.filter(id=>(R.byId[id]||{}).category==="proteins" && canLead(id));
+  /* A dry-heat cut has no business in a simmering pot AT ALL — not as a base, and not
+     as an addition. You do not drop a steak into a braise. Keep them out entirely and
+     report them, so the cook knows why. */
+  const dryHeat = real.filter(id=>{
+    const b=BROTH_BASE[id];
+    return b && b.noBroth;
+  });
+  const others  = real.filter(id=>!proteins.includes(id) && !dryHeat.includes(id));
 
   // group the proteins by species \u2014 a pork pot, a fish pot, a beef pot
   const speciesOf=(id)=>{
@@ -1949,6 +1958,8 @@ function potCandidates(ingIds, R, dishes, AFF){
     if(cuts.length<2) return;
     cuts=cuts.slice().sort((a,b)=>{
       const A=BROTH_BASE[a]||{}, B=BROTH_BASE[b]||{};
+      // a cut that cannot carry a broth never leads, whatever its numbers
+      if(!!A.noBroth !== !!B.noBroth) return A.noBroth ? 1 : -1;
       return ((B.body||0)+(B.depth||0)) - ((A.body||0)+(A.depth||0));
     });
     /* A WHOLE animal excludes its own parts — you don't add a thigh to a whole chicken.
@@ -2011,6 +2022,8 @@ function potCandidates(ingIds, R, dishes, AFF){
       describe: ch?describeBroth(ch):"a light vegetable pot",
       reminds: dishes ? brothLikeDishes(contents,R,dishes.filter(hasBroth),2) : [],
       suggest: AFF ? potSuggestions(ids, "soup", R, AFF, {have:real}) : {yours:[],buy:[]},
+      dryHeat: dryHeat.map(id=>({id, name:(R.byId[id]||{}).name||id,
+        why:(BROTH_BASE[id]||{}).note||"a dry-heat cut"})),
       // a pot is stronger when the things in it have precedent together
       strength: belongs.reduce((n,b)=>n+b.n,0)
     };
@@ -2027,6 +2040,145 @@ function potCandidates(ingIds, R, dishes, AFF){
    SUGGEST — both from what you own (things you might have forgotten) and from what
    you don't (a shopping nudge). This is the graph being generous rather than gatekeeping.
    ============================================================ */
+
+
+/* ============================================================
+   POT MODES — "one-pot" is not one thing.
+   A soup, a braise and a baked rice all put everything in one vessel, but they cook by
+   DIFFERENT HEAT, and that changes everything: which cuts work, what the liquid does,
+   and whether staging even applies.
+
+   • SOUP / BRAISE — wet heat, everything simmers together, staged by how long each
+     thing needs. This is what the pot has been all along.
+   • BAKED — dry heat in one dish. Nothing is "added at 38 minutes"; it mostly goes in
+     together and comes out together. A steak is fine here. A tough cut is not.
+   ============================================================ */
+const POT_MODES=[
+  {key:"soup",  label:"Soup or braise", vessel:["stovetop","pressure_cooker","slow_cooker"],
+   heat:"wet",  note:"everything simmers together — staged by how long each thing needs"},
+  {key:"baked", label:"Baked in one dish", vessel:["oven","air_fryer"],
+   heat:"dry",  note:"dry heat — it mostly goes in together and comes out together"}
+];
+
+/* which cuts suit which heat? This is the two-axis meat model doing its job. */
+function suitsHeat(id, heat, R){
+  const i=R.byId[id]||{};
+  const p=new Set(i.provides||[]);
+  const b=BROTH_BASE[id]||{};
+  if(i.category!=="proteins") return true;                 // vegetables are fine either way
+  if(heat==="wet"){
+    if(b.noBroth) return false;                            // steak, loin, breast: not in a pot
+    return true;
+  }
+  // DRY heat: a tough collagen cut needs long wet cooking to soften. It will be leather.
+  if(p.has("collagen_rich") && !["chicken_wing","chicken_whole","pork_belly"].includes(id)) return false;
+  return true;
+}
+
+/* what CAN'T go in, given the heat, and why */
+function heatMismatch(ingIds, heat, R){
+  return ingIds.filter(id=>!suitsHeat(id,heat,R)).map(id=>{
+    const i=R.byId[id]||{};
+    const p=new Set(i.provides||[]);
+    const why = heat==="wet"
+      ? ((BROTH_BASE[id]||{}).note||"a dry-heat cut \u2014 sear it, don\u2019t simmer it")
+      : (p.has("collagen_rich")
+          ? "a tough cut \u2014 it needs long, wet cooking or it turns to leather"
+          : "doesn\u2019t suit dry heat");
+    return {id, name:i.name||id, why};
+  });
+}
+
+
+/* ============================================================
+   A BAKED ONE-DISH has no broth — it has a main protein and things roasted around it.
+   So it needs its own candidate logic: which protein leads, what roasts alongside,
+   and (crucially) which cuts would be ruined by dry heat.
+   ============================================================ */
+function bakeCandidates(ingIds, R, dishes, AFF){
+  const real=ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed");
+  const ok=real.filter(id=>suitsHeat(id,"dry",R));
+  const proteins=ok.filter(id=>(R.byId[id]||{}).category==="proteins");
+  const others=ok.filter(id=>!proteins.includes(id));
+
+  const speciesOf=(id)=>{
+    const anc=R.anc[id]||new Set();
+    for(const k of ["beef","pork","chicken","mutton","fish","prawn","squid","oyster"])
+      if(anc.has(k)||id===k) return k;
+    return id;
+  };
+  const bySpecies={};
+  proteins.forEach(id=>{ const sp=speciesOf(id); (bySpecies[sp]=bySpecies[sp]||[]).push(id); });
+
+  // one lead cut per species (same rule as the pot: cuts are alternatives)
+  Object.keys(bySpecies).forEach(sp=>{
+    const cuts=bySpecies[sp];
+    if(cuts.length<2) return;
+    const whole=cuts.find(id=>/_whole$/.test(id));
+    const lead = whole || cuts[0];
+    bySpecies[sp]=[lead];
+    bySpecies[sp].alternatives=cuts.filter(id=>id!==lead);
+  });
+
+  return Object.entries(bySpecies).map(([sp,ids])=>{
+    const belongs=[], uncertain=[];
+    others.forEach(o=>{
+      let seen=0;
+      ids.forEach(p=>{
+        const pr=AFF?precedentFor(p,o,"fried",AFF,R):{n:0};
+        seen=Math.max(seen,pr.n);
+      });
+      (seen>0?belongs:uncertain).push({id:o, n:seen});
+    });
+    const contents=[...new Set(ids.concat(belongs.map(x=>x.id)).concat(uncertain.map(x=>x.id)))];
+    return {
+      species: sp,
+      base: ids,
+      baseNames: ids.map(id=>(R.byId[id]||{}).name||id),
+      alternatives: ids.alternatives||[],
+      altNames: (ids.alternatives||[]).map(id=>(R.byId[id]||{}).name||id),
+      belongs, uncertain, contents,
+      describe: "roasted \u2014 everything in one dish",
+      dryHeat: heatMismatch(real,"dry",R),
+      suggest: {yours:[],buy:[]},
+      reminds: dishes ? dishes.filter(d=>{
+        const t=((d.steps||[]).join(" ")).toLowerCase();
+        return /roast|bake|oven/.test(t) && (d.grocery_items||[]).some(g=>ids.includes(g.id));
+      }).slice(0,2).map(d=>({dish:d.name, closeness:"a baked dish with the same protein"})) : []
+    };
+  });
+}
+
+/* a bake is not staged minute-by-minute — dense things get a head start, that's all */
+function buildBake(ingIds, R, opts){
+  const real=[...new Set(ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed"))];
+  const groups={lead:[], dense:[], quick:[]};
+  real.forEach(id=>{
+    const i=R.byId[id]||{};
+    const p=new Set(i.provides||[]);
+    if(i.category==="proteins") groups.lead.push({id,name:i.name||id});
+    else if(p.has("starchy")||p.has("holds_shape")) groups.dense.push({id,name:i.name||id});
+    else groups.quick.push({id,name:i.name||id});
+  });
+  const total = groups.lead.length ? 45 : 30;
+  const steps=[];
+  if(groups.dense.length) steps.push({at:0, from:0, to:0, cooks:total, critical:false,
+    label:"Dense vegetables", why:"they take longest — give them a head start",
+    items:groups.dense});
+  if(groups.lead.length) steps.push({at:0, from:0, to:5, cooks:total, critical:false,
+    label:"The protein", why:"in with the vegetables, so everything roasts together",
+    items:groups.lead});
+  if(groups.quick.length) steps.push({at:Math.round(total*0.6), from:Math.round(total*0.5), to:Math.round(total*0.7),
+    cooks:Math.round(total*0.4), critical:false,
+    label:"Quicker vegetables", why:"they'd burn if they went in at the start",
+    items:groups.quick});
+  return {
+    steps, total, handsOn:12, handsOff:total-12,
+    describe:"roasted in one dish",
+    gaps:[],
+    baked:true
+  };
+}
 
 function prepVerb(d,n){return (d&&d.prep_overrides&&d.prep_overrides[n])||PREP_VERB[n]||"prep";}
 ;
