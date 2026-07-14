@@ -582,7 +582,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.91</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.92</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -690,14 +690,33 @@ function statedCut(raw){
   return null;
 }
 
+/* DERIVED from the taxonomy, not hand-written. A "character" ingredient is one that
+   defines what the dish IS \u2014 a paste, or a sauce that names the dish. The taxonomy now
+   has a `pastes` category for exactly this, so the engine reads it rather than carrying
+   a hand-written list that goes stale. (That pattern has bitten seven times.) */
+let CHARACTER_SET=new Set();
+function buildCharacterSet(R){
+  const s=new Set();
+  R.list.forEach(i=>{ if(i.category==="pastes") s.add(i.id); });   // every paste, automatically
+  // a handful of condiments genuinely name a dish (soy-braised, oyster-sauce kailan)
+  ["oyster_sauce","dark_soy_sauce","fish_sauce","dashi","tamarind","coconut_milk",
+   "dried_shrimp","salted_fish","salted_vegetable","star_anise","dang_gui","white_pepper",
+   "kaffir_lime","lemongrass","galangal","turmeric","curry_leaves","shaoxing","mirin",
+   "wolfberry","kimchi"].forEach(x=>{ if(R.byId[x]) s.add(x); });
+  return s;
+}
+const CHARACTER_SEASONINGS={ has(id){ return CHARACTER_SET.has(id); } };
+
 function buildReference(ingData){
   const list=ingData.ingredients;
   const byId={}, GROC_CAT={}, PREP_VERB={}, hasChild=new Set();
   list.forEach(i=>{byId[i.id]=i;GROC_CAT[i.name]=i.aisle;PREP_VERB[i.name]=i.prep_verb;if(i.parent)hasChild.add(i.parent);});
   const anc={};
   list.forEach(i=>{const s=new Set();let p=i.parent;while(p){s.add(p);p=byId[p]?byId[p].parent:null;}anc[i.id]=s;});
-  return {list,byId,anc,GROC_CAT,PREP_VERB,isLeaf:id=>!hasChild.has(id),
+  const R={list,byId,anc,GROC_CAT,PREP_VERB,isLeaf:id=>!hasChild.has(id),
           match:makeMatcher(list),taste:ingData.taste_rules};
+  CHARACTER_SET=buildCharacterSet(R);   // derived from the taxonomy — never hand-written
+  return R;
 }
 
 /* ---- the derived layers ---- */
@@ -1541,22 +1560,14 @@ function contextOf(d){
   if(d.role==="base") return "rice_noodle";
   return d.role||"other";
 }
-/* A CHARACTER seasoning is the paste or sauce that MAKES the dish — sambal, belacan,
-   oyster sauce, miso, gochujang. It is "assumed" (you don't weigh it) but it is not
-   background. Salt, oil and garlic ARE background: they're in everything and would swamp
-   the signal. The affinity graph must see the character seasonings, or it can never learn
-   that sambal goes with kangkong — which is the whole point of a stir-fry. */
-const CHARACTER_SEASONINGS=new Set([
-  "sambal","belacan","shrimp_paste","laksa_paste","tom_yum_paste","curry_powder",
-  "oyster_sauce","dark_soy_sauce","hoisin","fermented_beancurd","gochujang","gochugaru",
-  "miso","dashi","kimchi","tamarind","dried_shrimp","salted_fish","salted_vegetable",
-  "star_anise","dang_gui","white_pepper","coconut_milk","fish_sauce","kaffir_lime",
-  "lemongrass","galangal","turmeric","curry_leaves","shaoxing","mirin","wolfberry"
-]);
+/* Which ingredients does the affinity graph SEE? A character paste or sauce defines the
+   dish (sambal, belacan, miso) and must be visible — or the graph can never learn that
+   sambal goes with kangkong. But salt, oil and garlic are BACKGROUND: they are in every
+   dish and would swamp the signal. */
 function inAffinity(id,R){
   if(id==="water") return false;
-  if(CHARACTER_SEASONINGS.has(id)) return true;          // the sauce IS the dish
-  return measureTypeOf(R.byId[id])!=="assumed";          // real, weighable ingredients
+  if(CHARACTER_SEASONINGS.has(id)) return true;      // the sauce IS the dish
+  return measureTypeOf(R.byId[id])!=="assumed";      // real, weighable ingredients
 }
 function buildAffinity(dishes,R){
   const pairs={};      // "ctx|a+b" -> {n, dishes:[]}
