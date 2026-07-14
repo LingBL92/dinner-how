@@ -357,6 +357,21 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .ps-why{font-family:"Space Mono",monospace;font-size:9.5px;color:var(--muted);margin-top:1px}
 .pot-done{font-size:13px;color:var(--muted);padding:8px 0 4px;margin-left:46px}
 .pd-t{color:var(--cool);font-weight:700;font-family:"Space Mono",monospace}
+.pot-mode{margin-bottom:12px;border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.pm-lab{font-family:"Space Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--muted);padding:8px 12px;background:rgba(50,117,100,.05);border-bottom:1px solid var(--line)}
+.pm-row{display:flex;align-items:center;gap:9px;padding:9px 12px;cursor:pointer;user-select:none;border-top:1px solid var(--line)}
+.pm-row:first-of-type{border-top:none}
+.pm-row:hover{background:rgba(50,117,100,.03)}
+.pm-t{flex:1;display:flex;flex-direction:column;gap:1px}
+.pm-n{font-size:13px;font-weight:600;line-height:1.2}
+.pm-d{font-size:10.5px;color:var(--muted);line-height:1.3}
+.pm-row.on .pm-n{color:var(--cool);font-weight:700}
+.pm-row .dot{width:11px;height:11px;border-radius:50%;border:2px solid var(--muted);flex:none}
+.pm-row.on .dot{background:var(--cool);border-color:var(--cool)}
+.pot-heat{margin-top:10px;padding:10px 12px;background:rgba(168,114,24,.07);border-left:3px solid var(--gold);
+  border-radius:7px;font-size:12px;line-height:1.6;color:var(--muted)}
+.pot-heat strong{color:var(--gold)}
 .pot-pick{margin-bottom:12px;border:1px solid var(--line);border-radius:11px;overflow:hidden}
 .pp-lab{font-family:"Space Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;
   color:var(--muted);padding:8px 12px;background:rgba(50,117,100,.05);border-bottom:1px solid var(--line)}
@@ -554,7 +569,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.85</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.87</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -1633,7 +1648,7 @@ const BROTH_BASE={
   beef_short_rib: {body:3, sweetness:1, depth:3, clean:0, marine:0, note:"very rich, unctuous"},
   beef:           {body:2, sweetness:1, depth:3, clean:0, marine:0, note:"deep and savoury"},
   chicken_thigh:  {body:2, sweetness:1, depth:1, clean:2, marine:0, note:"clean, light, gently savoury"},
-  chicken_breast: {body:1, sweetness:1, depth:1, clean:3, marine:0, note:"very clean and light"},
+  chicken_breast: {body:1, sweetness:1, depth:1, clean:3, marine:0, noBroth:true, note:"lean \u2014 fine as an addition, but it can\u2019t carry a broth"},
   chicken:        {body:2, sweetness:1, depth:1, clean:2, marine:0, note:"clean and comforting"},
   fish:           {body:1, sweetness:1, depth:1, clean:3, marine:2, note:"delicate; goes in late"},
   salmon:         {body:1, sweetness:1, depth:2, clean:2, marine:2, note:"oily, distinctly marine"},
@@ -1657,8 +1672,8 @@ const BROTH_BASE={
   chicken_wing:   {body:3, sweetness:1, depth:1, clean:1, marine:0, note:"skin and collagen \u2014 gives a rich, gelatinous broth"},
   chicken_drumstick:{body:2, sweetness:1, depth:1, clean:2, marine:0, note:"dark meat on the bone \u2014 clean and savoury"},
   chicken_whole:  {body:3, sweetness:1, depth:2, clean:2, marine:0, note:"the whole bird \u2014 the classic clear broth"},
-  beef_steak:     {body:1, sweetness:1, depth:2, clean:1, marine:0, note:"lean \u2014 not really a broth cut"},
-  pork_loin:      {body:1, sweetness:2, depth:1, clean:2, marine:0, note:"lean \u2014 a light, clean broth"}
+  beef_steak:     {body:1, sweetness:1, depth:2, clean:1, marine:0, noBroth:true, note:"a dry-heat cut \u2014 sear it, don\u2019t simmer it"},
+  pork_loin:      {body:1, sweetness:2, depth:1, clean:2, marine:0, noBroth:true, note:"lean \u2014 goes dry and stringy in a pot"}
 };
 const BROTH_AXES=["body","sweetness","depth","clean","marine","gamey"];
 
@@ -2246,8 +2261,17 @@ function potSuggestions(baseIds, ctx, R, AFF, {have=[], limit=5}={}){
 
 function potCandidates(ingIds, R, dishes, AFF){
   const real=ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed");
-  const proteins=real.filter(id=>(R.byId[id]||{}).category==="proteins" && BROTH_BASE[id]);
-  const others  =real.filter(id=>!proteins.includes(id));
+  // a lean dry-heat cut (steak, loin, breast) can go IN a pot but can never LEAD one
+  const canLead=(id)=> !!BROTH_BASE[id] && !BROTH_BASE[id].noBroth;
+  const proteins=real.filter(id=>(R.byId[id]||{}).category==="proteins" && canLead(id));
+  /* A dry-heat cut has no business in a simmering pot AT ALL — not as a base, and not
+     as an addition. You do not drop a steak into a braise. Keep them out entirely and
+     report them, so the cook knows why. */
+  const dryHeat = real.filter(id=>{
+    const b=BROTH_BASE[id];
+    return b && b.noBroth;
+  });
+  const others  = real.filter(id=>!proteins.includes(id) && !dryHeat.includes(id));
 
   // group the proteins by species \u2014 a pork pot, a fish pot, a beef pot
   const speciesOf=(id)=>{
@@ -2269,6 +2293,8 @@ function potCandidates(ingIds, R, dishes, AFF){
     if(cuts.length<2) return;
     cuts=cuts.slice().sort((a,b)=>{
       const A=BROTH_BASE[a]||{}, B=BROTH_BASE[b]||{};
+      // a cut that cannot carry a broth never leads, whatever its numbers
+      if(!!A.noBroth !== !!B.noBroth) return A.noBroth ? 1 : -1;
       return ((B.body||0)+(B.depth||0)) - ((A.body||0)+(A.depth||0));
     });
     /* A WHOLE animal excludes its own parts — you don't add a thigh to a whole chicken.
@@ -2331,6 +2357,8 @@ function potCandidates(ingIds, R, dishes, AFF){
       describe: ch?describeBroth(ch):"a light vegetable pot",
       reminds: dishes ? brothLikeDishes(contents,R,dishes.filter(hasBroth),2) : [],
       suggest: AFF ? potSuggestions(ids, "soup", R, AFF, {have:real}) : {yours:[],buy:[]},
+      dryHeat: dryHeat.map(id=>({id, name:(R.byId[id]||{}).name||id,
+        why:(BROTH_BASE[id]||{}).note||"a dry-heat cut"})),
       // a pot is stronger when the things in it have precedent together
       strength: belongs.reduce((n,b)=>n+b.n,0)
     };
@@ -2349,6 +2377,145 @@ function potCandidates(ingIds, R, dishes, AFF){
    ============================================================ */
 
 
+/* ============================================================
+   POT MODES — "one-pot" is not one thing.
+   A soup, a braise and a baked rice all put everything in one vessel, but they cook by
+   DIFFERENT HEAT, and that changes everything: which cuts work, what the liquid does,
+   and whether staging even applies.
+
+   • SOUP / BRAISE — wet heat, everything simmers together, staged by how long each
+     thing needs. This is what the pot has been all along.
+   • BAKED — dry heat in one dish. Nothing is "added at 38 minutes"; it mostly goes in
+     together and comes out together. A steak is fine here. A tough cut is not.
+   ============================================================ */
+const POT_MODES=[
+  {key:"soup",  label:"Soup or braise", vessel:["stovetop","pressure_cooker","slow_cooker"],
+   heat:"wet",  note:"everything simmers together — staged by how long each thing needs"},
+  {key:"baked", label:"Baked in one dish", vessel:["oven","air_fryer"],
+   heat:"dry",  note:"dry heat — it mostly goes in together and comes out together"}
+];
+
+/* which cuts suit which heat? This is the two-axis meat model doing its job. */
+function suitsHeat(id, heat, R){
+  const i=R.byId[id]||{};
+  const p=new Set(i.provides||[]);
+  const b=BROTH_BASE[id]||{};
+  if(i.category!=="proteins") return true;                 // vegetables are fine either way
+  if(heat==="wet"){
+    if(b.noBroth) return false;                            // steak, loin, breast: not in a pot
+    return true;
+  }
+  // DRY heat: a tough collagen cut needs long wet cooking to soften. It will be leather.
+  if(p.has("collagen_rich") && !["chicken_wing","chicken_whole","pork_belly"].includes(id)) return false;
+  return true;
+}
+
+/* what CAN'T go in, given the heat, and why */
+function heatMismatch(ingIds, heat, R){
+  return ingIds.filter(id=>!suitsHeat(id,heat,R)).map(id=>{
+    const i=R.byId[id]||{};
+    const p=new Set(i.provides||[]);
+    const why = heat==="wet"
+      ? ((BROTH_BASE[id]||{}).note||"a dry-heat cut \u2014 sear it, don\u2019t simmer it")
+      : (p.has("collagen_rich")
+          ? "a tough cut \u2014 it needs long, wet cooking or it turns to leather"
+          : "doesn\u2019t suit dry heat");
+    return {id, name:i.name||id, why};
+  });
+}
+
+
+/* ============================================================
+   A BAKED ONE-DISH has no broth — it has a main protein and things roasted around it.
+   So it needs its own candidate logic: which protein leads, what roasts alongside,
+   and (crucially) which cuts would be ruined by dry heat.
+   ============================================================ */
+function bakeCandidates(ingIds, R, dishes, AFF){
+  const real=ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed");
+  const ok=real.filter(id=>suitsHeat(id,"dry",R));
+  const proteins=ok.filter(id=>(R.byId[id]||{}).category==="proteins");
+  const others=ok.filter(id=>!proteins.includes(id));
+
+  const speciesOf=(id)=>{
+    const anc=R.anc[id]||new Set();
+    for(const k of ["beef","pork","chicken","mutton","fish","prawn","squid","oyster"])
+      if(anc.has(k)||id===k) return k;
+    return id;
+  };
+  const bySpecies={};
+  proteins.forEach(id=>{ const sp=speciesOf(id); (bySpecies[sp]=bySpecies[sp]||[]).push(id); });
+
+  // one lead cut per species (same rule as the pot: cuts are alternatives)
+  Object.keys(bySpecies).forEach(sp=>{
+    const cuts=bySpecies[sp];
+    if(cuts.length<2) return;
+    const whole=cuts.find(id=>/_whole$/.test(id));
+    const lead = whole || cuts[0];
+    bySpecies[sp]=[lead];
+    bySpecies[sp].alternatives=cuts.filter(id=>id!==lead);
+  });
+
+  return Object.entries(bySpecies).map(([sp,ids])=>{
+    const belongs=[], uncertain=[];
+    others.forEach(o=>{
+      let seen=0;
+      ids.forEach(p=>{
+        const pr=AFF?precedentFor(p,o,"fried",AFF,R):{n:0};
+        seen=Math.max(seen,pr.n);
+      });
+      (seen>0?belongs:uncertain).push({id:o, n:seen});
+    });
+    const contents=[...new Set(ids.concat(belongs.map(x=>x.id)).concat(uncertain.map(x=>x.id)))];
+    return {
+      species: sp,
+      base: ids,
+      baseNames: ids.map(id=>(R.byId[id]||{}).name||id),
+      alternatives: ids.alternatives||[],
+      altNames: (ids.alternatives||[]).map(id=>(R.byId[id]||{}).name||id),
+      belongs, uncertain, contents,
+      describe: "roasted \u2014 everything in one dish",
+      dryHeat: heatMismatch(real,"dry",R),
+      suggest: {yours:[],buy:[]},
+      reminds: dishes ? dishes.filter(d=>{
+        const t=((d.steps||[]).join(" ")).toLowerCase();
+        return /roast|bake|oven/.test(t) && (d.grocery_items||[]).some(g=>ids.includes(g.id));
+      }).slice(0,2).map(d=>({dish:d.name, closeness:"a baked dish with the same protein"})) : []
+    };
+  });
+}
+
+/* a bake is not staged minute-by-minute — dense things get a head start, that's all */
+function buildBake(ingIds, R, opts){
+  const real=[...new Set(ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed"))];
+  const groups={lead:[], dense:[], quick:[]};
+  real.forEach(id=>{
+    const i=R.byId[id]||{};
+    const p=new Set(i.provides||[]);
+    if(i.category==="proteins") groups.lead.push({id,name:i.name||id});
+    else if(p.has("starchy")||p.has("holds_shape")) groups.dense.push({id,name:i.name||id});
+    else groups.quick.push({id,name:i.name||id});
+  });
+  const total = groups.lead.length ? 45 : 30;
+  const steps=[];
+  if(groups.dense.length) steps.push({at:0, from:0, to:0, cooks:total, critical:false,
+    label:"Dense vegetables", why:"they take longest — give them a head start",
+    items:groups.dense});
+  if(groups.lead.length) steps.push({at:0, from:0, to:5, cooks:total, critical:false,
+    label:"The protein", why:"in with the vegetables, so everything roasts together",
+    items:groups.lead});
+  if(groups.quick.length) steps.push({at:Math.round(total*0.6), from:Math.round(total*0.5), to:Math.round(total*0.7),
+    cooks:Math.round(total*0.4), critical:false,
+    label:"Quicker vegetables", why:"they'd burn if they went in at the start",
+    items:groups.quick});
+  return {
+    steps, total, handsOn:12, handsOff:total-12,
+    describe:"roasted in one dish",
+    gaps:[],
+    baked:true
+  };
+}
+
+
 /* ================= FLOW STATE ================= */
 const PANTRY_ITEMS=["garlic","onion","ginger","egg","scallion","chilli","rice","brown_rice","noodles","udon","salt","pepper","white_pepper","white_sugar","butter","vegetable_oil","sesame_oil","soy_sauce","oyster_sauce","ketchup"];
 const PANTRY_OFF=new Set(["brown_rice","noodles","udon","white_pepper","butter"]);   // present in the pantry but unchecked by default
@@ -2358,7 +2525,7 @@ const PANTRY_ON=PANTRY_ITEMS.filter(id=>!PANTRY_OFF.has(id));
    the meat. */
 const MEAL_ROLES=[["base","Rice"],["veg","Vegetable"],["meat","Meat"],["fish","Fish"],["soup","Soup"],["dessert","Dessert"]];
 const MEAL_DEFAULT={base:1,veg:1,meat:1,fish:0,soup:0,dessert:0};
-const FLOW={comps:[],active:new Set(),pantry:new Set(PANTRY_ON),appl:new Set(["stovetop","oven"]),taste:new Set(),types:new Set(),compose:null,mode:"type",time:{total:null,active:null,cook:null},potPath:null,mealShape:{...MEAL_DEFAULT},results:[]};
+const FLOW={comps:[],active:new Set(),pantry:new Set(PANTRY_ON),appl:new Set(["stovetop","oven"]),taste:new Set(),types:new Set(),compose:null,mode:"type",time:{total:null,active:null,cook:null},potPath:null,potMode:"soup",mealShape:{...MEAL_DEFAULT},results:[]};
 let REF=null,DISHES=[],APPL={},APPL_DATA={},APPLIANCE_ORDER=[],AFF=null;
 let pax=4;
 /* How many dishes each vessel can run at once. Kitchens differ — two burners is common,
@@ -3587,9 +3754,31 @@ function renderOnePot(){
     return;
   }
   const nm=id=>{ const n=(REF.byId[id]||{}).name; return n||id.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()); };
+
+  /* WHICH KIND OF ONE-POT? A soup and a baked rice are both "one vessel", but they cook
+     by different heat — and that changes which cuts work. */
+  const mode = POT_MODES.find(m=>m.key===FLOW.potMode) || POT_MODES[0];
+  const md=document.createElement("div"); md.className="pot-mode";
+  const mdl=document.createElement("div"); mdl.className="pm-lab"; mdl.textContent="What kind of one-pot?";
+  md.appendChild(mdl);
+  POT_MODES.forEach(m=>{
+    const on=mode.key===m.key;
+    const r=document.createElement("div"); r.className="pm-row"+(on?" on":"");
+    r.innerHTML="<span class=\"pm-t\"><span class=\"pm-n\">"+m.label+"</span>"+
+      "<span class=\"pm-d\">"+m.note+"</span></span><span class=\"dot\"></span>";
+    r.onclick=()=>{ FLOW.potMode=m.key; FLOW.potBase=null; FLOW.potCut=null; renderOnePot(); };
+    md.appendChild(r);
+  });
+  box.appendChild(md);
+
+  // things that don't suit this heat are kept OUT, and we say why
+  const wrongHeat = heatMismatch(ids, mode.heat, REF);
+  const okIds = ids.filter(id=>!wrongHeat.some(w=>w.id===id));
   /* You own pork AND fish. That doesn't mean you want a pork-and-fish pot — it means
      the app should be choosing WHICH pot to make. One pot per protein base. */
-  const cands=potCandidates(ids, REF, DISHES, AFF);
+  const cands = mode.key==="baked"
+    ? bakeCandidates(okIds, REF, DISHES, AFF)
+    : potCandidates(okIds, REF, DISHES, AFF);
   if(cands.length>1){
     if(!FLOW.potBase || !cands.some(c=>c.species===FLOW.potBase)) FLOW.potBase=cands[0].species;
     const pick=document.createElement("div"); pick.className="pot-pick";
@@ -3649,9 +3838,13 @@ function renderOnePot(){
   // WHICH VESSEL? A pot needs moist heat. Prefer pressure/slow cooker if switched on
   // (they change the cook dramatically), else the stovetop.
   // a steamer is deliberately NOT here: it cooks with steam, it cannot hold a broth
-  const POT_APPL=["pressure_cooker","slow_cooker","stovetop","rice_cooker"];
+  const POT_APPL = mode.key==="baked"
+    ? ["oven","air_fryer"]
+    : ["pressure_cooker","slow_cooker","stovetop","rice_cooker"];
   const vessel = POT_APPL.find(a=>FLOW.appl.has(a)) || "stovetop";
-  const p       = buildOnePot(potIds, REF, DISHES, {appliance:vessel, applData:APPL_DATA[vessel]});
+  const p = mode.key==="baked"
+    ? buildBake(potIds, REF)
+    : buildOnePot(potIds, REF, DISHES, {appliance:vessel, applData:APPL_DATA[vessel]});
 
   /* ============ 1. THE HEADLINE — what this pot is, in one line ============ */
   const title=document.createElement("div"); title.className="op-title";
@@ -3778,7 +3971,7 @@ function renderOnePot(){
   }
 
   // the fork now lives in a RADIAL selector, opened from the Season button
-  const sb=el("season-btn");
+  const sb = mode.key==="baked" ? null : el("season-btn");
   if(sb) sb.onclick=(e)=>{ e.stopPropagation(); openRadial(dirs); };
 
   /* ============ 4. ABOUT — everything else, folded away ============ */
@@ -3812,6 +4005,11 @@ function renderOnePot(){
     // the alternative cuts — they're offered as swaps above, not "left out".
     /* The pot now holds everything you own. So the useful thing to say is not
        "what's missing" but "what would go well" — the affinity graph being generous. */
+    if(wrongHeat.length){
+      const h=document.createElement("div"); h.className="pot-heat";
+      h.innerHTML=wrongHeat.map(w=>"<div><strong>"+w.name+"</strong> \u2014 "+w.why+"</div>").join("");
+      box.appendChild(h);
+    }
     const sug=chosen.suggest||{yours:[],buy:[]};
     if(sug.buy.length){
       const o=document.createElement("div"); o.className="pot-sug";
