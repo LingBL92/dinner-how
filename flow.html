@@ -571,7 +571,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.89</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.90</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2489,6 +2489,8 @@ function bakeCandidates(ingIds, R, dishes, AFF){
 /* a bake is not staged minute-by-minute — dense things get a head start, that's all */
 function buildBake(ingIds, R, opts){
   const real=[...new Set(ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed"))];
+  const APP=(opts&&opts.appliance)||null;
+  const APPD=(opts&&opts.applData)||null;
   const groups={lead:[], dense:[], quick:[]};
   real.forEach(id=>{
     const i=R.byId[id]||{};
@@ -2497,7 +2499,15 @@ function buildBake(ingIds, R, opts){
     else if(p.has("starchy")||p.has("holds_shape")) groups.dense.push({id,name:i.name||id});
     else groups.quick.push({id,name:i.name||id});
   });
-  const total = groups.lead.length ? 45 : 30;
+  // the vessel changes the cook: an air fryer runs hotter and faster than an oven
+  const mult = APPD && APPD.passive_multiplier!=null ? APPD.passive_multiplier : 1;
+  const base = groups.lead.length ? 45 : 30;
+  const total = Math.max(12, Math.round(base*mult));
+
+  // ...but it is SMALL. A one-dish bake for four will not fit a 1.8-litre basket.
+  const items = groups.lead.length + groups.dense.length + groups.quick.length;
+  const vol = APPD && APPD.volume_litres ? APPD.volume_litres : null;
+  const tooBig = vol!=null && vol<3 && items>=3;
   const steps=[];
   if(groups.dense.length) steps.push({at:0, from:0, to:0, cooks:total, critical:false,
     label:"Dense vegetables", why:"they take longest — give them a head start",
@@ -2509,10 +2519,15 @@ function buildBake(ingIds, R, opts){
     cooks:Math.round(total*0.4), critical:false,
     label:"Quicker vegetables", why:"they'd burn if they went in at the start",
     items:groups.quick});
+  const gaps=[];
+  if(tooBig) gaps.push({what:"more room",
+    why:"a "+vol+"-litre basket won\u2019t hold all this at once \u2014 you\u2019ll have to cook it in batches, or use the oven"});
+
   return {
-    steps, total, handsOn:12, handsOff:total-12,
+    steps, total, handsOn:12, handsOff:Math.max(0,total-12),
+    appliance: APP, multiplier: mult, tooBig,
     describe:"roasted in one dish",
-    gaps:[],
+    gaps,
     baked:true
   };
 }
@@ -3878,9 +3893,18 @@ function renderOnePot(){
   const POT_APPL = mode.key==="baked"
     ? ["oven","air_fryer"]
     : ["pressure_cooker","slow_cooker","stovetop","rice_cooker"];
-  const vessel = POT_APPL.find(a=>FLOW.appl.has(a)) || "stovetop";
+  const vessel = POT_APPL.find(a=>FLOW.appl.has(a)) || null;
+
+  // You cannot bake on a hob. If there's no dry-heat vessel, say so plainly.
+  if(mode.key==="baked" && !vessel){
+    const w=document.createElement("div"); w.className="pot-gap";
+    w.innerHTML="<strong>You\u2019d need an oven or an air fryer.</strong> A baked one-dish needs dry heat \u2014 "+
+      "switch one on above, or use the soup/braise mode instead.";
+    box.appendChild(w);
+    return;
+  }
   const p = mode.key==="baked"
-    ? buildBake(potIds, REF)
+    ? buildBake(potIds, REF, {appliance:vessel, applData:APPL_DATA[vessel]})
     : buildOnePot(potIds, REF, DISHES, {appliance:vessel, applData:APPL_DATA[vessel]});
 
   /* ============ 1. THE HEADLINE — what this pot is, in one line ============ */
@@ -3897,7 +3921,10 @@ function renderOnePot(){
       (p.character?" \u00b7 built on "+p.character.baseName.toLowerCase():"")+"</div>"+
     "<div class=\"op-vessel\"><span class=\"ov-ico\">"+(APPL_ICON[vessel]||"")+"</span>"+
       "in the <strong>"+(APPL[vessel]||vessel).toLowerCase()+"</strong>"+
-      (p.multiplier&&p.multiplier!==1?" \u00b7 <em>"+(p.multiplier<1?"much faster":"much slower")+" than a stovetop</em>":"")+
+      (p.multiplier&&p.multiplier!==1
+        ? " \u00b7 <em>"+(p.multiplier<1?"much faster":"much slower")+" than "+
+            (mode.key==="baked" ? "an oven" : "a stovetop")+"</em>"
+        : "")+
     "</div>";
   box.appendChild(title);
 
