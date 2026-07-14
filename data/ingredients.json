@@ -806,7 +806,7 @@
     "umami"
    ],
    "aisle": "Fish & seafood",
-   "prep_verb": "cut into pieces",
+   "prep_verb": "score and cut into rings",
    "parent": "proteins",
    "category": "proteins"
   },
@@ -924,6 +924,23 @@
    ],
    "aisle": "Meat & protein",
    "prep_verb": "toast in a dry wok",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "peanut",
+   "name": "Peanuts",
+   "aliases": [
+    "peanut",
+    "peanuts",
+    "groundnut"
+   ],
+   "provides": [
+    "fat_solid",
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "toast",
    "parent": "proteins",
    "category": "proteins"
   },
@@ -1502,6 +1519,42 @@
    ],
    "aisle": "Rice, grains & bread",
    "prep_verb": "rinse",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
+   "id": "hor_fun",
+   "name": "Hor Fun",
+   "aliases": [
+    "hor fun",
+    "flat rice noodle",
+    "kway teow",
+    "ho fun"
+   ],
+   "provides": [
+    "carb_starch",
+    "starch"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "measure",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
+   "id": "cereal",
+   "name": "Nestum Cereal",
+   "aliases": [
+    "cereal",
+    "nestum",
+    "oat cereal"
+   ],
+   "provides": [
+    "carb_starch",
+    "starch",
+    "sugar"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "measure",
    "parent": "starches",
    "category": "starches"
   },
@@ -2150,6 +2203,42 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "leafy"
+  },
+  {
+   "id": "petai",
+   "name": "Petai",
+   "aliases": [
+    "petai",
+    "stink bean",
+    "sator",
+    "bitter bean"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "split and rinse",
+   "parent": "vegetables",
+   "category": "vegetables",
+   "group": "pods"
+  },
+  {
+   "id": "bittergourd",
+   "name": "Bitter Gourd",
+   "aliases": [
+    "bittergourd",
+    "bitter gourd",
+    "bitter melon",
+    "karela"
+   ],
+   "provides": [
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "halve, scrape out the pith, slice thin",
+   "parent": "vegetables",
+   "category": "vegetables",
+   "group": "fruiting"
   },
   {
    "id": "sweeteners",
@@ -2959,6 +3048,41 @@
    "provides": [
     "aromatic",
     "heat"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "black_pepper",
+   "name": "Black Pepper",
+   "aliases": [
+    "black pepper",
+    "black peppercorn",
+    "coarse black pepper"
+   ],
+   "provides": [
+    "aromatic",
+    "heat"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "preserved_radish",
+   "name": "Chye Poh",
+   "aliases": [
+    "chye poh",
+    "preserved radish",
+    "preserved turnip"
+   ],
+   "provides": [
+    "aromatic",
+    "salt",
+    "umami"
    ],
    "aisle": "Herbs & spices",
    "prep_verb": "measure",

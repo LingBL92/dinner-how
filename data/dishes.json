@@ -3999,6 +3999,275 @@
    "serves": 4,
    "base_volume": 0,
    "fresh": true
+  },
+  {
+   "name": "Cereal Prawns",
+   "role": "fish",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "400 g prawn",
+    "60 g cereal",
+    "3 tablespoons butter",
+    "10 curry leaves",
+    "3 chilli",
+    "1 tablespoon white sugar",
+    "1 teaspoon salt",
+    "2 tablespoons cornstarch",
+    "3 tablespoons vegetable oil"
+   ],
+   "steps": [
+    "Pat the prawns dry and dust them with cornstarch.",
+    "Fry the prawns in hot oil for 90 seconds until they curl and turn pink, then lift them out.",
+    "Wipe the wok, lower the heat, and melt the butter \u2014 keep it gentle or it will burn.",
+    "Fry the curry leaves and chilli in the butter until the leaves crackle and go translucent.",
+    "Add the cereal and sugar and stir constantly for 2 minutes \u2014 it burns in seconds.",
+    "Return the prawns and toss until every one is coated in the cereal.",
+    "Season and serve immediately, while it's still crisp."
+   ],
+   "handson_action": "stirring the cereal so it doesn't burn",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": true
+  },
+  {
+   "name": "Kung Po Chicken",
+   "role": "meat",
+   "cuisine": "chinese",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "400 g chicken thigh",
+    "60 g peanut",
+    "8 dried chilli",
+    "1 teaspoon sichuan peppercorn",
+    "4 clove garlic",
+    "3 slice ginger",
+    "2 scallion",
+    "2 tablespoons light soy sauce",
+    "1 tablespoon vinegar",
+    "1 tablespoon white sugar",
+    "1 tablespoon cornstarch",
+    "3 tablespoons vegetable oil"
+   ],
+   "steps": [
+    "Cube the chicken and toss it with cornstarch and a splash of soy.",
+    "Toast the peanuts in a dry wok until golden, then set them aside.",
+    "Sear the chicken in a smoking wok until it colours, then lift it out.",
+    "Lower the heat and fry the dried chilli and sichuan peppercorns until fragrant \u2014 do not let them blacken or the whole dish turns bitter.",
+    "Add the garlic and ginger for 20 seconds.",
+    "Return the chicken, then add the soy, vinegar and sugar.",
+    "Toss until the sauce clings, then fold in the peanuts and scallion."
+   ],
+   "handson_action": "tossing over high heat",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": true
+  },
+  {
+   "name": "Sambal Sotong",
+   "role": "fish",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "500 g squid",
+    "3 tablespoons sambal",
+    "1 tablespoon belacan",
+    "1 onion",
+    "4 clove garlic",
+    "1 tablespoon tamarind",
+    "1 tablespoon white sugar",
+    "2 tablespoons vegetable oil",
+    "1 teaspoon salt"
+   ],
+   "steps": [
+    "Score the squid and cut it into rings.",
+    "Fry the sambal and belacan in oil for 4 minutes, until the oil separates and it smells sweet.",
+    "Add the onion and garlic and fry for 2 minutes.",
+    "Stir in the tamarind and sugar.",
+    "Turn the heat to maximum and add the squid.",
+    "Stir-fry for 90 seconds only \u2014 squid goes rubbery the moment you overcook it.",
+    "Season and take it straight off the heat."
+   ],
+   "handson_action": "watching the squid",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": true
+  },
+  {
+   "name": "Sweet and Sour Pork",
+   "role": "meat",
+   "cuisine": "chinese",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "400 g pork shoulder",
+    "1 bell pepper",
+    "1 onion",
+    "150 g pineapple",
+    "4 clove garlic",
+    "3 tablespoons ketchup",
+    "2 tablespoons vinegar",
+    "2 tablespoons white sugar",
+    "3 tablespoons cornstarch",
+    "4 tablespoons vegetable oil",
+    "1 teaspoon salt"
+   ],
+   "steps": [
+    "Cube the pork and toss it in cornstarch.",
+    "Fry the pork in hot oil until it's golden and crisp, then lift it out and drain it.",
+    "Pour off most of the oil and fry the garlic for 20 seconds.",
+    "Add the onion and bell pepper and stir-fry for 90 seconds \u2014 they should stay crunchy.",
+    "Add the ketchup, vinegar and sugar and let it bubble until it thickens.",
+    "Add the pineapple.",
+    "Return the pork and toss quickly \u2014 the longer it sits in the sauce, the soggier it gets.",
+    "Serve at once."
+   ],
+   "handson_action": "frying the pork",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": true
+  },
+  {
+   "name": "Sambal Petai with Prawns",
+   "role": "fish",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "300 g prawn",
+    "150 g petai",
+    "3 tablespoons sambal",
+    "1 tablespoon belacan",
+    "1 onion",
+    "1 tablespoon tamarind",
+    "1 tablespoon white sugar",
+    "2 tablespoons vegetable oil",
+    "1 teaspoon salt"
+   ],
+   "steps": [
+    "Split the petai and rinse them.",
+    "Fry the sambal and belacan in oil for 4 minutes until the oil separates.",
+    "Add the onion and fry for 2 minutes.",
+    "Add the petai and stir-fry for 3 minutes \u2014 they should soften but keep their bite.",
+    "Stir in the tamarind and sugar.",
+    "Add the prawns and cook for 2 minutes, until they curl.",
+    "Season and serve."
+   ],
+   "handson_action": "frying the sambal",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": true
+  },
+  {
+   "name": "Bitter Gourd with Egg",
+   "role": "veg",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "1 bittergourd",
+    "3 egg",
+    "4 clove garlic",
+    "1 teaspoon salt",
+    "1 teaspoon white sugar",
+    "1 tablespoon light soy sauce",
+    "2 tablespoons vegetable oil"
+   ],
+   "steps": [
+    "Halve the bitter gourd and scrape out every scrap of the white pith \u2014 that's where the harshest bitterness lives.",
+    "Slice it thin and salt it for 10 minutes, then rinse and squeeze it dry. This tames it.",
+    "Beat the eggs with a little soy.",
+    "Fry the garlic, then add the bitter gourd and stir-fry for 3 minutes.",
+    "Push it to one side, pour in the egg, let it set, then fold everything together.",
+    "Season with a little sugar to balance the bitterness."
+   ],
+   "handson_action": "stir-frying",
+   "serves": 3,
+   "base_volume": 0,
+   "fresh": true
+  },
+  {
+   "name": "Beef Hor Fun",
+   "role": "base",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "400 g hor fun",
+    "250 g beef slices",
+    "200 g chye sim",
+    "4 clove garlic",
+    "3 slice ginger",
+    "2 tablespoons oyster sauce",
+    "1 tablespoon dark soy sauce",
+    "1 tablespoon light soy sauce",
+    "2 tablespoons cornstarch",
+    "2 cups water",
+    "3 tablespoons vegetable oil",
+    "1 teaspoon white sugar"
+   ],
+   "steps": [
+    "Slice the beef thin against the grain and toss it with cornstarch and soy.",
+    "Loosen the hor fun with your hands so the strands separate.",
+    "Get the wok smoking, then fry the hor fun with dark soy until it takes on char \u2014 this is the wok hei, and it is the whole point.",
+    "Lift the noodles out onto the plate.",
+    "Sear the beef for 45 seconds and lift it out while it's underdone.",
+    "Fry the garlic and ginger, add the chye sim, then the water, oyster sauce and light soy.",
+    "Thicken with the cornstarch slurry until the gravy coats a spoon.",
+    "Return the beef, then pour the gravy over the noodles."
+   ],
+   "handson_action": "chasing the wok hei",
+   "serves": 3,
+   "base_volume": 0,
+   "fresh": true
+  },
+  {
+   "name": "Chye Poh Omelette",
+   "role": "veg",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "4 egg",
+    "3 tablespoons preserved radish",
+    "2 clove garlic",
+    "1 scallion",
+    "1 chilli",
+    "2 tablespoons vegetable oil",
+    "1 teaspoon white sugar"
+   ],
+   "steps": [
+    "Rinse the chye poh well \u2014 it's very salty \u2014 then squeeze it dry.",
+    "Fry it in oil until it crisps and smells sweet.",
+    "Add the garlic and a pinch of sugar.",
+    "Beat the eggs and pour them over the chye poh.",
+    "Let the bottom set completely before you touch it, then flip.",
+    "It should be browned and a little crisp at the edges, not pale and soft.",
+    "Finish with scallion and chilli."
+   ],
+   "handson_action": "watching the omelette set",
+   "serves": 3,
+   "base_volume": 0,
+   "fresh": true
   }
  ]
 }
