@@ -583,7 +583,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.93</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.94</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2818,17 +2818,45 @@ function wokCandidates(ingIds, R, dishes, AFF){
   // one option per protein: that protein + the vegetables that go with it
   Object.entries(bySp).forEach(([sp,ids])=>{
     const lead=ids[0];                       // cuts are alternatives, as in the pot
-    // affinity: which of your vegetables have been stir-fried with this protein?
-    const scored=veg.map(v=>({id:v, n:AFF?precedentFor(lead,v,"stir_fry",AFF,R).n:0}))
-      .sort((a,b)=>b.n-a.n);
-    const pick=scored.slice(0,2).map(x=>x.id);      // a wok holds a protein and 1-2 veg
+
+    /* Rank the vegetables by PRECEDENT. But if nothing has precedent — which is common,
+       because the catalogue has almost no meat stir-fries — the sort is a no-op and we'd
+       silently return whatever came first in the array, dressed up as a recommendation.
+       So fall back to PHYSICS, and say plainly that it's our call, not a precedent. */
+    const scored=veg.map(v=>({id:v, n:AFF?precedentFor(lead,v,"stir_fry",AFF,R).n:0}));
+    const anyPrecedent = scored.some(x=>x.n>0);
+
+    let pick, basis;
+    if(anyPrecedent){
+      scored.sort((a,b)=>b.n-a.n);
+      pick=scored.filter(x=>x.n>0).slice(0,2).map(x=>x.id);
+      basis="precedent";
+    } else {
+      /* Physics: a stir-fry wants CONTRAST — something with bite against something soft,
+         and things that cook in roughly the same time as the meat. Rank by how well the
+         vegetable suits a wok, not by array order. */
+      const rank=(v)=>{
+        const w=wokBehaviour(v,R);
+        if(w.cls==="quick") return 3;      // mushroom, tomato, peppers — made for a wok
+        if(w.cls==="leafy") return 2;      // greens — the classic partner
+        if(w.cls==="firm")  return 2;
+        if(w.cls==="dense") return 0;      // needs blanching; more work, but fine
+        return 1;
+      };
+      pick=veg.slice().sort((a,b)=>rank(b)-rank(a)).slice(0,2);
+      basis="physics";
+    }
+
+    const names=pick.map(v=>(R.byId[v]||{}).name.toLowerCase());
     out.push({
       key:"prot_"+sp,
       label:(R.byId[lead]||{}).name+" stir-fry",
       lead:[lead],
       contents:[lead].concat(pick).concat(rest),
-      note:pick.length? "with "+pick.map(v=>(R.byId[v]||{}).name.toLowerCase()).join(" and ")
-                      : "just the "+((R.byId[lead]||{}).name||"").toLowerCase(),
+      basis,
+      note: !pick.length ? "just the "+((R.byId[lead]||{}).name||"").toLowerCase()
+          : basis==="precedent" ? "with "+names.join(" and ")
+          : "with "+names.join(" and ")+" — our call, no recipe pairs these yet",
       leftOut: veg.filter(v=>!pick.includes(v)),
       alternatives: ids.slice(1)
     });
