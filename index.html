@@ -1157,15 +1157,58 @@ function generateVariant(dish, targetId, R, allDishes){
      "seen 3x in soups"  /  "seen once"  /  "no precedent"
    Physics (does it survive the pot?) stays with the property rules.
    ============================================================ */
+/* What method does this dish ACTUALLY use? Read the steps, not the archetype — the
+   archetype classifier only runs on protein dishes, so 54 of 84 dishes had no build at
+   all, and the affinity graph was lumping sambal stir-fries in with braised cabbage. */
+function cookMethodOf(d){
+  const t=((d.steps||[]).join(" ")).toLowerCase();
+  // The DEFINING method is where the dish ends up, not where it starts. A baked rice
+  // stir-fries the rice first — but it's a bake.
+  const apps=(d.appliances||[d.appliance]||[]);
+  if(apps.includes("oven")||apps.includes("air_fryer")){
+    if(/\bbake|roast\b/.test(t)) return "roast";
+  }
+  if(/\bstir[- ]?fry|toss (over|in) high heat|wok\b/.test(t)) return "stir_fry";
+  if(/\bsteam\b/.test(t) && !/steamer basket for the/.test(t)) return "steam";
+  if(/\bbraise|simmer\b/.test(t)) return "braise";
+  if(/\bdeep[- ]?fry|shallow[- ]?fry\b/.test(t)) return "deep_fry";
+  if(/\broast|bake\b/.test(t)) return "roast";
+  if(/\bgrill|char\b/.test(t)) return "grill";
+  if(/\bblanch\b/.test(t)) return "blanch";
+  if(/\bboil\b/.test(t)) return "boil";
+  return null;
+}
 function contextOf(d){
-  // the cooking frame a pairing was learned in — the "lowest branch" first
+  // the cooking frame a pairing was learned in. METHOD first — a vegetable stir-fry is a
+  // stir-fry, not a "veg". A soup is a soup whatever's in it.
   if(d.role==="soup") return "soup";
   if(d.role==="dessert") return "dessert";
+  const m=cookMethodOf(d);
+  if(m==="stir_fry") return "stir_fry";
+  if(m==="steam") return "steam";
+  if(m==="braise") return "braise";
+  if(m==="deep_fry"||m==="grill"||m==="roast") return "fried";
   if(d.build==="braise"||d.build==="simmer") return "braise";
-  if(d.build==="stir_fry") return "stir_fry";
   if(d.build==="coat"||d.build==="fry_dry") return "fried";
   if(d.role==="base") return "rice_noodle";
   return d.role||"other";
+}
+/* A CHARACTER seasoning is the paste or sauce that MAKES the dish — sambal, belacan,
+   oyster sauce, miso, gochujang. It is "assumed" (you don't weigh it) but it is not
+   background. Salt, oil and garlic ARE background: they're in everything and would swamp
+   the signal. The affinity graph must see the character seasonings, or it can never learn
+   that sambal goes with kangkong — which is the whole point of a stir-fry. */
+const CHARACTER_SEASONINGS=new Set([
+  "sambal","belacan","shrimp_paste","laksa_paste","tom_yum_paste","curry_powder",
+  "oyster_sauce","dark_soy_sauce","hoisin","fermented_beancurd","gochujang","gochugaru",
+  "miso","dashi","kimchi","tamarind","dried_shrimp","salted_fish","salted_vegetable",
+  "star_anise","dang_gui","white_pepper","coconut_milk","fish_sauce","kaffir_lime",
+  "lemongrass","galangal","turmeric","curry_leaves","shaoxing","mirin","wolfberry"
+]);
+function inAffinity(id,R){
+  if(id==="water") return false;
+  if(CHARACTER_SEASONINGS.has(id)) return true;          // the sauce IS the dish
+  return measureTypeOf(R.byId[id])!=="assumed";          // real, weighable ingredients
 }
 function buildAffinity(dishes,R){
   const pairs={};      // "ctx|a+b" -> {n, dishes:[]}
@@ -1174,7 +1217,7 @@ function buildAffinity(dishes,R){
   dishes.forEach(d=>{
     const ctx=contextOf(d); contexts.add(ctx);
     const ids=[...new Set((d.grocery_items||[])
-      .filter(g=>g.id!=="water" && measureTypeOf(R.byId[g.id])!=="assumed")
+      .filter(g=>inAffinity(g.id,R))
       .map(g=>g.id))];
     ids.forEach(id=>{ const k=ctx+"|"+id; seen[k]=(seen[k]||0)+1; });
     for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++){
@@ -2192,6 +2235,191 @@ function buildBake(ingIds, R, opts){
     describe:"roasted in one dish",
     gaps,
     baked:true
+  };
+}
+
+/* ============================================================
+   THE WOK \u2014 a stir-fry is not a pot.
+   A pot is forgiving: everything simmers, and a few minutes either way is fine.
+   A wok is the opposite: high heat, short time, strict order, and the vegetable's
+   STRUCTURE decides the technique.
+
+   This is the okra/kangkong problem. Same sambal, different dish:
+     kangkong \u2014 straight into the wok, 90 seconds, high heat
+     okra     \u2014 blanch it first, and DON'T cut it, or it goes slimy
+   The sauce is not what differs. The vegetable is.
+   ============================================================ */
+const WOK_CLASS=[
+  {key:"aromatics", label:"Aromatics",        at:0,  secs:30,
+   why:"garlic, ginger, chilli \u2014 30 seconds, until they smell sweet. Don't let them brown."},
+  {key:"paste",     label:"The paste",        at:1,  secs:120,
+   why:"fry it until the oil separates and it darkens \u2014 this is where the flavour is made"},
+  {key:"protein",   label:"The protein",      at:3,  secs:120,
+   why:"sear it, get colour, then push it to the side or lift it out"},
+  {key:"dense",     label:"Dense vegetables", at:5,  secs:180,
+   why:"they need the longest \u2014 blanch them first, or slice them thin"},
+  {key:"firm",      label:"Firm vegetables",  at:8,  secs:120,
+   why:"a couple of minutes over high heat"},
+  {key:"quick",     label:"Quick vegetables", at:10, secs:90,
+   why:"90 seconds \u2014 they should stay crisp"},
+  {key:"sauce",     label:"The sauce",        at:11, secs:30,
+   why:"in at the end, tossed through \u2014 it should coat, not stew"},
+  {key:"leafy",     label:"Leafy greens",     at:12, secs:60,
+   why:"last, 60 seconds, high heat \u2014 and DON'T cover the wok or they'll steam and go grey"}
+];
+
+/* How does this vegetable behave in a wok? Derived from structure \u2014 which is exactly
+   what makes okra and kangkong different. */
+function wokBehaviour(id, R){
+  const i=R.byId[id]||{};
+  const p=new Set(i.provides||[]);
+  const g=i.group;
+
+  /* A SAUCE IS NOT A VEGETABLE. Seasonings and pastes belong to the direction — they are
+     not staged like an ingredient. Without this, sambal was appearing twice (once as the
+     paste, once as a "quick vegetable") and dried shrimp was being told to "slice thin
+     against the grain". */
+  // dried shrimp and salted fish DO go in the wok — crisped with the aromatics, not
+  // seared like a protein. Check them BEFORE the seasoning catch-all or they vanish.
+  if(["dried_shrimp","salted_fish"].includes(id))
+    return {id, name:i.name||id, cls:"aromatics", prep:"soak and chop",
+      warn:"crisp it in the oil first \u2014 that's where its flavour comes from"};
+
+  if(CHARACTER_SEASONINGS.has(id)) return {id, name:i.name||id, cls:null, seasoning:true};
+  if(["condiments","seasonings","acids","sweeteners","fats_oils"].includes(i.category))
+    return {id, name:i.name||id, cls:null, seasoning:true};
+
+  // SPECIAL CASES \u2014 vegetables whose structure demands a technique.
+  // These are authored because they're culinary facts, not derivable properties.
+  const SPECIAL={
+    okra:      {cls:"firm", prep:"blanch whole", warn:"don\u2019t cut it and don\u2019t crowd it \u2014 cut okra goes slimy"},
+    eggplant:  {cls:"dense",prep:"salt and pre-fry", warn:"it drinks oil \u2014 fry it separately first, or it\u2019ll be greasy"},
+    beansprouts:{cls:"quick",prep:"rinse", warn:"90 seconds at most \u2014 they must stay squeaky, not limp"},
+    broccoli:  {cls:"dense",prep:"blanch", warn:"blanch it first or the stems will still be raw when the florets are dead"},
+    kailan:    {cls:"dense",prep:"blanch the stems", warn:"the stems and the leaves cook at different speeds \u2014 split them"},
+    long_beans:{cls:"firm", prep:"cut into lengths", warn:"they need real time \u2014 don\u2019t rush them"},
+    carrot:    {cls:"dense",prep:"slice thin", warn:"slice it thin or it won\u2019t cook in wok time"},
+    potato:    {cls:"dense",prep:"par-boil", warn:"a wok cannot cook a raw potato \u2014 par-boil it"},
+    cabbage:   {cls:"firm", prep:"shred", warn:null},
+    napa_cabbage:{cls:"firm",prep:"shred", warn:null}
+  };
+  if(SPECIAL[id]) return {id, name:i.name||id, ...SPECIAL[id]};
+
+  if(i.category==="proteins"){
+    if(i.form==="mince") return {id,name:i.name,cls:"protein",prep:"break it up in the wok",warn:null};
+    return {id,name:i.name,cls:"protein",prep:"slice thin against the grain",
+      warn:p.has("collagen_rich")?"a tough cut will not tenderise in a wok \u2014 slice it very thin, or use a quicker cut":null};
+  }
+  if(p.has("leafy")) return {id,name:i.name,cls:"leafy",prep:"wash and cut into lengths",
+    warn:"in at the very end \u2014 and don\u2019t cover the wok"};
+  if(g==="fungi")    return {id,name:i.name,cls:"quick",prep:"slice",warn:null};
+  if(g==="fruiting") return {id,name:i.name,cls:"quick",prep:"chop",warn:null};
+  if(g==="root"||p.has("starchy")) return {id,name:i.name,cls:"dense",prep:"slice thin",
+    warn:"dense \u2014 slice it thin or par-cook it first"};
+  if(g==="pods")     return {id,name:i.name,cls:"firm",prep:"trim",warn:null};
+  if(g==="florets")  return {id,name:i.name,cls:"dense",prep:"blanch",warn:null};
+  return {id,name:i.name,cls:"quick",prep:"chop",warn:null};
+}
+
+/* ---- STIR-FRY SEASONING DIRECTIONS ----
+   A wok's sauces are not a pot's. There is no broth: the sauce COATS. AUTHORED \u2014 this is
+   Singaporean/Cantonese kitchen convention, and a chef should own it. */
+const STIRFRY_DIRS=[
+  {key:"sambal",   label:"Sambal / belacan", region:"Malay/Peranakan",
+   markers:["sambal","belacan","shrimp_paste"], need:1,
+   note:"fry the paste until the oil separates \u2014 that's the whole dish",
+   paste:true},
+  {key:"garlic_oyster", label:"Garlic & oyster sauce", region:"Cantonese",
+   markers:["oyster_sauce","garlic"], need:1,
+   note:"the everyday one \u2014 garlic in the oil, oyster sauce at the end",
+   paste:false},
+  {key:"fu_yu",    label:"Fermented beancurd", region:"Cantonese",
+   markers:["fermented_beancurd"], need:1,
+   note:"mash it with a little water \u2014 funky, savoury, the classic for greens",
+   paste:true},
+  {key:"salted_fish", label:"Salted fish", region:"Cantonese",
+   markers:["salted_fish","dried_shrimp"], need:1,
+   note:"crisp it in the oil first, then lift it out and return it at the end",
+   paste:false},
+  {key:"ginger_scallion", label:"Ginger & scallion", region:"Cantonese",
+   markers:["ginger","scallion"], need:2,
+   note:"light and clean \u2014 lets the vegetable speak",
+   paste:false},
+  {key:"dark_soy", label:"Dark soy (mee goreng style)", region:"Singaporean",
+   markers:["dark_soy_sauce","ketchup","white_sugar"], need:2,
+   note:"sweet, dark and glossy",
+   paste:false},
+  {key:"dried_chilli", label:"Dried chilli", region:"Sichuan",
+   markers:["chilli","doubanjiang"], need:1,
+   note:"bloom the chilli in oil until it darkens \u2014 don't burn it or it turns bitter",
+   paste:false},
+  {key:"plain_garlic", label:"Just garlic", region:"\u2014",
+   markers:[], need:0,
+   note:"garlic, oil, salt. Sometimes that's the right answer.",
+   paste:false}
+];
+
+/* ---- BUILD A STIR-FRY ----
+   High heat, short time, strict order. Everything is in SECONDS, not windows: a wok is
+   the opposite of a pot. Get it wrong by 60 seconds and you have a different dish. */
+function buildStirFry(ingIds, R, dishes, AFF, opts){
+  const dir=(opts&&opts.direction)||null;
+  const real=[...new Set(ingIds.filter(id=>{
+    const i=R.byId[id]||{};
+    if(i.id==="water") return false;
+    return measureTypeOf(i)!=="assumed" || CHARACTER_SEASONINGS.has(id);
+  }))];
+
+  const behaviours=real.map(id=>wokBehaviour(id,R)).filter(w=>w.cls);   // seasonings drop out
+  const byClass={};
+  behaviours.forEach(w=>{ (byClass[w.cls]=byClass[w.cls]||[]).push(w); });
+
+  // the sauce direction contributes its own step
+  const steps=[];
+  let t=0;
+  const push=(cls,items,extra)=>{
+    const c=WOK_CLASS.find(x=>x.key===cls);
+    if(!c||!items.length) return;
+    steps.push({key:cls, label:c.label, at:t, secs:c.secs, why:c.why,
+      items, warn:items.map(i=>i.warn).filter(Boolean)});
+    t+=Math.round(c.secs/60*10)/10;
+  };
+
+  const arom=[{name:"Garlic, and ginger or chilli if you like",warn:null}].concat(byClass.aromatics||[]);
+  push("aromatics", arom);
+  if(dir && dir.paste)
+    push("paste",[{name:dir.label,warn:null}]);
+  push("protein", byClass.protein||[]);
+  push("dense",   byClass.dense||[]);
+  push("firm",    byClass.firm||[]);
+  push("quick",   byClass.quick||[]);
+  if(dir && !dir.paste && dir.key!=="plain_garlic")
+    push("sauce",[{name:dir.label,warn:null}]);
+  push("leafy",   byClass.leafy||[]);
+
+  const totalSecs=steps.reduce((n,s)=>n+s.secs,0);
+  const total=Math.max(4, Math.ceil(totalSecs/60));
+
+  // PREP is where a stir-fry is won or lost \u2014 you cannot chop while the wok is hot
+  const prep=behaviours.filter(w=>w.prep).map(w=>({name:w.name, prep:w.prep, warn:w.warn}));
+  const prepMins=Math.max(5, Math.round(prep.length*1.5));
+
+  // what would go well? the affinity graph, scoped to the WOK
+  let suggest={yours:[],buy:[]};
+  if(AFF){
+    const base=real.filter(id=>(R.byId[id]||{}).category==="proteins");
+    const key=base.length?base:real.slice(0,1);
+    suggest=potSuggestions(key,"stir_fry",R,AFF,{have:real});
+  }
+
+  return {
+    steps, prep, prepMins, total, handsOn: total+prepMins, handsOff: 0,
+    direction: dir,
+    suggest,
+    warnings: behaviours.map(w=>w.warn).filter(Boolean),
+    reminds: dishes ? dishes.filter(d=>contextOf(d)==="stir_fry" &&
+      (d.grocery_items||[]).some(g=>real.includes(g.id)))
+      .slice(0,2).map(d=>({dish:d.name})) : []
   };
 }
 
