@@ -2831,22 +2831,6 @@
    "category": "seasonings"
   },
   {
-   "id": "gochugaru",
-   "name": "Gochugaru",
-   "aliases": [
-    "korean chilli flakes",
-    "gochugaru"
-   ],
-   "provides": [
-    "aromatic",
-    "heat"
-   ],
-   "aisle": "Herbs & spices",
-   "prep_verb": "measure",
-   "parent": "seasonings",
-   "category": "seasonings"
-  },
-  {
    "id": "candlenut",
    "name": "Candlenut",
    "aliases": [
@@ -2912,24 +2896,6 @@
    "category": "seasonings"
   },
   {
-   "id": "curry_powder",
-   "name": "Curry Powder",
-   "aliases": [
-    "curry powder",
-    "fish curry powder",
-    "meat curry powder"
-   ],
-   "provides": [
-    "aromatic",
-    "heat",
-    "umami"
-   ],
-   "aisle": "Herbs & spices",
-   "prep_verb": "measure",
-   "parent": "seasonings",
-   "category": "seasonings"
-  },
-  {
    "id": "wolfberry",
    "name": "Wolfberry",
    "aliases": [
@@ -2941,24 +2907,6 @@
    "provides": [
     "aromatic",
     "sugar"
-   ],
-   "aisle": "Herbs & spices",
-   "prep_verb": "measure",
-   "parent": "seasonings",
-   "category": "seasonings"
-  },
-  {
-   "id": "fermented_beancurd",
-   "name": "Fermented Beancurd",
-   "aliases": [
-    "fermented beancurd",
-    "fu yu",
-    "nam yu"
-   ],
-   "provides": [
-    "aromatic",
-    "salt",
-    "umami"
    ],
    "aisle": "Herbs & spices",
    "prep_verb": "measure",
@@ -3078,23 +3026,6 @@
    "category": "condiments"
   },
   {
-   "id": "hoisin",
-   "name": "Hoisin",
-   "aliases": [
-    "hoisin sauce",
-    "hoisin"
-   ],
-   "provides": [
-    "salt",
-    "sugar",
-    "umami"
-   ],
-   "aisle": "Condiments & sauces",
-   "prep_verb": "measure",
-   "parent": "condiments",
-   "category": "condiments"
-  },
-  {
    "id": "fish_sauce",
    "name": "Fish Sauce",
    "aliases": [
@@ -3103,23 +3034,6 @@
    "provides": [
     "salt",
     "umami"
-   ],
-   "aisle": "Condiments & sauces",
-   "prep_verb": "measure",
-   "parent": "condiments",
-   "category": "condiments"
-  },
-  {
-   "id": "sambal",
-   "name": "Sambal",
-   "aliases": [
-    "sambal",
-    "chilli paste",
-    "chili paste"
-   ],
-   "provides": [
-    "aromatic",
-    "heat"
    ],
    "aisle": "Condiments & sauces",
    "prep_verb": "measure",
@@ -3152,39 +3066,6 @@
    ],
    "provides": [
     "acid"
-   ],
-   "aisle": "Condiments & sauces",
-   "prep_verb": "measure",
-   "parent": "condiments",
-   "category": "condiments"
-  },
-  {
-   "id": "belacan",
-   "name": "Belacan",
-   "aliases": [
-    "belacan",
-    "shrimp paste"
-   ],
-   "provides": [
-    "salt"
-   ],
-   "aisle": "Condiments & sauces",
-   "prep_verb": "measure",
-   "parent": "condiments",
-   "category": "condiments"
-  },
-  {
-   "id": "curry_paste_pack",
-   "name": "Curry Paste Pack",
-   "aliases": [
-    "chicken curry paste",
-    "fish curry paste",
-    "meat curry paste",
-    "rendang paste",
-    "curry paste"
-   ],
-   "provides": [
-    "salt"
    ],
    "aisle": "Condiments & sauces",
    "prep_verb": "measure",
@@ -3314,22 +3195,6 @@
    "category": "condiments"
   },
   {
-   "id": "miso",
-   "name": "Miso",
-   "aliases": [
-    "miso paste",
-    "miso"
-   ],
-   "provides": [
-    "salt",
-    "umami"
-   ],
-   "aisle": "Condiments & sauces",
-   "prep_verb": "measure",
-   "parent": "condiments",
-   "category": "condiments"
-  },
-  {
    "id": "teriyaki",
    "name": "Teriyaki",
    "aliases": [
@@ -3396,53 +3261,6 @@
    "category": "condiments"
   },
   {
-   "id": "gochujang",
-   "name": "Gochujang",
-   "aliases": [
-    "gochujang",
-    "korean chilli paste"
-   ],
-   "provides": [
-    "heat",
-    "umami"
-   ],
-   "aisle": "Condiments & sauces",
-   "prep_verb": "measure",
-   "parent": "condiments",
-   "category": "condiments"
-  },
-  {
-   "id": "laksa_paste",
-   "name": "Laksa Paste",
-   "aliases": [
-    "laksa paste",
-    "rempah"
-   ],
-   "provides": [
-    "heat",
-    "umami"
-   ],
-   "aisle": "Condiments & sauces",
-   "prep_verb": "measure",
-   "parent": "condiments",
-   "category": "condiments"
-  },
-  {
-   "id": "tom_yum_paste",
-   "name": "Tom Yum Paste",
-   "aliases": [
-    "tom yum paste"
-   ],
-   "provides": [
-    "heat",
-    "umami"
-   ],
-   "aisle": "Condiments & sauces",
-   "prep_verb": "measure",
-   "parent": "condiments",
-   "category": "condiments"
-  },
-  {
    "id": "shaoxing",
    "name": "Shaoxing Wine",
    "aliases": [
@@ -3472,15 +3290,16 @@
    "category": "condiments"
   },
   {
-   "id": "shrimp_paste",
-   "name": "Shrimp Paste",
+   "id": "dark_soy_sauce",
+   "name": "Dark Soy Sauce",
    "aliases": [
-    "shrimp paste",
-    "hae ko",
-    "petis"
+    "dark soy sauce",
+    "dark soy",
+    "thick soy"
    ],
    "provides": [
     "salt",
+    "sugar",
     "umami"
    ],
    "aisle": "Condiments & sauces",
@@ -3653,6 +3472,223 @@
    "prep_verb": "peel and chop",
    "parent": "fruits",
    "category": "fruits"
+  },
+  {
+   "id": "pastes",
+   "name": "Pastes & flavour bases",
+   "aliases": [],
+   "provides": [],
+   "aisle": "Other",
+   "prep_verb": "prep",
+   "parent": "root"
+  },
+  {
+   "id": "belacan",
+   "name": "Belacan",
+   "aliases": [
+    "belacan",
+    "shrimp paste"
+   ],
+   "provides": [
+    "salt"
+   ],
+   "aisle": "Pastes & flavour bases",
+   "prep_verb": "fry until the oil separates",
+   "parent": "pastes",
+   "category": "pastes",
+   "bloom": true
+  },
+  {
+   "id": "sambal",
+   "name": "Sambal",
+   "aliases": [
+    "sambal",
+    "chilli paste",
+    "chili paste"
+   ],
+   "provides": [
+    "aromatic",
+    "heat"
+   ],
+   "aisle": "Pastes & flavour bases",
+   "prep_verb": "fry until the oil separates",
+   "parent": "pastes",
+   "category": "pastes",
+   "bloom": true
+  },
+  {
+   "id": "shrimp_paste",
+   "name": "Shrimp Paste",
+   "aliases": [
+    "shrimp paste",
+    "hae ko",
+    "petis"
+   ],
+   "provides": [
+    "salt",
+    "umami"
+   ],
+   "aisle": "Pastes & flavour bases",
+   "prep_verb": "fry until the oil separates",
+   "parent": "pastes",
+   "category": "pastes",
+   "bloom": true
+  },
+  {
+   "id": "laksa_paste",
+   "name": "Laksa Paste",
+   "aliases": [
+    "laksa paste",
+    "rempah"
+   ],
+   "provides": [
+    "heat",
+    "umami"
+   ],
+   "aisle": "Pastes & flavour bases",
+   "prep_verb": "fry until the oil separates",
+   "parent": "pastes",
+   "category": "pastes",
+   "bloom": true
+  },
+  {
+   "id": "tom_yum_paste",
+   "name": "Tom Yum Paste",
+   "aliases": [
+    "tom yum paste"
+   ],
+   "provides": [
+    "heat",
+    "umami"
+   ],
+   "aisle": "Pastes & flavour bases",
+   "prep_verb": "fry until the oil separates",
+   "parent": "pastes",
+   "category": "pastes",
+   "bloom": true
+  },
+  {
+   "id": "gochujang",
+   "name": "Gochujang",
+   "aliases": [
+    "gochujang",
+    "korean chilli paste"
+   ],
+   "provides": [
+    "heat",
+    "umami"
+   ],
+   "aisle": "Pastes & flavour bases",
+   "prep_verb": "fry until the oil separates",
+   "parent": "pastes",
+   "category": "pastes",
+   "bloom": true
+  },
+  {
+   "id": "gochugaru",
+   "name": "Gochugaru",
+   "aliases": [
+    "korean chilli flakes",
+    "gochugaru"
+   ],
+   "provides": [
+    "heat"
+   ],
+   "aisle": "Pastes & flavour bases",
+   "prep_verb": "fry briefly in the oil",
+   "parent": "pastes",
+   "category": "pastes",
+   "bloom": true
+  },
+  {
+   "id": "miso",
+   "name": "Miso",
+   "aliases": [
+    "miso paste",
+    "miso"
+   ],
+   "provides": [
+    "salt",
+    "umami"
+   ],
+   "aisle": "Pastes & flavour bases",
+   "prep_verb": "whisk in off the heat",
+   "parent": "pastes",
+   "category": "pastes",
+   "cut_note": "boiling miso destroys its aroma"
+  },
+  {
+   "id": "fermented_beancurd",
+   "name": "Fermented Beancurd",
+   "aliases": [
+    "fermented beancurd",
+    "fu yu",
+    "nam yu"
+   ],
+   "provides": [
+    "salt",
+    "umami"
+   ],
+   "aisle": "Pastes & flavour bases",
+   "prep_verb": "mash with a little water, then fry",
+   "parent": "pastes",
+   "category": "pastes",
+   "bloom": true
+  },
+  {
+   "id": "curry_powder",
+   "name": "Curry Powder",
+   "aliases": [
+    "curry powder",
+    "fish curry powder",
+    "meat curry powder"
+   ],
+   "provides": [
+    "heat",
+    "umami"
+   ],
+   "aisle": "Pastes & flavour bases",
+   "prep_verb": "fry until the oil separates",
+   "parent": "pastes",
+   "category": "pastes",
+   "bloom": true
+  },
+  {
+   "id": "hoisin",
+   "name": "Hoisin",
+   "aliases": [
+    "hoisin sauce",
+    "hoisin"
+   ],
+   "provides": [
+    "salt",
+    "sugar",
+    "umami"
+   ],
+   "aisle": "Pastes & flavour bases",
+   "prep_verb": "brush on or stir in",
+   "parent": "pastes",
+   "category": "pastes",
+   "cut_note": "a glaze, not a paste to fry"
+  },
+  {
+   "id": "curry_paste_pack",
+   "name": "Curry Paste Pack",
+   "aliases": [
+    "chicken curry paste",
+    "fish curry paste",
+    "meat curry paste",
+    "rendang paste",
+    "curry paste"
+   ],
+   "provides": [
+    "salt"
+   ],
+   "aisle": "Pastes & flavour bases",
+   "prep_verb": "fry until the oil separates",
+   "parent": "pastes",
+   "category": "pastes",
+   "bloom": true
   }
  ]
 }
