@@ -2360,8 +2360,12 @@ const STIRFRY_DIRS=[
    markers:["dark_soy_sauce","ketchup","white_sugar"], need:2,
    note:"sweet, dark and glossy",
    paste:false},
+  {key:"mala", label:"Mala (\u9ebb\u8fa3)", region:"Sichuan",
+   markers:["sichuan_peppercorn","doubanjiang","dried_chilli"], need:1,
+   note:"numbing and hot \u2014 toast the peppercorns, then bloom the chilli and bean paste",
+   paste:true},
   {key:"dried_chilli", label:"Dried chilli", region:"Sichuan",
-   markers:["chilli","doubanjiang"], need:1,
+   markers:["dried_chilli","chilli"], need:1,
    note:"bloom the chilli in oil until it darkens \u2014 don't burn it or it turns bitter",
    paste:false},
   {key:"plain_garlic", label:"Just garlic", region:"\u2014",
@@ -2432,6 +2436,84 @@ function buildStirFry(ingIds, R, dishes, AFF, opts){
       (d.grocery_items||[]).some(g=>real.includes(g.id)))
       .slice(0,2).map(d=>({dish:d.name})) : []
   };
+}
+
+/* ============================================================
+   WHICH STIR-FRY? \u2014 a wok is not a kitchen sink.
+   A stir-fry is one protein and a vegetable or two, or just vegetables. Throwing in
+   everything you own is not a dish; it's a mess. So propose coherent options, the way
+   the pot proposes pots.
+   ============================================================ */
+function wokCandidates(ingIds, R, dishes, AFF){
+  const real=[...new Set(ingIds.filter(id=>{
+    const i=R.byId[id]||{};
+    if(i.id==="water") return false;
+    return measureTypeOf(i)!=="assumed" || CHARACTER_SEASONINGS.has(id);
+  }))];
+  const proteins=real.filter(id=>(R.byId[id]||{}).category==="proteins" &&
+    !["dried_shrimp","salted_fish"].includes(id));
+  const veg=real.filter(id=>(R.byId[id]||{}).category==="vegetables");
+  const rest=real.filter(id=>!proteins.includes(id) && !veg.includes(id));
+
+  const speciesOf=(id)=>{
+    const anc=R.anc[id]||new Set();
+    for(const k of ["beef","pork","chicken","mutton","fish","prawn","squid","oyster"])
+      if(anc.has(k)||id===k) return k;
+    return id;
+  };
+  const bySp={};
+  proteins.forEach(id=>{ const sp=speciesOf(id); (bySp[sp]=bySp[sp]||[]).push(id); });
+
+  const out=[];
+
+  // one option per protein: that protein + the vegetables that go with it
+  Object.entries(bySp).forEach(([sp,ids])=>{
+    const lead=ids[0];                       // cuts are alternatives, as in the pot
+    // affinity: which of your vegetables have been stir-fried with this protein?
+    const scored=veg.map(v=>({id:v, n:AFF?precedentFor(lead,v,"stir_fry",AFF,R).n:0}))
+      .sort((a,b)=>b.n-a.n);
+    const pick=scored.slice(0,2).map(x=>x.id);      // a wok holds a protein and 1-2 veg
+    out.push({
+      key:"prot_"+sp,
+      label:(R.byId[lead]||{}).name+" stir-fry",
+      lead:[lead],
+      contents:[lead].concat(pick).concat(rest),
+      note:pick.length? "with "+pick.map(v=>(R.byId[v]||{}).name.toLowerCase()).join(" and ")
+                      : "just the "+((R.byId[lead]||{}).name||"").toLowerCase(),
+      leftOut: veg.filter(v=>!pick.includes(v)),
+      alternatives: ids.slice(1)
+    });
+  });
+
+  // a vegetable-only stir-fry \u2014 the commonest Singaporean side, and often the right answer
+  if(veg.length){
+    const pick=veg.slice(0,2);
+    out.push({
+      key:"veg",
+      label:(pick.length>1?"Vegetable stir-fry":((R.byId[pick[0]]||{}).name+" stir-fry")),
+      lead:[],
+      contents:pick.concat(rest),
+      note: pick.length>1 ? pick.map(v=>(R.byId[v]||{}).name.toLowerCase()).join(" and ")
+                          : "just the greens",
+      leftOut: veg.filter(v=>!pick.includes(v)),
+      alternatives: []
+    });
+  }
+
+  // everything \u2014 offered honestly, and flagged as probably too much
+  if(real.length>4){
+    out.push({
+      key:"all",
+      label:"Everything",
+      lead:proteins.slice(0,1),
+      contents:real,
+      note:"a wok this full will steam, not fry \u2014 do it in two batches or drop something",
+      leftOut:[],
+      alternatives:[],
+      crowded:true
+    });
+  }
+  return out;
 }
 
 function prepVerb(d,n){return (d&&d.prep_overrides&&d.prep_overrides[n])||PREP_VERB[n]||"prep";}

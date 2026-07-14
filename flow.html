@@ -410,6 +410,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .pot-unc{margin-top:8px;padding:9px 12px;background:rgba(168,114,24,.07);border-left:3px solid var(--gold);
   border-radius:7px;font-size:12px;line-height:1.5;color:var(--muted)}
 .pot-unc strong{color:var(--gold)}
+.pp-row.crowded .pp-d{color:var(--gold)}
 .wok-prep{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)}
 .wp-n{font-size:13px;font-weight:600;min-width:110px}
 .wp-p{font-size:12px;color:var(--cool)}
@@ -582,7 +583,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.92</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.93</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2708,8 +2709,12 @@ const STIRFRY_DIRS=[
    markers:["dark_soy_sauce","ketchup","white_sugar"], need:2,
    note:"sweet, dark and glossy",
    paste:false},
+  {key:"mala", label:"Mala (\u9ebb\u8fa3)", region:"Sichuan",
+   markers:["sichuan_peppercorn","doubanjiang","dried_chilli"], need:1,
+   note:"numbing and hot \u2014 toast the peppercorns, then bloom the chilli and bean paste",
+   paste:true},
   {key:"dried_chilli", label:"Dried chilli", region:"Sichuan",
-   markers:["chilli","doubanjiang"], need:1,
+   markers:["dried_chilli","chilli"], need:1,
    note:"bloom the chilli in oil until it darkens \u2014 don't burn it or it turns bitter",
    paste:false},
   {key:"plain_garlic", label:"Just garlic", region:"\u2014",
@@ -2782,6 +2787,84 @@ function buildStirFry(ingIds, R, dishes, AFF, opts){
   };
 }
 
+/* ============================================================
+   WHICH STIR-FRY? \u2014 a wok is not a kitchen sink.
+   A stir-fry is one protein and a vegetable or two, or just vegetables. Throwing in
+   everything you own is not a dish; it's a mess. So propose coherent options, the way
+   the pot proposes pots.
+   ============================================================ */
+function wokCandidates(ingIds, R, dishes, AFF){
+  const real=[...new Set(ingIds.filter(id=>{
+    const i=R.byId[id]||{};
+    if(i.id==="water") return false;
+    return measureTypeOf(i)!=="assumed" || CHARACTER_SEASONINGS.has(id);
+  }))];
+  const proteins=real.filter(id=>(R.byId[id]||{}).category==="proteins" &&
+    !["dried_shrimp","salted_fish"].includes(id));
+  const veg=real.filter(id=>(R.byId[id]||{}).category==="vegetables");
+  const rest=real.filter(id=>!proteins.includes(id) && !veg.includes(id));
+
+  const speciesOf=(id)=>{
+    const anc=R.anc[id]||new Set();
+    for(const k of ["beef","pork","chicken","mutton","fish","prawn","squid","oyster"])
+      if(anc.has(k)||id===k) return k;
+    return id;
+  };
+  const bySp={};
+  proteins.forEach(id=>{ const sp=speciesOf(id); (bySp[sp]=bySp[sp]||[]).push(id); });
+
+  const out=[];
+
+  // one option per protein: that protein + the vegetables that go with it
+  Object.entries(bySp).forEach(([sp,ids])=>{
+    const lead=ids[0];                       // cuts are alternatives, as in the pot
+    // affinity: which of your vegetables have been stir-fried with this protein?
+    const scored=veg.map(v=>({id:v, n:AFF?precedentFor(lead,v,"stir_fry",AFF,R).n:0}))
+      .sort((a,b)=>b.n-a.n);
+    const pick=scored.slice(0,2).map(x=>x.id);      // a wok holds a protein and 1-2 veg
+    out.push({
+      key:"prot_"+sp,
+      label:(R.byId[lead]||{}).name+" stir-fry",
+      lead:[lead],
+      contents:[lead].concat(pick).concat(rest),
+      note:pick.length? "with "+pick.map(v=>(R.byId[v]||{}).name.toLowerCase()).join(" and ")
+                      : "just the "+((R.byId[lead]||{}).name||"").toLowerCase(),
+      leftOut: veg.filter(v=>!pick.includes(v)),
+      alternatives: ids.slice(1)
+    });
+  });
+
+  // a vegetable-only stir-fry \u2014 the commonest Singaporean side, and often the right answer
+  if(veg.length){
+    const pick=veg.slice(0,2);
+    out.push({
+      key:"veg",
+      label:(pick.length>1?"Vegetable stir-fry":((R.byId[pick[0]]||{}).name+" stir-fry")),
+      lead:[],
+      contents:pick.concat(rest),
+      note: pick.length>1 ? pick.map(v=>(R.byId[v]||{}).name.toLowerCase()).join(" and ")
+                          : "just the greens",
+      leftOut: veg.filter(v=>!pick.includes(v)),
+      alternatives: []
+    });
+  }
+
+  // everything \u2014 offered honestly, and flagged as probably too much
+  if(real.length>4){
+    out.push({
+      key:"all",
+      label:"Everything",
+      lead:proteins.slice(0,1),
+      contents:real,
+      note:"a wok this full will steam, not fry \u2014 do it in two batches or drop something",
+      leftOut:[],
+      alternatives:[],
+      crowded:true
+    });
+  }
+  return out;
+}
+
 
 /* ================= FLOW STATE ================= */
 const PANTRY_ITEMS=["garlic","onion","ginger","egg","scallion","chilli","rice","brown_rice","noodles","udon","salt","pepper","white_pepper","white_sugar","butter","vegetable_oil","sesame_oil","soy_sauce","oyster_sauce","ketchup"];
@@ -2792,7 +2875,7 @@ const PANTRY_ON=PANTRY_ITEMS.filter(id=>!PANTRY_OFF.has(id));
    the meat. */
 const MEAL_ROLES=[["base","Rice"],["veg","Vegetable"],["meat","Meat"],["fish","Fish"],["soup","Soup"],["dessert","Dessert"]];
 const MEAL_DEFAULT={base:1,veg:1,meat:1,fish:0,soup:0,dessert:0};
-const FLOW={comps:[],active:new Set(),pantry:new Set(PANTRY_ON),appl:new Set(["stovetop","oven"]),taste:new Set(),types:new Set(),compose:null,mode:"type",time:{total:null,active:null,cook:null},potPath:null,potMode:"soup",wokDir:null,mealShape:{...MEAL_DEFAULT},results:[]};
+const FLOW={comps:[],active:new Set(),pantry:new Set(PANTRY_ON),appl:new Set(["stovetop","oven"]),taste:new Set(),types:new Set(),compose:null,mode:"type",time:{total:null,active:null,cook:null},potPath:null,potMode:"soup",wokDir:null,wokPick:null,mealShape:{...MEAL_DEFAULT},results:[]};
 let REF=null,DISHES=[],APPL={},APPL_DATA={},APPLIANCE_ORDER=[],AFF=null;
 let pax=4;
 /* How many dishes each vessel can run at once. Kitchens differ — two burners is common,
@@ -4050,43 +4133,59 @@ function renderStirFry(){
     return measureTypeOf(ing)!=="assumed" || CHARACTER_SEASONINGS.has(id);
   });
   if(!ids.length){
-    box.innerHTML="<div class=\"hint\">Add a vegetable, a protein, or a sauce \u2014 the wok builds itself around them.</div>";
+    box.innerHTML="<div class=\"hint\">Add a vegetable, a protein, or a paste \u2014 the wok builds itself around them.</div>";
     return;
   }
   const nm=id=>((REF.byId[id]||{}).name)||id;
 
-  // the sauce direction
+  /* A WOK IS NOT A KITCHEN SINK. Propose coherent dishes — one protein and a vegetable
+     or two, or just vegetables — rather than frying everything you own at once. */
+  const cands=wokCandidates(ids, REF, DISHES, AFF);
+  if(!FLOW.wokPick || !cands.some(c=>c.key===FLOW.wokPick)) FLOW.wokPick=cands[0]?cands[0].key:null;
+  const chosen=cands.find(c=>c.key===FLOW.wokPick)||cands[0];
+  if(!chosen){ box.innerHTML="<div class=\"hint\">Nothing here suits a wok.</div>"; return; }
+
   const dir = FLOW.wokDir ? STIRFRY_DIRS.find(d=>d.key===FLOW.wokDir) : null;
-  const sf  = buildStirFry(ids, REF, DISHES, AFF, {direction:dir});
+  const sf  = buildStirFry(chosen.contents, REF, DISHES, AFF, {direction:dir});
 
-  // headline
+  // ---- headline + the Sauce button (radial, as in the pot) ----
   const t=document.createElement("div"); t.className="op-title";
-  t.innerHTML="<div class=\"op-head\"><span class=\"op-name\">Your wok</span></div>"+
-    "<div class=\"op-sub\">"+(dir?dir.note:"pick a sauce below \u2014 it decides the dish")+"</div>";
+  const sauceLabel = dir ? dir.label.replace(/ \(.*\)/,"") : "Sauce";
+  t.innerHTML="<div class=\"op-head\"><span class=\"op-name\">"+chosen.label+"</span>"+
+    "<button class=\"op-season"+(dir?" on":"")+"\" id=\"wok-sauce-btn\">"+
+      "<span class=\"os-dot\"></span>"+sauceLabel+"</button></div>"+
+    "<div class=\"op-sub\">"+(dir?dir.note:chosen.note)+"</div>";
   box.appendChild(t);
+  const sb=el("wok-sauce-btn");
+  if(sb) sb.onclick=(e)=>{ e.stopPropagation(); openWokRadial(); };
 
-  // times — a wok has NO hands-off time. That's the point.
+  // ---- which stir-fry? ----
+  if(cands.length>1){
+    const pick=document.createElement("div"); pick.className="pot-pick";
+    const pl=document.createElement("div"); pl.className="pp-lab";
+    pl.textContent="Which stir-fry?";
+    pick.appendChild(pl);
+    cands.forEach(c=>{
+      const on=FLOW.wokPick===c.key;
+      const r=document.createElement("div"); r.className="pp-row"+(on?" on":"")+(c.crowded?" crowded":"");
+      const icon = c.key==="veg" ? "veg" : (c.key==="all" ? "soup" : "meat");
+      r.innerHTML="<span class=\"pp-i\">"+(ROLE_ICON[icon]||"")+"</span>"+
+        "<span class=\"pp-t\"><span class=\"pp-n\">"+c.label+"</span>"+
+          "<span class=\"pp-d\">"+c.note+"</span></span><span class=\"dot\"></span>";
+      r.onclick=()=>{ FLOW.wokPick=c.key; renderStirFry(); };
+      pick.appendChild(r);
+    });
+    box.appendChild(pick);
+  }
+
+  // ---- times: a wok has NO hands-off. That's the point. ----
   const hero=document.createElement("div"); hero.className="op-hero";
   hero.innerHTML="<div class=\"op-times\">"+
     "<span class=\"op-big\">"+sf.total+"<em>min in the wok</em></span>"+
     "<span class=\"op-free wok\">"+sf.prepMins+" min prep first \u2014 you can\u2019t chop while it\u2019s hot</span></div>";
   box.appendChild(hero);
 
-  // THE SAUCE — this is the fork, as in the pot
-  const sec=document.createElement("div"); sec.className="pot-pick";
-  const sl=document.createElement("div"); sl.className="pp-lab"; sl.textContent="The sauce \u2014 it decides the dish";
-  sec.appendChild(sl);
-  STIRFRY_DIRS.forEach(d=>{
-    const on=FLOW.wokDir===d.key;
-    const r=document.createElement("div"); r.className="pp-row"+(on?" on":"");
-    r.innerHTML="<span class=\"pp-t\"><span class=\"pp-n\">"+d.label+"</span>"+
-      "<span class=\"pp-d\">"+d.note+"</span></span><span class=\"dot\"></span>";
-    r.onclick=()=>{ FLOW.wokDir = (FLOW.wokDir===d.key)?null:d.key; renderStirFry(); };
-    sec.appendChild(r);
-  });
-  box.appendChild(sec);
-
-  // PREP — where a stir-fry is won or lost
+  // ---- prep ----
   if(sf.prep.length){
     const ph=document.createElement("div"); ph.className="rgroup"; ph.textContent="Prep everything first";
     box.appendChild(ph);
@@ -4098,7 +4197,7 @@ function renderStirFry(){
     });
   }
 
-  // THE WOK — order and seconds, not windows
+  // ---- the wok ----
   const wh=document.createElement("div"); wh.className="rgroup"; wh.textContent="Then, in this order";
   box.appendChild(wh);
   sf.steps.forEach(st=>{
@@ -4111,15 +4210,122 @@ function renderStirFry(){
     box.appendChild(row);
   });
 
-  // affinity suggestions, scoped to the WOK
+  // ---- what's not in this wok ----
+  if(chosen.leftOut && chosen.leftOut.length){
+    const o=document.createElement("div"); o.className="pot-out";
+    const lab=document.createElement("span"); lab.className="po-l"; lab.textContent="not in this wok";
+    o.appendChild(lab);
+    chosen.leftOut.forEach(id=>{
+      const c=document.createElement("span"); c.className="po-c"; c.textContent=nm(id); o.appendChild(c);
+    });
+    const w=document.createElement("span"); w.className="po-w";
+    w.textContent="a wok holds a protein and a vegetable or two \u2014 more and it steams";
+    o.appendChild(w);
+    box.appendChild(o);
+  }
+
+  // ---- affinity suggestions, scoped to the wok ----
   if(sf.suggest && sf.suggest.buy.length){
     const o=document.createElement("div"); o.className="pot-sug";
     o.innerHTML="<div class=\"ps-lab\">Goes well in a wok with these</div>"+
       "<div class=\"ps-row\">"+sf.suggest.buy.slice(0,5).map(x=>
         "<span class=\"ps-chip\">"+x.name+"<em>"+(x.n>1?"seen "+x.n+"\u00d7":"seen once")+"</em></span>").join("")+"</div>"+
-      "<div class=\"ps-note\">From our stir-fries \u2014 you\u2019d need to buy "+(sf.suggest.buy.length>1?"these":"this")+".</div>";
+      "<div class=\"ps-note\">From our stir-fries.</div>";
     box.appendChild(o);
   }
+}
+
+/* the sauce radial — the same interaction as the pot's Season button */
+function openWokRadial(){
+  closeRadial();
+  const byRegion={};
+  STIRFRY_DIRS.forEach(o=>{ const r=o.region||"Other"; (byRegion[r]=byRegion[r]||[]).push(o); });
+  const ORDER=["Malay/Peranakan","Cantonese","Singaporean","Sichuan","\u2014"];
+  const regions=ORDER.filter(r=>byRegion[r]);
+
+  const btn=el("wok-sauce-btn");
+  const r0=btn?btn.getBoundingClientRect():{left:120,top:150,width:80,height:28};
+  const cx=r0.left+r0.width/2, cy=r0.top+r0.height/2;
+  const VW=window.innerWidth||1200, VH=window.innerHeight||800;
+
+  const wrap=document.createElement("div"); wrap.className="radial"; wrap.id="radial";
+  wrap.onclick=(e)=>{ if(e.target===wrap) closeRadial(); };
+
+  // MOBILE: a plain sheet
+  if(VW<760){
+    wrap.classList.add("sheet");
+    const panel=document.createElement("div"); panel.className="rad-sheet";
+    const h=document.createElement("div"); h.className="rs-head";
+    h.textContent="The sauce decides the dish";
+    panel.appendChild(h);
+    regions.forEach(rg=>{
+      const lab=document.createElement("div"); lab.className="rs-lab"; lab.textContent=rg;
+      panel.appendChild(lab);
+      const row=document.createElement("div"); row.className="rs-row";
+      byRegion[rg].forEach(o=>{
+        const b=document.createElement("div");
+        b.className="rad-btn"+(FLOW.wokDir===o.key?" on":"");
+        b.textContent=o.label.replace(/ \(.*\)/,"");
+        b.onclick=(e)=>{ e.stopPropagation(); FLOW.wokDir=o.key; closeRadial(); renderStirFry(); };
+        row.appendChild(b);
+      });
+      panel.appendChild(row);
+    });
+    wrap.appendChild(panel);
+    document.body.appendChild(wrap);
+    requestAnimationFrame(()=>wrap.classList.add("in"));
+    return;
+  }
+
+  const hub=document.createElement("div"); hub.className="rad-hub";
+  hub.style.left=cx+"px"; hub.style.top=cy+"px";
+  wrap.appendChild(hub);
+  const tip=document.createElement("div"); tip.className="rad-tip";
+  tip.style.left=cx+"px"; tip.style.top=(cy+22)+"px";
+  tip.textContent="The sauce decides the dish";
+  wrap.appendChild(tip);
+
+  const N=regions.length;
+  const topY=Math.max(90, cy-300), botY=Math.min(VH-100, cy+300);
+  const BOW=Math.min(260, Math.max(150, (VW-cx-300)*0.5));
+  regions.forEach((rg,i)=>{
+    const tt = N>1 ? i/(N-1) : 0.5;
+    const y = topY + tt*(botY-topY);
+    const x = cx + 120 + Math.sin(tt*Math.PI)*BOW;
+    const multi = byRegion[rg].length>1;
+    const clu=document.createElement("div"); clu.className="rad-clu"+(multi?" multi":"");
+    const halfW = multi ? byRegion[rg].length*80 : 70;
+    clu.style.left=Math.max(halfW+16, Math.min(VW-halfW-16, x))+"px";
+    clu.style.top=y+"px";
+    const lab=document.createElement("div"); lab.className="rad-lab"; lab.textContent=rg;
+    clu.appendChild(lab);
+    const row=document.createElement("div"); row.className="rad-btns";
+    byRegion[rg].forEach(o=>{
+      const b=document.createElement("div");
+      b.className="rad-btn"+(FLOW.wokDir===o.key?" on":"");
+      b.textContent=o.label.replace(/ \(.*\)/,"");
+      b.title=o.note;
+      b.onclick=(e)=>{ e.stopPropagation(); FLOW.wokDir=o.key; closeRadial(); renderStirFry(); };
+      row.appendChild(b);
+    });
+    clu.appendChild(row);
+    wrap.appendChild(clu);
+  });
+
+  wrap.addEventListener("pointermove",(e)=>{
+    wrap.querySelectorAll(".rad-btn").forEach(b=>{
+      const r=b.getBoundingClientRect?b.getBoundingClientRect():null;
+      if(!r) return;
+      const dx=e.clientX-(r.left+r.width/2), dy=e.clientY-(r.top+r.height/2);
+      const d=Math.sqrt(dx*dx+dy*dy);
+      const sc=1 + Math.max(0, 0.5*(1 - d/170));
+      b.style.transform="scale("+sc.toFixed(3)+")";
+      b.style.zIndex=String(100-Math.round(d/4));
+    });
+  });
+
+  document.body.appendChild(wrap);
+  requestAnimationFrame(()=>wrap.classList.add("in"));
 }
 function renderOnePot(){
   const box=el("recipes"); if(!box)return; box.innerHTML="";
