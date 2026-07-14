@@ -1413,51 +1413,51 @@ function consistencyOf(d,R){
 const SEASONING_DIRS=[
   // --- Chinese / Singaporean ---
   {key:"bkt_teochew", label:"Bak kut teh \u2014 Teochew", region:"Teochew",
-   markers:["white_pepper","garlic","pork_ribs"], need:3,          // ALL three, and…
+   markers:["white_pepper","garlic","pork_ribs"], need:3, needsLiquid:true, bakeNote:"the broth IS the dish — there is nothing to bake",          // ALL three, and…
    exclude:["dang_gui","dark_soy_sauce","star_anise","cinnamon","cloves_spice","white_sugar","soy_sauce"],
    note:"peppery and garlicky, kept clear \u2014 no herbs, no dark soy"},
   {key:"bkt_hokkien", label:"Bak kut teh \u2014 Hokkien", region:"Hokkien/Klang",
    markers:["dang_gui","star_anise","cinnamon","cloves_spice","goji","wolfberry","dark_soy_sauce"],
-   need:2, note:"dark and herbal \u2014 medicinal warmth"},
+   need:2, needsLiquid:true, bakeNote:"the herbs infuse into a simmering broth", note:"dark and herbal \u2014 medicinal warmth"},
   {key:"hong_shao",   label:"Red-braised (\u7ea2\u70e7)", region:"Chinese",
-   markers:["dark_soy_sauce","white_sugar","rock_sugar","shaoxing","star_anise"], need:2,
+   markers:["dark_soy_sauce","white_sugar","rock_sugar","shaoxing","star_anise"], need:2, needsLiquid:false, bakeNote:"soy, sugar and spice make a glaze — this is how char siu works",
    note:"soy and sugar \u2014 dark, glossy, savoury-sweet"},
   {key:"clear_chinese", label:"Clear Chinese soup (\u6e05\u6c64)", region:"Chinese",
-   markers:["ginger","scallion","salt"], need:2,
+   markers:["ginger","scallion","salt"], need:2, needsLiquid:true, bakeNote:"a clear broth needs a broth",
    exclude:["dark_soy_sauce","coconut_milk","curry_powder","gochugaru","laksa_paste","tom_yum_paste"],
    note:"the broth speaks for itself \u2014 ginger, scallion, salt"},
   {key:"milky_bone",  label:"Milky bone broth (\u5976\u6c64)", region:"Chinese",
-   markers:["pork_ribs","garlic","ginger"], need:2, requireMilky:true,
+   markers:["pork_ribs","garlic","ginger"], need:2, needsLiquid:true, bakeNote:"the milkiness comes from hard-boiling fat into water", requireMilky:true,
    note:"boiled hard until the fat emulsifies \u2014 opaque and rich"},
   // --- Malay / Peranakan ---
   {key:"rempah",      label:"Rempah (Malay/Peranakan)", region:"Malay/Peranakan",
-   markers:["belacan","candlenut","laksa_paste","sambal","laksa_leaf","lemongrass","galangal","kaffir_lime"], need:1,
+   markers:["belacan","candlenut","laksa_paste","sambal","laksa_leaf","lemongrass","galangal","kaffir_lime"], need:1, needsLiquid:false, bakeNote:"fry the paste, then rub it on and roast — as in sambal grilled fish",
    also:["turmeric","chilli","shallot","coconut_milk"],
    note:"pounded spice paste \u2014 belacan, lemongrass, galangal"},
   {key:"assam",       label:"Sour-hot (assam / tom yum)", region:"SEA",
-   markers:["lemongrass","galangal","kaffir_lime","chilli","fish_sauce","tom_yum_paste"], need:2,
+   markers:["lemongrass","galangal","kaffir_lime","chilli","fish_sauce","tom_yum_paste"], need:2, needsLiquid:true, bakeNote:"the sour goes in off the heat, into a broth",
    require:["tamarind","lime","tom_yum_paste"],        // the SOUR agent is the whole point — no sour, no assam
    exclude:["coconut_milk","coriander_seed","cumin"],   // that's a curry, not a tom yum
    note:"tamarind or lime against chilli \u2014 sharp and hot"},
   // --- Indian ---
   {key:"masala",      label:"Indian masala", region:"Indian",
    markers:["turmeric","coriander_seed","cumin","fennel","cardamom","curry_leaves","garam_masala","mustard_seed"],
-   need:3, note:"toasted whole spice \u2014 layered and warm"},
+   need:3, needsLiquid:false, bakeNote:"a dry spice rub — arguably the more traditional way", note:"toasted whole spice \u2014 layered and warm"},
   // --- Japanese (broth x tare, as ramen is actually taught) ---
   {key:"dashi_miso",  label:"Dashi + miso", region:"Japanese",
-   markers:["miso","dashi","kombu","wakame"], need:1, note:"clean kelp umami, thickened by miso"},
+   markers:["miso","dashi","kombu","wakame"], need:1, needsLiquid:true, bakeNote:"miso is whisked into a broth — an oven has none", note:"clean kelp umami, thickened by miso"},
   {key:"dashi_shoyu", label:"Dashi + shoyu", region:"Japanese",
-   markers:["dashi","soy_sauce","mirin","sake","kombu"], need:2, exclude:["miso"],
+   markers:["dashi","soy_sauce","mirin","sake","kombu"], need:2, needsLiquid:true, bakeNote:"dashi is a stock", exclude:["miso"],
    note:"dashi seasoned with soy \u2014 clear and savoury"},
   {key:"jp_curry",    label:"Japanese curry", region:"Japanese",
-   markers:["japanese_curry_roux","curry_powder"], need:1, note:"a roux-thickened, gently sweet curry"},
+   markers:["japanese_curry_roux","curry_powder"], need:1, needsLiquid:true, bakeNote:"a roux thickens a liquid", note:"a roux-thickened, gently sweet curry"},
   // --- Korean ---
   {key:"korean",      label:"Korean gochu", region:"Korean",
-   markers:["gochugaru","gochujang","kimchi"], need:1,
+   markers:["gochugaru","gochujang","kimchi"], need:1, needsLiquid:false, bakeNote:"gochujang makes a fine glaze on a roast",
    note:"fermented chilli \u2014 deep, savoury heat"},
   // --- Western ---
   {key:"western_herb",label:"Western herb & stock", region:"Western",
-   markers:["bay_leaf","parsley","thyme","rosemary","oregano","celery","broth"], need:2,
+   markers:["bay_leaf","parsley","thyme","rosemary","oregano","celery","broth"], need:2, needsLiquid:false, bakeNote:"herbs and garlic on a roast — obviously",
    note:"herb-and-stock \u2014 homely and clean"},
   // --- fallback ---
   {key:"clear",       label:"Unseasoned", region:"\u2014", markers:[], need:0,
