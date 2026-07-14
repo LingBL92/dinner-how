@@ -2152,6 +2152,8 @@ function bakeCandidates(ingIds, R, dishes, AFF){
 /* a bake is not staged minute-by-minute — dense things get a head start, that's all */
 function buildBake(ingIds, R, opts){
   const real=[...new Set(ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed"))];
+  const APP=(opts&&opts.appliance)||null;
+  const APPD=(opts&&opts.applData)||null;
   const groups={lead:[], dense:[], quick:[]};
   real.forEach(id=>{
     const i=R.byId[id]||{};
@@ -2160,7 +2162,15 @@ function buildBake(ingIds, R, opts){
     else if(p.has("starchy")||p.has("holds_shape")) groups.dense.push({id,name:i.name||id});
     else groups.quick.push({id,name:i.name||id});
   });
-  const total = groups.lead.length ? 45 : 30;
+  // the vessel changes the cook: an air fryer runs hotter and faster than an oven
+  const mult = APPD && APPD.passive_multiplier!=null ? APPD.passive_multiplier : 1;
+  const base = groups.lead.length ? 45 : 30;
+  const total = Math.max(12, Math.round(base*mult));
+
+  // ...but it is SMALL. A one-dish bake for four will not fit a 1.8-litre basket.
+  const items = groups.lead.length + groups.dense.length + groups.quick.length;
+  const vol = APPD && APPD.volume_litres ? APPD.volume_litres : null;
+  const tooBig = vol!=null && vol<3 && items>=3;
   const steps=[];
   if(groups.dense.length) steps.push({at:0, from:0, to:0, cooks:total, critical:false,
     label:"Dense vegetables", why:"they take longest — give them a head start",
@@ -2172,10 +2182,15 @@ function buildBake(ingIds, R, opts){
     cooks:Math.round(total*0.4), critical:false,
     label:"Quicker vegetables", why:"they'd burn if they went in at the start",
     items:groups.quick});
+  const gaps=[];
+  if(tooBig) gaps.push({what:"more room",
+    why:"a "+vol+"-litre basket won\u2019t hold all this at once \u2014 you\u2019ll have to cook it in batches, or use the oven"});
+
   return {
-    steps, total, handsOn:12, handsOff:total-12,
+    steps, total, handsOn:12, handsOff:Math.max(0,total-12),
+    appliance: APP, multiplier: mult, tooBig,
     describe:"roasted in one dish",
-    gaps:[],
+    gaps,
     baked:true
   };
 }
