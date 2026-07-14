@@ -3826,6 +3826,179 @@
    "serves": 6,
    "base_volume": 0,
    "fresh": false
+  },
+  {
+   "name": "Chicken with Cashew Nuts",
+   "role": "meat",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "400 g chicken thigh",
+    "100 g cashew",
+    "1 bell pepper",
+    "1 onion",
+    "4 clove garlic",
+    "2 dried chilli",
+    "2 tablespoons oyster sauce",
+    "1 tablespoon light soy sauce",
+    "1 teaspoon white sugar",
+    "1 tablespoon cornstarch",
+    "2 tablespoons vegetable oil",
+    "1 teaspoon sesame oil"
+   ],
+   "steps": [
+    "Cube the chicken and toss it with the cornstarch and a splash of soy \u2014 this is velveting, and it keeps the meat tender.",
+    "Toast the cashews in a dry wok until golden, then set them aside.",
+    "Get the wok smoking hot and sear the chicken in one layer. Don't crowd it or it will steam.",
+    "Lift the chicken out while it's still slightly underdone.",
+    "Fry the garlic and dried chilli for 20 seconds.",
+    "Add the onion and bell pepper and stir-fry over high heat for 90 seconds \u2014 they should keep their bite.",
+    "Return the chicken, add the oyster sauce, soy and sugar, and toss to coat.",
+    "Fold in the cashews and finish with sesame oil."
+   ],
+   "handson_action": "tossing over high heat",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": true
+  },
+  {
+   "name": "Beef with Kailan",
+   "role": "meat",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "300 g beef slices",
+    "400 g kailan",
+    "5 clove garlic",
+    "3 slice ginger",
+    "2 tablespoons oyster sauce",
+    "1 tablespoon light soy sauce",
+    "1 tablespoon shaoxing wine",
+    "1 tablespoon cornstarch",
+    "2 tablespoons vegetable oil",
+    "1 teaspoon white sugar"
+   ],
+   "steps": [
+    "Slice the beef thin against the grain and toss it with cornstarch, soy and a spoon of water.",
+    "Separate the kailan stems from the leaves \u2014 they cook at different speeds.",
+    "Blanch the stems for 90 seconds and drain them well.",
+    "Sear the beef in a smoking wok for 45 seconds a side, then lift it out.",
+    "Fry the garlic and ginger for 20 seconds.",
+    "Add the blanched stems and toss for a minute, then the leaves.",
+    "Return the beef, splash in the shaoxing, and add the oyster sauce and sugar.",
+    "Toss it all together and serve straight away."
+   ],
+   "handson_action": "tossing over high heat",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": true
+  },
+  {
+   "name": "Pork with Long Beans",
+   "role": "meat",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "300 g pork mince",
+    "300 g long beans",
+    "4 clove garlic",
+    "2 chilli",
+    "1 tablespoon dried shrimp",
+    "2 tablespoons light soy sauce",
+    "1 teaspoon white sugar",
+    "2 tablespoons vegetable oil",
+    "1 teaspoon sesame oil"
+   ],
+   "steps": [
+    "Cut the long beans into short lengths.",
+    "Soak and chop the dried shrimp.",
+    "Fry the dried shrimp in oil until it crisps and smells strong.",
+    "Add the garlic and chilli for 20 seconds.",
+    "Add the pork mince and break it up, frying until it browns and the fat renders.",
+    "Add the long beans and stir-fry over high heat for 4 minutes \u2014 they need real time.",
+    "Season with soy and sugar, finish with sesame oil."
+   ],
+   "handson_action": "stir-frying",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": true
+  },
+  {
+   "name": "Mapo Tofu",
+   "role": "meat",
+   "cuisine": "chinese",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "200 g pork mince",
+    "1 block tofu",
+    "2 tablespoons doubanjiang",
+    "1 teaspoon sichuan peppercorn",
+    "4 clove garlic",
+    "2 scallion",
+    "1 tablespoon light soy sauce",
+    "1 cup water",
+    "1 tablespoon cornstarch",
+    "2 tablespoons vegetable oil"
+   ],
+   "steps": [
+    "Toast the sichuan peppercorns in a dry wok, then crush them.",
+    "Cube the tofu and slide it into salted hot water to firm it up.",
+    "Fry the pork mince until it browns and the fat runs.",
+    "Add the doubanjiang and fry until the oil turns red \u2014 this is the whole dish.",
+    "Add the garlic, then the water and soy, and bring it to a simmer.",
+    "Slide in the tofu and simmer gently for 4 minutes \u2014 don't stir hard or it'll break.",
+    "Thicken with the cornstarch slurry.",
+    "Scatter the crushed peppercorns and scallion over the top."
+   ],
+   "handson_action": "frying the bean paste",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": true
+  },
+  {
+   "name": "Stir-Fried Prawns with Broccoli",
+   "role": "fish",
+   "cuisine": "singaporean",
+   "appliance": "stovetop",
+   "appliances": [
+    "stovetop"
+   ],
+   "ingredients": [
+    "300 g prawn",
+    "300 g broccoli",
+    "4 clove garlic",
+    "3 slice ginger",
+    "1 tablespoon oyster sauce",
+    "1 tablespoon shaoxing wine",
+    "1 teaspoon white sugar",
+    "2 tablespoons vegetable oil",
+    "1 teaspoon sesame oil"
+   ],
+   "steps": [
+    "Blanch the broccoli for 2 minutes and drain it well \u2014 the stems will still be raw otherwise.",
+    "Pat the prawns dry so they sear rather than steam.",
+    "Fry the garlic and ginger in a hot wok for 20 seconds.",
+    "Add the prawns and stir-fry for 2 minutes, until they curl and turn opaque.",
+    "Add the blanched broccoli and toss for a minute.",
+    "Splash in the shaoxing, add the oyster sauce and sugar, and toss to coat.",
+    "Finish with sesame oil."
+   ],
+   "handson_action": "tossing over high heat",
+   "serves": 4,
+   "base_volume": 0,
+   "fresh": true
   }
  ]
 }

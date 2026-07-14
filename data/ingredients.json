@@ -840,7 +840,7 @@
     "protein"
    ],
    "aisle": "Meat & protein",
-   "prep_verb": "cut into pieces",
+   "prep_verb": "have it sliced thin",
    "parent": "proteins",
    "category": "proteins"
   },
@@ -907,6 +907,23 @@
    ],
    "aisle": "Fish & seafood",
    "prep_verb": "cut into pieces",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "cashew",
+   "name": "Cashew Nuts",
+   "aliases": [
+    "cashew",
+    "cashews",
+    "cashew nuts"
+   ],
+   "provides": [
+    "fat_solid",
+    "protein"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "toast in a dry wok",
    "parent": "proteins",
    "category": "proteins"
   },
@@ -1580,7 +1597,7 @@
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "wash and chop",
+   "prep_verb": "cut into florets",
    "parent": "vegetables",
    "category": "vegetables",
    "group": "florets"
@@ -1893,7 +1910,7 @@
     "water"
    ],
    "aisle": "Vegetables",
-   "prep_verb": "wash and chop",
+   "prep_verb": "cut into lengths",
    "parent": "vegetables",
    "category": "vegetables",
    "group": "pods"
@@ -2914,6 +2931,41 @@
    "category": "seasonings"
   },
   {
+   "id": "sichuan_peppercorn",
+   "name": "Sichuan Peppercorn",
+   "aliases": [
+    "sichuan peppercorn",
+    "sichuan pepper",
+    "mala",
+    "huajiao"
+   ],
+   "provides": [
+    "aromatic",
+    "heat"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "dried_chilli",
+   "name": "Dried Chilli",
+   "aliases": [
+    "dried chilli",
+    "dried chillies",
+    "dried red chilli"
+   ],
+   "provides": [
+    "aromatic",
+    "heat"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "measure",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
    "id": "condiments",
    "name": "Condiments",
    "aliases": [],
@@ -3683,6 +3735,25 @@
    ],
    "provides": [
     "salt"
+   ],
+   "aisle": "Pastes & flavour bases",
+   "prep_verb": "fry until the oil separates",
+   "parent": "pastes",
+   "category": "pastes",
+   "bloom": true
+  },
+  {
+   "id": "doubanjiang",
+   "name": "Doubanjiang",
+   "aliases": [
+    "doubanjiang",
+    "broad bean paste",
+    "chilli bean paste"
+   ],
+   "provides": [
+    "heat",
+    "salt",
+    "umami"
    ],
    "aisle": "Pastes & flavour bases",
    "prep_verb": "fry until the oil separates",
