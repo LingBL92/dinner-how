@@ -583,7 +583,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.95</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.96</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2903,7 +2903,7 @@ const PANTRY_ON=PANTRY_ITEMS.filter(id=>!PANTRY_OFF.has(id));
    the meat. */
 const MEAL_ROLES=[["base","Rice"],["veg","Vegetable"],["meat","Meat"],["fish","Fish"],["soup","Soup"],["dessert","Dessert"]];
 const MEAL_DEFAULT={base:1,veg:1,meat:1,fish:0,soup:0,dessert:0};
-const FLOW={comps:[],active:new Set(),pantry:new Set(PANTRY_ON),appl:new Set(["stovetop","oven"]),taste:new Set(),types:new Set(),compose:null,mode:"type",time:{total:null,active:null,cook:null},potPath:null,potMode:"soup",wokDir:null,wokPick:null,mealShape:{...MEAL_DEFAULT},results:[]};
+const FLOW={comps:[],active:new Set(),pantry:new Set(PANTRY_ON),appl:new Set(["stovetop","oven"]),taste:new Set(),types:new Set(),compose:null,mode:"compose",time:{total:null,active:null,cook:null},potPath:null,potMode:"soup",wokDir:null,wokPick:null,mealShape:{...MEAL_DEFAULT},results:[]};
 let REF=null,DISHES=[],APPL={},APPL_DATA={},APPLIANCE_ORDER=[],AFF=null;
 let pax=4;
 /* How many dishes each vessel can run at once. Kitchens differ — two burners is common,
@@ -3076,24 +3076,10 @@ function toggleTaste(t){ FLOW.taste.has(t)?FLOW.taste.delete(t):FLOW.taste.add(t
 function toggleType(t){ FLOW.types.has(t)?FLOW.types.delete(t):FLOW.types.add(t); renderType(); recompute(); }
 function renderType(){
   const box=el("type-ports"); if(!box)return; box.innerHTML="";
+  // COMPOSE IS THE FRONT DOOR. The engine's job is to work out what to cook — the recipe
+  // list is reference material, not the product.
+  if(FLOW.mode==="compose" && !FLOW.compose) FLOW.compose="family_meal";
   const composing=(FLOW.mode==="compose");
-
-  // ===== MODE 1: SELECT DISH TYPE =====
-  const m1=document.createElement("div"); m1.className="tmode"+(composing?"":" open");
-  const h1=document.createElement("div"); h1.className="tmode-head";
-  h1.innerHTML="<span class=\"tm-t\">Select dish type</span><span class=\"tm-x\"></span>";
-  h1.onclick=()=>{ if(FLOW.mode!=="type"){ FLOW.mode="type"; FLOW.compose=null; FLOW.mealPick=null; clearGrocery(); renderType(); recompute(); } };
-  m1.appendChild(h1);
-  const body1=document.createElement("div"); body1.className="tmode-body";
-  TYPE_OPTS.forEach(([id,label])=>{
-    const t=document.createElement("div"); t.className="tgl"+(FLOW.types.has(id)?" on":"");
-    t.setAttribute("data-type",id);
-    t.innerHTML="<span>"+label+"</span><span class=\"dot\" data-typedot=\""+id+"\"></span>";
-    t.onclick=()=>{ FLOW.mode="type"; FLOW.compose=null; FLOW.mealPick=null; clearGrocery(); toggleType(id); };
-    body1.appendChild(t);
-  });
-  m1.appendChild(body1);
-  box.appendChild(m1);
 
   // ===== MODE 2: COMPOSE A MEAL =====
   const m2=document.createElement("div"); m2.className="tmode compose"+(composing?" open":"");
@@ -3143,7 +3129,24 @@ function renderType(){
     }
   });
   m2.appendChild(body2);
-  box.appendChild(m2);
+  box.appendChild(m2);  // ===== MODE 1: SELECT DISH TYPE =====
+  const m1=document.createElement("div"); m1.className="tmode"+(composing?"":" open");
+  const h1=document.createElement("div"); h1.className="tmode-head";
+  h1.innerHTML="<span class=\"tm-t\">Select dish type</span><span class=\"tm-x\"></span>";
+  h1.onclick=()=>{ if(FLOW.mode!=="type"){ FLOW.mode="type"; FLOW.compose=null; FLOW.mealPick=null; clearGrocery(); renderType(); recompute(); } };
+  m1.appendChild(h1);
+  const body1=document.createElement("div"); body1.className="tmode-body";
+  TYPE_OPTS.forEach(([id,label])=>{
+    const t=document.createElement("div"); t.className="tgl"+(FLOW.types.has(id)?" on":"");
+    t.setAttribute("data-type",id);
+    t.innerHTML="<span>"+label+"</span><span class=\"dot\" data-typedot=\""+id+"\"></span>";
+    t.onclick=()=>{ FLOW.mode="type"; FLOW.compose=null; FLOW.mealPick=null; clearGrocery(); toggleType(id); };
+    body1.appendChild(t);
+  });
+  m1.appendChild(body1);
+  box.appendChild(m1);
+
+
 }
 function clearGrocery(){ const g=el("grocery"); if(g) g.innerHTML=""; }
 function toggleCompose(id){
