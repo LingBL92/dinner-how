@@ -3884,6 +3884,111 @@
    "parent": "pastes",
    "category": "pastes",
    "bloom": true
+  },
+  {
+   "id": "fermented_black_bean",
+   "name": "Fermented Black Bean",
+   "aliases": [
+    "fermented black bean",
+    "fermented black beans",
+    "black bean",
+    "black beans",
+    "salted black bean",
+    "douchi",
+    "dou chi",
+    "tau si"
+   ],
+   "provides": [
+    "salt",
+    "umami",
+    "aromatic"
+   ],
+   "aisle": "Pastes & flavour bases",
+   "prep_verb": "rinse and lightly mash with garlic",
+   "parent": "pastes",
+   "category": "pastes",
+   "bloom": true
+  },
+  {
+   "id": "glass_noodles",
+   "name": "Glass Noodles",
+   "aliases": [
+    "glass noodles",
+    "glass noodle",
+    "tang hoon",
+    "tanghoon",
+    "cellophane noodles",
+    "mung bean vermicelli",
+    "bean thread noodles"
+   ],
+   "provides": [
+    "starch"
+   ],
+   "aisle": "Rice, grains & bread",
+   "prep_verb": "soak in warm water until pliable",
+   "parent": "starches",
+   "category": "starches"
+  },
+  {
+   "id": "clams",
+   "name": "Clams",
+   "aliases": [
+    "clams",
+    "clam",
+    "lala",
+    "asari",
+    "manila clams",
+    "venus clams"
+   ],
+   "provides": [
+    "protein",
+    "umami"
+   ],
+   "aisle": "Fish & seafood",
+   "prep_verb": "purge in salted water, then scrub",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "lap_cheong",
+   "name": "Lap Cheong",
+   "aliases": [
+    "lap cheong",
+    "lap chong",
+    "lup cheong",
+    "chinese sausage",
+    "waxed sausage"
+   ],
+   "provides": [
+    "protein",
+    "fat_solid",
+    "umami",
+    "salt"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "slice on the diagonal",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "char_siu",
+   "name": "Char Siu",
+   "aliases": [
+    "char siu",
+    "char siew",
+    "cha siu",
+    "barbecued pork",
+    "bbq pork"
+   ],
+   "provides": [
+    "protein",
+    "umami",
+    "sugar"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "slice thickly",
+   "parent": "proteins",
+   "category": "proteins"
   }
  ]
 }
