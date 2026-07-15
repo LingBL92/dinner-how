@@ -613,7 +613,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.0</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.5</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -1588,7 +1588,7 @@ const RICE_TOPPING_PROTEINS=new Set(["chicken","chicken_thigh","chicken_breast",
   "chicken_wing","chicken_whole","chicken_mince","turkey","pork","pork_belly","pork_loin","pork_shoulder",
   "pork_ribs","pork_mince","beef","beef_slices","beef_mince","beef_brisket","beef_chuck","beef_short_rib",
   "beef_steak","mutton","lap_cheong","char_siu","fish","salmon","threadfin","pomfret","seabass","snapper",
-  "grouper","cod","mackerel","tuna","sardine","prawn","squid","clams","oyster","dried_shrimp","fish_cake","century_egg","egg"]);
+  "grouper","cod","mackerel","tuna","sardine","prawn","squid","clams","oyster","scallops","mussels","dried_shrimp","fish_cake","century_egg","egg"]);
 function isRiceBowl(d){
   const ids=(d.grocery_items||[]).map(g=>g.id);
   if(!ids.some(id=>RICE_BASE_IDS.has(id))) return false;
@@ -2739,39 +2739,75 @@ const STIRFRY_DIRS=[
   {key:"sambal",   label:"Sambal / belacan", region:"Malay/Peranakan",
    markers:["sambal","belacan","shrimp_paste"], need:1,
    note:"fry the paste until the oil separates \u2014 that's the whole dish",
-   paste:true},
+   paste:true,
+   steps:[
+     {t:"Bloom the paste", d:"Fry the sambal (or pounded chilli-belacan) in plenty of oil over medium heat until the oil separates and turns red and fragrant \u2014 this is the base of the whole dish."},
+     {t:"Toss through", d:"Turn the heat to high, add the protein and vegetables, and toss so everything is coated."},
+     {t:"Balance", d:"Finish with a little sugar, salt and a squeeze of lime or tamarind to round it out."}]},
   {key:"garlic_oyster", label:"Garlic & oyster sauce", region:"Cantonese",
    markers:["oyster_sauce","garlic"], need:1,
    note:"the everyday one \u2014 garlic in the oil, oyster sauce at the end",
-   paste:false},
+   paste:false,
+   steps:[
+     {t:"Garlic first", d:"Fry the chopped garlic in the hot oil for a few seconds until just fragrant \u2014 don't let it brown."},
+     {t:"Mix the sauce", d:"Stir oyster sauce with a splash of light soy, a pinch of sugar and a little water or stock."},
+     {t:"Glaze at the end", d:"Add the sauce once the protein and veg are almost done, toss to glaze, and thicken with a little cornstarch slurry if you like."}]},
   {key:"fu_yu",    label:"Fermented beancurd", region:"Cantonese",
    markers:["fermented_beancurd"], need:1,
    note:"mash it with a little water \u2014 funky, savoury, the classic for greens",
-   paste:true},
+   paste:true,
+   steps:[
+     {t:"Mash it", d:"Mash a cube or two of fermented beancurd with a little of its brine and a splash of water into a smooth paste."},
+     {t:"Bloom", d:"Fry garlic in oil, then add the mashed beancurd and let it sizzle for a few seconds."},
+     {t:"Toss", d:"Add the greens and toss over high heat just until wilted."}]},
   {key:"salted_fish", label:"Salted fish", region:"Cantonese",
    markers:["salted_fish","dried_shrimp"], need:1,
    note:"crisp it in the oil first, then lift it out and return it at the end",
-   paste:false},
+   paste:false,
+   steps:[
+     {t:"Crisp it", d:"Fry the diced salted fish in oil over medium heat until golden and crisp, then lift it out and set aside."},
+     {t:"Fry in the oil", d:"Use the fragrant oil to fry the garlic, protein and veg over high heat."},
+     {t:"Return it", d:"Toss the crisp salted fish back in at the end so it stays crunchy."}]},
   {key:"ginger_scallion", label:"Ginger & scallion", region:"Cantonese",
    markers:["ginger","scallion"], need:2,
    note:"light and clean \u2014 lets the vegetable speak",
-   paste:false},
+   paste:false,
+   steps:[
+     {t:"Ginger in the oil", d:"Fry sliced ginger in the hot oil until fragrant to perfume it."},
+     {t:"High and fast", d:"Add the protein and veg and toss over high heat; season with a splash of shaoxing, a little salt and white pepper."},
+     {t:"Scallion last", d:"Add the scallion whites early and the greens at the very end, off the heat, so they stay fresh."}]},
   {key:"dark_soy", label:"Dark soy (mee goreng style)", region:"Singaporean",
    markers:["dark_soy_sauce","ketchup","white_sugar"], need:2,
    note:"sweet, dark and glossy",
-   paste:false},
+   paste:false,
+   steps:[
+     {t:"Mix the sauce", d:"Stir dark soy, a little light soy, ketchup (or tomato) and sugar into a sweet, glossy sauce."},
+     {t:"Toss over high heat", d:"Add it once the noodles or protein are hot, and toss hard so everything takes on the dark glaze."},
+     {t:"Char", d:"Let it catch briefly on the hot wok for a smoky edge before serving."}]},
   {key:"mala", label:"Mala (\u9ebb\u8fa3)", region:"Sichuan",
    markers:["sichuan_peppercorn","doubanjiang","dried_chilli"], need:1,
    note:"numbing and hot \u2014 toast the peppercorns, then bloom the chilli and bean paste",
-   paste:true},
+   paste:true,
+   steps:[
+     {t:"Toast the peppercorns", d:"Toast Sichuan peppercorns in the oil until fragrant, then add dried chilli and doubanjiang and fry until the oil turns red."},
+     {t:"Bloom gently", d:"Keep the heat moderate so the bean paste and chilli bloom without burning \u2014 burnt mala turns bitter."},
+     {t:"Toss & finish", d:"Toss the protein and veg through, and finish with a little sugar and more ground peppercorn for the numbing hit."}]},
   {key:"dried_chilli", label:"Dried chilli", region:"Sichuan",
    markers:["dried_chilli","chilli"], need:1,
    note:"bloom the chilli in oil until it darkens \u2014 don't burn it or it turns bitter",
-   paste:false},
+   paste:false,
+   steps:[
+     {t:"Bloom the chilli", d:"Fry the dried chilli in oil over medium heat until it darkens and smells toasty \u2014 stop before it blackens or it turns bitter."},
+     {t:"Aromatics", d:"Add garlic and ginger, then the protein, and toss over high heat."},
+     {t:"Season", d:"Finish with a splash of soy, a pinch of sugar and a little vinegar for balance."}]},
   {key:"plain_garlic", label:"Just garlic", region:"\u2014",
    markers:[], need:0,
    note:"garlic, oil, salt. Sometimes that's the right answer.",
-   paste:false}
+   paste:false,
+   steps:[
+     {t:"Garlic in the oil", d:"Fry a generous amount of chopped garlic in the oil until just golden and fragrant."},
+     {t:"Toss", d:"Add the vegetable or protein and toss over high heat with a good pinch of salt."},
+     {t:"Finish", d:"A splash of water or stock to steam it briefly, and it's done."}]}
 ];
 
 /* ---- BUILD A STIR-FRY ----
@@ -2827,9 +2863,12 @@ function buildStirFry(ingIds, R, dishes, AFF, opts){
     suggest=potSuggestions(key,"stir_fry",R,AFF,{have:real});
   }
 
+  const sauceSteps = (dir&&dir.steps) ? dir.steps
+    : [{t:"Garlic in the oil", d:"Fry chopped garlic in the hot oil until just golden, then toss everything through over high heat with a pinch of salt and a splash of water or stock."}];
+
   return {
     steps, prep, prepMins, total, handsOn: total+prepMins, handsOff: 0,
-    direction: dir,
+    direction: dir, sauceSteps,
     suggest,
     warnings: behaviours.map(w=>w.warn).filter(Boolean),
     reminds: dishes ? dishes.filter(d=>contextOf(d)==="stir_fry" &&
@@ -2988,7 +3027,7 @@ function steamFormOf(id, R){
   if(id==="pork_ribs") return "ribs";
   if(i.form==="mince") return "mince";
   if(/^chicken/.test(id)||id==="turkey") return "poultry";
-  if(["prawn","clams","oyster","squid"].includes(id)) return "shellfish";
+  if(["prawn","clams","oyster","squid","scallops","mussels"].includes(id)) return "shellfish";
   if(id==="egg") return "custard";
   if(id==="tofu") return "tofu";
   if(STEAM_FISH.includes(id)) return "whole_fish";
@@ -3026,44 +3065,93 @@ const STEAM_DIRS=[
   {key:"ginger_scallion", label:"Ginger, scallion & hot oil", region:"Cantonese",
    markers:["ginger","scallion"], need:2,
    note:"the everyday one \u2014 smoking oil over the scallion, a good soy at the end",
-   finish:"pile scallion (and shredded ginger) on top, pour SMOKING-hot oil over so it sizzles, then drizzle soy and sesame oil"},
+   steps:[
+     {t:"Cut the aromatics", d:"Finely shred a big handful of scallion and young ginger; drop them in cold water so they curl."},
+     {t:"After steaming", d:"Pour off the watery liquid from the plate, pile the scallion and ginger on top, and drizzle with light soy."},
+     {t:"The hot oil", d:"Heat 3 tbsp oil until it just smokes and pour it over so the aromatics sizzle and bloom, then a few drops of sesame oil."}]},
   {key:"superior_soy", label:"Superior soy (clean)", region:"Cantonese",
    markers:["light_soy_sauce","soy_sauce"], need:1,
    note:"just the fish \u2014 a good soy, hot oil, coriander. Let it speak.",
-   finish:"pour a warm soy-and-sugar sauce around it, pile scallion on top, then smoking-hot oil over, and scatter coriander"},
+   steps:[
+     {t:"The sauce", d:"Warm 3 tbsp light soy with 1 tsp sugar and 2 tbsp water (or the steaming juices) until the sugar melts."},
+     {t:"After steaming", d:"Pour the warm soy around the fish and pile shredded scallion and ginger on top."},
+     {t:"The hot oil", d:"Pour smoking-hot oil over the aromatics, then scatter coriander."}]},
   {key:"black_bean", label:"Black bean & garlic", region:"Cantonese",
    markers:["fermented_black_bean","garlic"], need:1,
    note:"rinse and mash the black beans with garlic and a little chilli, then steam it on",
-   finish:"the black bean has steamed into it \u2014 finish with scallion and a spoon of hot oil"},
+   steps:[
+     {t:"Mash the beans", d:"Rinse 2 tbsp fermented black beans and lightly mash with garlic, a little chilli and a pinch of sugar."},
+     {t:"Onto the subject", d:"Spread the black-bean mix over the fish or ribs before they go in, so it steams into them."},
+     {t:"Finish", d:"Scatter scallion and spoon a little hot oil over."}]},
   {key:"minced_garlic", label:"Minced garlic", region:"Cantonese",
    markers:["garlic"], need:1,
    note:"gently fried garlic spooned over \u2014 the classic for prawns and tofu",
-   finish:"spoon the pale-gold fried garlic over, then scallion and a spoon of hot oil"},
+   steps:[
+     {t:"Fry the garlic", d:"Gently fry a lot of minced garlic in oil until pale gold \u2014 stop before it browns, or it turns bitter."},
+     {t:"Onto the subject", d:"Spoon the garlic and its oil over the prawns or tofu before steaming."},
+     {t:"Finish", d:"Scatter scallion and a little more hot oil."}]},
   {key:"salted_egg", label:"Salted egg", region:"Cantonese",
    markers:["salted_egg"], need:1,
    note:"mash the salted yolk through minced pork, or set it over the dish",
-   finish:"the salted yolk turns oily and orange as it steams \u2014 finish with scallion"},
+   steps:[
+     {t:"Mash the yolk", d:"Steam or boil the salted egg, then mash the yolk to a paste with a little oil; chop the white."},
+     {t:"Work it in", d:"Beat it through minced meat, or spread it over the subject before steaming."},
+     {t:"Finish", d:"The yolk turns oily and orange as it steams; finish with scallion."}]},
   {key:"salted_veg", label:"Salted vegetable & sour", region:"Teochew",
    markers:["salted_vegetable","tomato"], need:1,
    note:"kiam chai, tomato and a sour edge \u2014 the Teochew way with fish",
-   finish:"the salted veg and tomato have steamed alongside \u2014 finish with scallion and hot sesame oil"},
+   steps:[
+     {t:"Rinse & slice", d:"Rinse the salted vegetable well and slice; if it's very salty, soak it a few minutes first."},
+     {t:"Layer & steam", d:"Layer the salted veg, sliced tomato and a little ginger over the fish and steam them together."},
+     {t:"Finish", d:"Spoon the tangy plate juices back over, then scallion and a little hot sesame oil."}]},
   {key:"rempah", label:"Spiced paste (otak)", region:"Peranakan",
    markers:["candlenut","shrimp_paste","belacan","laksa_paste","curry_paste_pack","turmeric"], need:1,
    note:"a rempah beaten with coconut and egg, steamed in a banana-leaf parcel",
-   finish:"none \u2014 the rempah is beaten in and steamed as a parcel until set and springy",
-   paste:true},
+   paste:true,
+   steps:[
+     {t:"Pound the rempah", d:"Blend candlenut, turmeric, galangal, lemongrass, soaked dried chilli and shrimp paste to a smooth paste."},
+     {t:"Beat it in", d:"Beat the rempah into the mashed fish with coconut milk and egg until thick and sticky."},
+     {t:"Wrap & steam", d:"Spoon into banana-leaf parcels or a shallow tray and steam until set and springy \u2014 no finishing sauce."}]},
   {key:"chilli_lime", label:"Chilli, lime & garlic", region:"Thai",
    markers:["lime","fish_sauce"], need:1,
    note:"sharp, sour and hot, poured over at the end \u2014 pla neung manao",
-   finish:"pound garlic and chilli, mix with lime, fish sauce and a little sugar, pour over the hot fish and steam 1 more minute"},
+   steps:[
+     {t:"Pound & mix", d:"Pound garlic and bird's-eye chilli, then stir in lime juice, fish sauce and a little sugar to a sharp, hot dressing."},
+     {t:"After steaming", d:"Pour the raw dressing over the just-cooked fish and return it to the steam for 1 minute."},
+     {t:"Finish", d:"Cover with plenty of coriander."}]},
   {key:"dashi_sake", label:"Dashi custard / sake", region:"Japanese",
    markers:["dashi","sake","kombu","mirin"], need:1,
    note:"a savoury dashi custard, or clams opened in sake \u2014 keep it clean",
-   finish:"restraint \u2014 a swirl of soy, or butter through the sake liquor; the steam is the point"},
+   steps:[
+     {t:"The liquid", d:"For a custard, warm dashi with a little soy and mirin; for clams, scatter garlic and ginger and pour over sake."},
+     {t:"Keep it gentle", d:"A custard barely wobbles when set; clams are done the instant they open."},
+     {t:"Finish", d:"A swirl of soy, or butter through the sake liquor, then scallion."}]},
+  {key:"green_chutney", label:"Green chutney (Parsi)", region:"Indian",
+   markers:["coconut","mint","cumin","turmeric"], need:1, wrap:true,
+   note:"a fresh coconut-coriander-mint chutney, coated on and steamed in a leaf \u2014 patra ni machi",
+   steps:[
+     {t:"Blend the chutney", d:"Grind grated coconut, coriander, mint, green chilli, garlic, ginger, cumin, a little sugar and lime into a smooth green paste."},
+     {t:"Coat & wrap", d:"Marinate the fish in lime, turmeric and salt, coat it all over with the chutney, and wrap in a softened banana leaf or parchment."},
+     {t:"Steam", d:"Steam the parcel 12\u201315 min until the fish flakes and the chutney is set and fragrant \u2014 no finishing sauce."}]},
+  {key:"salted_fish", label:"Salted fish", region:"Cantonese",
+   markers:["salted_fish"], need:1,
+   note:"pungent and savoury \u2014 diced salted fish steamed over a minced-pork patty",
+   steps:[
+     {t:"Prep the salted fish", d:"Rinse and finely dice the salted fish; fry it briefly in a little oil for a milder, nuttier taste."},
+     {t:"Onto the subject", d:"Scatter it over a seasoned minced-pork patty (or the fish) with a little ginger before steaming."},
+     {t:"Finish", d:"Spoon the savoury oil back over and finish with scallion."}]},
+  {key:"white_wine", label:"White wine & herbs", region:"Western",
+   markers:["white_wine","parsley","butter"], need:1,
+   note:"garlic, white wine and butter, finished with parsley and lemon \u2014 moules or en papillote",
+   steps:[
+     {t:"The aromatics", d:"Soften chopped shallot and garlic in butter, then pour in white wine and a bay leaf and bring to a boil."},
+     {t:"Steam", d:"Steam mussels covered 3\u20134 min until they open (discard any that stay shut), or seal fish in parchment with wine, butter and lemon and steam ~12 min."},
+     {t:"Finish", d:"Stir plenty of chopped parsley through the briny liquor, with a squeeze of lemon."}]},
   {key:"plain", label:"Just ginger", region:"\u2014",
    markers:[], need:0,
    note:"ginger under it, a little soy after. Sometimes that's enough.",
-   finish:"a spoon of soy and a little hot oil over the top"}
+   steps:[
+     {t:"After steaming", d:"Pour off the watery liquid, drizzle a little soy, and pour a spoon of hot oil over the top."}]}
 ];
 
 /* ---- BUILD A STEAMED DISH ----
@@ -3089,29 +3177,47 @@ function buildSteam(ingIds, R, dishes, AFF, opts){
     ingIds.find(id=>steamFormOf(id,R)===form) || ingIds[0];
   const subjName=((R.byId[subjId]||{}).name)||subjId;
 
-  // prep: the subject, the topping/paste, plus any bed (noodles, celery, greens)
-  const parcel = !!(dir && dir.paste);   // a rempah dish (otak) is beaten and steamed in a parcel
-  const prep=[ parcel && form==="whole_fish"
+  // prep: the subject, the topping/paste, plus any bed
+  const minced  = !!(dir && dir.paste);           // otak: the fish is minced into a paste
+  const wrapped = minced || !!(dir && dir.wrap);   // otak / green chutney: steamed in a leaf parcel
+  const prep=[ minced && form==="whole_fish"
     ? {name:subjName, prep:"fillet and mash to a paste", warn:"a fish paste, not a whole fish \u2014 otak is a custard"}
     : subjectPrep(form, subjName, subjId) ];
   if(dir && dir.paste) prep.push({name:dir.label, prep:"pound to a smooth paste and beat into the mix with coconut and egg", warn:null});
+  else if(dir && dir.wrap) prep.push({name:dir.label, prep:"blend to a smooth paste and coat the subject all over", warn:null});
   else if(dir && dir.key==="black_bean") prep.push({name:"Black bean & garlic", prep:"rinse and lightly mash together", warn:null});
   else if(dir && dir.key==="minced_garlic") prep.push({name:"Garlic", prep:"mince and fry gently until pale gold \u2014 don't brown it", warn:"browned garlic turns bitter"});
-  const bed=real.filter(id=>["glass_noodles","noodles","celery","napa_cabbage","cabbage"].includes(id));
-  bed.forEach(id=>prep.push({name:(R.byId[id]||{}).name||id,
-    prep: id==="glass_noodles"?"soak until pliable, then lay as a bed":"lay as a bed under the subject", warn:null}));
+
+  // A BED does one of two jobs. (1) A LIFT: a couple of smashed scallion stalks or ginger
+  // under a whole fish, holding it off the plate so steam reaches underneath and the skin
+  // doesn't stick. (2) A COLLECTOR: an absorbent layer that drinks the flavourful juices the
+  // subject renders \u2014 glass noodles, tofu, napa cabbage, lettuce. Collectors go only under
+  // things that render (fish and shellfish), and only ONE at a time.
+  const COLLECTORS=["glass_noodles","tofu","napa_cabbage","lettuce"];
+  const collector = (!wrapped && (form==="whole_fish"||form==="shellfish"))
+    ? COLLECTORS.find(id=>real.includes(id) && id!==subjId) : null;
+  const collName = collector ? ((R.byId[collector]||{}).name||collector) : null;
+  if(collector) prep.push({name:collName,
+    prep: collector==="glass_noodles" ? "soak until pliable, then lay as a bed to drink the juices"
+        : collector==="tofu" ? "slice and lay as a bed \u2014 it soaks up the sauce (Hunan-style)"
+        : "shred and lay as a bed under the subject to catch the juices", warn:null});
 
   const prepMins=Math.max(4, 3+prep.length*2);
   const finishMins=1;
   const total=prepMins+info.mins+finishMins;
 
   // assembly + finish sentences
-  const assemble = parcel
+  const assemble = minced
     ? "Beat the mix until thick and sticky, then spoon into banana-leaf parcels or a shallow foil tray."
+    : wrapped
+    ? "Coat the subject all over with the "+(dir?dir.label.toLowerCase().replace(/ \(.*\)/,""):"paste")+" and fold it into a softened banana-leaf or parchment parcel."
     : form==="custard"
     ? "Divide any solids between cups and pour the strained custard over."
-    : "Lay half the aromatics under the subject on a heatproof plate and the rest on top"+(bed.length?", over the bed":"")+".";
-  const finish = dir ? dir.finish : "pile scallion on top, pour smoking-hot oil over, then a drizzle of soy";
+    : form==="whole_fish"
+    ? "Lay a couple of smashed scallion stalks (and ginger) under the fish so it sits off the plate and steams evenly"+(collector?", on the "+collName+" bed":"")+", then pile the aromatics over the top."
+    : "Lay half the aromatics under the subject and the rest on top"+(collector?", over the "+collName+" bed":"")+".";
+  const sauceSteps = (dir&&dir.steps) ? dir.steps
+    : [{t:"After steaming", d:"Pour off the watery liquid, drizzle a little soy, and pour a spoon of hot oil over the top."}];
 
   // what would go well? the affinity graph, scoped to STEAM
   let suggest={yours:[],buy:[]};
@@ -3125,7 +3231,7 @@ function buildSteam(ingIds, R, dishes, AFF, opts){
     subject:subjId, subjectName:subjName, form, formInfo:info,
     prep, prepMins, assemble,
     steam:{mins:info.mins, vigour:info.vigour, why:info.why, warn:info.warn},
-    finish, total, handsOn:prepMins+finishMins, handsOff:info.mins,
+    sauceSteps, total, handsOn:prepMins+finishMins, handsOff:info.mins,
     direction:dir, suggest,
     warnings:[info.warn].filter(Boolean),
     reminds: dishes ? dishes.filter(d=>contextOf(d)==="steam" &&
@@ -3151,8 +3257,8 @@ function steamCandidates(ingIds, R, dishes, AFF){
   const byForm={};
   ingIds.forEach(id=>{ const f=steamFormOf(id,R); if(f){ (byForm[f]=byForm[f]||[]).push(id); } });
 
-  // the "furniture" that can go on any steamer plate (a bed, the aromatics, a character topping)
-  const bed=real.filter(id=>["glass_noodles","noodles","celery","napa_cabbage","cabbage","tomato","mushroom","enoki","shiitake_dried","wolfberry","salted_vegetable"].includes(id));
+  // the only real "bed" is a single absorbent collector under fish or prawns.
+  const COLLECTORS_C=["glass_noodles","tofu","napa_cabbage","lettuce"];
   const topping=real.filter(id=>CHARACTER_SEASONINGS.has(id));
 
   const out=[];
@@ -3183,9 +3289,20 @@ function steamCandidates(ingIds, R, dishes, AFF){
       return;
     }
     const ids=byForm[form]; if(!ids||!ids.length) return;
+    if(form==="dense_veg"){
+      // one clean vegetable option, not a bed bolted onto every subject
+      const label = ids.length>1 ? "Steamed vegetables" : "Steamed "+nm(ids[0]);
+      out.push({key:"dense_veg", label, subject:ids[0], form:"dense_veg",
+        contents:ids.concat(topping),
+        note: ids.length>1 ? "a plate of mixed vegetables, steamed soft then dressed" : NOTE.dense_veg,
+        leftOut:[], alternatives:[]});
+      return;
+    }
     const subj=ids[0];
+    const bedFor = (form==="whole_fish"||form==="shellfish")
+      ? COLLECTORS_C.filter(id=>real.includes(id) && id!==subj).slice(0,1) : [];
     out.push({key:form, label:LABELS[form]+nm(subj), subject:subj, form,
-      contents:[subj].concat(bed).concat(topping),
+      contents:[subj].concat(bedFor).concat(topping),
       note:NOTE[form],
       leftOut:ids.slice(1),
       alternatives:ids.slice(1)});
@@ -3224,34 +3341,74 @@ const RICE_MODES={
 const RICE_DIRS=[
   {key:"claypot", label:"Claypot dark soy", region:"Cantonese", mode:"in_rice",
    markers:["dark_soy_sauce","lap_cheong","chicken_thigh"], need:1,
-   note:"marinated chicken and lap cheong on the rice, a dark sweet soy \u2014 the crust at the bottom is the prize"},
+   note:"marinated chicken and lap cheong on the rice, a dark sweet soy \u2014 the crust at the bottom is the prize",
+   steps:[
+     {t:"The marinade", d:"Mix dark soy for colour with light soy, oyster sauce, shaoxing and sesame oil."},
+     {t:"Marinate", d:"Coat the chicken (and lap cheong) and leave 20 minutes before it goes on the rice."},
+     {t:"Finish", d:"Drizzle a little more dark soy over the cooked rice and toss until every grain is glossy."}]},
   {key:"lap_cheong", label:"Lap cheong & mushroom", region:"Cantonese", mode:"in_rice",
    markers:["lap_cheong","shiitake_dried"], need:1,
-   note:"the sausage fat is the whole point \u2014 it melts into the rice as it cooks"},
+   note:"the sausage fat is the whole point \u2014 it melts into the rice as it cooks",
+   steps:[
+     {t:"Slice thin", d:"Slice the lap cheong thin so its sweet fat melts into the rice as it steams."},
+     {t:"Season lightly", d:"A little light and dark soy is all it needs \u2014 the sausage does the work."},
+     {t:"Finish", d:"Toss through with scallion once the crust has set."}]},
   {key:"yam_shrimp", label:"Yam & dried shrimp", region:"Teochew", mode:"in_rice",
    markers:["yam","dried_shrimp","sweet_potato"], need:1,
-   note:"diced yam and dried shrimp fried, then cooked through the rice \u2014 Teochew"},
+   note:"diced yam and dried shrimp fried, then cooked through the rice \u2014 Teochew",
+   steps:[
+     {t:"Fry the base", d:"Fry sliced shallot and garlic until golden, then the soaked dried shrimp, until fragrant."},
+     {t:"Toss the yam", d:"Add the diced yam with dark and light soy and white pepper, then stir it through the raw rice."},
+     {t:"Finish", d:"Top with crisp fried shallots and scallion."}]},
   {key:"soy_braise", label:"Soy-braised (lu rou)", region:"Cantonese", mode:"over_rice",
    markers:["pork_belly","star_anise","five_spice"], need:1,
-   note:"pork belly braised soft in dark soy and five-spice, ladled over with a braised egg"},
+   note:"pork belly braised soft in dark soy and five-spice, ladled over with a braised egg",
+   steps:[
+     {t:"Brown & aromatics", d:"Brown the pork belly until the fat renders, then add garlic, ginger, star anise and cinnamon."},
+     {t:"The braise", d:"Add dark and light soy, sugar, shaoxing and water; slip in peeled boiled eggs and braise gently ~45 min until dark and glossy."},
+     {t:"Ladle over", d:"Spoon the pork, an egg and plenty of the sauce over the rice \u2014 the sauce is what makes the bowl."}]},
   {key:"roast", label:"Roast meat over rice", region:"Cantonese", mode:"over_rice",
    markers:["char_siu"], need:1,
-   note:"sliced char siu or roast pork, a spoon of glossy sauce, a little blanched green"},
+   note:"sliced char siu or roast pork, a spoon of glossy sauce, a little blanched green",
+   steps:[
+     {t:"Slice", d:"Slice the char siu or roast pork thickly."},
+     {t:"The sauce", d:"Warm oyster sauce, light and dark soy, sugar, sesame oil and a little water into a glossy sauce."},
+     {t:"Assemble", d:"Lay the meat and a blanched green over the rice and spoon the sauce over."}]},
   {key:"hainanese", label:"Hainanese chicken rice", region:"Cantonese", mode:"over_rice",
    markers:["chicken_whole","pandan"], need:1,
-   note:"chicken poached gently, rice cooked in its fat and stock, chilli-ginger on the side"},
+   note:"chicken poached gently, rice cooked in its fat and stock, chilli-ginger on the side",
+   steps:[
+     {t:"Poach & keep the stock", d:"Poach the chicken gently, then plunge it into iced water for glossy skin; keep the poaching stock."},
+     {t:"Rice in the fat", d:"Fry garlic and ginger in sesame oil, toss the rice until glossy, then cook it in the reserved stock."},
+     {t:"The sauces", d:"Serve with light soy, a chilli-ginger sauce and a bowl of the hot stock on the side."}]},
   {key:"donburi", label:"Donburi (dashi & egg)", region:"Japanese", mode:"over_rice",
    markers:["dashi","mirin"], need:1,
-   note:"onion and a protein simmered in dashi-soy, often bound loosely with egg, over rice"},
+   note:"onion and a protein simmered in dashi-soy, often bound loosely with egg, over rice",
+   steps:[
+     {t:"The simmer", d:"Simmer sliced onion in dashi, soy and mirin, then add the protein until just cooked."},
+     {t:"The egg", d:"Pour beaten egg over in a ring, cover, and cook 1 minute \u2014 keep it soft and barely set."},
+     {t:"Slide over", d:"Slide the whole thing over a bowl of hot rice and finish with scallion."}]},
   {key:"curry", label:"Japanese curry", region:"Japanese", mode:"over_rice",
    markers:["japanese_curry_roux","curry_powder"], need:1,
-   note:"a thick curry with potato and carrot, simmered and ladled over"},
+   note:"a thick curry with potato and carrot, simmered and ladled over",
+   steps:[
+     {t:"Fry & simmer", d:"Fry onion and the protein, add potato, carrot and water, and simmer until tender."},
+     {t:"Melt the roux", d:"Off the heat, stir in the curry roux until dissolved, then simmer to a thick gravy."},
+     {t:"Ladle over", d:"Ladle the curry over hot rice."}]},
   {key:"herb", label:"Herb & butter (pilaf)", region:"\u2014", mode:"in_rice",
    markers:["thyme","rosemary","parsley","dill","bay_leaf","butter","cilantro","curry_leaves","corn"], need:1,
-   note:"rice toasted in butter with aromatics and herbs, cooked in stock \u2014 a fragrant pilaf, no meat needed"},
+   note:"rice toasted in butter with aromatics and herbs, cooked in stock \u2014 a fragrant pilaf, no meat needed",
+   steps:[
+     {t:"Toast in butter", d:"Sizzle aromatics in butter, then add the rice and toast it a minute so the grains stay separate."},
+     {t:"Cook in stock", d:"Cook the rice in stock (not water) with bay and thyme for flavour and moisture."},
+     {t:"Fold herbs", d:"Fold fresh herbs through at the end and fluff with a fork."}]},
   {key:"plain", label:"Just soy & egg", region:"\u2014", mode:"over_rice",
    markers:[], need:0,
-   note:"a fried egg, a spoon of soy, a little sesame oil. The lazy bowl \u2014 but a good one."}
+   note:"a fried egg, a spoon of soy, a little sesame oil. The lazy bowl \u2014 but a good one.",
+   steps:[
+     {t:"Fry an egg", d:"Fry an egg to your liking \u2014 crisp edges, runny yolk."},
+     {t:"Dress the rice", d:"Warm a little soy and sesame oil and spoon it over the hot rice."},
+     {t:"Top", d:"Slide the egg on top and break the yolk through."}]}
 ];
 
 // the topping method for an OVER-rice bowl, by style. mins = simmer/braise time (hands-off).
@@ -3421,10 +3578,16 @@ function buildRice(ingIds, R, dishes, AFF, opts){
         : "Cook plain rice in a separate pot \u2014 or use rice you already have; leftover rice is ideal for a bowl.", mins:0, handsoff:true});
     prep.push({name:subjName, prep: style==="roast"?"slice thickly": style==="braise"?"cut into pieces":"cut into bite-size pieces", warn:null});
     if(style==="braise"||style==="donburi"){ if(has("egg")) prep.push({name:"Eggs", prep: style==="braise"?"hard-boil and peel":"beat loosely", warn:null}); }
-    steps.push({label:S.label, detail:S.step, mins:S.mins, handsoff:true});
+    steps.push({label:S.label, detail:"about "+S.mins+" minutes, mostly hands-off \u2014 the method's in the sauce steps below", mins:S.mins, handsoff:true});
     steps.push({label:"Assemble", detail:"Ladle the topping and plenty of its sauce over the hot rice, so the grain soaks it up.", mins:1, handsoff:false});
     handsOff=S.mins;
   }
+
+  // the sauce/seasoning method for the chosen direction (mirrors steam and stir-fry)
+  const sauceSteps = (dir&&dir.steps) ? dir.steps
+    : [{t:"Season", d: mode==="over_rice"
+         ? "cook the topping in a savoury sauce until it has gravy to spoon over the rice"
+         : "marinate the topping in soy and a little dark soy, and cook the rice in stock for flavour"}];
 
   const prepMins=Math.max(4, 3+prep.length*2);
   const total=prepMins+handsOff+1;
@@ -3442,7 +3605,7 @@ function buildRice(ingIds, R, dishes, AFF, opts){
   return {
     mode, modeInfo, subject:subjId, subjectName:subjName,
     prep, prepMins, steps, total, handsOn:total-handsOff, handsOff,
-    direction:dir, moisture, texture, suggest,
+    direction:dir, moisture, texture, suggest, sauceSteps,
     separate: separate.map(a=>({name:a.name, alt:a.alt, note:a.note})),
     warnings:[moisture.warn, texture.note].filter(Boolean),
     reminds: dishes ? dishes.filter(d=>contextOf(d)==="rice_bowl" &&
@@ -4889,6 +5052,18 @@ function renderStirFry(){
     box.appendChild(row);
   });
 
+  // ---- the sauce: how to make and apply it (mirrors steam's topping steps) ----
+  const sh=document.createElement("div"); sh.className="rgroup";
+  sh.textContent = dir ? "The sauce \u2014 "+dir.label.replace(/ \(.*\)/,"") : "The sauce";
+  box.appendChild(sh);
+  (sf.sauceSteps||[]).forEach(s=>{
+    const row=document.createElement("div"); row.className="wok-step";
+    row.innerHTML="<span class=\"ws-t\">\u2022</span>"+
+      "<span class=\"ws-b\"><span class=\"ws-i\">"+s.t+"</span>"+
+        "<span class=\"ws-w\">"+s.d+"</span></span>";
+    box.appendChild(row);
+  });
+
   // ---- what's not in this wok ----
   if(chosen.leftOut && chosen.leftOut.length){
     const o=document.createElement("div"); o.className="pot-out";
@@ -5042,9 +5217,9 @@ function renderSteam(){
   const dir = FLOW.steamDir ? STEAM_DIRS.find(d=>d.key===FLOW.steamDir) : null;
   const st  = buildSteam(chosen.contents, REF, DISHES, AFF, {form:chosen.form, subject:chosen.subject, direction:dir});
 
-  // ---- headline + the Topping button (radial, as in the wok) ----
+  // ---- headline + the Seasoning button (radial, as in the wok) ----
   const t=document.createElement("div"); t.className="op-title";
-  const topLabel = dir ? dir.label.replace(/ \(.*\)/,"") : "Topping";
+  const topLabel = dir ? dir.label.replace(/ \(.*\)/,"") : "Seasoning";
   t.innerHTML="<div class=\"op-head\"><span class=\"op-name\">"+chosen.label+"</span>"+
     "<button class=\"op-season"+(dir?" on":"")+"\" id=\"steam-top-btn\">"+
       "<span class=\"os-dot\"></span>"+topLabel+"</button></div>"+
@@ -5116,13 +5291,17 @@ function renderSteam(){
     box.appendChild(w);
   }
 
-  // ---- finish ----
-  const fh=document.createElement("div"); fh.className="rgroup"; fh.textContent="Finish";
+  // ---- the topping / sauce: how to make it and put it on ----
+  const fh=document.createElement("div"); fh.className="rgroup";
+  fh.textContent = dir ? "The seasoning \u2014 "+dir.label.replace(/ \(.*\)/,"") : "The seasoning";
   box.appendChild(fh);
-  const frow=document.createElement("div"); frow.className="wok-step";
-  frow.innerHTML="<span class=\"ws-t\">last</span>"+
-    "<span class=\"ws-b\"><span class=\"ws-i\">"+st.finish+"</span></span>";
-  box.appendChild(frow);
+  (st.sauceSteps||[]).forEach(s=>{
+    const row=document.createElement("div"); row.className="wok-step";
+    row.innerHTML="<span class=\"ws-t\">\u2022</span>"+
+      "<span class=\"ws-b\"><span class=\"ws-i\">"+s.t+"</span>"+
+        "<span class=\"ws-w\">"+s.d+"</span></span>";
+    box.appendChild(row);
+  });
 
   // ---- what's not on this plate ----
   if(chosen.leftOut && chosen.leftOut.length){
@@ -5138,7 +5317,7 @@ function renderSteam(){
     box.appendChild(o);
   }
 
-  // ---- affinity suggestions, scoped to the steamer ----
+  // ---- steams well with these (from the affinity graph; grows as more steamed dishes are added) ----
   if(st.suggest && st.suggest.buy.length){
     const o=document.createElement("div"); o.className="pot-sug";
     o.innerHTML="<div class=\"ps-lab\">Steams well with these</div>"+
@@ -5154,7 +5333,7 @@ function openSteamRadial(){
   closeRadial();
   const byRegion={};
   STEAM_DIRS.forEach(o=>{ const r=o.region||"Other"; (byRegion[r]=byRegion[r]||[]).push(o); });
-  const ORDER=["Cantonese","Teochew","Peranakan","Thai","Japanese","\u2014"];
+  const ORDER=["Cantonese","Teochew","Peranakan","Thai","Japanese","Indian","Western","\u2014"];
   const regions=ORDER.filter(r=>byRegion[r]);
 
   const btn=el("steam-top-btn");
@@ -5170,7 +5349,7 @@ function openSteamRadial(){
     wrap.classList.add("sheet");
     const panel=document.createElement("div"); panel.className="rad-sheet";
     const h=document.createElement("div"); h.className="rs-head";
-    h.textContent="The topping decides the dish";
+    h.textContent="The seasoning decides the dish";
     panel.appendChild(h);
     regions.forEach(rg=>{
       const lab=document.createElement("div"); lab.className="rs-lab"; lab.textContent=rg;
@@ -5196,7 +5375,7 @@ function openSteamRadial(){
   wrap.appendChild(hub);
   const tip=document.createElement("div"); tip.className="rad-tip";
   tip.style.left=cx+"px"; tip.style.top=(cy+22)+"px";
-  tip.textContent="The topping decides the dish";
+  tip.textContent="The seasoning decides the dish";
   wrap.appendChild(tip);
 
   const N=regions.length;
@@ -5330,6 +5509,18 @@ function renderRice(){
       "<span class=\"ws-b\"><span class=\"ws-i\">"+st.label+"</span>"+
         "<span class=\"ws-w\">"+st.detail+"</span></span>"+
       "<span class=\"ws-s\">"+(st.handsoff?"walk away":"hands-on")+"</span>";
+    box.appendChild(row);
+  });
+
+  // ---- the sauce: how it's flavoured (mirrors steam's topping and the wok's sauce) ----
+  const sch=document.createElement("div"); sch.className="rgroup";
+  sch.textContent = dir ? "The sauce \u2014 "+dir.label.replace(/ \(.*\)/,"") : "The sauce";
+  box.appendChild(sch);
+  (rb.sauceSteps||[]).forEach(s=>{
+    const row=document.createElement("div"); row.className="wok-step";
+    row.innerHTML="<span class=\"ws-t\">\u2022</span>"+
+      "<span class=\"ws-b\"><span class=\"ws-i\">"+s.t+"</span>"+
+        "<span class=\"ws-w\">"+s.d+"</span></span>";
     box.appendChild(row);
   });
 
