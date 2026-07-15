@@ -58,7 +58,7 @@ function buildCharacterSet(R){
   ["oyster_sauce","dark_soy_sauce","fish_sauce","dashi","tamarind","coconut_milk",
    "dried_shrimp","salted_fish","salted_vegetable","star_anise","dang_gui","white_pepper",
    "kaffir_lime","lemongrass","galangal","turmeric","curry_leaves","shaoxing","mirin",
-   "wolfberry","kimchi"].forEach(x=>{ if(R.byId[x]) s.add(x); });
+   "wolfberry","kimchi","salted_egg","century_egg"].forEach(x=>{ if(R.byId[x]) s.add(x); });
   return s;
 }
 const CHARACTER_SEASONINGS={ has(id){ return CHARACTER_SET.has(id); } };
@@ -892,7 +892,9 @@ function cookMethodOf(d){
     if(/\bbake|roast\b/.test(t)) return "roast";
   }
   if(/\bstir[- ]?fry|toss (over|in) high heat|wok\b/.test(t)) return "stir_fry";
-  if(/\bsteam\b/.test(t) && !/steamer basket for the/.test(t)) return "steam";
+  // "let it steam, covered" is a covered-pan cooking step inside a stir-fry or a rice pot,
+  // not steamer-steaming. A real steamed dish steams its subject as the main event.
+  if(/\bsteam\b/.test(t) && !/let it steam/.test(t) && !/steamer basket for the/.test(t)) return "steam";
   if(/\bbraise|simmer\b/.test(t)) return "braise";
   if(/\bdeep[- ]?fry|shallow[- ]?fry\b/.test(t)) return "deep_fry";
   if(/\broast|bake\b/.test(t)) return "roast";
@@ -901,11 +903,30 @@ function cookMethodOf(d){
   if(/\bboil\b/.test(t)) return "boil";
   return null;
 }
+/* A ONE-DISH RICE BOWL: rice plus one topping, eaten as a single bowl. It splits two ways
+   — the topping cooked IN the rice (claypot, yam rice, takikomi: it renders into the grain
+   and a crust forms), or cooked separately and ladled OVER plain rice (donburi, lu rou,
+   curry: the sauce is the moisture). Either way it is NOT fried rice (that's a stir-fry) and
+   NOT plain rice or a herb pilaf (those have no protein topping). */
+const RICE_BASE_IDS=new Set(["rice","brown_rice","glutinous_rice"]);
+const RICE_TOPPING_PROTEINS=new Set(["chicken","chicken_thigh","chicken_breast","chicken_drumstick",
+  "chicken_wing","chicken_whole","chicken_mince","turkey","pork","pork_belly","pork_loin","pork_shoulder",
+  "pork_ribs","pork_mince","beef","beef_slices","beef_mince","beef_brisket","beef_chuck","beef_short_rib",
+  "beef_steak","mutton","lap_cheong","char_siu","fish","salmon","threadfin","pomfret","seabass","snapper",
+  "grouper","cod","mackerel","tuna","sardine","prawn","squid","clams","oyster","dried_shrimp","fish_cake","century_egg","egg"]);
+function isRiceBowl(d){
+  const ids=(d.grocery_items||[]).map(g=>g.id);
+  if(!ids.some(id=>RICE_BASE_IDS.has(id))) return false;
+  if(cookMethodOf(d)==="stir_fry") return false;         // fried rice, mee goreng, yakisoba
+  return ids.some(id=>RICE_TOPPING_PROTEINS.has(id));    // a topping, not plain rice or a herb pilaf
+}
+
 function contextOf(d){
   // the cooking frame a pairing was learned in. METHOD first — a vegetable stir-fry is a
   // stir-fry, not a "veg". A soup is a soup whatever's in it.
   if(d.role==="soup") return "soup";
   if(d.role==="dessert") return "dessert";
+  if(isRiceBowl(d)) return "rice_bowl";
   const m=cookMethodOf(d);
   if(m==="stir_fry") return "stir_fry";
   if(m==="steam") return "steam";
@@ -2244,6 +2265,598 @@ function wokCandidates(ingIds, R, dishes, AFF){
       alternatives:[],
       crowded:true
     });
+  }
+  return out;
+}
+
+/* ============================================================
+   STEAM — the opposite of the wok.
+   A wok has NO hands-off time; a steamer is almost ALL hands-off. You prep, you assemble
+   on a plate, you set a timer and walk away, then a 30-second finish. So the model is not
+   a sequence of timed stages (that was the wok) — it's: pick the SUBJECT, let its FORM
+   decide how long and how hard to steam, dress it, and DON'T over-steam. Over-steaming is
+   the one way to ruin a steamed dish: fish goes woolly, custard pockmarks, tofu weeps.
+   ============================================================ */
+
+// The subject's FORM decides everything: rolling vs gentle steam, and the minutes.
+const STEAM_FORM={
+  whole_fish:{label:"a whole fish",       mins:10, vigour:"rolling",
+    why:"rolling steam, 8\u201312 min \u2014 the flesh should just part at the bone",
+    warn:"take it off the moment it flakes; a minute too long and it turns woolly"},
+  shellfish:{label:"shellfish",           mins:7,  vigour:"rolling",
+    why:"rolling steam, 5\u20138 min \u2014 until the prawns curl or the shells open",
+    warn:"the instant a clam opens it's done \u2014 discard any that stay shut"},
+  ribs:{label:"pork ribs",                mins:18, vigour:"rolling",
+    why:"rolling steam, ~18 min \u2014 the meat should pull from the bone",
+    warn:"cut the ribs into 3 cm pieces or the centre stays raw"},
+  poultry:{label:"chicken on the bone",   mins:18, vigour:"rolling",
+    why:"rolling steam, ~18 min \u2014 bone-in pieces need real time",
+    warn:"cut to an even size, or the thick pieces lag the thin ones"},
+  mince:{label:"a minced-meat patty",     mins:15, vigour:"rolling",
+    why:"rolling steam, ~15 min \u2014 an even, shallow patty cooks through",
+    warn:"press it thin and even, or the middle steams slower than the edge"},
+  custard:{label:"a savoury egg custard", mins:14, vigour:"gentle",
+    why:"GENTLE steam \u2014 low heat, lid ajar, ~14 min",
+    warn:"fierce steam pockmarks a custard and turns it spongy \u2014 keep it low"},
+  tofu:{label:"tofu",                     mins:9,  vigour:"gentle",
+    why:"gentle steam, ~8\u201310 min \u2014 just to heat it through",
+    warn:"hard steam splits silken tofu and makes it weep water"},
+  dense_veg:{label:"a dense vegetable",   mins:10, vigour:"rolling",
+    why:"rolling steam, ~10 min \u2014 until a chopstick slides through with no resistance",
+    warn:"tip away the water that collects on the plate, or the dish turns watery"}
+};
+const STEAM_FISH=["fish","pomfret","seabass","snapper","grouper","threadfin","mackerel","cod","salmon","tuna","sardine","fish_cake"];
+
+// Which form is THIS ingredient, on its own? (seasonings/character pastes return null)
+function steamFormOf(id, R){
+  const i=R.byId[id]||{};
+  if(id==="pork_ribs") return "ribs";
+  if(i.form==="mince") return "mince";
+  if(/^chicken/.test(id)||id==="turkey") return "poultry";
+  if(["prawn","clams","oyster","squid"].includes(id)) return "shellfish";
+  if(id==="egg") return "custard";
+  if(id==="tofu") return "tofu";
+  if(STEAM_FISH.includes(id)) return "whole_fish";
+  // a real dense vegetable can be the subject — but an aromatic (ginger, garlic, chilli) cannot
+  if(i.category==="vegetables" && measureTypeOf(i)!=="assumed") return "dense_veg";
+  return null;   // beef, mutton, aromatics, seasonings — not a steaming subject
+}
+
+// form-specific prep for the subject (the thing the recipes actually tell you to do)
+function subjectPrep(form, name, id){
+  if(form==="shellfish"){
+    if(id==="clams") return {name, prep:"purge in salted water for an hour, then scrub", warn:"discard any that don't close"};
+    if(id==="prawn") return {name, prep:"butterfly, leaving the shell on the back", warn:null};
+    return {name, prep:"clean and leave whole", warn:null};
+  }
+  const P={
+    whole_fish:{prep:"scale, gut and score twice on each side", warn:"scoring lets the steam reach the bone"},
+    shellfish: {prep:"clean", warn:null},
+    ribs:      {prep:"cut into 3 cm pieces", warn:"small pieces or the centre stays raw"},
+    poultry:   {prep:"cut into even, bite-size pieces", warn:null},
+    mince:     {prep:"season, then press into an even, shallow patty", warn:"even and thin, or the middle lags"},
+    custard:   {prep:"beat with the liquid, then STRAIN", warn:"straining is what makes it silky"},
+    tofu:      {prep:"slice thick, keeping the block shape", warn:"handle silken tofu gently"},
+    dense_veg: {prep:"cut into even batons so it cooks evenly", warn:null}
+  };
+  const e=P[form]||{prep:"prepare",warn:null};
+  return {name, prep:e.prep, warn:e.warn};
+}
+
+/* ---- STEAM SEASONING DIRECTIONS ----
+   The topping and the finish. AUTHORED \u2014 this is the construct of a steamed dish across
+   the cuisines that steam: Cantonese (hot oil over aromatics), Teochew (salted-veg sour),
+   Peranakan (a rempah steamed IN), Thai (a raw sauce poured over), Japanese (restraint). */
+const STEAM_DIRS=[
+  {key:"ginger_scallion", label:"Ginger, scallion & hot oil", region:"Cantonese",
+   markers:["ginger","scallion"], need:2,
+   note:"the everyday one \u2014 smoking oil over the scallion, a good soy at the end",
+   finish:"pile scallion (and shredded ginger) on top, pour SMOKING-hot oil over so it sizzles, then drizzle soy and sesame oil"},
+  {key:"superior_soy", label:"Superior soy (clean)", region:"Cantonese",
+   markers:["light_soy_sauce","soy_sauce"], need:1,
+   note:"just the fish \u2014 a good soy, hot oil, coriander. Let it speak.",
+   finish:"pour a warm soy-and-sugar sauce around it, pile scallion on top, then smoking-hot oil over, and scatter coriander"},
+  {key:"black_bean", label:"Black bean & garlic", region:"Cantonese",
+   markers:["fermented_black_bean","garlic"], need:1,
+   note:"rinse and mash the black beans with garlic and a little chilli, then steam it on",
+   finish:"the black bean has steamed into it \u2014 finish with scallion and a spoon of hot oil"},
+  {key:"minced_garlic", label:"Minced garlic", region:"Cantonese",
+   markers:["garlic"], need:1,
+   note:"gently fried garlic spooned over \u2014 the classic for prawns and tofu",
+   finish:"spoon the pale-gold fried garlic over, then scallion and a spoon of hot oil"},
+  {key:"salted_egg", label:"Salted egg", region:"Cantonese",
+   markers:["salted_egg"], need:1,
+   note:"mash the salted yolk through minced pork, or set it over the dish",
+   finish:"the salted yolk turns oily and orange as it steams \u2014 finish with scallion"},
+  {key:"salted_veg", label:"Salted vegetable & sour", region:"Teochew",
+   markers:["salted_vegetable","tomato"], need:1,
+   note:"kiam chai, tomato and a sour edge \u2014 the Teochew way with fish",
+   finish:"the salted veg and tomato have steamed alongside \u2014 finish with scallion and hot sesame oil"},
+  {key:"rempah", label:"Spiced paste (otak)", region:"Peranakan",
+   markers:["candlenut","shrimp_paste","belacan","laksa_paste","curry_paste_pack","turmeric"], need:1,
+   note:"a rempah beaten with coconut and egg, steamed in a banana-leaf parcel",
+   finish:"none \u2014 the rempah is beaten in and steamed as a parcel until set and springy",
+   paste:true},
+  {key:"chilli_lime", label:"Chilli, lime & garlic", region:"Thai",
+   markers:["lime","fish_sauce"], need:1,
+   note:"sharp, sour and hot, poured over at the end \u2014 pla neung manao",
+   finish:"pound garlic and chilli, mix with lime, fish sauce and a little sugar, pour over the hot fish and steam 1 more minute"},
+  {key:"dashi_sake", label:"Dashi custard / sake", region:"Japanese",
+   markers:["dashi","sake","kombu","mirin"], need:1,
+   note:"a savoury dashi custard, or clams opened in sake \u2014 keep it clean",
+   finish:"restraint \u2014 a swirl of soy, or butter through the sake liquor; the steam is the point"},
+  {key:"plain", label:"Just ginger", region:"\u2014",
+   markers:[], need:0,
+   note:"ginger under it, a little soy after. Sometimes that's enough.",
+   finish:"a spoon of soy and a little hot oil over the top"}
+];
+
+/* ---- BUILD A STEAMED DISH ----
+   Assemble \u2192 steam (form decides) \u2192 finish. Almost all hands-off. */
+function buildSteam(ingIds, R, dishes, AFF, opts){
+  const dir=(opts&&opts.direction)||null;
+  const real=[...new Set(ingIds.filter(id=>{
+    const i=R.byId[id]||{};
+    if(i.id==="water") return false;
+    return measureTypeOf(i)!=="assumed" || CHARACTER_SEASONINGS.has(id);
+  }))];
+
+  // the subject: highest-priority steaming protein, else a dense vegetable
+  const PRIORITY=["whole_fish","shellfish","ribs","poultry","mince","custard","tofu","dense_veg"];
+  const forms=opts&&opts.form ? [opts.form] :
+    [...new Set(ingIds.map(id=>steamFormOf(id,R)).filter(Boolean))]
+      .sort((a,b)=>PRIORITY.indexOf(a)-PRIORITY.indexOf(b));
+  const form=forms[0]||"dense_veg";
+  const info=STEAM_FORM[form];
+
+  // the subject ingredient itself (for the name and prep)
+  const subjId = (opts&&opts.subject) ||
+    ingIds.find(id=>steamFormOf(id,R)===form) || ingIds[0];
+  const subjName=((R.byId[subjId]||{}).name)||subjId;
+
+  // prep: the subject, the topping/paste, plus any bed (noodles, celery, greens)
+  const parcel = !!(dir && dir.paste);   // a rempah dish (otak) is beaten and steamed in a parcel
+  const prep=[ parcel && form==="whole_fish"
+    ? {name:subjName, prep:"fillet and mash to a paste", warn:"a fish paste, not a whole fish \u2014 otak is a custard"}
+    : subjectPrep(form, subjName, subjId) ];
+  if(dir && dir.paste) prep.push({name:dir.label, prep:"pound to a smooth paste and beat into the mix with coconut and egg", warn:null});
+  else if(dir && dir.key==="black_bean") prep.push({name:"Black bean & garlic", prep:"rinse and lightly mash together", warn:null});
+  else if(dir && dir.key==="minced_garlic") prep.push({name:"Garlic", prep:"mince and fry gently until pale gold \u2014 don't brown it", warn:"browned garlic turns bitter"});
+  const bed=real.filter(id=>["glass_noodles","noodles","celery","napa_cabbage","cabbage"].includes(id));
+  bed.forEach(id=>prep.push({name:(R.byId[id]||{}).name||id,
+    prep: id==="glass_noodles"?"soak until pliable, then lay as a bed":"lay as a bed under the subject", warn:null}));
+
+  const prepMins=Math.max(4, 3+prep.length*2);
+  const finishMins=1;
+  const total=prepMins+info.mins+finishMins;
+
+  // assembly + finish sentences
+  const assemble = parcel
+    ? "Beat the mix until thick and sticky, then spoon into banana-leaf parcels or a shallow foil tray."
+    : form==="custard"
+    ? "Divide any solids between cups and pour the strained custard over."
+    : "Lay half the aromatics under the subject on a heatproof plate and the rest on top"+(bed.length?", over the bed":"")+".";
+  const finish = dir ? dir.finish : "pile scallion on top, pour smoking-hot oil over, then a drizzle of soy";
+
+  // what would go well? the affinity graph, scoped to STEAM
+  let suggest={yours:[],buy:[]};
+  if(AFF){
+    const base=real.filter(id=>steamFormOf(id,R) && steamFormOf(id,R)!=="dense_veg");
+    const key=base.length?base:[subjId];
+    suggest=potSuggestions(key,"steam",R,AFF,{have:real});
+  }
+
+  return {
+    subject:subjId, subjectName:subjName, form, formInfo:info,
+    prep, prepMins, assemble,
+    steam:{mins:info.mins, vigour:info.vigour, why:info.why, warn:info.warn},
+    finish, total, handsOn:prepMins+finishMins, handsOff:info.mins,
+    direction:dir, suggest,
+    warnings:[info.warn].filter(Boolean),
+    reminds: dishes ? dishes.filter(d=>contextOf(d)==="steam" &&
+      (d.grocery_items||[]).some(g=>real.includes(g.id)))
+      .slice(0,2).map(d=>({dish:d.name})) : []
+  };
+}
+
+/* ============================================================
+   WHICH STEAM? \u2014 a steamer plates one subject, not a pile.
+   Offer coherent options the way the wok and the pot do: one fish, or the prawns, or a
+   custard \u2014 each a complete dish, with a plain honest note.
+   ============================================================ */
+function steamCandidates(ingIds, R, dishes, AFF){
+  const real=[...new Set(ingIds.filter(id=>{
+    const i=R.byId[id]||{};
+    if(i.id==="water") return false;
+    return measureTypeOf(i)!=="assumed" || CHARACTER_SEASONINGS.has(id);
+  }))];
+  const nm=id=>((R.byId[id]||{}).name)||id;
+
+  // group by form
+  const byForm={};
+  ingIds.forEach(id=>{ const f=steamFormOf(id,R); if(f){ (byForm[f]=byForm[f]||[]).push(id); } });
+
+  // the "furniture" that can go on any steamer plate (a bed, the aromatics, a character topping)
+  const bed=real.filter(id=>["glass_noodles","noodles","celery","napa_cabbage","cabbage","tomato","mushroom","enoki","shiitake_dried","wolfberry","salted_vegetable"].includes(id));
+  const topping=real.filter(id=>CHARACTER_SEASONINGS.has(id));
+
+  const out=[];
+  const LABELS={whole_fish:"Steamed ", shellfish:"Steamed ", ribs:"Steamed ",
+    poultry:"Steamed ", mince:"Steamed ", tofu:"Steamed ", dense_veg:"Steamed "};
+  const NOTE={
+    whole_fish:"a whole fish, on a bed of ginger \u2014 the flesh just parting at the bone",
+    shellfish:"quick and briny \u2014 5 to 8 minutes, no more",
+    ribs:"chopped small so they cook through \u2014 about 18 minutes",
+    poultry:"bone-in pieces \u2014 they need the full time",
+    mince:"an even patty \u2014 the local everyday steam",
+    tofu:"gentle \u2014 just to heat it through without splitting it",
+    dense_veg:"steamed soft, then dressed \u2014 no protein needed"
+  };
+  const PRIORITY=["whole_fish","shellfish","ribs","poultry","mince","custard","tofu","dense_veg"];
+
+  // custard is special: egg + a steaming liquid (dashi / stock) = a savoury custard
+  const hasLiquid = ingIds.some(id=>["dashi","broth","kombu"].includes(id));
+  PRIORITY.forEach(form=>{
+    if(form==="custard"){
+      if((byForm.custard||[]).length && (hasLiquid || Object.keys(byForm).every(f=>f==="custard"))){
+        const solids=real.filter(id=>{const f=steamFormOf(id,R); return f && f!=="custard" && f!=="dense_veg";});
+        out.push({key:"custard", label:"Savoury egg custard", subject:"egg", form:"custard",
+          contents:["egg"].concat(solids.slice(0,2)).concat(topping),
+          note:"chawanmushi-style \u2014 gentle steam, or it goes spongy",
+          leftOut:[], alternatives:[]});
+      }
+      return;
+    }
+    const ids=byForm[form]; if(!ids||!ids.length) return;
+    const subj=ids[0];
+    out.push({key:form, label:LABELS[form]+nm(subj), subject:subj, form,
+      contents:[subj].concat(bed).concat(topping),
+      note:NOTE[form],
+      leftOut:ids.slice(1),
+      alternatives:ids.slice(1)});
+  });
+
+  if(!out.length){
+    // nothing obviously steamable — offer the aromatics honestly
+    out.push({key:"plain", label:"Steamed \u2014 add a subject", subject:real[0]||null, form:"dense_veg",
+      contents:real, note:"add a fish, some prawns, minced pork, tofu or an egg \u2014 the steam builds around it",
+      leftOut:[], alternatives:[]});
+  }
+  return out;
+}
+
+/* ============================================================
+   ONE-DISH RICE — rice plus one topping, a whole meal in a bowl.
+   The decision that defines it is the FORK: do you cook the topping IN the rice, or cook
+   the rice SEPARATELY and ladle the topping over?
+     • IN the rice (claypot, yam rice, takikomi): the topping's fat and moisture render down
+       into the grain as it cooks, and a crust forms at the bottom. One pot, mostly hands-off.
+     • OVER the rice (donburi, lu rou, curry, roast): the topping is a braise/simmer/roast with
+       its own sauce, made separately and ladled over plain rice. The sauce is the moisture,
+       and the rice can be one you already have — leftover rice is ideal.
+   A rice bowl is only good if every spoonful carries MOISTURE and at least two TEXTURES. A
+   bowl of dry lean meat over rice is the failure mode, so the engine checks for it.
+   ============================================================ */
+const RICE_MODES={
+  in_rice:{key:"in_rice", label:"Cooked in the rice", tag:"one pot \u00b7 renders in \u00b7 crust",
+    why:"the topping cooks on the rice and its fat and moisture render down into the grain; a golden crust forms at the bottom"},
+  over_rice:{key:"over_rice", label:"Rice cooked separately", tag:"topping ladled over \u00b7 rice can be leftover",
+    why:"a braise, simmer or roast in its own pot, ladled over plain rice \u2014 the sauce is the moisture, and the rice can be one you already have"}
+};
+
+/* ---- RICE-BOWL DIRECTIONS ---- each carries the MODE it implies. AUTHORED. */
+const RICE_DIRS=[
+  {key:"claypot", label:"Claypot dark soy", region:"Cantonese", mode:"in_rice",
+   markers:["dark_soy_sauce","lap_cheong","chicken_thigh"], need:1,
+   note:"marinated chicken and lap cheong on the rice, a dark sweet soy \u2014 the crust at the bottom is the prize"},
+  {key:"lap_cheong", label:"Lap cheong & mushroom", region:"Cantonese", mode:"in_rice",
+   markers:["lap_cheong","shiitake_dried"], need:1,
+   note:"the sausage fat is the whole point \u2014 it melts into the rice as it cooks"},
+  {key:"yam_shrimp", label:"Yam & dried shrimp", region:"Teochew", mode:"in_rice",
+   markers:["yam","dried_shrimp","sweet_potato"], need:1,
+   note:"diced yam and dried shrimp fried, then cooked through the rice \u2014 Teochew"},
+  {key:"soy_braise", label:"Soy-braised (lu rou)", region:"Cantonese", mode:"over_rice",
+   markers:["pork_belly","star_anise","five_spice"], need:1,
+   note:"pork belly braised soft in dark soy and five-spice, ladled over with a braised egg"},
+  {key:"roast", label:"Roast meat over rice", region:"Cantonese", mode:"over_rice",
+   markers:["char_siu"], need:1,
+   note:"sliced char siu or roast pork, a spoon of glossy sauce, a little blanched green"},
+  {key:"hainanese", label:"Hainanese chicken rice", region:"Cantonese", mode:"over_rice",
+   markers:["chicken_whole","pandan"], need:1,
+   note:"chicken poached gently, rice cooked in its fat and stock, chilli-ginger on the side"},
+  {key:"donburi", label:"Donburi (dashi & egg)", region:"Japanese", mode:"over_rice",
+   markers:["dashi","mirin"], need:1,
+   note:"onion and a protein simmered in dashi-soy, often bound loosely with egg, over rice"},
+  {key:"curry", label:"Japanese curry", region:"Japanese", mode:"over_rice",
+   markers:["japanese_curry_roux","curry_powder"], need:1,
+   note:"a thick curry with potato and carrot, simmered and ladled over"},
+  {key:"herb", label:"Herb & butter (pilaf)", region:"\u2014", mode:"in_rice",
+   markers:["thyme","rosemary","parsley","dill","bay_leaf","butter","cilantro","curry_leaves","corn"], need:1,
+   note:"rice toasted in butter with aromatics and herbs, cooked in stock \u2014 a fragrant pilaf, no meat needed"},
+  {key:"plain", label:"Just soy & egg", region:"\u2014", mode:"over_rice",
+   markers:[], need:0,
+   note:"a fried egg, a spoon of soy, a little sesame oil. The lazy bowl \u2014 but a good one."}
+];
+
+// the topping method for an OVER-rice bowl, by style. mins = simmer/braise time (hands-off).
+const RICE_STYLE={
+  braise:{label:"The braise", mins:45,
+    step:"Brown the meat until the fat renders, add aromatics, dark soy and five-spice, cover with water and braise gently \u2014 slip in peeled boiled eggs to braise alongside."},
+  donburi:{label:"The simmer", mins:8,
+    step:"Simmer sliced onion in dashi, soy and mirin, add the protein until just cooked, then pour beaten egg over in a ring and cook 1 minute \u2014 keep it soft, barely set."},
+  curry:{label:"The curry", mins:20,
+    step:"Fry onion and the protein, add potato and carrot and water, simmer until tender, then melt in the curry roux and simmer to a thick gravy."},
+  roast:{label:"The topping", mins:5,
+    step:"Slice the roast meat, warm a glossy soy-and-oyster sauce, and blanch a green briefly."},
+  hainanese:{label:"Chicken & rice", mins:35,
+    step:"Poach the whole chicken gently, then cook the rinsed rice in its fat and stock in a separate pot; chop the chicken to serve with chilli-ginger and a bowl of the stock."},
+  plain:{label:"The topping", mins:4,
+    step:"Fry an egg to your liking and warm a little soy and sesame oil."},
+  simmer:{label:"The topping", mins:12,
+    step:"Cook the protein through in a savoury sauce until it has a little gravy to spoon over."}
+};
+
+function riceStyleOf(dir, ingIds){
+  if(dir){
+    if(dir.key==="soy_braise") return "braise";
+    if(dir.key==="donburi")    return "donburi";
+    if(dir.key==="curry")      return "curry";
+    if(dir.key==="roast")      return "roast";
+    if(dir.key==="hainanese")  return "hainanese";
+    if(dir.key==="plain")      return "plain";
+  }
+  const has=id=>ingIds.includes(id);
+  if(has("japanese_curry_roux")||has("curry_powder")) return "curry";
+  if(has("char_siu")) return "roast";
+  if(has("chicken_whole")) return "hainanese";
+  if(has("pork_belly")||has("star_anise")||has("five_spice")) return "braise";
+  if(has("egg")&&(has("dashi")||has("mirin"))) return "donburi";
+  return "simmer";
+}
+
+/* Does this bowl carry moisture, and enough texture? The governing check. Over-rice bowls
+   are ladled with a braise/simmer/curry sauce by definition — that IS the moisture. The dry
+   risk is a lean cut cooked IN the rice with nothing to render. */
+function riceMoisture(ingIds, mode){
+  const has=id=>ingIds.includes(id);
+  const rendersFat = ["lap_cheong","char_siu","pork_belly","pork_shoulder","chicken_thigh",
+    "chicken_whole","chicken_drumstick","salmon","beef_short_rib","beef_brisket"].some(has);
+  const egg = has("egg");
+  const juicy = ["corn","tomato","mushroom","enoki","pumpkin","peas","daikon","zucchini","eggplant"].some(has);
+  const hasProtein = ingIds.some(id=>id!=="egg" && RICE_TOPPING_PROTEINS.has(id));
+  // over-rice is ladled with a sauce; in-rice needs rendering fat, an egg or a juicy
+  // vegetable. A plain veg or herb rice (no meat) is cooked in stock and is fine on its own.
+  const ok = mode==="over_rice" || rendersFat || egg || juicy || !hasProtein;
+  return {ok, rendersFat, egg, juicy,
+    warn: ok?null:"a lean cut cooked in the rice runs dry \u2014 use a cut that renders (thigh, belly, lap cheong), add a soft egg or a juicy vegetable like corn, or ladle a sauce over instead"};
+}
+function riceTexture(ingIds){
+  const has=id=>ingIds.includes(id);
+  let n=0; const parts=[];
+  const prot=["chicken","chicken_thigh","chicken_whole","pork","pork_belly","beef","beef_slices","char_siu","lap_cheong","salmon","prawn"].filter(has);
+  if(prot.length){ n++; parts.push("the meat"); }
+  if(has("egg")){ n++; parts.push("a soft egg"); }
+  if(["shiitake_dried","mushroom","enoki"].some(has)){ n++; parts.push("mushroom"); }
+  if(["bok_choy","kailan","chye_sim","spinach","cucumber","kangkong","broccoli"].some(has)){ n++; parts.push("a green"); }
+  if(["yam","potato","sweet_potato"].some(has)){ n++; parts.push("something starchy-soft"); }
+  return {n, parts, note: n>=2?null:"one note only \u2014 add a soft egg, some blanched greens, or crisp fried shallots for contrast"};
+}
+
+/* Co-cooking with rice-by-absorption (~15 min gentle steam + 10 min rest, one covered pot,
+   one appliance). Given the rice is cooking anyway, what else can ride in the SAME pot, at
+   the SAME gentle heat, in the SAME time? Each add-in gets a stage:
+     • base_in  — in with the rice from the START (sturdy veg, corn, cured meat, chicken pieces)
+     • lay_on   — LAID ON near the end (a fish fillet, prawns, an egg cracked on top)
+     • fold_end — FOLDED THROUGH at the finish, off the heat (peas, leafy greens)
+     • no_along — CANNOT ride along: a different heat/time/appliance (a steak needs a sear,
+                  pork belly a long braise) — cook it separately.
+   This is exactly the "same temperature and appliance" test: only things whose cooking
+   profile matches gentle moist absorption can share the pot. */
+function riceAlong(id, R){
+  const i=R.byId[id]||{}; const p=new Set(i.provides||[]);
+  const FISH=["fish","salmon","cod","snapper","seabass","threadfin","pomfret","mackerel","tuna","sardine","grouper"];
+  if(id==="egg") return {stage:"lay_on", note:"crack it on top for the last few minutes so it steams into the rice, or stir it through the hot rice at the end"};
+  if(id==="lap_cheong") return {stage:"base_in", note:"slice it in from the start \u2014 the fat renders into the rice"};
+  if(id==="char_siu") return {stage:"lay_on", note:"already cooked \u2014 lay it on to warm through for the last few minutes"};
+  if(id==="dried_shrimp") return {stage:"base_in", note:"in from the start \u2014 it perfumes the whole pot"};
+  if(FISH.includes(id)) return {stage:"lay_on", note:"lay the fillet on the rice for the last 10 minutes \u2014 it steams through gently"};
+  if(["prawn","squid","clams","oyster"].includes(id)) return {stage:"lay_on", note:"scatter on top for the last 6\u20138 minutes, just until opaque"};
+  if(id==="beef_slices") return {stage:"lay_on", note:"thin slices laid on for the last few minutes"};
+  if(p.has("collagen_rich") || i.cut_role==="braise") return {stage:"no_along", alt:"a slow braise", note:"needs 45+ minutes of braising \u2014 far longer than the rice takes"};
+  if(["beef","beef_steak","beef_chuck","pork_loin","pork_shoulder","mutton"].includes(id)) return {stage:"no_along", alt:"a hot sear", note:"wants dry, high heat \u2014 not gentle steam"};
+  if(/^chicken/.test(id)) return {stage:"base_in", note:"marinate it and cook it on the rice from the start"};
+  if(id==="tofu") return {stage:"base_in", note:"firm tofu holds up cooked in the rice"};
+  if(i.category==="vegetables"){
+    if(["peas","beansprouts","spinach","bok_choy","chye_sim","kangkong","kailan","watercress","lettuce"].includes(id))
+      return {stage:"fold_end", note:"fold through at the very end \u2014 residual heat is enough, and it stays bright"};
+    return {stage:"base_in", note:"cooks in the same time and heat \u2014 stir it in with the rice"};
+  }
+  return {stage:"base_in", note:"cooks along with the rice"};
+}
+
+/* ---- BUILD A RICE BOWL ---- */
+function buildRice(ingIds, R, dishes, AFF, opts){
+  const dir=(opts&&opts.direction)||null;
+  const real=[...new Set(ingIds.filter(id=>{
+    const i=R.byId[id]||{};
+    if(i.id==="water") return false;
+    return measureTypeOf(i)!=="assumed" || CHARACTER_SEASONINGS.has(id);
+  }))];
+  const nm=id=>((R.byId[id]||{}).name)||id;
+  const has=id=>ingIds.includes(id);
+
+  // mode: the direction decides, else the ingredients, else "over" (rice you already have)
+  let mode = (dir&&dir.mode) || (opts&&opts.mode) || null;
+  if(!mode){
+    const inSignal = has("lap_cheong")||has("dried_shrimp")||has("yam")||has("sweet_potato");
+    mode = inSignal ? "in_rice" : "over_rice";
+  }
+  const modeInfo=RICE_MODES[mode];
+
+  const subjId=(opts&&opts.subject) || real.find(id=>RICE_TOPPING_PROTEINS.has(id)) || real[0];
+  const subjName=subjId?nm(subjId):"the topping";
+
+  const prep=[];
+  const steps=[];   // {label, detail, mins, handsoff}
+  let handsOff=0;
+  let separate=[];  // add-ins that can't cook in the rice — a different heat/time/appliance
+
+  if(mode==="in_rice"){
+    // stage every add-in by whether (and when) it can share the rice's pot, heat and time.
+    // Only real SOLIDS are staged — sauces and seasonings live in the marinade, not the pot.
+    const others=real.filter(id=>{
+      if(RICE_BASE_IDS.has(id)) return false;
+      if(id==="shiitake_dried") return true;                 // dried, but a genuine cook-in solid
+      if(CHARACTER_SEASONINGS.has(id)) return false;         // dark soy, oyster, dashi... = seasoning
+      return ["proteins","vegetables","starches"].includes((R.byId[id]||{}).category);
+    });
+    const along=others.map(id=>({id, name:nm(id), ...riceAlong(id,R)}));
+    const baseIn =along.filter(a=>a.stage==="base_in");
+    const layOn  =along.filter(a=>a.stage==="lay_on");
+    const foldEnd=along.filter(a=>a.stage==="fold_end");
+    separate     =along.filter(a=>a.stage==="no_along");
+    const names=arr=>arr.map(a=>a.name).join(", ").replace(/, ([^,]*)$/," and $1");
+
+    // prep — only the add-ins that need a knife or a soak
+    if(baseIn.some(a=>/^chicken/.test(a.id))) prep.push({name:"Chicken", prep:"marinate in soy, a little dark soy for colour, and oil", warn:null});
+    if(has("shiitake_dried")) prep.push({name:"Dried shiitake", prep:"soak until soft, then slice", warn:null});
+    if(has("dried_shrimp")) prep.push({name:"Dried shrimp", prep:"soak, then chop", warn:null});
+    ["yam","sweet_potato","potato","carrot","pumpkin","daikon"].forEach(v=>{ if(has(v)) prep.push({name:nm(v), prep:"peel and cut into small, even cubes so it cooks in rice time", warn:null}); });
+    if(has("corn")) prep.push({name:"Corn", prep:"strip the kernels off the cob", warn:null});
+    if(has("lap_cheong")) prep.push({name:"Lap cheong", prep:"slice on the diagonal", warn:null});
+    if(layOn.some(a=>/fish|salmon|cod|snapper|seabass|threadfin|pomfret|mackerel|tuna|sardine|grouper/.test(a.id)))
+      prep.push({name:"Fish", prep:"pat dry and season lightly", warn:null});
+
+    steps.push({label:"The rice", detail:"Rinse the rice and add the water \u2014 a touch less than usual, since the add-ins give off moisture. Use stock in place of water for more flavour.", mins:0, handsoff:false});
+    if(baseIn.length)
+      steps.push({label:"In from the start", detail:"Stir "+names(baseIn)+" through the raw rice \u2014 they share the pot, the heat and the 15 minutes.", mins:0, handsoff:false});
+    steps.push({label:"Cook together", detail:"Bring to a boil, then cover and cook on low for 15 minutes"+(layOn.length?", laying "+names(layOn)+" on top for the last 10 minutes":"")+".", mins:15, handsoff:true});
+    steps.push({label:"The crust, resting", detail:"Off the heat, leave it covered and undisturbed for 10 minutes \u2014 this sets the golden crust at the bottom. Don't lift the lid.", mins:10, handsoff:true});
+    if(foldEnd.length)
+      steps.push({label:"Fold in to finish", detail:"Fold "+names(foldEnd)+" through the hot rice \u2014 the residual heat cooks them through and keeps them bright. Scatter scallion.", mins:1, handsoff:false});
+    else
+      steps.push({label:"Finish", detail:"Toss everything through and scatter scallion.", mins:1, handsoff:false});
+    handsOff=25;
+  } else {
+    const style=riceStyleOf(dir, ingIds);
+    const S=RICE_STYLE[style];
+    steps.push({label:"The rice", detail: style==="hainanese"
+        ? "The rice cooks in the chicken's fat and stock, in its own pot."
+        : "Cook plain rice in a separate pot \u2014 or use rice you already have; leftover rice is ideal for a bowl.", mins:0, handsoff:true});
+    prep.push({name:subjName, prep: style==="roast"?"slice thickly": style==="braise"?"cut into pieces":"cut into bite-size pieces", warn:null});
+    if(style==="braise"||style==="donburi"){ if(has("egg")) prep.push({name:"Eggs", prep: style==="braise"?"hard-boil and peel":"beat loosely", warn:null}); }
+    steps.push({label:S.label, detail:S.step, mins:S.mins, handsoff:true});
+    steps.push({label:"Assemble", detail:"Ladle the topping and plenty of its sauce over the hot rice, so the grain soaks it up.", mins:1, handsoff:false});
+    handsOff=S.mins;
+  }
+
+  const prepMins=Math.max(4, 3+prep.length*2);
+  const total=prepMins+handsOff+1;
+
+  const moisture=riceMoisture(ingIds, mode);
+  const texture=riceTexture(ingIds);
+
+  let suggest={yours:[],buy:[]};
+  if(AFF){
+    const base=real.filter(id=>RICE_TOPPING_PROTEINS.has(id));
+    const key=base.length?base:[subjId].filter(Boolean);
+    if(key.length) suggest=potSuggestions(key,"rice_bowl",R,AFF,{have:real});
+  }
+
+  return {
+    mode, modeInfo, subject:subjId, subjectName:subjName,
+    prep, prepMins, steps, total, handsOn:total-handsOff, handsOff,
+    direction:dir, moisture, texture, suggest,
+    separate: separate.map(a=>({name:a.name, alt:a.alt, note:a.note})),
+    warnings:[moisture.warn, texture.note].filter(Boolean),
+    reminds: dishes ? dishes.filter(d=>contextOf(d)==="rice_bowl" &&
+      (d.grocery_items||[]).some(g=>!RICE_BASE_IDS.has(g.id) && real.includes(g.id)))
+      .slice(0,2).map(d=>({dish:d.name})) : []
+  };
+}
+
+/* ============================================================
+   WHICH BOWL? \u2014 surface the fork. When the ingredients suit both, offer both, so the
+   choice between "cook it in" and "ladle it over" is the user's to make.
+   ============================================================ */
+function riceCandidates(ingIds, R, dishes, AFF){
+  const real=[...new Set(ingIds.filter(id=>{
+    const i=R.byId[id]||{};
+    if(i.id==="water") return false;
+    return measureTypeOf(i)!=="assumed" || CHARACTER_SEASONINGS.has(id);
+  }))];
+  const nm=id=>((R.byId[id]||{}).name)||id;
+  const has=id=>ingIds.includes(id);
+  const proteins=real.filter(id=>RICE_TOPPING_PROTEINS.has(id));
+  const out=[];
+  const add=(key,label,mode,subject,note)=>{
+    out.push({key,label,mode,subject,note,
+      contents:real, leftOut:[]});
+  };
+
+  // strong claypot / cook-in signals
+  if(has("lap_cheong")||(proteins.some(p=>/^chicken/.test(p))&&has("dark_soy_sauce")))
+    add("claypot","Claypot chicken rice","in_rice", proteins.find(p=>/^chicken/.test(p))||"lap_cheong","cooked in the rice \u2014 chicken and sausage render down, crust at the bottom");
+  if(has("yam")||has("sweet_potato")||has("dried_shrimp"))
+    add("yam","Yam rice","in_rice", has("yam")?"yam":(has("sweet_potato")?"sweet_potato":"dried_shrimp"),"cooked in the rice \u2014 yam and dried shrimp fried through the grain (Teochew)");
+
+  // over-rice styles
+  if(has("japanese_curry_roux")||has("curry_powder"))
+    add("curry","Curry rice","over_rice", proteins[0]||"potato","rice separate \u2014 a thick curry ladled over");
+  if(has("pork_belly")||has("five_spice")||has("star_anise"))
+    add("braise","Braised pork over rice","over_rice","pork_belly","rice separate \u2014 pork belly braised soft in dark soy, sauce over");
+  if(has("char_siu"))
+    add("roast","Char siu over rice","over_rice","char_siu","rice separate \u2014 sliced roast meat, a glossy sauce, a green");
+  if(has("chicken_whole"))
+    add("hainanese","Hainanese chicken rice","over_rice","chicken_whole","poached chicken, rice cooked in its stock, sauces on the side");
+  if(has("egg")&&(has("dashi")||has("mirin"))){
+    const p=proteins.find(x=>/^chicken/.test(x))||proteins.find(x=>/^beef/.test(x))||proteins[0];
+    add("donburi",(p?nm(p)+" ":"")+"& egg donburi","over_rice", p||"egg","rice separate \u2014 simmered in dashi-soy, bound with a soft egg");
+  }
+
+  // fish leads a rice-cooker "[fish] rice" — the fillet laid on top, steamed as the rice cooks
+  const FISH_IDS=["fish","salmon","cod","snapper","seabass","threadfin","pomfret","mackerel","tuna","sardine","grouper"];
+  const fishes=proteins.filter(p=>FISH_IDS.includes(p));
+  let styledSubjects=new Set(out.map(o=>o.subject));
+  fishes.filter(f=>!styledSubjects.has(f)).slice(0,1).forEach(f=>{
+    add("fish_"+f, nm(f)+" rice","in_rice", f,"cooked in the rice \u2014 the fillet laid on top and steamed through as the grain cooks");
+  });
+
+  // a plain solid meat with no strong style: SURFACE THE FORK — but only offer "in the rice"
+  // if it can actually cook there. A steak or a tough cut can't; it gets the over-rice path.
+  styledSubjects=new Set(out.map(o=>o.subject));
+  const meats=proteins.filter(p=>!styledSubjects.has(p) && !fishes.includes(p) &&
+    !["dried_shrimp","lap_cheong","egg","prawn","squid","clams","oyster"].includes(p));
+  meats.slice(0,1).forEach(p=>{
+    if(riceAlong(p,R).stage!=="no_along")
+      add("in_"+p, nm(p)+" claypot rice","in_rice", p,"cooked in the rice \u2014 marinate it, cook it on the grain, form a crust");
+    add("over_"+p, nm(p)+" over rice","over_rice", p,"rice separate \u2014 cook it in a sauce, or sear it, and serve over");
+  });
+
+  // COOK-ALONG: rice + whatever shares its pot, heat and time (corn, egg, mushroom, veg).
+  // Offered when nothing above already leads an in-rice bowl.
+  if(!out.some(o=>o.mode==="in_rice")){
+    const along=real.filter(id=>!RICE_BASE_IDS.has(id))
+      .map(id=>({id, cat:(R.byId[id]||{}).category, ...riceAlong(id,R)}))
+      .filter(a=>a.stage!=="no_along");
+    const veg=along.filter(a=>a.cat==="vegetables").map(a=>a.id);
+    const hasEgg=has("egg");
+    if(veg.length || hasEgg){
+      let label;
+      if(hasEgg && veg.includes("corn")) label="Corn & egg rice";
+      else if(veg.includes("corn")) label="Corn rice";
+      else if(veg.includes("tomato")) label=hasEgg?"Tomato & egg rice":"Tomato rice";
+      else if(veg.some(v=>["mushroom","enoki"].includes(v))) label="Mushroom rice";
+      else if(hasEgg && !veg.length) label="Egg rice";
+      else if(veg.length) label="Vegetable rice";
+      else label="Rice-cooker rice";
+      add("along", label, "in_rice", hasEgg?"egg":(veg[0]||null),
+        "cooked in the rice \u2014 everything that shares the pot, the heat and the time goes in together");
+    }
+  }
+
+  if(!out.length){
+    add("herb","Herb rice","in_rice",null,"rice cooked with aromatics and herbs, in stock instead of water \u2014 a fragrant pilaf");
   }
   return out;
 }
