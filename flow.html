@@ -613,7 +613,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.5</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.6</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5266,6 +5266,27 @@ function renderSteam(){
     });
   }
 
+  // the seasoning straddles the steam: you MAKE it (and put on what steams with the dish)
+  // before, and the pour-over flourish comes AFTER. Split it so it reads in order.
+  const AFTER_TITLES=new Set(["After steaming","The hot oil","Finish"]);
+  const seasonBefore=(st.sauceSteps||[]).filter(s=>!AFTER_TITLES.has(s.t));
+  const seasonAfter =(st.sauceSteps||[]).filter(s=> AFTER_TITLES.has(s.t));
+  const sauceRows=(arr)=>arr.forEach(s=>{
+    const row=document.createElement("div"); row.className="wok-step";
+    row.innerHTML="<span class=\"ws-t\">\u2022</span>"+
+      "<span class=\"ws-b\"><span class=\"ws-i\">"+s.t+"</span>"+
+        "<span class=\"ws-w\">"+s.d+"</span></span>";
+    box.appendChild(row);
+  });
+
+  // ---- the seasoning: make it, before it steams ----
+  if(seasonBefore.length){
+    const fh=document.createElement("div"); fh.className="rgroup";
+    fh.textContent = dir ? "The seasoning \u2014 "+dir.label.replace(/ \(.*\)/,"") : "The seasoning";
+    box.appendChild(fh);
+    sauceRows(seasonBefore);
+  }
+
   // ---- assemble ----
   const ah=document.createElement("div"); ah.className="rgroup"; ah.textContent="Assemble on the plate";
   box.appendChild(ah);
@@ -5291,17 +5312,12 @@ function renderSteam(){
     box.appendChild(w);
   }
 
-  // ---- the topping / sauce: how to make it and put it on ----
-  const fh=document.createElement("div"); fh.className="rgroup";
-  fh.textContent = dir ? "The seasoning \u2014 "+dir.label.replace(/ \(.*\)/,"") : "The seasoning";
-  box.appendChild(fh);
-  (st.sauceSteps||[]).forEach(s=>{
-    const row=document.createElement("div"); row.className="wok-step";
-    row.innerHTML="<span class=\"ws-t\">\u2022</span>"+
-      "<span class=\"ws-b\"><span class=\"ws-i\">"+s.t+"</span>"+
-        "<span class=\"ws-w\">"+s.d+"</span></span>";
-    box.appendChild(row);
-  });
+  // ---- finish: the pour-over, after it's steamed ----
+  if(seasonAfter.length){
+    const fih=document.createElement("div"); fih.className="rgroup"; fih.textContent="Finish \u2014 after steaming";
+    box.appendChild(fih);
+    sauceRows(seasonAfter);
+  }
 
   // ---- what's not on this plate ----
   if(chosen.leftOut && chosen.leftOut.length){
