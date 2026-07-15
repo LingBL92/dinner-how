@@ -414,6 +414,13 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   border-radius:7px;font-size:12px;line-height:1.5;color:var(--muted)}
 .pot-unc strong{color:var(--gold)}
 .pp-row.crowded .pp-d{color:var(--gold)}
+.alt-pick{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.alt-lab{font-family:"Space Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-right:1px}
+.alt-chip{font:inherit;font-size:11.5px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);
+  background:var(--panel);color:var(--ink);cursor:pointer;transition:.12s;line-height:1.1}
+.alt-chip:hover{border-color:var(--cool);color:var(--cool);background:rgba(50,117,100,.05)}
+.alt-chip.in_rice{border-left:3px solid rgba(31,120,120,.55)}
+.alt-chip.over_rice{border-left:3px solid rgba(168,114,24,.55)}
 .wok-prep{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)}
 .wp-n{font-size:13px;font-weight:600;min-width:110px}
 .wp-p{font-size:12px;color:var(--cool)}
@@ -606,7 +613,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v2.96</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.0</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -4834,22 +4841,20 @@ function renderStirFry(){
   { const tg=ingredientTags(chosen.contents); if(tg) box.appendChild(tg); }
 
   // ---- which stir-fry? ----
-  if(cands.length>1){
-    const pick=document.createElement("div"); pick.className="pot-pick";
-    const pl=document.createElement("div"); pl.className="pp-lab";
-    pl.textContent="Which stir-fry?";
-    pick.appendChild(pl);
-    cands.forEach(c=>{
-      const on=FLOW.wokPick===c.key;
-      const r=document.createElement("div"); r.className="pp-row"+(on?" on":"")+(c.crowded?" crowded":"");
-      const icon = c.key==="veg" ? "veg" : (c.key==="all" ? "soup" : "meat");
-      r.innerHTML="<span class=\"pp-i\">"+(ROLE_ICON[icon]||"")+"</span>"+
-        "<span class=\"pp-t\"><span class=\"pp-n\">"+c.label+"</span>"+
-          "<span class=\"pp-d\">"+c.note+"</span></span><span class=\"dot\"></span>";
-      r.onclick=()=>{ FLOW.wokPick=c.key; renderStirFry(); };
-      pick.appendChild(r);
-    });
-    box.appendChild(pick);
+  // ---- other options (the current one is already the title above) ----
+  {
+    const alts=cands.filter(c=>c.key!==FLOW.wokPick);
+    if(alts.length){
+      const pick=document.createElement("div"); pick.className="alt-pick";
+      const pl=document.createElement("span"); pl.className="alt-lab"; pl.textContent="or"; pick.appendChild(pl);
+      alts.forEach(c=>{
+        const b=document.createElement("button"); b.className="alt-chip"+(c.crowded?" crowded":"");
+        b.textContent=c.label; b.title=c.note;
+        b.onclick=()=>{ FLOW.wokPick=c.key; renderStirFry(); };
+        pick.appendChild(b);
+      });
+      box.appendChild(pick);
+    }
   }
 
   // ---- times: a wok has NO hands-off. That's the point. ----
@@ -5050,22 +5055,20 @@ function renderSteam(){
   { const tg=ingredientTags(chosen.contents); if(tg) box.appendChild(tg); }
 
   // ---- which steam? ----
-  if(cands.length>1){
-    const pick=document.createElement("div"); pick.className="pot-pick";
-    const pl=document.createElement("div"); pl.className="pp-lab";
-    pl.textContent="Which steam?";
-    pick.appendChild(pl);
-    const FICON={whole_fish:"fish",shellfish:"fish",ribs:"meat",poultry:"meat",mince:"meat",custard:"soup",tofu:"veg",dense_veg:"veg"};
-    cands.forEach(c=>{
-      const on=FLOW.steamPick===c.key;
-      const r=document.createElement("div"); r.className="pp-row"+(on?" on":"");
-      r.innerHTML="<span class=\"pp-i\">"+(ROLE_ICON[FICON[c.key]||FICON[c.form]||"veg"]||"")+"</span>"+
-        "<span class=\"pp-t\"><span class=\"pp-n\">"+c.label+"</span>"+
-          "<span class=\"pp-d\">"+c.note+"</span></span><span class=\"dot\"></span>";
-      r.onclick=()=>{ FLOW.steamPick=c.key; renderSteam(); };
-      pick.appendChild(r);
-    });
-    box.appendChild(pick);
+  // ---- other options (the current one is already the title above) ----
+  {
+    const alts=cands.filter(c=>c.key!==FLOW.steamPick);
+    if(alts.length){
+      const pick=document.createElement("div"); pick.className="alt-pick";
+      const pl=document.createElement("span"); pl.className="alt-lab"; pl.textContent="or"; pick.appendChild(pl);
+      alts.forEach(c=>{
+        const b=document.createElement("button"); b.className="alt-chip";
+        b.textContent=c.label; b.title=c.note;
+        b.onclick=()=>{ FLOW.steamPick=c.key; renderSteam(); };
+        pick.appendChild(b);
+      });
+      box.appendChild(pick);
+    }
   }
 
   // ---- times: a steamer is almost ALL hands-off. That's the point. ----
@@ -5280,24 +5283,20 @@ function renderRice(){
   box.appendChild(mb);
 
   // ---- which bowl? (surfaces in-rice vs over-rice) ----
-  if(cands.length>1){
-    const pick=document.createElement("div"); pick.className="pot-pick";
-    const pl=document.createElement("div"); pl.className="pp-lab";
-    pl.textContent="Which bowl?";
-    pick.appendChild(pl);
-    cands.forEach(c=>{
-      const on=FLOW.ricePick===c.key;
-      const icon = c.subject && /fish|prawn|salmon|pomfret|seabass|snapper|cod|squid|clams/.test(c.subject) ? "fish"
-        : c.subject && /chicken|pork|beef|lap_cheong|char_siu|mutton|turkey/.test(c.subject) ? "meat" : "base";
-      const r=document.createElement("div"); r.className="pp-row"+(on?" on":"");
-      r.innerHTML="<span class=\"pp-i\">"+(ROLE_ICON[icon]||"")+"</span>"+
-        "<span class=\"pp-t\"><span class=\"pp-n\">"+c.label+"<b class=\"pp-mode "+c.mode+"\">"+
-          (c.mode==="in_rice"?"in the rice":"over rice")+"</b></span>"+
-          "<span class=\"pp-d\">"+c.note+"</span></span><span class=\"dot\"></span>";
-      r.onclick=()=>{ FLOW.ricePick=c.key; renderRice(); };
-      pick.appendChild(r);
-    });
-    box.appendChild(pick);
+  // ---- other bowls (the current one is already the title above); mode shown by the chip's edge ----
+  {
+    const alts=cands.filter(c=>c.key!==FLOW.ricePick);
+    if(alts.length){
+      const pick=document.createElement("div"); pick.className="alt-pick";
+      const pl=document.createElement("span"); pl.className="alt-lab"; pl.textContent="or"; pick.appendChild(pl);
+      alts.forEach(c=>{
+        const b=document.createElement("button"); b.className="alt-chip "+c.mode;
+        b.textContent=c.label; b.title=(c.mode==="in_rice"?"in the rice \u2014 ":"over rice \u2014 ")+c.note;
+        b.onclick=()=>{ FLOW.ricePick=c.key; renderRice(); };
+        pick.appendChild(b);
+      });
+      box.appendChild(pick);
+    }
   }
 
   // ---- times: a rice bowl is mostly hands-off (the pot, or the braise, does the work) ----
