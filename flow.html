@@ -308,6 +308,28 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .ing-tags{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 12px}
 .ing-tag{font-family:"Space Mono",monospace;font-size:10.5px;padding:3px 9px;border-radius:999px;
   background:rgba(50,117,100,.10);color:var(--cool);border:1px solid rgba(50,117,100,.30)}
+/* numbered section headers + the mobile step timeline */
+.step-head{display:flex;align-items:center;gap:8px}
+.step-n{width:19px;height:19px;border-radius:50%;background:var(--cool);color:#fff;flex:none;
+  font-family:"Space Mono",monospace;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.steptl{display:none}
+@media(max-width:760px){
+  .steptl{display:flex;align-items:flex-start;overflow-x:auto;padding:10px 2px 9px;margin:0 0 6px;
+    position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--line);
+    -webkit-overflow-scrolling:touch}
+}
+.steptl-b{flex:1 0 auto;min-width:58px;display:flex;flex-direction:column;align-items:center;gap:4px;
+  background:none;border:0;cursor:pointer;font:inherit;padding:0;position:relative}
+.steptl-b::before{content:"";position:absolute;top:12px;right:50%;width:100%;height:2px;background:var(--line);z-index:0}
+.steptl-b:first-child::before{display:none}
+.steptl-b.done::before,.steptl-b.on::before{background:var(--cool)}
+.steptl-n{position:relative;z-index:1;width:24px;height:24px;border-radius:50%;border:2px solid var(--line);
+  color:var(--muted);background:var(--paper);display:flex;align-items:center;justify-content:center;
+  font-family:"Space Mono",monospace;font-size:11px;font-weight:700;transition:.15s}
+.steptl-b.done .steptl-n{border-color:var(--cool);color:var(--cool)}
+.steptl-b.on .steptl-n{border-color:var(--cool);background:#1d4d40;color:#fff;font-weight:800}
+.steptl-l{font-family:"Space Mono",monospace;font-size:8.5px;letter-spacing:.02em;color:var(--muted);white-space:nowrap}
+.steptl-b.on .steptl-l,.steptl-b.done .steptl-l{color:var(--cool)}
 .op-vessel{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--muted)}
 .ov-ico{width:16px;height:16px;color:var(--cool);display:flex;align-items:center}
 .ov-ico svg{width:16px;height:16px}
@@ -613,7 +635,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.6</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.8</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5184,6 +5206,7 @@ function openWokRadial(){
 /* ===== STEAM — the opposite of the wok. Almost all hands-off: assemble, set a timer,
    walk away, then a 30-second finish. The subject's FORM decides time and vigour, and
    over-steaming is the only way to ruin it. Mirrors the stir-fry render. ===== */
+let steamScrollObs=null;
 /* green tags for the ingredients used in the shown dish (stir-fry / steam / rice bowl) */
 function ingredientTags(ids){
   const seen=new Set(); const list=[];
@@ -5254,18 +5277,6 @@ function renderSteam(){
     "<span class=\"op-free wok\">"+st.handsOn+" min hands-on \u2014 prep and the finish</span></div>";
   box.appendChild(hero);
 
-  // ---- prep ----
-  if(st.prep.length){
-    const ph=document.createElement("div"); ph.className="rgroup"; ph.textContent="Prep first";
-    box.appendChild(ph);
-    st.prep.forEach(p=>{
-      const row=document.createElement("div"); row.className="wok-prep";
-      row.innerHTML="<span class=\"wp-n\">"+p.name+"</span><span class=\"wp-p\">"+p.prep+"</span>"+
-        (p.warn?"<span class=\"wp-w\">"+p.warn+"</span>":"");
-      box.appendChild(row);
-    });
-  }
-
   // the seasoning straddles the steam: you MAKE it (and put on what steams with the dish)
   // before, and the pour-over flourish comes AFTER. Split it so it reads in order.
   const AFTER_TITLES=new Set(["After steaming","The hot oil","Finish"]);
@@ -5279,9 +5290,62 @@ function renderSteam(){
     box.appendChild(row);
   });
 
+  // ---- mobile step timeline: tap a number to jump to that section. green outline =
+  //      a step this dish actually has; solid green = where you are now ----
+  const STEAM_SECS=[
+    {id:"steam-s-prep",   label:"Prep",   present: st.prep.length>0},
+    {id:"steam-s-season", label:"Season", present: seasonBefore.length>0},
+    {id:"steam-s-steam",  label:"Steam",  present: true},
+    {id:"steam-s-finish", label:"Finish", present: seasonAfter.length>0}
+  ];
+  const firstPresent=STEAM_SECS.findIndex(s=>s.present);
+  const tl=document.createElement("div"); tl.className="steptl";
+  STEAM_SECS.forEach((sec,i)=>{
+    const b=document.createElement("button");
+    b.className="steptl-b"+(sec.present?" done":"")+(i===firstPresent?" on":"");
+    b.setAttribute("data-id",sec.id);
+    b.innerHTML="<span class=\"steptl-n\">"+(i+1)+"</span><span class=\"steptl-l\">"+sec.label+"</span>";
+    if(sec.present) b.onclick=()=>{
+      const tgt=el(sec.id);
+      if(tgt&&tgt.scrollIntoView) tgt.scrollIntoView({behavior:"smooth",block:"start"});
+      tl.querySelectorAll(".steptl-b").forEach(x=>x.classList.remove("on"));
+      b.classList.add("on");
+    };
+    tl.appendChild(b);
+  });
+  // sit the sticky timeline just below the sticky minimap so the two don't overlap
+  if(mobileView()){ const mm=el("minimap"); if(mm) tl.style.top=Math.round(mm.getBoundingClientRect().height)+"px"; }
+  box.appendChild(tl);
+  // keep the active bubble in sync with scroll position (sections exist by next frame)
+  if(window.__steamTLObs){ window.__steamTLObs.disconnect(); window.__steamTLObs=null; }
+  if("IntersectionObserver" in window && mobileView()){
+    requestAnimationFrame(()=>{
+      const obs=new IntersectionObserver(ents=>{
+        ents.forEach(e=>{ if(e.isIntersecting){
+          const bb=tl.querySelector('.steptl-b[data-id="'+e.target.id+'"]');
+          if(bb){ tl.querySelectorAll(".steptl-b").forEach(x=>x.classList.remove("on")); bb.classList.add("on"); }
+        }});
+      },{rootMargin:"-15% 0px -75% 0px",threshold:0});
+      STEAM_SECS.forEach(s=>{ if(s.present){ const elx=el(s.id); if(elx) obs.observe(elx); } });
+      window.__steamTLObs=obs;
+    });
+  }
+
+  // ---- prep ----
+  if(st.prep.length){
+    const ph=document.createElement("div"); ph.className="rgroup"; ph.id="steam-s-prep"; ph.textContent="Prep first";
+    box.appendChild(ph);
+    st.prep.forEach(p=>{
+      const row=document.createElement("div"); row.className="wok-prep";
+      row.innerHTML="<span class=\"wp-n\">"+p.name+"</span><span class=\"wp-p\">"+p.prep+"</span>"+
+        (p.warn?"<span class=\"wp-w\">"+p.warn+"</span>":"");
+      box.appendChild(row);
+    });
+  }
+
   // ---- the seasoning: make it, before it steams ----
   if(seasonBefore.length){
-    const fh=document.createElement("div"); fh.className="rgroup";
+    const fh=document.createElement("div"); fh.className="rgroup"; fh.id="steam-s-season";
     fh.textContent = dir ? "The seasoning \u2014 "+dir.label.replace(/ \(.*\)/,"") : "The seasoning";
     box.appendChild(fh);
     sauceRows(seasonBefore);
@@ -5296,7 +5360,7 @@ function renderSteam(){
   box.appendChild(arow);
 
   // ---- the steam itself: vigour + time + the over-steam warning ----
-  const sh=document.createElement("div"); sh.className="rgroup"; sh.textContent="Then steam \u2014 and walk away";
+  const sh=document.createElement("div"); sh.className="rgroup"; sh.id="steam-s-steam"; sh.textContent="Then steam \u2014 and walk away";
   box.appendChild(sh);
   const vig = st.steam.vigour==="gentle" ? "GENTLE" : "rolling";
   const srow=document.createElement("div"); srow.className="wok-step steam-step"+(st.steam.vigour==="gentle"?" gentle":"");
@@ -5314,7 +5378,7 @@ function renderSteam(){
 
   // ---- finish: the pour-over, after it's steamed ----
   if(seasonAfter.length){
-    const fih=document.createElement("div"); fih.className="rgroup"; fih.textContent="Finish \u2014 after steaming";
+    const fih=document.createElement("div"); fih.className="rgroup"; fih.id="steam-s-finish"; fih.textContent="Finish \u2014 after steaming";
     box.appendChild(fih);
     sauceRows(seasonAfter);
   }
