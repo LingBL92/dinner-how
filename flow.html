@@ -312,13 +312,12 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .step-head{display:flex;align-items:center;gap:8px}
 .step-n{width:19px;height:19px;border-radius:50%;background:var(--cool);color:#fff;flex:none;
   font-family:"Space Mono",monospace;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
-.steptl{display:none}
-@media(max-width:760px){
-  .steptl{display:flex;align-items:flex-start;overflow-x:auto;padding:10px 2px 9px;margin:0 0 6px;
-    position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--line);
-    -webkit-overflow-scrolling:touch}
-}
-.steptl-b{flex:1 0 auto;min-width:58px;display:flex;flex-direction:column;align-items:center;gap:4px;
+.steptl{display:flex;justify-content:center;align-items:flex-start;padding:12px 2px 4px;margin:2px 0 10px}
+@media(max-width:760px){ .steptl{overflow-x:auto;-webkit-overflow-scrolling:touch} }
+.stepslider{position:relative;overflow:hidden;transition:height .28s ease}
+.steptrack{display:flex;align-items:flex-start;transition:transform .3s ease}
+.stepcard{min-width:100%;box-sizing:border-box;padding:0 1px}
+.steptl-b{flex:0 0 auto;min-width:66px;display:flex;flex-direction:column;align-items:center;gap:4px;
   background:none;border:0;cursor:pointer;font:inherit;padding:0;position:relative}
 .steptl-b::before{content:"";position:absolute;top:12px;right:50%;width:100%;height:2px;background:var(--line);z-index:0}
 .steptl-b:first-child::before{display:none}
@@ -635,7 +634,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.8</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.9</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5278,110 +5277,85 @@ function renderSteam(){
   box.appendChild(hero);
 
   // the seasoning straddles the steam: you MAKE it (and put on what steams with the dish)
-  // before, and the pour-over flourish comes AFTER. Split it so it reads in order.
+  // before, and the pour-over flourish comes AFTER. Split it into before/after.
   const AFTER_TITLES=new Set(["After steaming","The hot oil","Finish"]);
   const seasonBefore=(st.sauceSteps||[]).filter(s=>!AFTER_TITLES.has(s.t));
   const seasonAfter =(st.sauceSteps||[]).filter(s=> AFTER_TITLES.has(s.t));
-  const sauceRows=(arr)=>arr.forEach(s=>{
+  const sauceRows=(arr,tgt)=>arr.forEach(s=>{
     const row=document.createElement("div"); row.className="wok-step";
     row.innerHTML="<span class=\"ws-t\">\u2022</span>"+
       "<span class=\"ws-b\"><span class=\"ws-i\">"+s.t+"</span>"+
         "<span class=\"ws-w\">"+s.d+"</span></span>";
-    box.appendChild(row);
+    tgt.appendChild(row);
   });
+  const rgroup=(tgt,txt)=>{ const g=document.createElement("div"); g.className="rgroup"; g.textContent=txt; tgt.appendChild(g); };
 
-  // ---- mobile step timeline: tap a number to jump to that section. green outline =
-  //      a step this dish actually has; solid green = where you are now ----
-  const STEAM_SECS=[
-    {id:"steam-s-prep",   label:"Prep",   present: st.prep.length>0},
-    {id:"steam-s-season", label:"Season", present: seasonBefore.length>0},
-    {id:"steam-s-steam",  label:"Steam",  present: true},
-    {id:"steam-s-finish", label:"Finish", present: seasonAfter.length>0}
-  ];
-  const firstPresent=STEAM_SECS.findIndex(s=>s.present);
-  const tl=document.createElement("div"); tl.className="steptl";
-  STEAM_SECS.forEach((sec,i)=>{
-    const b=document.createElement("button");
-    b.className="steptl-b"+(sec.present?" done":"")+(i===firstPresent?" on":"");
-    b.setAttribute("data-id",sec.id);
-    b.innerHTML="<span class=\"steptl-n\">"+(i+1)+"</span><span class=\"steptl-l\">"+sec.label+"</span>";
-    if(sec.present) b.onclick=()=>{
-      const tgt=el(sec.id);
-      if(tgt&&tgt.scrollIntoView) tgt.scrollIntoView({behavior:"smooth",block:"start"});
-      tl.querySelectorAll(".steptl-b").forEach(x=>x.classList.remove("on"));
-      b.classList.add("on");
-    };
-    tl.appendChild(b);
-  });
-  // sit the sticky timeline just below the sticky minimap so the two don't overlap
-  if(mobileView()){ const mm=el("minimap"); if(mm) tl.style.top=Math.round(mm.getBoundingClientRect().height)+"px"; }
-  box.appendChild(tl);
-  // keep the active bubble in sync with scroll position (sections exist by next frame)
-  if(window.__steamTLObs){ window.__steamTLObs.disconnect(); window.__steamTLObs=null; }
-  if("IntersectionObserver" in window && mobileView()){
-    requestAnimationFrame(()=>{
-      const obs=new IntersectionObserver(ents=>{
-        ents.forEach(e=>{ if(e.isIntersecting){
-          const bb=tl.querySelector('.steptl-b[data-id="'+e.target.id+'"]');
-          if(bb){ tl.querySelectorAll(".steptl-b").forEach(x=>x.classList.remove("on")); bb.classList.add("on"); }
-        }});
-      },{rootMargin:"-15% 0px -75% 0px",threshold:0});
-      STEAM_SECS.forEach(s=>{ if(s.present){ const elx=el(s.id); if(elx) obs.observe(elx); } });
-      window.__steamTLObs=obs;
-    });
-  }
-
-  // ---- prep ----
-  if(st.prep.length){
-    const ph=document.createElement("div"); ph.className="rgroup"; ph.id="steam-s-prep"; ph.textContent="Prep first";
-    box.appendChild(ph);
+  // ---- the four steps, each built into its own card (an a,b,c… slider) ----
+  const CARDS=[];
+  if(st.prep.length) CARDS.push({label:"Prep", build:(c)=>{
+    rgroup(c,"Prep first");
     st.prep.forEach(p=>{
       const row=document.createElement("div"); row.className="wok-prep";
       row.innerHTML="<span class=\"wp-n\">"+p.name+"</span><span class=\"wp-p\">"+p.prep+"</span>"+
         (p.warn?"<span class=\"wp-w\">"+p.warn+"</span>":"");
-      box.appendChild(row);
+      c.appendChild(row);
     });
-  }
+  }});
+  if(seasonBefore.length) CARDS.push({label:"Season", build:(c)=>{
+    rgroup(c, dir ? "The seasoning \u2014 "+dir.label.replace(/ \(.*\)/,"") : "The seasoning");
+    sauceRows(seasonBefore,c);
+  }});
+  CARDS.push({label:"Steam", build:(c)=>{
+    rgroup(c,"Assemble on the plate");
+    const arow=document.createElement("div"); arow.className="wok-step";
+    arow.innerHTML="<span class=\"ws-t\">plate</span>"+
+      "<span class=\"ws-b\"><span class=\"ws-i\">"+st.assemble+"</span></span>";
+    c.appendChild(arow);
+    rgroup(c,"Then steam \u2014 and walk away");
+    const vig = st.steam.vigour==="gentle" ? "GENTLE" : "rolling";
+    const srow=document.createElement("div"); srow.className="wok-step steam-step"+(st.steam.vigour==="gentle"?" gentle":"");
+    srow.innerHTML=
+      "<span class=\"ws-t\">"+st.steam.mins+"m</span>"+
+      "<span class=\"ws-b\"><span class=\"ws-i\">"+vig+" steam</span>"+
+        "<span class=\"ws-w\">"+st.steam.why+"</span></span>"+
+      "<span class=\"ws-s\">hands-off</span>";
+    c.appendChild(srow);
+    if(st.steam.warn){ const w=document.createElement("div"); w.className="steam-warn"; w.textContent="\u26a0 "+st.steam.warn; c.appendChild(w); }
+  }});
+  if(seasonAfter.length) CARDS.push({label:"Finish", build:(c)=>{
+    rgroup(c,"Finish \u2014 after steaming");
+    sauceRows(seasonAfter,c);
+  }});
 
-  // ---- the seasoning: make it, before it steams ----
-  if(seasonBefore.length){
-    const fh=document.createElement("div"); fh.className="rgroup"; fh.id="steam-s-season";
-    fh.textContent = dir ? "The seasoning \u2014 "+dir.label.replace(/ \(.*\)/,"") : "The seasoning";
-    box.appendChild(fh);
-    sauceRows(seasonBefore);
-  }
+  // clean up any scroll observer left over from the previous (pre-slider) design
+  if(window.__steamTLObs){ window.__steamTLObs.disconnect(); window.__steamTLObs=null; }
 
-  // ---- assemble ----
-  const ah=document.createElement("div"); ah.className="rgroup"; ah.textContent="Assemble on the plate";
-  box.appendChild(ah);
-  const arow=document.createElement("div"); arow.className="wok-step";
-  arow.innerHTML="<span class=\"ws-t\">plate</span>"+
-    "<span class=\"ws-b\"><span class=\"ws-i\">"+st.assemble+"</span></span>";
-  box.appendChild(arow);
-
-  // ---- the steam itself: vigour + time + the over-steam warning ----
-  const sh=document.createElement("div"); sh.className="rgroup"; sh.id="steam-s-steam"; sh.textContent="Then steam \u2014 and walk away";
-  box.appendChild(sh);
-  const vig = st.steam.vigour==="gentle" ? "GENTLE" : "rolling";
-  const srow=document.createElement("div"); srow.className="wok-step steam-step"+(st.steam.vigour==="gentle"?" gentle":"");
-  srow.innerHTML=
-    "<span class=\"ws-t\">"+st.steam.mins+"m</span>"+
-    "<span class=\"ws-b\"><span class=\"ws-i\">"+vig+" steam</span>"+
-      "<span class=\"ws-w\">"+st.steam.why+"</span></span>"+
-    "<span class=\"ws-s\">hands-off</span>";
-  box.appendChild(srow);
-  if(st.steam.warn){
-    const w=document.createElement("div"); w.className="steam-warn";
-    w.textContent="\u26a0 "+st.steam.warn;
-    box.appendChild(w);
+  // ---- the a,b,c timeline (below the hero line) + the card slider it drives ----
+  const LETTERS="abcdefgh";
+  const tl=document.createElement("div"); tl.className="steptl";
+  const slider=document.createElement("div"); slider.className="stepslider";
+  const track=document.createElement("div"); track.className="steptrack";
+  slider.appendChild(track);
+  const cardEls=[];
+  CARDS.forEach((cd,i)=>{
+    const card=document.createElement("div"); card.className="stepcard"; cd.build(card);
+    track.appendChild(card); cardEls.push(card);
+    const b=document.createElement("button"); b.className="steptl-b done"+(i===0?" on":"");
+    b.innerHTML="<span class=\"steptl-n\">"+LETTERS[i]+"</span><span class=\"steptl-l\">"+cd.label+"</span>";
+    b.onclick=()=>show(i);
+    tl.appendChild(b);
+  });
+  box.appendChild(tl);
+  box.appendChild(slider);
+  const bubbles=[...tl.querySelectorAll(".steptl-b")];
+  function show(i){
+    track.style.transform="translateX(-"+(i*100)+"%)";
+    bubbles.forEach((x,j)=>x.classList.toggle("on", j===i));
+    const h=cardEls[i]?cardEls[i].offsetHeight:0; if(h) slider.style.height=h+"px";
   }
-
-  // ---- finish: the pour-over, after it's steamed ----
-  if(seasonAfter.length){
-    const fih=document.createElement("div"); fih.className="rgroup"; fih.id="steam-s-finish"; fih.textContent="Finish \u2014 after steaming";
-    box.appendChild(fih);
-    sauceRows(seasonAfter);
-  }
+  // fix the slider to the first card's height (synchronously = no flash on load)
+  { const h0=cardEls[0]?cardEls[0].offsetHeight:0; if(h0) slider.style.height=h0+"px"; }
+  requestAnimationFrame(()=>{ const h=cardEls[0]?cardEls[0].offsetHeight:0; if(h) slider.style.height=h+"px"; });
 
   // ---- what's not on this plate ----
   if(chosen.leftOut && chosen.leftOut.length){
