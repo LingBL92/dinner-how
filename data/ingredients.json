@@ -3989,6 +3989,155 @@
    "prep_verb": "slice thickly",
    "parent": "proteins",
    "category": "proteins"
+  },
+  {
+   "id": "coconut",
+   "name": "Coconut",
+   "aliases": [
+    "coconut",
+    "grated coconut",
+    "fresh coconut",
+    "desiccated coconut",
+    "shredded coconut"
+   ],
+   "provides": [
+    "fat",
+    "aromatic"
+   ],
+   "aisle": "Pastes & flavour bases",
+   "prep_verb": "grate",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "water_chestnut",
+   "name": "Water Chestnut",
+   "aliases": [
+    "water chestnut",
+    "water chestnuts",
+    "matai"
+   ],
+   "provides": [
+    "texture",
+    "sweet"
+   ],
+   "aisle": "Fruit & vegetables",
+   "prep_verb": "peel and finely dice",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "scallops",
+   "name": "Scallops",
+   "aliases": [
+    "scallop",
+    "scallops"
+   ],
+   "provides": [
+    "protein",
+    "umami"
+   ],
+   "aisle": "Fish & seafood",
+   "prep_verb": "rinse and pat dry",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "mussels",
+   "name": "Mussels",
+   "aliases": [
+    "mussel",
+    "mussels"
+   ],
+   "provides": [
+    "protein",
+    "umami"
+   ],
+   "aisle": "Fish & seafood",
+   "prep_verb": "scrub and debeard",
+   "parent": "proteins",
+   "category": "proteins"
+  },
+  {
+   "id": "white_wine",
+   "name": "White Wine",
+   "aliases": [
+    "white wine",
+    "dry white wine"
+   ],
+   "provides": [
+    "acid",
+    "aromatic"
+   ],
+   "aisle": "Pastes & flavour bases",
+   "prep_verb": "measure",
+   "parent": "condiments",
+   "category": "condiments"
+  },
+  {
+   "id": "mint",
+   "name": "Mint",
+   "aliases": [
+    "mint",
+    "mint leaves",
+    "pudina"
+   ],
+   "provides": [
+    "aromatic",
+    "fresh"
+   ],
+   "aisle": "Herbs & spices",
+   "prep_verb": "pick the leaves",
+   "parent": "seasonings",
+   "category": "seasonings"
+  },
+  {
+   "id": "chestnut",
+   "name": "Chestnut",
+   "aliases": [
+    "chestnut",
+    "chestnuts",
+    "kuri"
+   ],
+   "provides": [
+    "starch",
+    "sweet"
+   ],
+   "aisle": "Fruit & vegetables",
+   "prep_verb": "peel",
+   "parent": "vegetables",
+   "category": "vegetables"
+  },
+  {
+   "id": "banana_leaf",
+   "name": "Banana Leaf",
+   "aliases": [
+    "banana leaf",
+    "banana leaves"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Fruit & vegetables",
+   "prep_verb": "soften over a flame or in hot water until pliable",
+   "parent": "wrappers",
+   "category": "wrappers"
+  },
+  {
+   "id": "lotus_leaf",
+   "name": "Lotus Leaf",
+   "aliases": [
+    "lotus leaf",
+    "lotus leaves",
+    "dried lotus leaf"
+   ],
+   "provides": [
+    "aromatic"
+   ],
+   "aisle": "Fruit & vegetables",
+   "prep_verb": "soak until pliable, then trim the stem",
+   "parent": "wrappers",
+   "category": "wrappers"
   }
  ]
 }
