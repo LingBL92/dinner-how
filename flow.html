@@ -305,6 +305,9 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .op-title{margin-bottom:12px}
 .op-name{font-size:20px;font-weight:700;line-height:1.2;letter-spacing:-.01em}
 .op-sub{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.4}
+.ing-tags{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 12px}
+.ing-tag{font-family:"Space Mono",monospace;font-size:10.5px;padding:3px 9px;border-radius:999px;
+  background:rgba(50,117,100,.10);color:var(--cool);border:1px solid rgba(50,117,100,.30)}
 .op-vessel{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--muted)}
 .ov-ico{width:16px;height:16px;color:var(--cool);display:flex;align-items:center}
 .ov-ico svg{width:16px;height:16px}
@@ -4828,6 +4831,7 @@ function renderStirFry(){
   box.appendChild(t);
   const sb=el("wok-sauce-btn");
   if(sb) sb.onclick=(e)=>{ e.stopPropagation(); openWokRadial(); };
+  { const tg=ingredientTags(chosen.contents); if(tg) box.appendChild(tg); }
 
   // ---- which stir-fry? ----
   if(cands.length>1){
@@ -5000,6 +5004,19 @@ function openWokRadial(){
 /* ===== STEAM — the opposite of the wok. Almost all hands-off: assemble, set a timer,
    walk away, then a 30-second finish. The subject's FORM decides time and vigour, and
    over-steaming is the only way to ruin it. Mirrors the stir-fry render. ===== */
+/* green tags for the ingredients used in the shown dish (stir-fry / steam / rice bowl) */
+function ingredientTags(ids){
+  const seen=new Set(); const list=[];
+  (ids||[]).forEach(id=>{ if(id==="water"||seen.has(id))return; seen.add(id); list.push(id); });
+  if(!list.length) return null;
+  const wrap=document.createElement("div"); wrap.className="ing-tags";
+  list.forEach(id=>{
+    const s=document.createElement("span"); s.className="ing-tag";
+    s.textContent=((REF.byId[id]||{}).name)||id;
+    wrap.appendChild(s);
+  });
+  return wrap;
+}
 function renderSteam(){
   const box=el("recipes"); if(!box)return; box.innerHTML="";
   const ids=[...FLOW.active].filter(id=>{
@@ -5030,6 +5047,7 @@ function renderSteam(){
   box.appendChild(t);
   const sb=el("steam-top-btn");
   if(sb) sb.onclick=(e)=>{ e.stopPropagation(); openSteamRadial(); };
+  { const tg=ingredientTags(chosen.contents); if(tg) box.appendChild(tg); }
 
   // ---- which steam? ----
   if(cands.length>1){
@@ -5254,6 +5272,7 @@ function renderRice(){
   box.appendChild(t);
   const sb=el("rice-style-btn");
   if(sb) sb.onclick=(e)=>{ e.stopPropagation(); openRiceRadial(); };
+  { const tg=ingredientTags(chosen.contents); if(tg) box.appendChild(tg); }
 
   // ---- THE FORK: a mode badge, the defining decision ----
   const mb=document.createElement("div"); mb.className="rice-mode "+rb.mode;
