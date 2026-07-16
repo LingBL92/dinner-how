@@ -634,7 +634,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.14</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.15</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2702,8 +2702,12 @@ const WOK_CLASS=[
 
 /* How does this vegetable behave in a wok? Derived from structure \u2014 which is exactly
    what makes okra and kangkong different. */
+// a whole fish (pomfret, salmon, snapper…) is bought and cooked whole — you steam it or
+// pan-fry it whole. A wok would break a delicate fish apart, so it never goes in one.
+function isWholeFish(id, R){ return ((R.byId[id]||{}).provides||[]).includes("fish_family"); }
 function wokBehaviour(id, R){
   const i=R.byId[id]||{};
+  if(isWholeFish(id,R)) return {id, name:i.name||id, cls:null, wholeFish:true};
   const p=new Set(i.provides||[]);
   const g=i.group;
 
@@ -2911,9 +2915,10 @@ function wokCandidates(ingIds, R, dishes, AFF){
     return measureTypeOf(i)!=="assumed" || CHARACTER_SEASONINGS.has(id);
   }))];
   const proteins=real.filter(id=>(R.byId[id]||{}).category==="proteins" &&
-    !["dried_shrimp","salted_fish"].includes(id));
+    !["dried_shrimp","salted_fish"].includes(id) && !isWholeFish(id,R));
+  const wholeFish=real.filter(id=>isWholeFish(id,R));
   const veg=real.filter(id=>(R.byId[id]||{}).category==="vegetables");
-  const rest=real.filter(id=>!proteins.includes(id) && !veg.includes(id));
+  const rest=real.filter(id=>!proteins.includes(id) && !veg.includes(id) && !isWholeFish(id,R));
 
   const speciesOf=(id)=>{
     const anc=R.anc[id]||new Set();
@@ -2994,7 +2999,7 @@ function wokCandidates(ingIds, R, dishes, AFF){
       key:"all",
       label:"Everything",
       lead:proteins.slice(0,1),
-      contents:real,
+      contents:real.filter(id=>!isWholeFish(id,R)),
       note:"a wok this full will steam, not fry \u2014 do it in two batches or drop something",
       leftOut:[],
       alternatives:[],
@@ -5078,7 +5083,13 @@ function renderStirFry(){
   const cands=wokCandidates(ids, REF, DISHES, AFF);
   if(!FLOW.wokPick || !cands.some(c=>c.key===FLOW.wokPick)) FLOW.wokPick=cands[0]?cands[0].key:null;
   const chosen=cands.find(c=>c.key===FLOW.wokPick)||cands[0];
-  if(!chosen){ box.innerHTML="<div class=\"hint\">Nothing here suits a wok.</div>"; return; }
+  if(!chosen){
+    const wf=ids.filter(id=>((REF.byId[id]||{}).provides||[]).includes("fish_family"));
+    box.innerHTML = wf.length
+      ? "<div class=\"hint\">"+wf.map(nm).join(", ")+(wf.length>1?" are whole fish":" is a whole fish")+" \u2014 best steamed or pan-fried whole, not stir-fried. Try the Steam option.</div>"
+      : "<div class=\"hint\">Nothing here suits a wok.</div>";
+    return;
+  }
 
   const dir = FLOW.wokDir ? STIRFRY_DIRS.find(d=>d.key===FLOW.wokDir) : null;
   const sf  = buildStirFry(chosen.contents, REF, DISHES, AFF, {direction:dir});
@@ -5165,6 +5176,19 @@ function renderStirFry(){
     });
     const w=document.createElement("span"); w.className="po-w";
     w.textContent="a wok holds a protein and a vegetable or two \u2014 more and it steams";
+    o.appendChild(w);
+    box.appendChild(o);
+  }
+
+  // a whole fish can't go in a wok — say so, and point to steaming
+  const wokFish = ids.filter(id=>((REF.byId[id]||{}).provides||[]).includes("fish_family"));
+  if(wokFish.length){
+    const o=document.createElement("div"); o.className="pot-out";
+    const lab=document.createElement("span"); lab.className="po-l"; lab.textContent="better steamed";
+    o.appendChild(lab);
+    wokFish.forEach(id=>{ const c=document.createElement("span"); c.className="po-c"; c.textContent=nm(id); o.appendChild(c); });
+    const w=document.createElement("span"); w.className="po-w";
+    w.textContent="a whole fish is best steamed or pan-fried whole \u2014 a wok would break it apart";
     o.appendChild(w);
     box.appendChild(o);
   }

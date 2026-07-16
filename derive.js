@@ -2006,8 +2006,12 @@ const WOK_CLASS=[
 
 /* How does this vegetable behave in a wok? Derived from structure \u2014 which is exactly
    what makes okra and kangkong different. */
+// a whole fish (pomfret, salmon, snapper…) is bought and cooked whole — you steam it or
+// pan-fry it whole. A wok would break a delicate fish apart, so it never goes in one.
+function isWholeFish(id, R){ return ((R.byId[id]||{}).provides||[]).includes("fish_family"); }
 function wokBehaviour(id, R){
   const i=R.byId[id]||{};
+  if(isWholeFish(id,R)) return {id, name:i.name||id, cls:null, wholeFish:true};
   const p=new Set(i.provides||[]);
   const g=i.group;
 
@@ -2215,9 +2219,10 @@ function wokCandidates(ingIds, R, dishes, AFF){
     return measureTypeOf(i)!=="assumed" || CHARACTER_SEASONINGS.has(id);
   }))];
   const proteins=real.filter(id=>(R.byId[id]||{}).category==="proteins" &&
-    !["dried_shrimp","salted_fish"].includes(id));
+    !["dried_shrimp","salted_fish"].includes(id) && !isWholeFish(id,R));
+  const wholeFish=real.filter(id=>isWholeFish(id,R));
   const veg=real.filter(id=>(R.byId[id]||{}).category==="vegetables");
-  const rest=real.filter(id=>!proteins.includes(id) && !veg.includes(id));
+  const rest=real.filter(id=>!proteins.includes(id) && !veg.includes(id) && !isWholeFish(id,R));
 
   const speciesOf=(id)=>{
     const anc=R.anc[id]||new Set();
@@ -2298,7 +2303,7 @@ function wokCandidates(ingIds, R, dishes, AFF){
       key:"all",
       label:"Everything",
       lead:proteins.slice(0,1),
-      contents:real,
+      contents:real.filter(id=>!isWholeFish(id,R)),
       note:"a wok this full will steam, not fry \u2014 do it in two batches or drop something",
       leftOut:[],
       alternatives:[],
