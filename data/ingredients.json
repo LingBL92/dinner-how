@@ -1673,7 +1673,8 @@
    "prep_verb": "peel and slice",
    "parent": "vegetables",
    "category": "vegetables",
-   "group": "root"
+   "group": "root",
+   "browse_group": "fungi_roots"
   },
   {
    "id": "mushroom",
@@ -1693,7 +1694,8 @@
    "prep_verb": "slice",
    "parent": "vegetables",
    "category": "vegetables",
-   "group": "fungi"
+   "group": "fungi",
+   "browse_group": "fungi_roots"
   },
   {
    "id": "cabbage",
@@ -2121,7 +2123,8 @@
    "prep_verb": "peel and slice",
    "parent": "vegetables",
    "category": "vegetables",
-   "group": "root"
+   "group": "root",
+   "browse_group": "fungi_roots"
   },
   {
    "id": "pumpkin",
@@ -2140,7 +2143,28 @@
    "prep_verb": "peel and cube",
    "parent": "vegetables",
    "category": "vegetables",
-   "group": "root"
+   "group": "root",
+   "browse_group": "fungi_roots"
+  },
+  {
+   "id": "lotus_root",
+   "name": "Lotus root",
+   "aliases": [
+    "lotus root",
+    "renkon"
+   ],
+   "provides": [
+    "holds_shape",
+    "root_veg",
+    "starchy",
+    "water"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "peel and slice",
+   "parent": "vegetables",
+   "category": "vegetables",
+   "group": "root",
+   "browse_group": "fungi_roots"
   },
   {
    "id": "enoki",
@@ -2153,7 +2177,8 @@
    "prep_verb": "trim",
    "parent": "vegetables",
    "category": "vegetables",
-   "group": "fungi"
+   "group": "fungi",
+   "browse_group": "fungi_roots"
   },
   {
    "id": "napa_cabbage",
