@@ -634,7 +634,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.9</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.10</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -1421,7 +1421,7 @@ function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}
    Derived from category + a small explicit list; an ingredient may carry
    its own `measure_type` to override. */
 const MT_ASSUMED=new Set(["garlic","ginger","chilli","lemongrass","galangal","scallion","curry_leaves",
-  "pandan","dried_orange_peel","dang_gui","dried_shrimp","belacan"]);
+  "pandan","dried_orange_peel","dang_gui","dried_shrimp","belacan","cornstarch"]);
 const MT_COUNT=new Set(["egg","century_egg","onion","potato","sweet_potato","tomato","carrot","cucumber",
   "bell_pepper","eggplant","zucchini","corn","tofu","lemon","lime","apple","banana","pineapple","okra","daikon",
   "pumpkin","yam"]);   // whole things you buy and use by the piece
@@ -4990,6 +4990,37 @@ function schedule(list){
 }
 
 
+// Shared step slider: a lettered (a,b,c…) tab row below the hero line that swaps cards.
+// Each card = {label, build(cardEl)}. Pass only the steps that exist for this dish; the
+// first present step is lettered 'a'. Active bubble = solid green, the rest green outline.
+function renderStepSlider(box, cards){
+  if(!cards.length) return;
+  const LETTERS="abcdefgh";
+  const tl=document.createElement("div"); tl.className="steptl";
+  const slider=document.createElement("div"); slider.className="stepslider";
+  const track=document.createElement("div"); track.className="steptrack";
+  slider.appendChild(track);
+  const cardEls=[];
+  cards.forEach((cd,i)=>{
+    const card=document.createElement("div"); card.className="stepcard"; cd.build(card);
+    track.appendChild(card); cardEls.push(card);
+    const b=document.createElement("button"); b.className="steptl-b done"+(i===0?" on":"");
+    b.innerHTML="<span class=\"steptl-n\">"+LETTERS[i]+"</span><span class=\"steptl-l\">"+cd.label+"</span>";
+    b.onclick=()=>show(i);
+    tl.appendChild(b);
+  });
+  box.appendChild(tl); box.appendChild(slider);
+  const bubbles=[...tl.querySelectorAll(".steptl-b")];
+  function show(i){
+    track.style.transform="translateX(-"+(i*100)+"%)";
+    bubbles.forEach((x,j)=>x.classList.toggle("on", j===i));
+    const h=cardEls[i]?cardEls[i].offsetHeight:0; if(h) slider.style.height=h+"px";
+  }
+  // fix the slider to the first card's height (synchronously = no flash on load)
+  { const h0=cardEls[0]?cardEls[0].offsetHeight:0; if(h0) slider.style.height=h0+"px"; }
+  requestAnimationFrame(()=>{ const h=cardEls[0]?cardEls[0].offsetHeight:0; if(h) slider.style.height=h+"px"; });
+}
+
 function renderStirFry(){
   const box=el("recipes"); if(!box)return; box.innerHTML="";
   const ids=[...FLOW.active].filter(id=>{
@@ -5048,42 +5079,41 @@ function renderStirFry(){
     "<span class=\"op-free wok\">"+sf.prepMins+" min prep first \u2014 you can\u2019t chop while it\u2019s hot</span></div>";
   box.appendChild(hero);
 
-  // ---- prep ----
-  if(sf.prep.length){
-    const ph=document.createElement("div"); ph.className="rgroup"; ph.textContent="Prep everything first";
-    box.appendChild(ph);
+  // ---- the steps, as an a,b,c card slider (prep · wok · sauce) ----
+  const rgroup=(tgt,txt)=>{ const g=document.createElement("div"); g.className="rgroup"; g.textContent=txt; tgt.appendChild(g); };
+  const CARDS=[];
+  if(sf.prep.length) CARDS.push({label:"Prep", build:(c)=>{
+    rgroup(c,"Prep everything first");
     sf.prep.forEach(p=>{
       const row=document.createElement("div"); row.className="wok-prep";
       row.innerHTML="<span class=\"wp-n\">"+p.name+"</span><span class=\"wp-p\">"+p.prep+"</span>"+
         (p.warn?"<span class=\"wp-w\">"+p.warn+"</span>":"");
-      box.appendChild(row);
+      c.appendChild(row);
     });
-  }
-
-  // ---- the wok ----
-  const wh=document.createElement("div"); wh.className="rgroup"; wh.textContent="Then, in this order";
-  box.appendChild(wh);
-  sf.steps.forEach(st=>{
-    const row=document.createElement("div"); row.className="wok-step";
-    row.innerHTML=
-      "<span class=\"ws-t\">"+(st.at===0?"first":"+"+st.at+"m")+"</span>"+
-      "<span class=\"ws-b\"><span class=\"ws-i\">"+st.items.map(i=>i.name).join(", ")+"</span>"+
-        "<span class=\"ws-w\">"+st.why+"</span></span>"+
-      "<span class=\"ws-s\">"+st.secs+"s</span>";
-    box.appendChild(row);
-  });
-
-  // ---- the sauce: how to make and apply it (mirrors steam's topping steps) ----
-  const sh=document.createElement("div"); sh.className="rgroup";
-  sh.textContent = dir ? "The sauce \u2014 "+dir.label.replace(/ \(.*\)/,"") : "The sauce";
-  box.appendChild(sh);
-  (sf.sauceSteps||[]).forEach(s=>{
-    const row=document.createElement("div"); row.className="wok-step";
-    row.innerHTML="<span class=\"ws-t\">\u2022</span>"+
-      "<span class=\"ws-b\"><span class=\"ws-i\">"+s.t+"</span>"+
-        "<span class=\"ws-w\">"+s.d+"</span></span>";
-    box.appendChild(row);
-  });
+  }});
+  CARDS.push({label:"Wok", build:(c)=>{
+    rgroup(c,"Then, in this order");
+    sf.steps.forEach(st=>{
+      const row=document.createElement("div"); row.className="wok-step";
+      row.innerHTML=
+        "<span class=\"ws-t\">"+(st.at===0?"first":"+"+st.at+"m")+"</span>"+
+        "<span class=\"ws-b\"><span class=\"ws-i\">"+st.items.map(i=>i.name).join(", ")+"</span>"+
+          "<span class=\"ws-w\">"+st.why+"</span></span>"+
+        "<span class=\"ws-s\">"+st.secs+"s</span>";
+      c.appendChild(row);
+    });
+  }});
+  if((sf.sauceSteps||[]).length) CARDS.push({label:"Sauce", build:(c)=>{
+    rgroup(c, dir ? "The sauce \u2014 "+dir.label.replace(/ \(.*\)/,"") : "The sauce");
+    (sf.sauceSteps||[]).forEach(s=>{
+      const row=document.createElement("div"); row.className="wok-step";
+      row.innerHTML="<span class=\"ws-t\">\u2022</span>"+
+        "<span class=\"ws-b\"><span class=\"ws-i\">"+s.t+"</span>"+
+          "<span class=\"ws-w\">"+s.d+"</span></span>";
+      c.appendChild(row);
+    });
+  }});
+  renderStepSlider(box, CARDS);
 
   // ---- what's not in this wok ----
   if(chosen.leftOut && chosen.leftOut.length){
@@ -5330,32 +5360,8 @@ function renderSteam(){
   // clean up any scroll observer left over from the previous (pre-slider) design
   if(window.__steamTLObs){ window.__steamTLObs.disconnect(); window.__steamTLObs=null; }
 
-  // ---- the a,b,c timeline (below the hero line) + the card slider it drives ----
-  const LETTERS="abcdefgh";
-  const tl=document.createElement("div"); tl.className="steptl";
-  const slider=document.createElement("div"); slider.className="stepslider";
-  const track=document.createElement("div"); track.className="steptrack";
-  slider.appendChild(track);
-  const cardEls=[];
-  CARDS.forEach((cd,i)=>{
-    const card=document.createElement("div"); card.className="stepcard"; cd.build(card);
-    track.appendChild(card); cardEls.push(card);
-    const b=document.createElement("button"); b.className="steptl-b done"+(i===0?" on":"");
-    b.innerHTML="<span class=\"steptl-n\">"+LETTERS[i]+"</span><span class=\"steptl-l\">"+cd.label+"</span>";
-    b.onclick=()=>show(i);
-    tl.appendChild(b);
-  });
-  box.appendChild(tl);
-  box.appendChild(slider);
-  const bubbles=[...tl.querySelectorAll(".steptl-b")];
-  function show(i){
-    track.style.transform="translateX(-"+(i*100)+"%)";
-    bubbles.forEach((x,j)=>x.classList.toggle("on", j===i));
-    const h=cardEls[i]?cardEls[i].offsetHeight:0; if(h) slider.style.height=h+"px";
-  }
-  // fix the slider to the first card's height (synchronously = no flash on load)
-  { const h0=cardEls[0]?cardEls[0].offsetHeight:0; if(h0) slider.style.height=h0+"px"; }
-  requestAnimationFrame(()=>{ const h=cardEls[0]?cardEls[0].offsetHeight:0; if(h) slider.style.height=h+"px"; });
+  // ---- the a,b,c timeline + card slider (below the hero line) ----
+  renderStepSlider(box, CARDS);
 
   // ---- what's not on this plate ----
   if(chosen.leftOut && chosen.leftOut.length){
@@ -5540,43 +5546,41 @@ function renderRice(){
     "<span class=\"op-free wok\">"+rb.handsOn+" min hands-on</span></div>";
   box.appendChild(hero);
 
-  // ---- prep ----
-  if(rb.prep.length){
-    const ph=document.createElement("div"); ph.className="rgroup"; ph.textContent="Prep first";
-    box.appendChild(ph);
+  // ---- the steps, as an a,b,c card slider (prep · cook · sauce) ----
+  const rgroup=(tgt,txt)=>{ const g=document.createElement("div"); g.className="rgroup"; g.textContent=txt; tgt.appendChild(g); };
+  const CARDS=[];
+  if(rb.prep.length) CARDS.push({label:"Prep", build:(c)=>{
+    rgroup(c,"Prep first");
     rb.prep.forEach(p=>{
       const row=document.createElement("div"); row.className="wok-prep";
       row.innerHTML="<span class=\"wp-n\">"+p.name+"</span><span class=\"wp-p\">"+p.prep+"</span>"+
         (p.warn?"<span class=\"wp-w\">"+p.warn+"</span>":"");
-      box.appendChild(row);
+      c.appendChild(row);
     });
-  }
-
-  // ---- the method: one pot (in-rice) or two tracks (over-rice) ----
-  const mh=document.createElement("div"); mh.className="rgroup";
-  mh.textContent = rb.mode==="in_rice" ? "One pot \u2014 then walk away" : "Two tracks \u2014 rice, and the topping";
-  box.appendChild(mh);
-  rb.steps.forEach(st=>{
-    const row=document.createElement("div"); row.className="wok-step"+(st.handsoff?" steam-step":"");
-    row.innerHTML=
-      "<span class=\"ws-t\">"+(st.mins?st.mins+"m":"\u2014")+"</span>"+
-      "<span class=\"ws-b\"><span class=\"ws-i\">"+st.label+"</span>"+
-        "<span class=\"ws-w\">"+st.detail+"</span></span>"+
-      "<span class=\"ws-s\">"+(st.handsoff?"walk away":"hands-on")+"</span>";
-    box.appendChild(row);
-  });
-
-  // ---- the sauce: how it's flavoured (mirrors steam's topping and the wok's sauce) ----
-  const sch=document.createElement("div"); sch.className="rgroup";
-  sch.textContent = dir ? "The sauce \u2014 "+dir.label.replace(/ \(.*\)/,"") : "The sauce";
-  box.appendChild(sch);
-  (rb.sauceSteps||[]).forEach(s=>{
-    const row=document.createElement("div"); row.className="wok-step";
-    row.innerHTML="<span class=\"ws-t\">\u2022</span>"+
-      "<span class=\"ws-b\"><span class=\"ws-i\">"+s.t+"</span>"+
-        "<span class=\"ws-w\">"+s.d+"</span></span>";
-    box.appendChild(row);
-  });
+  }});
+  CARDS.push({label:"Cook", build:(c)=>{
+    rgroup(c, rb.mode==="in_rice" ? "One pot \u2014 then walk away" : "Two tracks \u2014 rice, and the topping");
+    rb.steps.forEach(st=>{
+      const row=document.createElement("div"); row.className="wok-step"+(st.handsoff?" steam-step":"");
+      row.innerHTML=
+        "<span class=\"ws-t\">"+(st.mins?st.mins+"m":"\u2014")+"</span>"+
+        "<span class=\"ws-b\"><span class=\"ws-i\">"+st.label+"</span>"+
+          "<span class=\"ws-w\">"+st.detail+"</span></span>"+
+        "<span class=\"ws-s\">"+(st.handsoff?"walk away":"hands-on")+"</span>";
+      c.appendChild(row);
+    });
+  }});
+  if((rb.sauceSteps||[]).length) CARDS.push({label:"Sauce", build:(c)=>{
+    rgroup(c, dir ? "The sauce \u2014 "+dir.label.replace(/ \(.*\)/,"") : "The sauce");
+    (rb.sauceSteps||[]).forEach(s=>{
+      const row=document.createElement("div"); row.className="wok-step";
+      row.innerHTML="<span class=\"ws-t\">\u2022</span>"+
+        "<span class=\"ws-b\"><span class=\"ws-i\">"+s.t+"</span>"+
+          "<span class=\"ws-w\">"+s.d+"</span></span>";
+      c.appendChild(row);
+    });
+  }});
+  renderStepSlider(box, CARDS);
 
   // ---- what can't ride in the rice — a different heat, time or appliance ----
   if(rb.separate && rb.separate.length){

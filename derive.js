@@ -725,7 +725,7 @@ function searchByIngredients(dishes,pantry,R,{mode="have",assumed=null,pax=null}
    Derived from category + a small explicit list; an ingredient may carry
    its own `measure_type` to override. */
 const MT_ASSUMED=new Set(["garlic","ginger","chilli","lemongrass","galangal","scallion","curry_leaves",
-  "pandan","dried_orange_peel","dang_gui","dried_shrimp","belacan"]);
+  "pandan","dried_orange_peel","dang_gui","dried_shrimp","belacan","cornstarch"]);
 const MT_COUNT=new Set(["egg","century_egg","onion","potato","sweet_potato","tomato","carrot","cucumber",
   "bell_pepper","eggplant","zucchini","corn","tofu","lemon","lime","apple","banana","pineapple","okra","daikon",
   "pumpkin","yam"]);   // whole things you buy and use by the piece
