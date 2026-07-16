@@ -634,7 +634,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.13</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.14</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -3237,13 +3237,18 @@ function buildSteam(ingIds, R, dishes, AFF, opts){
   // doesn't stick. (2) A COLLECTOR: an absorbent layer that drinks the flavourful juices the
   // subject renders \u2014 glass noodles, tofu, napa cabbage, lettuce. Collectors go only under
   // things that render (fish and shellfish), and only ONE at a time.
-  const COLLECTORS=["glass_noodles","tofu","napa_cabbage","lettuce"];
+  // the fish's plate partner: an absorbent bed under it, OR — Teochew-style — tomato laid over
+  // it for a sweet-sour edge. Absorbent beds win if present; tomato beats a plain lettuce bed,
+  // which is the weakest of the four.
+  const COLLECTORS=["glass_noodles","tofu","napa_cabbage","tomato","lettuce"];
   const collector = (!wrapped && (form==="whole_fish"||form==="shellfish"))
     ? COLLECTORS.find(id=>real.includes(id) && id!==subjId) : null;
   const collName = collector ? ((R.byId[collector]||{}).name||collector) : null;
+  const isBed = collector && collector!=="tomato";   // tomato sits over the fish, not under it
   if(collector) prep.push({name:collName,
     prep: collector==="glass_noodles" ? "soak until pliable, then lay as a bed to drink the juices"
         : collector==="tofu" ? "slice and lay as a bed \u2014 it soaks up the sauce (Hunan-style)"
+        : collector==="tomato" ? "cut into wedges and lay over and around the fish \u2014 Teochew-style, for a sweet-sour edge"
         : "shred and lay as a bed under the subject to catch the juices", warn:null});
 
   const prepMins=Math.max(4, 3+prep.length*2);
@@ -3258,8 +3263,8 @@ function buildSteam(ingIds, R, dishes, AFF, opts){
     : form==="custard"
     ? "Divide any solids between cups and pour the strained custard over."
     : form==="whole_fish"
-    ? "Lay a couple of smashed scallion stalks (and ginger) under the fish so it sits off the plate and steams evenly"+(collector?", on the "+collName+" bed":"")+", then pile the aromatics over the top."
-    : "Lay half the aromatics under the subject and the rest on top"+(collector?", over the "+collName+" bed":"")+".";
+    ? "Lay a couple of smashed scallion stalks (and ginger) under the fish so it sits off the plate and steams evenly"+(isBed?", on the "+collName+" bed":"")+(collector==="tomato"?"; lay tomato slices over and around it":"")+", then pile the aromatics over the top."
+    : "Lay half the aromatics under the subject and the rest on top"+(isBed?", over the "+collName+" bed":"")+(collector==="tomato"?"; tuck tomato slices alongside":"")+".";
   const sauceSteps = (dir&&dir.steps) ? dir.steps
     : [{t:"After steaming", d:"Pour off the watery liquid, drizzle a little soy, and pour a spoon of hot oil over the top."}];
 
@@ -3302,7 +3307,7 @@ function steamCandidates(ingIds, R, dishes, AFF){
   ingIds.forEach(id=>{ const f=steamFormOf(id,R); if(f){ (byForm[f]=byForm[f]||[]).push(id); } });
 
   // the only real "bed" is a single absorbent collector under fish or prawns.
-  const COLLECTORS_C=["glass_noodles","tofu","napa_cabbage","lettuce"];
+  const COLLECTORS_C=["glass_noodles","tofu","napa_cabbage","tomato","lettuce"];
   const topping=real.filter(id=>CHARACTER_SEASONINGS.has(id));
 
   const out=[];

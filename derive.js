@@ -2382,6 +2382,23 @@ function subjectPrep(form, name, id){
   return {name, prep:e.prep, warn:e.warn};
 }
 
+// For a plate of mixed vegetables, each vegetable is prepped for the steamer according to
+// its group — roots into batons, leaves separated, mushrooms trimmed, and so on — rather
+// than every one getting the generic "batons" line.
+function vegPrep(id, R){
+  const i=R.byId[id]||{}; const g=i.group; const name=i.name||id;
+  let prep;
+  if(g==="root")          prep="cut into even batons so it cooks evenly";
+  else if(g==="florets")  prep="break into bite-size florets";
+  else if(g==="leafy")    prep="separate the leaves; halve any large ones";
+  else if(g==="fungi")    prep = id==="enoki" ? "trim the root base and pull into small clumps"
+                                              : "trim; halve larger caps, leave small ones whole";
+  else if(g==="fruiting") prep="cut into thick rounds so they steam through";
+  else if(g==="pods")     prep="trim; cut long ones into lengths";
+  else                    prep="cut into even, bite-size pieces";
+  return {name, prep, warn:null};
+}
+
 /* ---- STEAM SEASONING DIRECTIONS ----
    The topping and the finish. AUTHORED \u2014 this is the construct of a steamed dish across
    the cuisines that steam: Cantonese (hot oil over aromatics), Teochew (salted-veg sour),
@@ -2502,12 +2519,18 @@ function buildSteam(ingIds, R, dishes, AFF, opts){
     ingIds.find(id=>steamFormOf(id,R)===form) || ingIds[0];
   const subjName=((R.byId[subjId]||{}).name)||subjId;
 
-  // prep: the subject, the topping/paste, plus any bed
+  // prep: the subject (or, for a mixed-vegetable plate, each vegetable), then topping/paste and bed
   const minced  = !!(dir && dir.paste);           // otak: the fish is minced into a paste
   const wrapped = minced || !!(dir && dir.wrap);   // otak / green chutney: steamed in a leaf parcel
-  const prep=[ minced && form==="whole_fish"
-    ? {name:subjName, prep:"fillet and mash to a paste", warn:"a fish paste, not a whole fish \u2014 otak is a custard"}
-    : subjectPrep(form, subjName, subjId) ];
+  let prep;
+  if(form==="dense_veg"){
+    const vegIds = real.filter(id=>steamFormOf(id,R)==="dense_veg");
+    prep = (vegIds.length?vegIds:[subjId]).map(id=>vegPrep(id,R));
+  } else {
+    prep = [ minced && form==="whole_fish"
+      ? {name:subjName, prep:"fillet and mash to a paste", warn:"a fish paste, not a whole fish \u2014 otak is a custard"}
+      : subjectPrep(form, subjName, subjId) ];
+  }
   if(dir && dir.paste) prep.push({name:dir.label, prep:"pound to a smooth paste and beat into the mix with coconut and egg", warn:null});
   else if(dir && dir.wrap) prep.push({name:dir.label, prep:"blend to a smooth paste and coat the subject all over", warn:null});
   else if(dir && dir.key==="black_bean") prep.push({name:"Black bean & garlic", prep:"rinse and lightly mash together", warn:null});
@@ -2518,13 +2541,18 @@ function buildSteam(ingIds, R, dishes, AFF, opts){
   // doesn't stick. (2) A COLLECTOR: an absorbent layer that drinks the flavourful juices the
   // subject renders \u2014 glass noodles, tofu, napa cabbage, lettuce. Collectors go only under
   // things that render (fish and shellfish), and only ONE at a time.
-  const COLLECTORS=["glass_noodles","tofu","napa_cabbage","lettuce"];
+  // the fish's plate partner: an absorbent bed under it, OR — Teochew-style — tomato laid over
+  // it for a sweet-sour edge. Absorbent beds win if present; tomato beats a plain lettuce bed,
+  // which is the weakest of the four.
+  const COLLECTORS=["glass_noodles","tofu","napa_cabbage","tomato","lettuce"];
   const collector = (!wrapped && (form==="whole_fish"||form==="shellfish"))
     ? COLLECTORS.find(id=>real.includes(id) && id!==subjId) : null;
   const collName = collector ? ((R.byId[collector]||{}).name||collector) : null;
+  const isBed = collector && collector!=="tomato";   // tomato sits over the fish, not under it
   if(collector) prep.push({name:collName,
     prep: collector==="glass_noodles" ? "soak until pliable, then lay as a bed to drink the juices"
         : collector==="tofu" ? "slice and lay as a bed \u2014 it soaks up the sauce (Hunan-style)"
+        : collector==="tomato" ? "cut into wedges and lay over and around the fish \u2014 Teochew-style, for a sweet-sour edge"
         : "shred and lay as a bed under the subject to catch the juices", warn:null});
 
   const prepMins=Math.max(4, 3+prep.length*2);
@@ -2539,8 +2567,8 @@ function buildSteam(ingIds, R, dishes, AFF, opts){
     : form==="custard"
     ? "Divide any solids between cups and pour the strained custard over."
     : form==="whole_fish"
-    ? "Lay a couple of smashed scallion stalks (and ginger) under the fish so it sits off the plate and steams evenly"+(collector?", on the "+collName+" bed":"")+", then pile the aromatics over the top."
-    : "Lay half the aromatics under the subject and the rest on top"+(collector?", over the "+collName+" bed":"")+".";
+    ? "Lay a couple of smashed scallion stalks (and ginger) under the fish so it sits off the plate and steams evenly"+(isBed?", on the "+collName+" bed":"")+(collector==="tomato"?"; lay tomato slices over and around it":"")+", then pile the aromatics over the top."
+    : "Lay half the aromatics under the subject and the rest on top"+(isBed?", over the "+collName+" bed":"")+(collector==="tomato"?"; tuck tomato slices alongside":"")+".";
   const sauceSteps = (dir&&dir.steps) ? dir.steps
     : [{t:"After steaming", d:"Pour off the watery liquid, drizzle a little soy, and pour a spoon of hot oil over the top."}];
 
@@ -2583,7 +2611,7 @@ function steamCandidates(ingIds, R, dishes, AFF){
   ingIds.forEach(id=>{ const f=steamFormOf(id,R); if(f){ (byForm[f]=byForm[f]||[]).push(id); } });
 
   // the only real "bed" is a single absorbent collector under fish or prawns.
-  const COLLECTORS_C=["glass_noodles","tofu","napa_cabbage","lettuce"];
+  const COLLECTORS_C=["glass_noodles","tofu","napa_cabbage","tomato","lettuce"];
   const topping=real.filter(id=>CHARACTER_SEASONINGS.has(id));
 
   const out=[];
