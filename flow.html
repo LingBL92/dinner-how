@@ -634,7 +634,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.10</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.12</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -3078,6 +3078,23 @@ function subjectPrep(form, name, id){
   return {name, prep:e.prep, warn:e.warn};
 }
 
+// For a plate of mixed vegetables, each vegetable is prepped for the steamer according to
+// its group — roots into batons, leaves separated, mushrooms trimmed, and so on — rather
+// than every one getting the generic "batons" line.
+function vegPrep(id, R){
+  const i=R.byId[id]||{}; const g=i.group; const name=i.name||id;
+  let prep;
+  if(g==="root")          prep="cut into even batons so it cooks evenly";
+  else if(g==="florets")  prep="break into bite-size florets";
+  else if(g==="leafy")    prep="separate the leaves; halve any large ones";
+  else if(g==="fungi")    prep = id==="enoki" ? "trim the root base and pull into small clumps"
+                                              : "trim; halve larger caps, leave small ones whole";
+  else if(g==="fruiting") prep="cut into thick rounds so they steam through";
+  else if(g==="pods")     prep="trim; cut long ones into lengths";
+  else                    prep="cut into even, bite-size pieces";
+  return {name, prep, warn:null};
+}
+
 /* ---- STEAM SEASONING DIRECTIONS ----
    The topping and the finish. AUTHORED \u2014 this is the construct of a steamed dish across
    the cuisines that steam: Cantonese (hot oil over aromatics), Teochew (salted-veg sour),
@@ -3198,12 +3215,18 @@ function buildSteam(ingIds, R, dishes, AFF, opts){
     ingIds.find(id=>steamFormOf(id,R)===form) || ingIds[0];
   const subjName=((R.byId[subjId]||{}).name)||subjId;
 
-  // prep: the subject, the topping/paste, plus any bed
+  // prep: the subject (or, for a mixed-vegetable plate, each vegetable), then topping/paste and bed
   const minced  = !!(dir && dir.paste);           // otak: the fish is minced into a paste
   const wrapped = minced || !!(dir && dir.wrap);   // otak / green chutney: steamed in a leaf parcel
-  const prep=[ minced && form==="whole_fish"
-    ? {name:subjName, prep:"fillet and mash to a paste", warn:"a fish paste, not a whole fish \u2014 otak is a custard"}
-    : subjectPrep(form, subjName, subjId) ];
+  let prep;
+  if(form==="dense_veg"){
+    const vegIds = real.filter(id=>steamFormOf(id,R)==="dense_veg");
+    prep = (vegIds.length?vegIds:[subjId]).map(id=>vegPrep(id,R));
+  } else {
+    prep = [ minced && form==="whole_fish"
+      ? {name:subjName, prep:"fillet and mash to a paste", warn:"a fish paste, not a whole fish \u2014 otak is a custard"}
+      : subjectPrep(form, subjName, subjId) ];
+  }
   if(dir && dir.paste) prep.push({name:dir.label, prep:"pound to a smooth paste and beat into the mix with coconut and egg", warn:null});
   else if(dir && dir.wrap) prep.push({name:dir.label, prep:"blend to a smooth paste and coat the subject all over", warn:null});
   else if(dir && dir.key==="black_bean") prep.push({name:"Black bean & garlic", prep:"rinse and lightly mash together", warn:null});
@@ -3774,6 +3797,9 @@ function dishMatchesType(d){
   return false;
 }
 const TOP_CATS=new Set(["proteins","vegetables","fruits","starches","dairy","fats_oils","seasonings","condiments","acids","sweeteners","leaveners"]);
+// selection-only groups that pull a few leaves out of their broad category into their own
+// shelf (like Pork sits apart from Proteins). Purely cosmetic — category/parent are untouched.
+const BROWSE_GROUPS={fungi_roots:"Mushrooms & roots"};
 
 function findLeaf(q){
   q=q.toLowerCase().trim(); if(!q)return null;
@@ -3805,13 +3831,22 @@ function groupFor(ing){
   if(isSeafood(ing.id)){
     return {key:"seafood", title:"Seafood", leaves:seafoodLeaves()};
   }
+  // an explicit browse group (e.g. "Mushrooms & roots") gets its own shelf, away from
+  // its broad category — the same way Pork sits apart from Proteins.
+  if(ing.browse_group && BROWSE_GROUPS[ing.browse_group]){
+    const bg=ing.browse_group;
+    let leaves=REF.list.filter(x=>x.browse_group===bg && REF.isLeaf(x.id));
+    leaves=leaves.filter(x=> !PANTRY_ITEMS.includes(x.id));
+    leaves=leaves.filter(x=>x.id===ing.id).concat(leaves.filter(x=>x.id!==ing.id));
+    return {key:bg, title:BROWSE_GROUPS[bg], leaves};
+  }
   const pid=ing.parent;
   let leaves, title;
   if(pid && REF.byId[pid] && !TOP_CATS.has(pid)){
     leaves=REF.list.filter(x=>x.parent===pid && REF.isLeaf(x.id));
     title=REF.byId[pid].name;
   } else {
-    leaves=REF.list.filter(x=>x.category===ing.category && REF.isLeaf(x.id));
+    leaves=REF.list.filter(x=>x.category===ing.category && REF.isLeaf(x.id) && !x.browse_group);
     title=(ing.category||"ingredients").replace(/_/g," ");
     title=title.charAt(0).toUpperCase()+title.slice(1);
   }
