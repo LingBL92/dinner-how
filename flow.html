@@ -321,14 +321,15 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .sh-row{display:flex;gap:2px}
 .sh-col{flex:0 1 0;min-width:10px;display:flex;justify-content:flex-start}
 .sh-tags{margin-bottom:6px}
-.sh-bubs{position:relative;margin-bottom:8px}
-.sh-bubs::before{content:"";position:absolute;top:12px;left:6px;right:6px;height:2px;background:var(--line);z-index:0}
+.sh-bubs{position:relative;margin-bottom:2px}
+.sh-bubs::before{content:"";position:absolute;top:19px;left:6px;right:6px;height:2px;background:var(--line);z-index:0}
+.sh-fill{position:absolute;top:19px;left:6px;height:2px;width:0;background:var(--cool);z-index:0;transition:width .3s ease}
 .sh-bubs .sh-col{gap:10px}
 .tc{padding:2px 8px;border-radius:999px;font-family:"Space Mono",monospace;font-size:10.5px;white-space:nowrap;height:fit-content}
 .tc-prep{background:rgba(168,114,24,.14);color:var(--gold)}
 .tc-cook{background:rgba(50,117,100,.14);color:var(--cool)}
 .tc-finish{background:rgba(168,114,24,.09);color:rgba(168,114,24,.7)}
-.timebar{display:flex;gap:2px;height:9px;border-radius:5px;overflow:hidden}
+.timebar{display:flex;gap:2px;height:9px;border-radius:5px;overflow:hidden;margin-bottom:14px}
 .tb-seg{flex:0 1 0;min-width:10px;border-radius:2px}
 .tb-prep{background:var(--gold)}
 .tb-cook{background:var(--cool)}
@@ -341,7 +342,11 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .steptl .steptl-b.done::before,.steptl .steptl-b.on::before{background:var(--cool)}
 .steptl-b{display:flex;flex-direction:column;align-items:center;gap:4px;
   background:none;border:0;cursor:pointer;font:inherit;padding:0;position:relative}
-.sh-bubs .steptl-b{flex:0 0 auto}
+/* in the aligned header each step is a little card; the active one gets a border + tab on top */
+.sh-bubs .steptl-b{flex:0 0 auto;border:1.5px solid transparent;border-radius:9px;padding:6px 8px 4px;transition:.15s}
+.sh-bubs .steptl-b.on{border-color:var(--cool);background:rgba(50,117,100,.07)}
+.sh-bubs .steptl-b.on::before{content:"";position:absolute;top:-5px;left:50%;transform:translateX(-50%);
+  width:18px;height:4px;border-radius:2px 2px 0 0;background:var(--cool);z-index:2}
 .steptl-n{position:relative;z-index:1;width:24px;height:24px;border-radius:50%;border:2px solid var(--line);
   color:var(--muted);background:var(--paper);display:flex;align-items:center;justify-content:center;
   font-family:"Space Mono",monospace;font-size:11px;font-weight:700;transition:.15s}
@@ -654,7 +659,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.20</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.22</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2717,7 +2722,9 @@ const WOK_CLASS=[
   {key:"sauce",     label:"The sauce",        at:11, secs:30,
    why:"in at the end, tossed through \u2014 it should coat, not stew"},
   {key:"leafy",     label:"Leafy greens",     at:12, secs:60,
-   why:"last, 60 seconds, high heat \u2014 and DON'T cover the wok or they'll steam and go grey"}
+   why:"last, 60 seconds, high heat \u2014 and DON'T cover the wok or they'll steam and go grey"},
+  {key:"delicate",  label:"Fish slices, at the very end", at:13, secs:90,
+   why:"slide them in off the fiercest heat and fold once or twice \u2014 they cook in about a minute and break apart if tossed"}
 ];
 
 /* How does this vegetable behave in a wok? Derived from structure \u2014 which is exactly
@@ -2764,8 +2771,8 @@ function wokBehaviour(id, R){
   if(SPECIAL[id]) return {id, name:i.name||id, ...SPECIAL[id]};
 
   if(i.category==="proteins"){
-    if(p.has("filleted")) return {id,name:i.name,cls:"protein",
-      prep:"pat dry and cut into thick slices \u2014 add near the end and fold gently, don\u2019t toss hard",
+    if(p.has("filleted")) return {id,name:i.name,cls:"delicate",
+      prep:"pat dry and cut into thick slices \u2014 they go in at the very end",
       warn:"delicate \u2014 fish slices break up if stirred hard"};
     if(i.form==="mince") return {id,name:i.name,cls:"protein",prep:"break it up in the wok",warn:null};
     return {id,name:i.name,cls:"protein",prep:"slice thin against the grain",
@@ -2881,22 +2888,39 @@ function buildStirFry(ingIds, R, dishes, AFF, opts){
   const push=(cls,items,extra)=>{
     const c=WOK_CLASS.find(x=>x.key===cls);
     if(!c||!items.length) return;
-    steps.push({key:cls, label:c.label, at:t, secs:c.secs, why:c.why,
+    const secs=(extra&&extra.secs)||c.secs, why=(extra&&extra.why)||c.why;
+    steps.push({key:cls, label:c.label, at:t, secs, why,
       items, warn:items.map(i=>i.warn).filter(Boolean)});
-    t+=Math.round(c.secs/60*10)/10;
+    t+=Math.round(secs/60*10)/10;
   };
 
   const arom=[{name:"Garlic, and ginger or chilli if you like",warn:null}].concat(byClass.aromatics||[]);
   push("aromatics", arom);
   if(dir && dir.paste)
     push("paste",[{name:dir.label,warn:null}]);
-  push("protein", byClass.protein||[]);
+  // the sear is NOT one-size-fits-all: pork belly must render (4-6 min), chicken pieces
+  // must cook through (~4 min), squid toughens past 90s. Thin-sliced beef and prawns
+  // really are 2-minute jobs. Calibrated against published wok recipes.
+  {
+    const items=byClass.protein||[];
+    let secs=120, why=null;
+    const searOf=(w)=>{
+      const anc=R.anc[w.id]||new Set();
+      if(w.id==="pork_belly") return [330,"pork belly first, on its own \u2014 let the fat render and the edges brown, 5\u20136 minutes, before anything else goes in"];
+      if(anc.has("chicken")||w.id==="turkey") return [240,"sear, then keep it moving until no pink remains \u2014 chicken takes a real 4 minutes, longer than you think"];
+      if(w.id==="squid") return [90,"90 seconds, no more \u2014 squid turns to rubber past that; it's done when it curls"];
+      return [120,null];
+    };
+    items.forEach(w=>{ const [s,y]=searOf(w); if(s>secs){secs=s; why=y;} else if(s===90&&items.length===1){secs=90; why=y;} });
+    push("protein", items, {secs, why:why||undefined});
+  }
   push("dense",   byClass.dense||[]);
   push("firm",    byClass.firm||[]);
   push("quick",   byClass.quick||[]);
   if(dir && !dir.paste && dir.key!=="plain_garlic")
     push("sauce",[{name:dir.label,warn:null}]);
   push("leafy",   byClass.leafy||[]);
+  push("delicate",byClass.delicate||[]);
 
   const totalSecs=steps.reduce((n,s)=>n+s.secs,0);
   const total=Math.max(4, Math.ceil(totalSecs/60));
@@ -5075,6 +5099,7 @@ function renderStepSlider(box, cards, segments){
   const LETTERS="abcdefgh";
   cards.forEach((cd,i)=>{ cd._letter=LETTERS[i]; cd._idx=i; });
   const bubbles=[], cardEls=[];
+  let fillEl=null, bubRowEl=null;
   const mkBubble=(cd)=>{
     const b=document.createElement("button"); b.className="steptl-b done"+(cd._idx===0?" on":"");
     b.innerHTML="<span class=\"steptl-n\">"+cd._letter+"</span><span class=\"steptl-l\">"+cd.label+"</span>";
@@ -5088,6 +5113,8 @@ function renderStepSlider(box, cards, segments){
     const tagRow=document.createElement("div"); tagRow.className="sh-row sh-tags";
     const bubRow=document.createElement("div"); bubRow.className="sh-row sh-bubs";
     const bar=document.createElement("div"); bar.className="timebar";
+    const fill=document.createElement("div"); fill.className="sh-fill"; bubRow.appendChild(fill);
+    fillEl=fill; bubRowEl=bubRow;
     cols.forEach((seg,ci)=>{
       const tc=document.createElement("div"); tc.className="sh-col"; tc.style.flexGrow=seg.mins;
       const tag=document.createElement("span"); tag.className="tc tc-"+seg.kind; tag.textContent=seg.label+" \u00b7 "+seg.mins+"m";
@@ -5098,7 +5125,7 @@ function renderStepSlider(box, cards, segments){
       const sg=document.createElement("div"); sg.className="tb-seg tb-"+seg.kind; sg.style.flexGrow=seg.mins;
       sg.title=seg.label+" \u2014 "+seg.mins+" min"; bar.appendChild(sg);
     });
-    head.appendChild(tagRow); head.appendChild(bubRow); head.appendChild(bar);
+    head.appendChild(tagRow); head.appendChild(bar); head.appendChild(bubRow);   // bar sits above the a,b,c row
     box.appendChild(head);
   } else {
     const tl=document.createElement("div"); tl.className="steptl";
@@ -5109,13 +5136,21 @@ function renderStepSlider(box, cards, segments){
   const track=document.createElement("div"); track.className="steptrack"; slider.appendChild(track);
   cards.forEach(cd=>{ const card=document.createElement("div"); card.className="stepcard"; cd.build(card); track.appendChild(card); cardEls[cd._idx]=card; });
   box.appendChild(slider);
+  // fill the connector line from the first step up to the current one
+  function updateFill(i){
+    if(!fillEl||!bubRowEl||!bubbles[i]) return;
+    const num=bubbles[i].querySelector(".steptl-n"); if(!num) return;
+    const br=bubRowEl.getBoundingClientRect(), nr=num.getBoundingClientRect();
+    fillEl.style.width=Math.max(0,(nr.left+nr.width/2)-br.left-6)+"px";
+  }
   function show(i){
     track.style.transform="translateX(-"+(i*100)+"%)";
     bubbles.forEach((x,j)=>{ if(x) x.classList.toggle("on", j===i); });
+    updateFill(i);
     const h=cardEls[i]?cardEls[i].offsetHeight:0; if(h) slider.style.height=h+"px";
   }
   { const h0=cardEls[0]?cardEls[0].offsetHeight:0; if(h0) slider.style.height=h0+"px"; }
-  requestAnimationFrame(()=>{ const h=cardEls[0]?cardEls[0].offsetHeight:0; if(h) slider.style.height=h+"px"; });
+  requestAnimationFrame(()=>{ const h=cardEls[0]?cardEls[0].offsetHeight:0; if(h) slider.style.height=h+"px"; updateFill(0); });
 }
 
 function renderStirFry(){

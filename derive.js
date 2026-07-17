@@ -2001,7 +2001,9 @@ const WOK_CLASS=[
   {key:"sauce",     label:"The sauce",        at:11, secs:30,
    why:"in at the end, tossed through \u2014 it should coat, not stew"},
   {key:"leafy",     label:"Leafy greens",     at:12, secs:60,
-   why:"last, 60 seconds, high heat \u2014 and DON'T cover the wok or they'll steam and go grey"}
+   why:"last, 60 seconds, high heat \u2014 and DON'T cover the wok or they'll steam and go grey"},
+  {key:"delicate",  label:"Fish slices, at the very end", at:13, secs:90,
+   why:"slide them in off the fiercest heat and fold once or twice \u2014 they cook in about a minute and break apart if tossed"}
 ];
 
 /* How does this vegetable behave in a wok? Derived from structure \u2014 which is exactly
@@ -2048,8 +2050,8 @@ function wokBehaviour(id, R){
   if(SPECIAL[id]) return {id, name:i.name||id, ...SPECIAL[id]};
 
   if(i.category==="proteins"){
-    if(p.has("filleted")) return {id,name:i.name,cls:"protein",
-      prep:"pat dry and cut into thick slices \u2014 add near the end and fold gently, don\u2019t toss hard",
+    if(p.has("filleted")) return {id,name:i.name,cls:"delicate",
+      prep:"pat dry and cut into thick slices \u2014 they go in at the very end",
       warn:"delicate \u2014 fish slices break up if stirred hard"};
     if(i.form==="mince") return {id,name:i.name,cls:"protein",prep:"break it up in the wok",warn:null};
     return {id,name:i.name,cls:"protein",prep:"slice thin against the grain",
@@ -2165,22 +2167,39 @@ function buildStirFry(ingIds, R, dishes, AFF, opts){
   const push=(cls,items,extra)=>{
     const c=WOK_CLASS.find(x=>x.key===cls);
     if(!c||!items.length) return;
-    steps.push({key:cls, label:c.label, at:t, secs:c.secs, why:c.why,
+    const secs=(extra&&extra.secs)||c.secs, why=(extra&&extra.why)||c.why;
+    steps.push({key:cls, label:c.label, at:t, secs, why,
       items, warn:items.map(i=>i.warn).filter(Boolean)});
-    t+=Math.round(c.secs/60*10)/10;
+    t+=Math.round(secs/60*10)/10;
   };
 
   const arom=[{name:"Garlic, and ginger or chilli if you like",warn:null}].concat(byClass.aromatics||[]);
   push("aromatics", arom);
   if(dir && dir.paste)
     push("paste",[{name:dir.label,warn:null}]);
-  push("protein", byClass.protein||[]);
+  // the sear is NOT one-size-fits-all: pork belly must render (4-6 min), chicken pieces
+  // must cook through (~4 min), squid toughens past 90s. Thin-sliced beef and prawns
+  // really are 2-minute jobs. Calibrated against published wok recipes.
+  {
+    const items=byClass.protein||[];
+    let secs=120, why=null;
+    const searOf=(w)=>{
+      const anc=R.anc[w.id]||new Set();
+      if(w.id==="pork_belly") return [330,"pork belly first, on its own \u2014 let the fat render and the edges brown, 5\u20136 minutes, before anything else goes in"];
+      if(anc.has("chicken")||w.id==="turkey") return [240,"sear, then keep it moving until no pink remains \u2014 chicken takes a real 4 minutes, longer than you think"];
+      if(w.id==="squid") return [90,"90 seconds, no more \u2014 squid turns to rubber past that; it's done when it curls"];
+      return [120,null];
+    };
+    items.forEach(w=>{ const [s,y]=searOf(w); if(s>secs){secs=s; why=y;} else if(s===90&&items.length===1){secs=90; why=y;} });
+    push("protein", items, {secs, why:why||undefined});
+  }
   push("dense",   byClass.dense||[]);
   push("firm",    byClass.firm||[]);
   push("quick",   byClass.quick||[]);
   if(dir && !dir.paste && dir.key!=="plain_garlic")
     push("sauce",[{name:dir.label,warn:null}]);
   push("leafy",   byClass.leafy||[]);
+  push("delicate",byClass.delicate||[]);
 
   const totalSecs=steps.reduce((n,s)=>n+s.secs,0);
   const total=Math.max(4, Math.ceil(totalSecs/60));
