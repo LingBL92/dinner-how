@@ -481,6 +481,29 @@
    "cut_note": "steam whole \u2014 sweet, delicate white flesh"
   },
   {
+   "id": "fish_slices",
+   "name": "Fish slices",
+   "aliases": [
+    "fish slices",
+    "sliced fish",
+    "dory",
+    "basa",
+    "pangasius",
+    "batang",
+    "fish fillet"
+   ],
+   "provides": [
+    "protein",
+    "umami",
+    "fish_family",
+    "filleted"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "slice",
+   "parent": "fish",
+   "category": "proteins"
+  },
+  {
    "id": "snapper",
    "name": "Red Snapper",
    "aliases": [
