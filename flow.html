@@ -667,7 +667,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.26</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.27</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5104,7 +5104,7 @@ function schedule(list){
 // several steps can share one phase (they pack left-to-right in that column).
 function renderStepSlider(box, cards, segments){
   if(!cards.length) return;
-  const LETTERS="abcdefgh";
+  const LETTERS="ABCDEFGH";
   cards.forEach((cd,i)=>{ cd._letter=LETTERS[i]; cd._idx=i; });
   const bubbles=[], cardEls=[];
   let fillEl=null, bubRowEl=null;
@@ -5239,7 +5239,7 @@ function renderStirFry(){
       c.appendChild(row);
     });
   }});
-  CARDS.push({label:"Wok", phase:"cook", build:(c)=>{
+  const wokCard = {label:"Wok", phase:"cook", build:(c)=>{
     rgroup(c,"Then, in this order");
     sf.steps.forEach(st=>{
       const row=document.createElement("div"); row.className="wok-step";
@@ -5250,9 +5250,10 @@ function renderStirFry(){
         "<span class=\"ws-s\">"+st.secs+"s</span>";
       c.appendChild(row);
     });
-  }});
-  if((sf.sauceSteps||[]).length) CARDS.push({label:"Sauce", phase:"cook", build:(c)=>{
-    rgroup(c, dir ? "The sauce \u2014 "+dir.label.replace(/ \(.*\)/,"") : "The sauce");
+  }};
+  const isPaste = !!(dir && dir.paste);
+  const sauceCard = (sf.sauceSteps||[]).length ? {label: isPaste?"Paste":"Sauce", phase:"cook", build:(c)=>{
+    rgroup(c, dir ? "The "+(isPaste?"paste":"sauce")+" \u2014 "+dir.label.replace(/ \(.*\)/,"") : "The sauce");
     (sf.sauceSteps||[]).forEach(s=>{
       const row=document.createElement("div"); row.className="wok-step";
       row.innerHTML="<span class=\"ws-t\">\u2022</span>"+
@@ -5260,7 +5261,12 @@ function renderStirFry(){
           "<span class=\"ws-w\">"+s.d+"</span></span>";
       c.appendChild(row);
     });
-  }});
+  }} : null;
+  // a paste (sambal, fu yu…) is bloomed FIRST, so its card leads the wok; a glaze/finish
+  // goes in at the end, so its card stays at the back.
+  if(isPaste && sauceCard) CARDS.push(sauceCard);
+  CARDS.push(wokCard);
+  if(sauceCard && !isPaste) CARDS.push(sauceCard);
   renderStepSlider(box, CARDS, [
     {label:"Prep", mins:sf.prepMins, kind:"prep"},
     {label:"Wok",  mins:sf.total,    kind:"cook"}
