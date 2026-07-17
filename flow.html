@@ -667,7 +667,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.25</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.26</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -6083,70 +6083,48 @@ function renderOnePot(){
   }
   const totalWithSeason = st && st.when==="before" ? p.total+st.mins : p.total;
 
-  const ROW=58, PAD=12;
-  const n=tlSteps.length;
-  const H=Math.max(n*ROW, 100);
-  const yOf=(mins)=> PAD + (totalWithSeason? (mins/totalWithSeason)*(H-PAD*2) : 0);
-  const rowMid=(i)=> i*ROW + ROW/2;
-  const tl=document.createElement("div"); tl.className="pot-timeline"; tl.style.height=H+"px";
-  // the AXIS is an html layer so the role icons can sit directly on it
-  let svg="<svg class=\"pot-svg\" width=\"70\" height=\""+H+"\" viewBox=\"0 0 70 "+H+"\">";
-  svg+="<line x1=\"20\" y1=\""+yOf(0)+"\" x2=\"20\" y2=\""+yOf(totalWithSeason)+"\" stroke=\"var(--line)\" stroke-width=\"2\"/>";
-  tlSteps.forEach((st,i)=>{
-    const y=yOf(st.at), ry=rowMid(i);
-    svg+="<line x1=\"20\" y1=\""+y+"\" x2=\"20\" y2=\""+yOf(totalWithSeason)+"\" stroke=\"var(--cool)\" stroke-width=\"2.5\" opacity=\".2\"/>";
-    svg+="<path d=\"M34,"+y+" C50,"+y+" 44,"+ry+" 68,"+ry+"\" fill=\"none\" stroke=\"var(--cool)\" stroke-width=\"1.2\" opacity=\".42\"/>";
-  });
-  svg+="</svg>";
-  tl.innerHTML=svg;
-
-  // ROLE ICONS sit ON the axis at each true time — one per category, overlapped if several
-  tlSteps.forEach(st=>{
-    const y=yOf(st.at);
-    if(st.kind==="season"){
-      const node=document.createElement("div"); node.className="tl-node"; node.style.top=y+"px";
-      const sp=document.createElement("span"); sp.className="tl-ico season";
-      sp.innerHTML="<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\"><path d=\"M12 3v4M12 17v4M3 12h4M17 12h4M6 6l3 3M15 15l3 3M18 6l-3 3M9 15l-3 3\"/><circle cx=\"12\" cy=\"12\" r=\"2.5\"/></svg>";
-      node.appendChild(sp); tl.appendChild(node);
-      return;
+  // ---- prep + the pot, as the shared aligned timeline (bar + a,b,c cards) ----
+  const rgroup=(tgt,txt)=>{ const g=document.createElement("div"); g.className="rgroup"; g.textContent=txt; tgt.appendChild(g); };
+  const whenOf=(st)=>{
+    if(st.at>=totalWithSeason) return "off the heat";
+    if(st.season) return st.at===0 ? "start" : "+"+st.at+"m";
+    if(st.from===0) return "start";
+    if(st.critical) return "+"+st.at+"m \u2014 don\u2019t be late";
+    if(st.from!=null && st.to!=null && st.to>st.from) return "+"+st.from+"\u2013"+st.to+"m";
+    return "+"+st.at+"m";
+  };
+  const potCARDS=[];
+  const prepList = potIngredients.filter(id=>{ const v=(REF.byId[id]||{}).prep_verb; return v && v!=="prep"; });
+  potCARDS.push({label:"Prep", phase:"prep", build:(c)=>{
+    rgroup(c,"Prep everything first");
+    if(prepList.length){
+      prepList.forEach(id=>{
+        const row=document.createElement("div"); row.className="wok-prep";
+        row.innerHTML="<span class=\"wp-n\">"+nm(id)+"</span><span class=\"wp-p\">"+((REF.byId[id]||{}).prep_verb||"prep")+"</span>";
+        c.appendChild(row);
+      });
+    } else {
+      const row=document.createElement("div"); row.className="wok-prep";
+      row.innerHTML="<span class=\"wp-n\">Everything</span><span class=\"wp-p\">cut into even, bite-size pieces</span>";
+      c.appendChild(row);
     }
-    const cats=[]; const seenCat=new Set();
-    st.items.forEach(x=>{ const k=iconKey(x.id); if(!seenCat.has(k)){ seenCat.add(k); cats.push(k); } });
-    const node=document.createElement("div"); node.className="tl-node"; node.style.top=y+"px";
-    cats.forEach((k,j)=>{
-      const sp=document.createElement("span");
-      sp.className="tl-ico"+(j?" stacked":"");
-      // overlap at an angle when there's more than one category at this moment
-      sp.style.transform="translate(-50%,-50%) translate("+(j*7)+"px,"+(j*-5)+"px) rotate("+(j*-11)+"deg)";
-      sp.style.zIndex=String(10-j);
-      sp.innerHTML=ROLE_ICON[k]||ROLE_ICON.soup;
-      node.appendChild(sp);
+  }});
+  potCARDS.push({label: mode.key==="baked"?"Bake":"The pot", phase:"cook", build:(c)=>{
+    rgroup(c, mode.key==="baked"?"Into the oven" : "Build the pot \u2014 add in this order");
+    tlSteps.forEach(st=>{
+      const names = st.items.map(x=>x.name).join(", ");
+      const row=document.createElement("div"); row.className="wok-step"+(st.kind==="season"?" steam-step":"");
+      row.innerHTML=
+        "<span class=\"ws-t\">\u2022</span>"+
+        "<span class=\"ws-b\"><span class=\"ws-i\">"+names+" <span class=\"ps-when\">("+whenOf(st)+")</span></span>"+
+          "<span class=\"ws-w\">"+st.why+"</span></span>";
+      c.appendChild(row);
     });
-    tl.appendChild(node);
-  });
-  const labels=document.createElement("div"); labels.className="pot-labels";
-  tlSteps.forEach((st,i)=>{
-    const row=document.createElement("div"); row.className="pot-lrow"+(st.kind==="season"?" season":""); row.style.height=ROW+"px";
-    /* A WINDOW, not a false minute. Carrot at "+38m" and corn at "+30m" asserts an
-       8-minute distinction a simmering pot cannot honour. Only the stages where timing
-       genuinely matters — the greens, the fish — get a hard time. */
-    let when;
-    if(st.at>=totalWithSeason) when="off the heat";
-    else if(st.season)      when = st.at===0 ? "start" : "+"+st.at+"m";
-    else if(st.from===0)    when="start";
-    else if(st.critical)    when="+"+st.at+"m \u2014 don\u2019t be late";
-    else if(st.from!=null && st.to!=null && st.to>st.from) when="+"+st.from+"\u2013"+st.to+"m";
-    else                    when="+"+st.at+"m";
-    const names = st.items.map(x=>x.name).join(", ");
-    row.innerHTML=
-      "<div class=\"pl-body\">"+
-        "<div class=\"ps-items\">"+names+" <span class=\"ps-when\">("+when+")</span></div>"+
-        "<div class=\"ps-why\">"+st.why+"</div>"+
-      "</div>";
-    labels.appendChild(row);
-  });
-  tl.appendChild(labels);
-  box.appendChild(tl);
+  }});
+  renderStepSlider(box, potCARDS, [
+    {label:"Prep", mins:Math.max(1,p.handsOn), kind:"prep"},
+    {label: mode.key==="baked"?"Bake":"Simmer", mins:Math.max(1,p.total-p.handsOn), kind:"cook"}
+  ]);
 
   if(pathDir){
     const need=pathDir.markers.slice(0,3).filter(m=>!ids.includes(m));
