@@ -305,9 +305,13 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .op-title{margin-bottom:12px}
 .op-name{font-size:20px;font-weight:700;line-height:1.2;letter-spacing:-.01em}
 .op-sub{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.4}
-.ing-tags{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 12px}
+.ing-tags{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin:2px 0 12px}
+.ing-lab{font-family:"Space Mono",monospace;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-right:2px}
 .ing-tag{font-family:"Space Mono",monospace;font-size:10.5px;padding:3px 9px;border-radius:999px;
   background:rgba(50,117,100,.10);color:var(--cool);border:1px solid rgba(50,117,100,.30)}
+.po-c.po-click{cursor:pointer;border:0;font-family:inherit}
+.po-c.on{background:rgba(50,117,100,.14);color:var(--cool)}
+.po-exp{flex-basis:100%;font-size:11.5px;color:var(--ink);line-height:1.45;margin-top:3px;display:none}
 /* numbered section headers + the mobile step timeline */
 .step-head{display:flex;align-items:center;gap:8px}
 .step-n{width:19px;height:19px;border-radius:50%;background:var(--cool);color:#fff;flex:none;
@@ -342,18 +346,22 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .steptl .steptl-b.done::before,.steptl .steptl-b.on::before{background:var(--cool)}
 .steptl-b{display:flex;flex-direction:column;align-items:center;gap:4px;
   background:none;border:0;cursor:pointer;font:inherit;padding:0;position:relative}
-/* in the aligned header each step is a little card; the active one gets a border + tab on top */
+/* in the aligned header each step is a little card; the active one gets a border + tab on top.
+   Each step also takes the colour of its phase column (prep = gold, cook = green). */
 .sh-bubs .steptl-b{flex:0 0 auto;border:1.5px solid transparent;border-radius:9px;padding:6px 8px 4px;transition:.15s}
-.sh-bubs .steptl-b.on{border-color:var(--cool);background:rgba(50,117,100,.07)}
+.sh-bubs .steptl-b.ph-prep{--ph:var(--gold);--phfill:#7a5312;--phbg:rgba(168,114,24,.08)}
+.sh-bubs .steptl-b.ph-cook{--ph:var(--cool);--phfill:#1d4d40;--phbg:rgba(50,117,100,.07)}
+.sh-bubs .steptl-b.ph-finish{--ph:#b98a3a;--phfill:#7a5312;--phbg:rgba(168,114,24,.06)}
+.sh-bubs .steptl-b.on{border-color:var(--ph,var(--cool));background:var(--phbg,rgba(50,117,100,.07))}
 .sh-bubs .steptl-b.on::before{content:"";position:absolute;top:-5px;left:50%;transform:translateX(-50%);
-  width:18px;height:4px;border-radius:2px 2px 0 0;background:var(--cool);z-index:2}
+  width:18px;height:4px;border-radius:2px 2px 0 0;background:var(--ph,var(--cool));z-index:2}
 .steptl-n{position:relative;z-index:1;width:24px;height:24px;border-radius:50%;border:2px solid var(--line);
   color:var(--muted);background:var(--paper);display:flex;align-items:center;justify-content:center;
   font-family:"Space Mono",monospace;font-size:11px;font-weight:700;transition:.15s}
-.steptl-b.done .steptl-n{border-color:var(--cool);color:var(--cool)}
-.steptl-b.on .steptl-n{border-color:var(--cool);background:#1d4d40;color:#fff;font-weight:800}
+.steptl-b.done .steptl-n{border-color:var(--ph,var(--cool));color:var(--ph,var(--cool))}
+.steptl-b.on .steptl-n{border-color:var(--ph,var(--cool));background:var(--phfill,#1d4d40);color:#fff;font-weight:800}
 .steptl-l{font-family:"Space Mono",monospace;font-size:8.5px;letter-spacing:.02em;color:var(--muted);white-space:nowrap}
-.steptl-b.on .steptl-l,.steptl-b.done .steptl-l{color:var(--cool)}
+.steptl-b.on .steptl-l,.steptl-b.done .steptl-l{color:var(--ph,var(--cool))}
 .op-vessel{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--muted)}
 .ov-ico{width:16px;height:16px;color:var(--cool);display:flex;align-items:center}
 .ov-ico svg{width:16px;height:16px}
@@ -659,7 +667,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.22</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.24</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5100,8 +5108,9 @@ function renderStepSlider(box, cards, segments){
   cards.forEach((cd,i)=>{ cd._letter=LETTERS[i]; cd._idx=i; });
   const bubbles=[], cardEls=[];
   let fillEl=null, bubRowEl=null;
+  const PHCOL={prep:"var(--gold)",cook:"var(--cool)",finish:"#b98a3a"};
   const mkBubble=(cd)=>{
-    const b=document.createElement("button"); b.className="steptl-b done"+(cd._idx===0?" on":"");
+    const b=document.createElement("button"); b.className="steptl-b done"+(cd._idx===0?" on":"")+(cd.phase?" ph-"+cd.phase:"");
     b.innerHTML="<span class=\"steptl-n\">"+cd._letter+"</span><span class=\"steptl-l\">"+cd.label+"</span>";
     b.onclick=()=>show(cd._idx); bubbles[cd._idx]=b; return b;
   };
@@ -5139,6 +5148,7 @@ function renderStepSlider(box, cards, segments){
   // fill the connector line from the first step up to the current one
   function updateFill(i){
     if(!fillEl||!bubRowEl||!bubbles[i]) return;
+    fillEl.style.background = PHCOL[cards[i].phase] || "var(--cool)";
     const num=bubbles[i].querySelector(".steptl-n"); if(!num) return;
     const br=bubRowEl.getBoundingClientRect(), nr=num.getBoundingClientRect();
     fillEl.style.width=Math.max(0,(nr.left+nr.width/2)-br.left-6)+"px";
@@ -5256,17 +5266,44 @@ function renderStirFry(){
     {label:"Wok",  mins:sf.total,    kind:"cook"}
   ]);
 
-  // ---- what's not in this wok ----
+  // ---- what's not in this wok (tap a chip to learn why, or whether it's a good swap) ----
+  const WOK_CLASS_NOTE={
+    dense:"a dense vegetable \u2014 it needs the longest in the wok; blanch it first or slice it thin",
+    firm:"a firm vegetable \u2014 a couple of minutes over high heat",
+    quick:"a quick vegetable \u2014 90 seconds, in near the end so it stays crisp",
+    leafy:"a leafy green \u2014 straight in at the very end for 60 seconds",
+    protein:"another protein \u2014 a wok really wants just one, or they crowd and stew",
+    delicate:"fish slices \u2014 they go in last and fold gently, they break apart if tossed",
+    aromatics:"an aromatic \u2014 it belongs in with the garlic, not as a vegetable"
+  };
+  const wokReason=(id)=>{
+    if(isWholeFish(id,REF)) return "a whole fish \u2014 better steamed or pan-fried whole; a wok would break it apart";
+    const cls=wokBehaviour(id,REF).cls;
+    const same=(chosen.contents||[]).filter(u=>u!==id && wokBehaviour(u,REF).cls===cls).map(nm);
+    let s=WOK_CLASS_NOTE[cls]||"it would cook fine in a wok";
+    s += same.length
+      ? ". It cooks just like "+same.join(" and ")+" here \u2014 a good swap for "+(same.length>1?"either":same[0])+"."
+      : ". It works in a wok \u2014 it's only left out to keep this one from crowding; swap it in for a vegetable above if you'd rather.";
+    return s;
+  };
   if(chosen.leftOut && chosen.leftOut.length){
     const o=document.createElement("div"); o.className="pot-out";
     const lab=document.createElement("span"); lab.className="po-l"; lab.textContent="not in this wok";
     o.appendChild(lab);
+    const exp=document.createElement("div"); exp.className="po-exp";
     chosen.leftOut.forEach(id=>{
-      const c=document.createElement("span"); c.className="po-c"; c.textContent=nm(id); o.appendChild(c);
+      const c=document.createElement("button"); c.className="po-c po-click"; c.textContent=nm(id);
+      c.onclick=()=>{
+        o.querySelectorAll(".po-c").forEach(x=>x.classList.remove("on"));
+        c.classList.add("on");
+        exp.textContent=wokReason(id); exp.style.display="block";
+      };
+      o.appendChild(c);
     });
     const w=document.createElement("span"); w.className="po-w";
-    w.textContent="a wok holds a protein and a vegetable or two \u2014 more and it steams";
+    w.textContent="a wok holds a protein and a vegetable or two \u2014 more and it steams. Tap a chip for why";
     o.appendChild(w);
+    o.appendChild(exp);
     box.appendChild(o);
   }
 
@@ -5396,6 +5433,7 @@ function ingredientTags(ids){
   (ids||[]).forEach(id=>{ if(id==="water"||seen.has(id))return; seen.add(id); list.push(id); });
   if(!list.length) return null;
   const wrap=document.createElement("div"); wrap.className="ing-tags";
+  const lab=document.createElement("span"); lab.className="ing-lab"; lab.textContent="Ingredients"; wrap.appendChild(lab);
   list.forEach(id=>{
     const s=document.createElement("span"); s.className="ing-tag";
     s.textContent=((REF.byId[id]||{}).name)||id;
