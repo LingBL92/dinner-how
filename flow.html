@@ -312,15 +312,36 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .step-head{display:flex;align-items:center;gap:8px}
 .step-n{width:19px;height:19px;border-radius:50%;background:var(--cool);color:#fff;flex:none;
   font-family:"Space Mono",monospace;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
-.steptl{display:flex;align-items:flex-start;padding:12px 2px 2px;margin:2px 0 8px}
 .stepslider{position:relative;overflow:hidden;transition:height .28s ease}
 .steptrack{display:flex;align-items:flex-start;transition:transform .3s ease}
 .stepcard{min-width:100%;box-sizing:border-box;padding:0 1px}
-.steptl-b{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;
+/* aligned header: a row of tags, a row of a,b,c bubbles, then the bar — every row in
+   columns whose widths track the bar segments, so each tag/letter sits over its phase. */
+.stephead{margin:8px 0 12px}
+.sh-row{display:flex;gap:2px}
+.sh-col{flex:0 1 0;min-width:10px;display:flex;justify-content:flex-start}
+.sh-tags{margin-bottom:6px}
+.sh-bubs{position:relative;margin-bottom:8px}
+.sh-bubs::before{content:"";position:absolute;top:12px;left:6px;right:6px;height:2px;background:var(--line);z-index:0}
+.sh-bubs .sh-col{gap:10px}
+.tc{padding:2px 8px;border-radius:999px;font-family:"Space Mono",monospace;font-size:10.5px;white-space:nowrap;height:fit-content}
+.tc-prep{background:rgba(168,114,24,.14);color:var(--gold)}
+.tc-cook{background:rgba(50,117,100,.14);color:var(--cool)}
+.tc-finish{background:rgba(168,114,24,.09);color:rgba(168,114,24,.7)}
+.timebar{display:flex;gap:2px;height:9px;border-radius:5px;overflow:hidden}
+.tb-seg{flex:0 1 0;min-width:10px;border-radius:2px}
+.tb-prep{background:var(--gold)}
+.tb-cook{background:var(--cool)}
+.tb-finish{background:rgba(168,114,24,.42)}
+/* fallback timeline (rice): a simple full-width row of bubbles */
+.steptl{display:flex;align-items:flex-start;padding:12px 2px 2px;margin:2px 0 8px}
+.steptl .steptl-b{flex:1 1 0;min-width:0}
+.steptl .steptl-b::before{content:"";position:absolute;top:12px;right:50%;width:100%;height:2px;background:var(--line);z-index:0}
+.steptl .steptl-b:first-child::before{display:none}
+.steptl .steptl-b.done::before,.steptl .steptl-b.on::before{background:var(--cool)}
+.steptl-b{display:flex;flex-direction:column;align-items:center;gap:4px;
   background:none;border:0;cursor:pointer;font:inherit;padding:0;position:relative}
-.steptl-b::before{content:"";position:absolute;top:12px;right:50%;width:100%;height:2px;background:var(--line);z-index:0}
-.steptl-b:first-child::before{display:none}
-.steptl-b.done::before,.steptl-b.on::before{background:var(--cool)}
+.sh-bubs .steptl-b{flex:0 0 auto}
 .steptl-n{position:relative;z-index:1;width:24px;height:24px;border-radius:50%;border:2px solid var(--line);
   color:var(--muted);background:var(--paper);display:flex;align-items:center;justify-content:center;
   font-family:"Space Mono",monospace;font-size:11px;font-weight:700;transition:.15s}
@@ -340,18 +361,6 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .op-big em{font-style:normal;font-size:13px;font-weight:400;margin-left:3px;color:var(--muted)}
 .op-free{font-family:"Space Mono",monospace;font-size:11.5px;color:var(--gold);
   background:rgba(168,114,24,.1);padding:3px 9px;border-radius:999px}
-/* start-to-finish time bar, split by phase (prep / cook / finish) */
-.timewrap{margin:2px 0 14px}
-.timecaps{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:7px;font-family:"Space Mono",monospace;font-size:10.5px}
-.tc{padding:2px 9px;border-radius:999px;line-height:1.5}
-.tc-prep{background:rgba(168,114,24,.14);color:var(--gold)}
-.tc-cook{background:rgba(50,117,100,.14);color:var(--cool)}
-.tc-finish{background:rgba(168,114,24,.09);color:rgba(168,114,24,.7)}
-.timebar{display:flex;height:9px;border-radius:5px;overflow:hidden;gap:2px}
-.tb-seg{min-width:10px;border-radius:2px}
-.tb-prep{background:var(--gold)}
-.tb-cook{background:var(--cool)}
-.tb-finish{background:rgba(168,114,24,.42)}
 .op-need{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin:4px 0 12px;
   font-size:12px}
 .op-need-l{font-family:"Space Mono",monospace;font-size:9px;text-transform:uppercase;
@@ -645,7 +654,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.19</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.20</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5057,57 +5066,54 @@ function schedule(list){
 }
 
 
-// A proportional start-to-finish bar, split into phases (prep / cook / finish). Each segment
-// grows with its minutes; captions name each phase and its time. Zero-length phases drop out.
-function renderTimeBar(box, segs){
-  segs=segs.filter(s=>s.mins>0);
-  if(segs.length<2) return;   // a single block isn't worth a bar
-  const wrap=document.createElement("div"); wrap.className="timewrap";
-  const caps=document.createElement("div"); caps.className="timecaps";
-  segs.forEach(s=>{
-    const c=document.createElement("span"); c.className="tc tc-"+s.kind;
-    c.textContent=s.label+" \u00b7 "+s.mins+"m";
-    caps.appendChild(c);
-  });
-  const bar=document.createElement("div"); bar.className="timebar";
-  segs.forEach(s=>{
-    const seg=document.createElement("div"); seg.className="tb-seg tb-"+s.kind;
-    seg.style.flexGrow=s.mins; seg.title=s.label+" \u2014 "+s.mins+" min";
-    bar.appendChild(seg);
-  });
-  wrap.appendChild(caps); wrap.appendChild(bar);
-  box.appendChild(wrap);
-}
-
-// Shared step slider: a lettered (a,b,c…) tab row below the hero line that swaps cards.
-// Each card = {label, build(cardEl)}. Pass only the steps that exist for this dish; the
-// first present step is lettered 'a'. Active bubble = solid green, the rest green outline.
-function renderStepSlider(box, cards, between){
+// A start-to-finish header aligned in columns: a row of phase tags, a row of a,b,c step
+// bubbles, then the proportional bar — every column tracks a bar segment, so each tag and
+// each letter sits directly over its phase. Cards carry a `phase` matching a segment `kind`;
+// several steps can share one phase (they pack left-to-right in that column).
+function renderStepSlider(box, cards, segments){
   if(!cards.length) return;
   const LETTERS="abcdefgh";
-  const tl=document.createElement("div"); tl.className="steptl";
+  cards.forEach((cd,i)=>{ cd._letter=LETTERS[i]; cd._idx=i; });
+  const bubbles=[], cardEls=[];
+  const mkBubble=(cd)=>{
+    const b=document.createElement("button"); b.className="steptl-b done"+(cd._idx===0?" on":"");
+    b.innerHTML="<span class=\"steptl-n\">"+cd._letter+"</span><span class=\"steptl-l\">"+cd.label+"</span>";
+    b.onclick=()=>show(cd._idx); bubbles[cd._idx]=b; return b;
+  };
+  const cols=(segments||[]).filter(s=>s.mins>0);
+  if(cols.length>=2){
+    const kindCol={}; cols.forEach((s,ci)=>{ if(!(s.kind in kindCol)) kindCol[s.kind]=ci; });
+    const colOf=cd=>(cd.phase in kindCol)?kindCol[cd.phase]:cols.length-1;   // unmatched → last column
+    const head=document.createElement("div"); head.className="stephead";
+    const tagRow=document.createElement("div"); tagRow.className="sh-row sh-tags";
+    const bubRow=document.createElement("div"); bubRow.className="sh-row sh-bubs";
+    const bar=document.createElement("div"); bar.className="timebar";
+    cols.forEach((seg,ci)=>{
+      const tc=document.createElement("div"); tc.className="sh-col"; tc.style.flexGrow=seg.mins;
+      const tag=document.createElement("span"); tag.className="tc tc-"+seg.kind; tag.textContent=seg.label+" \u00b7 "+seg.mins+"m";
+      tc.appendChild(tag); tagRow.appendChild(tc);
+      const bc=document.createElement("div"); bc.className="sh-col"; bc.style.flexGrow=seg.mins;
+      cards.filter(cd=>colOf(cd)===ci).forEach(cd=>bc.appendChild(mkBubble(cd)));
+      bubRow.appendChild(bc);
+      const sg=document.createElement("div"); sg.className="tb-seg tb-"+seg.kind; sg.style.flexGrow=seg.mins;
+      sg.title=seg.label+" \u2014 "+seg.mins+" min"; bar.appendChild(sg);
+    });
+    head.appendChild(tagRow); head.appendChild(bubRow); head.appendChild(bar);
+    box.appendChild(head);
+  } else {
+    const tl=document.createElement("div"); tl.className="steptl";
+    cards.forEach(cd=>tl.appendChild(mkBubble(cd)));
+    box.appendChild(tl);
+  }
   const slider=document.createElement("div"); slider.className="stepslider";
-  const track=document.createElement("div"); track.className="steptrack";
-  slider.appendChild(track);
-  const cardEls=[];
-  cards.forEach((cd,i)=>{
-    const card=document.createElement("div"); card.className="stepcard"; cd.build(card);
-    track.appendChild(card); cardEls.push(card);
-    const b=document.createElement("button"); b.className="steptl-b done"+(i===0?" on":"");
-    b.innerHTML="<span class=\"steptl-n\">"+LETTERS[i]+"</span><span class=\"steptl-l\">"+cd.label+"</span>";
-    b.onclick=()=>show(i);
-    tl.appendChild(b);
-  });
-  box.appendChild(tl);           // the a,b,c timeline sits on top
-  if(between) between(box);       // …then the time bar (captions + bar)…
-  box.appendChild(slider);        // …then the cards it drives
-  const bubbles=[...tl.querySelectorAll(".steptl-b")];
+  const track=document.createElement("div"); track.className="steptrack"; slider.appendChild(track);
+  cards.forEach(cd=>{ const card=document.createElement("div"); card.className="stepcard"; cd.build(card); track.appendChild(card); cardEls[cd._idx]=card; });
+  box.appendChild(slider);
   function show(i){
     track.style.transform="translateX(-"+(i*100)+"%)";
-    bubbles.forEach((x,j)=>x.classList.toggle("on", j===i));
+    bubbles.forEach((x,j)=>{ if(x) x.classList.toggle("on", j===i); });
     const h=cardEls[i]?cardEls[i].offsetHeight:0; if(h) slider.style.height=h+"px";
   }
-  // fix the slider to the first card's height (synchronously = no flash on load)
   { const h0=cardEls[0]?cardEls[0].offsetHeight:0; if(h0) slider.style.height=h0+"px"; }
   requestAnimationFrame(()=>{ const h=cardEls[0]?cardEls[0].offsetHeight:0; if(h) slider.style.height=h+"px"; });
 }
@@ -5179,7 +5185,7 @@ function renderStirFry(){
   // ---- the steps, as an a,b,c card slider (prep · wok · sauce) ----
   const rgroup=(tgt,txt)=>{ const g=document.createElement("div"); g.className="rgroup"; g.textContent=txt; tgt.appendChild(g); };
   const CARDS=[];
-  if(sf.prep.length) CARDS.push({label:"Prep", build:(c)=>{
+  if(sf.prep.length) CARDS.push({label:"Prep", phase:"prep", build:(c)=>{
     rgroup(c,"Prep everything first");
     sf.prep.forEach(p=>{
       const row=document.createElement("div"); row.className="wok-prep";
@@ -5188,7 +5194,7 @@ function renderStirFry(){
       c.appendChild(row);
     });
   }});
-  CARDS.push({label:"Wok", build:(c)=>{
+  CARDS.push({label:"Wok", phase:"cook", build:(c)=>{
     rgroup(c,"Then, in this order");
     sf.steps.forEach(st=>{
       const row=document.createElement("div"); row.className="wok-step";
@@ -5200,7 +5206,7 @@ function renderStirFry(){
       c.appendChild(row);
     });
   }});
-  if((sf.sauceSteps||[]).length) CARDS.push({label:"Sauce", build:(c)=>{
+  if((sf.sauceSteps||[]).length) CARDS.push({label:"Sauce", phase:"cook", build:(c)=>{
     rgroup(c, dir ? "The sauce \u2014 "+dir.label.replace(/ \(.*\)/,"") : "The sauce");
     (sf.sauceSteps||[]).forEach(s=>{
       const row=document.createElement("div"); row.className="wok-step";
@@ -5210,10 +5216,10 @@ function renderStirFry(){
       c.appendChild(row);
     });
   }});
-  renderStepSlider(box, CARDS, (b)=>renderTimeBar(b, [
+  renderStepSlider(box, CARDS, [
     {label:"Prep", mins:sf.prepMins, kind:"prep"},
     {label:"Wok",  mins:sf.total,    kind:"cook"}
-  ]));
+  ]);
 
   // ---- what's not in this wok ----
   if(chosen.leftOut && chosen.leftOut.length){
@@ -5435,7 +5441,7 @@ function renderSteam(){
 
   // ---- the four steps, each built into its own card (an a,b,c… slider) ----
   const CARDS=[];
-  if(st.prep.length) CARDS.push({label:"Prep", build:(c)=>{
+  if(st.prep.length) CARDS.push({label:"Prep", phase:"prep", build:(c)=>{
     rgroup(c,"Prep first");
     st.prep.forEach(p=>{
       const row=document.createElement("div"); row.className="wok-prep";
@@ -5444,11 +5450,11 @@ function renderSteam(){
       c.appendChild(row);
     });
   }});
-  if(seasonBefore.length) CARDS.push({label:"Season", build:(c)=>{
+  if(seasonBefore.length) CARDS.push({label:"Season", phase:"prep", build:(c)=>{
     rgroup(c, dir ? "The seasoning \u2014 "+dir.label.replace(/ \(.*\)/,"") : "The seasoning");
     sauceRows(seasonBefore,c);
   }});
-  CARDS.push({label:"Steam", build:(c)=>{
+  CARDS.push({label:"Steam", phase:"cook", build:(c)=>{
     rgroup(c,"Assemble on the plate");
     const arow=document.createElement("div"); arow.className="wok-step";
     arow.innerHTML="<span class=\"ws-t\">plate</span>"+
@@ -5465,7 +5471,7 @@ function renderSteam(){
     c.appendChild(srow);
     if(st.steam.warn){ const w=document.createElement("div"); w.className="steam-warn"; w.textContent="\u26a0 "+st.steam.warn; c.appendChild(w); }
   }});
-  if(seasonAfter.length) CARDS.push({label:"Finish", build:(c)=>{
+  if(seasonAfter.length) CARDS.push({label:"Finish", phase:"cook", build:(c)=>{
     rgroup(c,"Finish \u2014 after steaming");
     sauceRows(seasonAfter,c);
   }});
@@ -5473,12 +5479,11 @@ function renderSteam(){
   // clean up any scroll observer left over from the previous (pre-slider) design
   if(window.__steamTLObs){ window.__steamTLObs.disconnect(); window.__steamTLObs=null; }
 
-  // ---- the a,b,c timeline + card slider (below the hero line); time bar sits between ----
-  renderStepSlider(box, CARDS, (b)=>renderTimeBar(b, [
-    {label:"Prep",   mins:st.prepMins, kind:"prep"},
-    {label:"Steam",  mins:st.steam.mins, kind:"cook"},
-    {label:"Finish", mins:Math.max(0, st.total - st.prepMins - st.steam.mins), kind:"finish"}
-  ]));
+  // ---- aligned header (tags · a,b,c · bar) + card slider ----
+  renderStepSlider(box, CARDS, [
+    {label:"Prep",  mins:st.prepMins, kind:"prep"},
+    {label:"Steam", mins:Math.max(1, st.total - st.prepMins), kind:"cook"}
+  ]);
 
   // ---- what's not on this plate ----
   if(chosen.leftOut && chosen.leftOut.length){
@@ -5666,7 +5671,7 @@ function renderRice(){
   // ---- the steps, as an a,b,c card slider (prep · cook · sauce) ----
   const rgroup=(tgt,txt)=>{ const g=document.createElement("div"); g.className="rgroup"; g.textContent=txt; tgt.appendChild(g); };
   const CARDS=[];
-  if(rb.prep.length) CARDS.push({label:"Prep", build:(c)=>{
+  if(rb.prep.length) CARDS.push({label:"Prep", phase:"prep", build:(c)=>{
     rgroup(c,"Prep first");
     rb.prep.forEach(p=>{
       const row=document.createElement("div"); row.className="wok-prep";
@@ -5687,7 +5692,7 @@ function renderRice(){
       c.appendChild(row);
     });
   }});
-  if((rb.sauceSteps||[]).length) CARDS.push({label:"Sauce", build:(c)=>{
+  if((rb.sauceSteps||[]).length) CARDS.push({label:"Sauce", phase:"cook", build:(c)=>{
     rgroup(c, dir ? "The sauce \u2014 "+dir.label.replace(/ \(.*\)/,"") : "The sauce");
     (rb.sauceSteps||[]).forEach(s=>{
       const row=document.createElement("div"); row.className="wok-step";
