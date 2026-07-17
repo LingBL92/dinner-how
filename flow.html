@@ -303,6 +303,8 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 }
 /* ===== ONE-POT: a clear hierarchy — the schedule is the hero ===== */
 .op-title{margin-bottom:12px}
+.dish-art{margin:2px 0 8px}
+.dish-art svg{display:block}
 .op-name{font-size:20px;font-weight:700;line-height:1.2;letter-spacing:-.01em}
 .op-sub{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.4}
 .ing-tags{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin:2px 0 12px}
@@ -667,7 +669,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.28</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.29</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5447,6 +5449,107 @@ function ingredientTags(ids){
   });
   return wrap;
 }
+/* ===== DISH ART — a small overhead illustration of the dish, generated from the same
+   data the recipe is built from: the subject's form, the plate partners, and the chosen
+   seasoning direction (its colour and whether it coats, pools, or is poured over). */
+const ART_SAUCE={
+  ginger_scallion:{oil:"#C8A24A"},
+  superior_soy:{pool:"#8A5A2B"},
+  black_bean:{specks:"#3A2A1E"},
+  minced_garlic:{specks:"#E3C97F"},
+  salted_egg:{coat:"#E0A93E"},
+  salted_veg:{pool:"#C9C06A"},
+  rempah:{coat:"#C64A22"},
+  chilli_lime:{pool:"#D4502E"},
+  dashi_sake:{pool:"#E7DFC8"},
+  green_chutney:{coat:"#4E7D3A"},
+  salted_fish:{specks:"#7A5230"},
+  white_wine:{pool:"#E3DDC9"}
+};
+const ART_VEG={leafy:"#4E8A4E",root:"#E08A2E",fungi:"#8A6A4A",fruiting:"#C4452B",florets:"#5A9A50",pods:"#6BA55A",aromatic:"#D9C089"};
+function steamDishArt(form, subjId, contents, dir, R){
+  const S=[];
+  const wrapped = !!(dir && (dir.paste || dir.wrap));
+  const sauce = dir ? (ART_SAUCE[dir.key]||{}) : {};
+  if(wrapped){
+    S.push('<ellipse cx="56" cy="60" rx="50" ry="40" fill="#EDE9DE"/>');
+    S.push('<g transform="rotate(-8 56 58)">');
+    S.push('<rect x="18" y="34" width="76" height="48" rx="14" fill="#4E7D3A"/>');
+    S.push('<rect x="18" y="34" width="76" height="48" rx="14" fill="none" stroke="#39602A" stroke-width="2"/>');
+    S.push('<path d="M24 58 q32 -8 64 0" stroke="#39602A" stroke-width="1.5" fill="none"/>');
+    S.push('<path d="M30 44 L38 72 M74 42 L82 70" stroke="#39602A" stroke-width="1.5"/>');
+    S.push('<path d="M20 70 Q56 84 92 68" stroke="#FFFFFF" stroke-width="4" fill="none" opacity="0.35" stroke-linecap="round"/>');
+    S.push('</g>');
+    return '<svg viewBox="0 0 112 112" width="112" height="112" role="img" aria-label="dish illustration">'+S.join("")+'</svg>';
+  }
+  const bowl = form==="custard";
+  S.push('<circle cx="56" cy="56" r="52" fill="'+(bowl?"#B9CBC8":"#E8E4DB")+'"/>');
+  S.push('<circle cx="56" cy="56" r="52" fill="none" stroke="'+(bowl?"#93AAA6":"#C9C3B4")+'" stroke-width="2"/>');
+  S.push('<circle cx="56" cy="56" r="'+(bowl?38:43)+'" fill="'+(bowl?"#F2E7C8":"#F4F1EA")+'"/>');
+  const has=id=>contents.includes(id)&&id!==subjId;
+  const fishy = form==="whole_fish"||form==="shellfish";
+  if(fishy && has("glass_noodles"))
+    S.push('<g stroke="#E4D9BC" stroke-width="2.5" fill="none" stroke-linecap="round"><path d="M26 52 q16 10 30 2 q14 -8 30 4"/><path d="M28 62 q18 8 30 0 q14 -8 26 4"/><path d="M32 44 q14 8 26 2"/></g>');
+  else if(fishy && has("tofu"))
+    S.push('<g fill="#F7F3E8" stroke="#E0D8C5" stroke-width="1.5"><rect x="28" y="46" width="20" height="14" rx="2"/><rect x="50" y="50" width="20" height="14" rx="2"/><rect x="66" y="42" width="18" height="13" rx="2"/></g>');
+  else if(fishy && (has("napa_cabbage")||has("lettuce")))
+    S.push('<g stroke="#BBD5A6" stroke-width="3" fill="none" stroke-linecap="round"><path d="M26 54 q16 6 28 0"/><path d="M40 62 q16 6 30 -2"/><path d="M50 46 q14 6 30 2"/></g>');
+  if(form==="whole_fish"){
+    S.push('<ellipse cx="54" cy="56" rx="34" ry="15" transform="rotate(-14 54 56)" fill="#EDE0CE"/>');
+    S.push('<ellipse cx="54" cy="56" rx="34" ry="15" transform="rotate(-14 54 56)" fill="none" stroke="#D8C6A9" stroke-width="1.5"/>');
+    S.push('<path d="M82 44 L94 38 L91 50 Z" fill="#EDE0CE" stroke="#D8C6A9" stroke-width="1.5"/>');
+    S.push('<circle cx="34" cy="56" r="2" fill="#C9B896"/>');
+    S.push('<path d="M40 62 q10 4 20 2" stroke="#D8C6A9" stroke-width="1.2" fill="none"/>');
+  } else if(form==="fish_slices"){
+    S.push('<g fill="#F1E6D2" stroke="#DECDA8" stroke-width="1.3"><rect x="30" y="44" width="22" height="12" rx="5" transform="rotate(-8 41 50)"/><rect x="50" y="52" width="22" height="12" rx="5" transform="rotate(6 61 58)"/><rect x="38" y="62" width="22" height="12" rx="5" transform="rotate(-4 49 68)"/><rect x="62" y="40" width="20" height="11" rx="5" transform="rotate(10 72 45)"/></g>');
+  } else if(form==="shellfish"){
+    if(subjId==="clams"||subjId==="mussels"){
+      const c = subjId==="mussels" ? "#3E3A55" : "#B08968";
+      S.push('<g fill="'+c+'" stroke="#5F5545" stroke-width="1.2"><ellipse cx="42" cy="48" rx="11" ry="8" transform="rotate(-18 42 48)"/><ellipse cx="66" cy="46" rx="11" ry="8" transform="rotate(14 66 46)"/><ellipse cx="50" cy="66" rx="11" ry="8" transform="rotate(6 50 66)"/><ellipse cx="72" cy="64" rx="10" ry="7" transform="rotate(-10 72 64)"/></g>');
+    } else if(subjId==="scallops"){
+      S.push('<g><circle cx="42" cy="48" r="9" fill="#F4EEDF" stroke="#DFCFA9" stroke-width="1.3"/><circle cx="68" cy="46" r="9" fill="#F4EEDF" stroke="#DFCFA9" stroke-width="1.3"/><circle cx="54" cy="68" r="9" fill="#F4EEDF" stroke="#DFCFA9" stroke-width="1.3"/></g>');
+    } else {
+      S.push('<g fill="#F0A583" stroke="#D07B52" stroke-width="1.4"><path d="M36 46 q14 -12 24 2 q-4 4 -8 3 q2 6 -6 8 q-10 2 -10 -13" /><path d="M58 62 q14 -12 24 2 q-4 4 -8 3 q2 6 -6 8 q-10 2 -10 -13"/><path d="M40 66 q12 -10 20 2 q-3 3 -7 2 q2 5 -5 7 q-9 2 -8 -11"/></g>');
+    }
+  } else if(form==="ribs"){
+    S.push('<g fill="#9A5A3A" stroke="#6E3D24" stroke-width="1.3"><rect x="32" y="44" width="17" height="13" rx="4" transform="rotate(-8 40 50)"/><rect x="52" y="40" width="17" height="13" rx="4" transform="rotate(9 60 46)"/><rect x="42" y="60" width="17" height="13" rx="4" transform="rotate(4 50 66)"/><rect x="62" y="58" width="16" height="12" rx="4" transform="rotate(-7 70 64)"/></g>');
+  } else if(form==="poultry"){
+    S.push('<g fill="#F0DCC0" stroke="#D9BE97" stroke-width="1.3"><rect x="32" y="44" width="19" height="14" rx="6" transform="rotate(-7 41 51)"/><rect x="54" y="40" width="19" height="14" rx="6" transform="rotate(8 63 47)"/><rect x="42" y="61" width="19" height="14" rx="6" transform="rotate(3 51 68)"/><rect x="63" y="58" width="17" height="13" rx="6" transform="rotate(-8 71 64)"/></g>');
+  } else if(form==="mince"){
+    S.push('<circle cx="56" cy="56" r="26" fill="#C98B72"/><circle cx="56" cy="56" r="26" fill="none" stroke="#A96A52" stroke-width="1.5"/><circle cx="56" cy="54" r="19" fill="#D49A81" opacity="0.7"/>');
+    if(has("egg")||has("century_egg")) S.push('<circle cx="62" cy="52" r="6" fill="#3E3A45" opacity="0.8"/>');
+  } else if(form==="custard"){
+    S.push('<circle cx="56" cy="56" r="34" fill="#F2D98B"/><circle cx="56" cy="56" r="34" fill="none" stroke="#DFC06A" stroke-width="1.5"/>');
+  } else if(form==="tofu"){
+    S.push('<g fill="#F7F3E8" stroke="#E0D8C5" stroke-width="1.4"><rect x="30" y="42" width="24" height="16" rx="2"/><rect x="56" y="46" width="24" height="16" rx="2"/><rect x="40" y="62" width="24" height="16" rx="2"/></g>');
+  } else if(form==="dense_veg"){
+    let px=0;
+    const spots=[[40,46],[64,44],[48,62],[70,62],[56,52],[36,60]];
+    contents.slice(0,6).forEach(id=>{
+      const g=(R.byId[id]||{}).group; const col=ART_VEG[g]||"#7AA061";
+      const [x,y]=spots[px%spots.length]; px++;
+      if(g==="leafy") S.push('<path d="M'+(x-8)+' '+y+' q8 -8 16 0 q-8 6 -16 0" fill="'+col+'"/>');
+      else if(g==="root") S.push('<rect x="'+(x-8)+'" y="'+(y-4)+'" width="16" height="8" rx="3" fill="'+col+'"/>');
+      else if(g==="fungi") S.push('<circle cx="'+x+'" cy="'+y+'" r="7" fill="'+col+'"/><circle cx="'+x+'" cy="'+y+'" r="3" fill="#A98A6A"/>');
+      else S.push('<circle cx="'+x+'" cy="'+y+'" r="7" fill="'+col+'"/>');
+    });
+  }
+  if(fishy && has("tomato")){
+    S.push('<g fill="#E85B4B" opacity="0.92"><path d="M28 66 q-8 -10 -2 -18 l10 -4 q-6 12 2 20 Z"/><path d="M84 46 q8 10 2 18 l-10 4 q6 -12 -2 -20 Z"/></g>');
+  }
+  if(sauce.coat) S.push('<ellipse cx="56" cy="55" rx="30" ry="17" fill="'+sauce.coat+'" opacity="0.45"/>');
+  if(sauce.pool) S.push('<ellipse cx="56" cy="60" rx="36" ry="20" fill="'+sauce.pool+'" opacity="0.30"/>');
+  if(sauce.oil)  S.push('<ellipse cx="55" cy="54" rx="32" ry="15" transform="rotate(-12 55 54)" fill="'+sauce.oil+'" opacity="0.30"/>');
+  if(sauce.specks){ S.push('<g fill="'+sauce.specks+'"><circle cx="44" cy="50" r="1.8"/><circle cx="58" cy="46" r="1.8"/><circle cx="66" cy="56" r="1.8"/><circle cx="50" cy="60" r="1.8"/><circle cx="60" cy="64" r="1.6"/><circle cx="38" cy="58" r="1.6"/></g>'); }
+  if(dir && dir.key!=="plain"){
+    S.push('<g stroke="#3E7D4F" stroke-width="2.2" stroke-linecap="round"><path d="M42 44 l12 -4"/><path d="M52 52 l13 -2"/><path d="M46 62 l12 2"/></g>');
+    if(dir.key==="chilli_lime"||dir.key==="rempah") S.push('<g stroke="#C43C2B" stroke-width="2.2" stroke-linecap="round"><path d="M62 44 l9 -3"/><path d="M64 58 l9 2"/></g>');
+    if(dir.key==="ginger_scallion") S.push('<g stroke="#E8B94A" stroke-width="1.8" stroke-linecap="round"><path d="M58 48 l10 0"/><path d="M48 56 l9 2"/></g>');
+  }
+  S.push('<path d="M22 40 Q52 24 92 36" stroke="#FFFFFF" stroke-width="4" fill="none" opacity="0.5" stroke-linecap="round"/>');
+  return '<svg viewBox="0 0 112 112" width="112" height="112" role="img" aria-label="dish illustration">'+S.join("")+'</svg>';
+}
+
 function renderSteam(){
   const box=el("recipes"); if(!box)return; box.innerHTML="";
   const ids=[...FLOW.active].filter(id=>{
@@ -5466,6 +5569,11 @@ function renderSteam(){
 
   const dir = FLOW.steamDir ? STEAM_DIRS.find(d=>d.key===FLOW.steamDir) : null;
   const st  = buildSteam(chosen.contents, REF, DISHES, AFF, {form:chosen.form, subject:chosen.subject, direction:dir});
+
+  // ---- the dish, drawn from the same data the recipe is built from ----
+  { const art=document.createElement("div"); art.className="dish-art";
+    art.innerHTML=steamDishArt(chosen.form, chosen.subject, chosen.contents, dir, REF);
+    box.appendChild(art); }
 
   // ---- headline + the Seasoning button (radial, as in the wok) ----
   const t=document.createElement("div"); t.className="op-title";
