@@ -2007,8 +2007,10 @@ const WOK_CLASS=[
 /* How does this vegetable behave in a wok? Derived from structure \u2014 which is exactly
    what makes okra and kangkong different. */
 // a whole fish (pomfret, salmon, snapper…) is bought and cooked whole — you steam it or
-// pan-fry it whole. A wok would break a delicate fish apart, so it never goes in one.
-function isWholeFish(id, R){ return ((R.byId[id]||{}).provides||[]).includes("fish_family"); }
+// pan-fry it whole. A wok would break a delicate fish apart, so it never goes in one. Fish
+// SLICES (dory, batang) are a fillet — they carry the fish family but are marked "filleted",
+// and those DO stir-fry (gently, near the end).
+function isWholeFish(id, R){ const p=(R.byId[id]||{}).provides||[]; return p.includes("fish_family") && !p.includes("filleted"); }
 function wokBehaviour(id, R){
   const i=R.byId[id]||{};
   if(isWholeFish(id,R)) return {id, name:i.name||id, cls:null, wholeFish:true};
@@ -2046,6 +2048,9 @@ function wokBehaviour(id, R){
   if(SPECIAL[id]) return {id, name:i.name||id, ...SPECIAL[id]};
 
   if(i.category==="proteins"){
+    if(p.has("filleted")) return {id,name:i.name,cls:"protein",
+      prep:"pat dry and cut into thick slices \u2014 add near the end and fold gently, don\u2019t toss hard",
+      warn:"delicate \u2014 fish slices break up if stirred hard"};
     if(i.form==="mince") return {id,name:i.name,cls:"protein",prep:"break it up in the wok",warn:null};
     return {id,name:i.name,cls:"protein",prep:"slice thin against the grain",
       warn:p.has("collagen_rich")?"a tough cut will not tenderise in a wok \u2014 slice it very thin, or use a quicker cut":null};
@@ -2330,6 +2335,9 @@ const STEAM_FORM={
   shellfish:{label:"shellfish",           mins:7,  vigour:"rolling",
     why:"rolling steam, 5\u20138 min \u2014 until the prawns curl or the shells open",
     warn:"the instant a clam opens it's done \u2014 discard any that stay shut"},
+  fish_slices:{label:"fish slices",        mins:7,  vigour:"gentle",
+    why:"GENTLE steam, ~6\u20138 min \u2014 sliced fish cooks fast; off the heat the moment it turns opaque",
+    warn:"thin slices overcook in seconds \u2014 don't walk away from these"},
   ribs:{label:"pork ribs",                mins:18, vigour:"rolling",
     why:"rolling steam, ~18 min \u2014 the meat should pull from the bone",
     warn:"cut the ribs into 3 cm pieces or the centre stays raw"},
@@ -2358,6 +2366,7 @@ function steamFormOf(id, R){
   if(i.form==="mince") return "mince";
   if(/^chicken/.test(id)||id==="turkey") return "poultry";
   if(["prawn","clams","oyster","squid","scallops","mussels"].includes(id)) return "shellfish";
+  if((i.provides||[]).includes("filleted")) return "fish_slices";
   if(id==="egg") return "custard";
   if(id==="tofu") return "tofu";
   if(STEAM_FISH.includes(id)) return "whole_fish";
@@ -2376,6 +2385,7 @@ function subjectPrep(form, name, id){
   const P={
     whole_fish:{prep:"scale, gut and score twice on each side", warn:"scoring lets the steam reach the bone"},
     shellfish: {prep:"clean", warn:null},
+    fish_slices:{prep:"cut into thick, even slices and pat dry", warn:"slices this thin cook in minutes \u2014 keep the steam gentle"},
     ribs:      {prep:"cut into 3 cm pieces", warn:"small pieces or the centre stays raw"},
     poultry:   {prep:"cut into even, bite-size pieces", warn:null},
     mince:     {prep:"season, then press into an even, shallow patty", warn:"even and thin, or the middle lags"},
@@ -2512,7 +2522,7 @@ function buildSteam(ingIds, R, dishes, AFF, opts){
   }))];
 
   // the subject: highest-priority steaming protein, else a dense vegetable
-  const PRIORITY=["whole_fish","shellfish","ribs","poultry","mince","custard","tofu","dense_veg"];
+  const PRIORITY=["whole_fish","shellfish","fish_slices","ribs","poultry","mince","custard","tofu","dense_veg"];
   const forms=opts&&opts.form ? [opts.form] :
     [...new Set(ingIds.map(id=>steamFormOf(id,R)).filter(Boolean))]
       .sort((a,b)=>PRIORITY.indexOf(a)-PRIORITY.indexOf(b));
@@ -2620,18 +2630,19 @@ function steamCandidates(ingIds, R, dishes, AFF){
   const topping=real.filter(id=>CHARACTER_SEASONINGS.has(id));
 
   const out=[];
-  const LABELS={whole_fish:"Steamed ", shellfish:"Steamed ", ribs:"Steamed ",
+  const LABELS={whole_fish:"Steamed ", shellfish:"Steamed ", fish_slices:"Steamed ", ribs:"Steamed ",
     poultry:"Steamed ", mince:"Steamed ", tofu:"Steamed ", dense_veg:"Steamed "};
   const NOTE={
     whole_fish:"a whole fish, on a bed of ginger \u2014 the flesh just parting at the bone",
     shellfish:"quick and briny \u2014 5 to 8 minutes, no more",
+    fish_slices:"a delicate fillet \u2014 a quick, gentle steam",
     ribs:"chopped small so they cook through \u2014 about 18 minutes",
     poultry:"bone-in pieces \u2014 they need the full time",
     mince:"an even patty \u2014 the local everyday steam",
     tofu:"gentle \u2014 just to heat it through without splitting it",
     dense_veg:"steamed soft, then dressed \u2014 no protein needed"
   };
-  const PRIORITY=["whole_fish","shellfish","ribs","poultry","mince","custard","tofu","dense_veg"];
+  const PRIORITY=["whole_fish","shellfish","fish_slices","ribs","poultry","mince","custard","tofu","dense_veg"];
 
   // custard is special: egg + a steaming liquid (dashi / stock) = a savoury custard
   const hasLiquid = ingIds.some(id=>["dashi","broth","kombu"].includes(id));
