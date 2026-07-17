@@ -669,7 +669,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.33</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.36</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5476,6 +5476,45 @@ const ART_SAUCE={
   white_wine:{pool:"#E3DDC9", lemon:true}
 };
 const ART_VEG={leafy:"#4E8A4E",root:"#E08A2E",fungi:"#8A6A4A",fruiting:"#C4452B",florets:"#5A9A50",pods:"#6BA55A",aromatic:"#D9C089"};
+/* whole-fish species looks: body build, base colour, darker back, and pattern.
+   Grounded in the real fish: pomfret round + silver, snapper pink-red, mackerel slim
+   with wavy back stripes, grouper stout and spotted, tuna dark-backed, sardine small. */
+const ART_FISH={
+  pomfret:  {shape:"round", base:"#DEDED4", back:"#B8BCB2"},
+  snapper:  {shape:"oval",  base:"#E8A08E", back:"#D06A52", fin:"#D06A52"},
+  seabass:  {shape:"slim",  base:"#D6D8CE", back:"#A8AEA2"},
+  threadfin:{shape:"slim",  base:"#DCD9C8", back:"#B0AA8E", fin:"#D9C060"},
+  grouper:  {shape:"stout", base:"#B99A72", back:"#8A6A48", pattern:"spots"},
+  mackerel: {shape:"slim",  base:"#B7C4C9", back:"#5F7A88", pattern:"stripes"},
+  cod:      {shape:"slim",  base:"#C4BAA0", back:"#968C70"},
+  salmon:   {shape:"slim",  base:"#C9CCC4", back:"#8E969A"},
+  tuna:     {shape:"oval",  base:"#9FABB5", back:"#4E5E6E"},
+  sardine:  {shape:"small", base:"#CDD2CC", back:"#8E9AA0"},
+  mackerel_spanish:{shape:"slim", base:"#B7C4C9", back:"#5F7A88", pattern:"stripes"}
+};
+/* organic sauce splats: 6 hand-tuned blob characters (lobes + one deep bite each, like
+   design-tool blobs), smoothed with quadratic curves. Which shape a dish gets is a hash of
+   the dish + seasoning — random-looking assignment, but stable across re-renders. */
+const ART_SPLATS=[
+  {r:[1.18,.72,1.22,1.02,.52,1.12], a:[0,.25,-.18,.12,.3,-.22]},
+  {r:[.62,1.2,1.05,.7,1.18,1.1],    a:[.2,-.15,.22,-.1,.15,-.25]},
+  {r:[1.1,1.2,.55,1.15,.95,.68],    a:[-.2,.15,.28,-.12,.2,.1]},
+  {r:[.7,1.05,1.22,.6,1.1,1.18],    a:[.15,.25,-.2,.18,-.15,.22]},
+  {r:[1.22,.58,1.08,1.2,.75,1.05],  a:[-.25,.2,.12,-.18,.25,-.1]},
+  {r:[1.05,1.18,.68,.58,1.2,1.1],   a:[.22,-.2,.15,.25,-.12,.18]}
+];
+function artSeed(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))|0; } return Math.abs(h); }
+function artBlob(cx,cy,rx,ry,seed){
+  const sp=ART_SPLATS[(seed||0)%ART_SPLATS.length];
+  const rot=((seed||0)*47)%360*Math.PI/180;
+  const pts=[];
+  for(let i=0;i<6;i++){ const a=i/6*2*Math.PI+sp.a[i]+rot;
+    pts.push([cx+Math.cos(a)*rx*sp.r[i], cy+Math.sin(a)*ry*sp.r[(i+2)%6]]); }
+  let d="M"+((pts[5][0]+pts[0][0])/2).toFixed(1)+" "+((pts[5][1]+pts[0][1])/2).toFixed(1);
+  for(let i=0;i<6;i++){ const p=pts[i], q=pts[(i+1)%6];
+    d+=" Q"+p[0].toFixed(1)+" "+p[1].toFixed(1)+" "+((p[0]+q[0])/2).toFixed(1)+" "+((p[1]+q[1])/2).toFixed(1); }
+  return d+" Z";
+}
 function steamDishArt(form, subjId, contents, dir, R){
   const S=[];
   const wrapped = !!(dir && (dir.paste || dir.wrap));
@@ -5523,18 +5562,31 @@ function steamDishArt(form, subjId, contents, dir, R){
     S.push('<g stroke="#BBD5A6" stroke-width="3" fill="none" stroke-linecap="round"><path d="M30 54 q16 6 26 0"/><path d="M42 62 q16 6 28 -2"/><path d="M50 46 q14 6 28 2"/></g>');
   // a poured sauce puddles UNDER the subject: an organic pool with a darker edge and a shine
   if(sauce.pool){
-    S.push('<path d="M24 58 Q22 46 36 44 Q48 38 62 42 Q80 40 86 52 Q92 62 80 68 Q70 76 54 74 Q34 76 26 68 Q20 64 24 58 Z" fill="'+sauce.pool+'" opacity="0.42"/>');
-    S.push('<path d="M24 58 Q22 46 36 44 Q48 38 62 42 Q80 40 86 52 Q92 62 80 68 Q70 76 54 74 Q34 76 26 68 Q20 64 24 58 Z" fill="none" stroke="'+sauce.pool+'" stroke-width="1.5" opacity="0.5"/>');
+    const pd=artBlob(56,58,32,19,artSeed("pud"+subjId+(dir?dir.key:"")));
+    S.push('<path d="'+pd+'" fill="'+sauce.pool+'" opacity="0.42"/>');
+    S.push('<path d="'+pd+'" fill="none" stroke="'+sauce.pool+'" stroke-width="1.5" opacity="0.5"/>');
     S.push('<ellipse cx="40" cy="50" rx="7" ry="3" fill="#FFFFFF" opacity="0.35"/>');
   }
   // the subject
   if(form==="whole_fish"){
-    S.push('<ellipse cx="52" cy="56" rx="32" ry="14" transform="rotate(-10 52 56)" fill="#EDE0CE"/>');
-    S.push('<ellipse cx="52" cy="56" rx="32" ry="14" transform="rotate(-10 52 56)" fill="none" stroke="#D8C6A9" stroke-width="1.5"/>');
-    S.push('<path d="M62 52 q4 4 0 9" stroke="#D8C6A9" stroke-width="1.2" fill="none"/>');
-    S.push('<path d="M80 46 L93 40 L90 54 Z" fill="#EDE0CE" stroke="#D8C6A9" stroke-width="1.5"/>');
-    S.push('<circle cx="30" cy="54" r="2" fill="#B8A683"/>');
-    S.push('<path d="M28 48 q14 -6 34 -4" stroke="#FFFFFF" stroke-width="2.5" fill="none" opacity="0.65" stroke-linecap="round"/>');
+    const F=ART_FISH[subjId]||{shape:"oval", base:"#DCD5C2", back:"#B0A88E"};
+    const dims={round:[26,17], oval:[30,14], slim:[34,11], stout:[30,15], small:[24,9]}[F.shape]||[30,14];
+    const rx=dims[0], ry=dims[1];
+    S.push('<g transform="rotate(-10 52 56)">');
+    S.push('<ellipse cx="52" cy="56" rx="'+rx+'" ry="'+ry+'" fill="'+F.base+'"/>');
+    S.push('<path d="M'+(52-rx)+' 56 A'+rx+' '+ry+' 0 0 1 '+(52+rx)+' 56 L'+(52+rx)+' 53 A'+rx+' '+(ry*0.55)+' 0 0 0 '+(52-rx)+' 53 Z" fill="'+F.back+'" opacity="0.75"/>');
+    S.push('<ellipse cx="52" cy="56" rx="'+rx+'" ry="'+ry+'" fill="none" stroke="'+F.back+'" stroke-width="1.5"/>');
+    if(F.pattern==="stripes") S.push('<g stroke="'+F.back+'" stroke-width="1.5" fill="none" opacity="0.9"><path d="M38 50 q2 3 0 6"/><path d="M46 49 q2 3 0 7"/><path d="M54 48 q2 4 0 8"/><path d="M62 49 q2 3 0 7"/><path d="M70 50 q2 3 0 6"/></g>');
+    if(F.pattern==="spots") S.push('<g fill="'+F.back+'" opacity="0.85"><circle cx="42" cy="53" r="1.7"/><circle cx="52" cy="50" r="1.7"/><circle cx="61" cy="54" r="1.7"/><circle cx="47" cy="60" r="1.6"/><circle cx="57" cy="61" r="1.6"/><circle cx="66" cy="58" r="1.5"/></g>');
+    S.push('<path d="M'+(38-(F.shape==="round"?2:0))+' '+(56-ry+3)+' q-4 '+(ry-2)+' 0 '+(2*ry-6)+'" stroke="'+F.back+'" stroke-width="1.2" fill="none" opacity="0.8"/>');
+    const tail = F.shape==="round" ? '<path d="M'+(52+rx-2)+' 50 L'+(52+rx+9)+' 46 L'+(52+rx+7)+' 56 L'+(52+rx+9)+' 66 L'+(52+rx-2)+' 62 Z"'
+                                   : '<path d="M'+(52+rx-2)+' 50 L'+(52+rx+11)+' 44 L'+(52+rx+8)+' 58 Z"';
+    S.push(tail+' fill="'+(F.fin||F.base)+'" stroke="'+F.back+'" stroke-width="1.3"/>');
+    if(F.fin) S.push('<path d="M46 '+(56+ry-2)+' q6 5 14 3 l-2 -4 Z" fill="'+F.fin+'" opacity="0.8"/>');
+    S.push('<circle cx="'+(52-rx+6)+'" cy="53" r="2" fill="#3A3632"/>');
+    S.push('<circle cx="'+(52-rx+5.4)+'" cy="52.4" r="0.7" fill="#FFFFFF"/>');
+    S.push('<path d="M'+(52-rx+4)+' 48 q'+(rx*0.7)+' -5 '+(rx*1.5)+' -2" stroke="#FFFFFF" stroke-width="2.2" fill="none" opacity="0.55" stroke-linecap="round"/>');
+    S.push('</g>');
   } else if(form==="fish_slices"){
     S.push('<g fill="#F1E6D2" stroke="#DECDA8" stroke-width="1.3"><rect x="30" y="44" width="22" height="12" rx="5" transform="rotate(-8 41 50)"/><rect x="50" y="52" width="22" height="12" rx="5" transform="rotate(6 61 58)"/><rect x="38" y="62" width="22" height="12" rx="5" transform="rotate(-4 49 68)"/><rect x="62" y="40" width="20" height="11" rx="5" transform="rotate(10 72 45)"/></g>');
     S.push('<g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.7"><path d="M34 46 l10 -2"/><path d="M54 54 l10 -1"/><path d="M66 42 l8 0"/></g>');
@@ -5566,8 +5618,12 @@ function steamDishArt(form, subjId, contents, dir, R){
     S.push('<g fill="#F0DCC0" stroke="#D9BE97" stroke-width="1.3"><rect x="32" y="44" width="19" height="14" rx="6" transform="rotate(-7 41 51)"/><rect x="54" y="40" width="19" height="14" rx="6" transform="rotate(8 63 47)"/><rect x="42" y="61" width="19" height="14" rx="6" transform="rotate(3 51 68)"/><rect x="63" y="58" width="17" height="13" rx="6" transform="rotate(-8 71 64)"/></g>');
     S.push('<g stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.7"><path d="M36 46 l9 -2"/><path d="M58 42 l9 1"/><path d="M46 63 l9 0"/></g>');
   } else if(form==="mince"){
-    S.push('<circle cx="56" cy="56" r="26" fill="#C98B72"/><circle cx="56" cy="56" r="26" fill="none" stroke="#A96A52" stroke-width="1.5"/><circle cx="56" cy="54" r="19" fill="#D49A81" opacity="0.7"/>');
-    S.push('<path d="M42 42 q10 -6 22 -3" stroke="#FFFFFF" stroke-width="2.5" fill="none" opacity="0.6" stroke-linecap="round"/>');
+    S.push('<path d="M56 30 q12 -1 19 7 q8 6 7 19 q1 12 -7 19 q-7 8 -19 7 q-12 1 -19 -7 q-8 -7 -7 -19 q-1 -13 7 -19 q7 -8 19 -7 Z" fill="#C98B72"/>');
+    S.push('<path d="M56 30 q12 -1 19 7 q8 6 7 19 q1 12 -7 19 q-7 8 -19 7 q-12 1 -19 -7 q-8 -7 -7 -19 q-1 -13 7 -19 q7 -8 19 -7 Z" fill="none" stroke="#A96A52" stroke-width="1.5"/>');
+    S.push('<circle cx="56" cy="54" r="19" fill="#D49A81" opacity="0.6"/>');
+    S.push('<g fill="#A96A52" opacity="0.75"><ellipse cx="46" cy="48" rx="2.4" ry="1.8"/><ellipse cx="60" cy="44" rx="2" ry="1.6"/><ellipse cx="68" cy="56" rx="2.2" ry="1.7"/><ellipse cx="50" cy="62" rx="2" ry="1.6"/><ellipse cx="62" cy="66" rx="2.3" ry="1.7"/><ellipse cx="40" cy="56" rx="1.8" ry="1.4"/><ellipse cx="55" cy="52" rx="1.7" ry="1.3"/></g>');
+    S.push('<g fill="#E2AC93" opacity="0.9"><ellipse cx="45" cy="47" rx="1" ry="0.7"/><ellipse cx="67" cy="55" rx="1" ry="0.7"/><ellipse cx="61" cy="65" rx="1" ry="0.7"/></g>');
+    S.push('<path d="M42 42 q10 -6 22 -3" stroke="#FFFFFF" stroke-width="2.5" fill="none" opacity="0.55" stroke-linecap="round"/>');
     if(has("egg")||has("century_egg")) S.push('<circle cx="63" cy="52" r="6" fill="#3E3A45" opacity="0.85"/><circle cx="61" cy="50" r="2" fill="#6B678C"/>');
   } else if(form==="custard"){
     S.push('<circle cx="56" cy="56" r="34" fill="#F2D98B"/><circle cx="56" cy="56" r="34" fill="none" stroke="#DFC06A" stroke-width="1.5"/>');
@@ -5587,9 +5643,10 @@ function steamDishArt(form, subjId, contents, dir, R){
     S.push('<g fill="#E85B4B"><path d="M30 66 q-8 -10 -2 -18 l9 -4 q-6 12 2 20 Z"/><path d="M82 46 q8 10 2 18 l-9 4 q6 -12 -2 -20 Z"/></g>');
     S.push('<g stroke="#F5A093" stroke-width="1.5" fill="none"><path d="M29 52 q-3 8 2 12"/><path d="M83 60 q3 -8 -2 -12"/></g>');
   }
-  if(sauce.coat) S.push('<ellipse cx="56" cy="55" rx="30" ry="17" fill="'+sauce.coat+'" opacity="0.45"/>');
+  const sseed=artSeed(subjId+(dir?dir.key:""));
+  if(sauce.coat) S.push('<path d="'+artBlob(56,55,29,17,sseed)+'" fill="'+sauce.coat+'" opacity="0.45"/>');
   if(sauce.pool) S.push('<path d="M34 50 q12 8 22 6 q14 -2 22 4" stroke="'+sauce.pool+'" stroke-width="4" fill="none" opacity="0.45" stroke-linecap="round"/>');
-  if(sauce.oil)  S.push('<ellipse cx="55" cy="54" rx="32" ry="15" transform="rotate(-10 55 54)" fill="'+sauce.oil+'" opacity="0.38"/>');
+  if(sauce.oil)  S.push('<g transform="rotate(-10 55 54)"><path d="'+artBlob(55,54,30,15,sseed+1)+'" fill="'+sauce.oil+'" opacity="0.38"/></g>');
   if(sauce.specks){ S.push('<g fill="'+sauce.specks+'"><circle cx="44" cy="50" r="1.8"/><circle cx="58" cy="46" r="1.8"/><circle cx="66" cy="56" r="1.8"/><circle cx="50" cy="60" r="1.8"/><circle cx="60" cy="64" r="1.6"/><circle cx="38" cy="58" r="1.6"/></g>'); }
   // dollops of chilli paste sitting on the food
   if(sauce.dollops){
@@ -5676,8 +5733,9 @@ function wokDishArt(contents, dir, R){
   });
   const vspots=[[36,58],[62,40],[74,62],[42,40],[58,70]];
   let vx=0; veg.slice(0,4).forEach(id=>{ const [x,y]=vspots[vx%vspots.length]; vx++; artPiece(S,x,y,R.byId[id]||{}); });
-  if(sauce.coat) S.push('<ellipse cx="56" cy="55" rx="30" ry="20" fill="'+sauce.coat+'" opacity="0.40"/>');
-  if(sauce.oil)  S.push('<ellipse cx="56" cy="55" rx="30" ry="18" fill="'+sauce.oil+'" opacity="0.35"/>');
+  const wseed=artSeed((contents[0]||"w")+(dir?dir.key:""));
+  if(sauce.coat) S.push('<path d="'+artBlob(56,55,28,19,wseed)+'" fill="'+sauce.coat+'" opacity="0.40"/>');
+  if(sauce.oil)  S.push('<path d="'+artBlob(56,55,28,17,wseed+1)+'" fill="'+sauce.oil+'" opacity="0.35"/>');
   if(sauce.specks){ S.push('<g fill="'+sauce.specks+'"><circle cx="46" cy="48" r="1.8"/><circle cx="60" cy="44" r="1.8"/><circle cx="66" cy="58" r="1.8"/><circle cx="50" cy="62" r="1.8"/></g>'); }
   if(sauce.chillies){ S.push('<g fill="#B93A28" stroke="#7E2418" stroke-width="1"><rect x="40" y="42" width="14" height="5" rx="2.5" transform="rotate(-18 47 44)"/><rect x="60" y="60" width="14" height="5" rx="2.5" transform="rotate(14 67 62)"/><rect x="64" y="42" width="12" height="5" rx="2.5" transform="rotate(30 70 44)"/></g>'); }
   S.push('<g fill="#F2E8D8"><circle cx="50" cy="44" r="1.5"/><circle cx="64" cy="48" r="1.5"/><circle cx="56" cy="62" r="1.5"/></g>');
@@ -5722,7 +5780,10 @@ function riceDishArt(mode, dir, contents, R){
     if(clay){ S.push('<path d="M34 44 q20 -10 44 4" stroke="#5A3A22" stroke-width="4" fill="none" opacity="0.5" stroke-linecap="round"/>'); }
   } else {
     if(spec.pool){
-      S.push('<path d="M56 16 A40 40 0 0 1 56 96 Q40 86 40 56 Q40 26 56 16 Z" fill="'+spec.pool+'" opacity="0.9" transform="rotate(90 56 56)"/>');
+      const cseed=artSeed("curry"+(contents[0]||""));
+      const cpd=artBlob(44,58,25,25,cseed);
+      S.push('<path d="'+cpd+'" fill="'+spec.pool+'" opacity="0.92"/>');
+      S.push('<path d="'+cpd+'" fill="none" stroke="#B9761E" stroke-width="1.5" opacity="0.5"/>');
       S.push('<g fill="#E08A2E"><circle cx="46" cy="70" r="5"/></g><g fill="#E3C88F"><circle cx="62" cy="74" r="5.5"/></g>');
     } else if(spec.top){
       const slice=(x,y,rot)=>{ S.push('<rect x="'+(x-11)+'" y="'+(y-5)+'" width="22" height="10" rx="4" transform="rotate('+rot+' '+x+' '+y+')" fill="'+spec.top+'" stroke="'+(spec.glaze||"#B98443")+'" stroke-width="1.2"/>'); };
