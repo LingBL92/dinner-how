@@ -478,6 +478,23 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .alt-chip.in_rice{border-left:3px solid rgba(31,120,120,.55)}
 .alt-chip.over_rice{border-left:3px solid rgba(168,114,24,.55)}
 .wok-prep{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)}
+.wp-g{flex:0 0 auto;align-self:center;line-height:0}
+/* ---- dish-art & prep animations (subtle, generative per piece) ---- */
+.dish-art .wokspin{animation:wokstir 7s ease-in-out infinite;transform-origin:56px 56px}
+@keyframes wokstir{0%,100%{transform:rotate(0deg)}22%{transform:rotate(2.4deg) translate(.5px,-.4px)}50%{transform:rotate(-1.8deg)}76%{transform:rotate(1.2deg) translate(-.4px,.3px)}}
+.dish-art .st-wisp{animation:wisprise 3.8s ease-in-out infinite;opacity:0}
+@keyframes wisprise{0%{transform:translateY(4px);opacity:0}30%{opacity:.55}70%{opacity:.3}100%{transform:translateY(-8px);opacity:0}}
+.pa{display:inline-block;vertical-align:middle}
+.pa .pa-k{animation:pachop 1.7s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes pachop{0%,100%{transform:translateY(0) rotate(0deg)}42%{transform:translateY(3.6px) rotate(-4deg)}54%{transform:translateY(3.6px) rotate(-2deg)}}
+.pa .pa-l{animation:pasplitl 1.7s ease-in-out infinite}
+.pa .pa-r{animation:pasplitr 1.7s ease-in-out infinite}
+@keyframes pasplitl{0%,42%{transform:translateX(0)}58%,86%{transform:translateX(-2.4px)}100%{transform:translateX(0)}}
+@keyframes pasplitr{0%,42%{transform:translateX(0)}58%,86%{transform:translateX(2.4px)}100%{transform:translateX(0)}}
+@media(prefers-reduced-motion:reduce){
+  .dish-art .wokspin,.dish-art .st-wisp,.pa .pa-k,.pa .pa-l,.pa .pa-r{animation:none}
+  .dish-art .st-wisp{opacity:.35}
+}
 .wp-n{font-size:13px;font-weight:600;min-width:110px}
 .wp-p{font-size:12px;color:var(--cool)}
 .wp-w{font-family:"Space Mono",monospace;font-size:10px;color:var(--gold);width:100%;line-height:1.4}
@@ -669,7 +686,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.40</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.41</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5110,6 +5127,26 @@ function schedule(list){
 // bubbles, then the proportional bar — every column tracks a bar segment, so each tag and
 // each letter sits directly over its phase. Cards carry a `phase` matching a segment `kind`;
 // several steps can share one phase (they pack left-to-right in that column).
+/* a tiny animated prep glyph: a knife bobbing over a piece that splits — the piece's
+   shape follows the prep verb, its colour the ingredient's hue. Generative, per row. */
+function prepGlyph(name, prepText){
+  const ing=REF.list.find(i=>i.name===name)||{};
+  const hue=ing.hue||"#C9A254";
+  const v=(prepText||ing.prep_verb||"").toLowerCase();
+  const stem=["bok_choy","chye_sim","kailan","napa_cabbage"].includes(ing.id);
+  let halves;
+  if(stem) halves='<path class="pa-l" d="M4 20 q2 -5 6 -5 l1 4 q-3 2 -7 1 Z" fill="#E8EFD8" stroke="#C9D4AE" stroke-width="0.8"/>'
+    +'<path class="pa-r" d="M14 15 q4 -4 8 -2 q-1 5 -6 6 Z" fill="'+hue+'"/>';
+  else if(v.indexOf("slice")>=0) halves='<circle class="pa-l" cx="9" cy="18" r="4" fill="'+hue+'"/><circle class="pa-r" cx="17" cy="18" r="4" fill="'+hue+'" opacity="0.8"/>';
+  else if(v.indexOf("baton")>=0||v.indexOf("length")>=0||v.indexOf("shred")>=0) halves='<rect class="pa-l" x="3" y="16" width="9" height="3.4" rx="1.7" fill="'+hue+'"/><rect class="pa-r" x="14" y="16" width="9" height="3.4" rx="1.7" fill="'+hue+'" opacity="0.85"/>';
+  else if(v.indexOf("dice")>=0||v.indexOf("chop")>=0||v.indexOf("mince")>=0) halves='<rect class="pa-l" x="5" y="15" width="5" height="5" rx="1.2" fill="'+hue+'"/><rect class="pa-r" x="15" y="15" width="5" height="5" rx="1.2" fill="'+hue+'" opacity="0.85"/><rect x="10.5" y="19" width="4.5" height="4.5" rx="1.2" fill="'+hue+'" opacity="0.65"/>';
+  else halves='<circle class="pa-l" cx="9" cy="18" r="4" fill="'+hue+'"/><circle class="pa-r" cx="17" cy="18" r="4" fill="'+hue+'" opacity="0.8"/>';
+  const delay=((artSeed(name)%8)/10).toFixed(1);
+  return '<svg class="pa" width="26" height="26" viewBox="0 0 26 26" style="animation-delay:'+delay+'s" aria-hidden="true">'
+    +'<g class="pa-k" style="animation-delay:'+delay+'s"><path d="M4 6 q7 -3 14 0 l0 3 q-7 2 -14 0 Z" fill="#C4BEB0"/><rect x="18" y="6.2" width="6" height="2.8" rx="1.4" fill="#8A6A4A"/></g>'
+    +'<g style="animation-delay:'+delay+'s">'+halves+'</g></svg>';
+}
+
 function renderStepSlider(box, cards, segments){
   if(!cards.length) return;
   const LETTERS="ABCDEFGH";
@@ -5245,7 +5282,7 @@ function renderStirFry(){
     rgroup(c,"Prep everything first");
     sf.prep.forEach(p=>{
       const row=document.createElement("div"); row.className="wok-prep";
-      row.innerHTML="<span class=\"wp-n\">"+p.name+"</span><span class=\"wp-p\">"+p.prep+"</span>"+
+      row.innerHTML="<span class=\"wp-g\">"+prepGlyph(p.name,p.prep)+"</span><span class=\"wp-n\">"+p.name+"</span><span class=\"wp-p\">"+p.prep+"</span>"+
         (p.warn?"<span class=\"wp-w\">"+p.warn+"</span>":"");
       c.appendChild(row);
     });
@@ -5705,6 +5742,11 @@ function steamDishArt(form, subjId, contents, dir, R){
     if(dir.key==="chilli_lime"||dir.key==="rempah") S.push('<g stroke="#C43C2B" stroke-width="2.2" stroke-linecap="round"><path d="M62 44 l9 -3"/><path d="M64 58 l9 2"/></g>');
     if(dir.key==="ginger_scallion") S.push('<g stroke="#E8B94A" stroke-width="1.8" stroke-linecap="round"><path d="M58 48 l10 0"/><path d="M48 56 l9 2"/></g>');
   }
+  // it just came off the steamer — wisps rising, staggered per plate (seeded)
+  S.push('<g stroke="#B8B2A4" stroke-width="2.4" fill="none" stroke-linecap="round">'
+    +'<path class="st-wisp" style="animation-delay:'+((sseed%9)/10)+'s" d="M40 24 q3 -6 0 -10"/>'
+    +'<path class="st-wisp" style="animation-delay:'+(1.1+(sseed%7)/10)+'s" d="M56 20 q-3 -6 0 -11"/>'
+    +'<path class="st-wisp" style="animation-delay:'+(2.2+(sseed%5)/10)+'s" d="M72 24 q3 -6 0 -10"/></g>');
   return '<svg viewBox="0 0 112 112" width="112" height="112" role="img" aria-label="dish illustration">'+S.join("")+'</svg>';
 }
 
@@ -5819,6 +5861,7 @@ function wokDishArt(contents, dir, R){
   S.push('<circle cx="56" cy="56" r="50" fill="none" stroke="#242220" stroke-width="2"/>');
   S.push('<circle cx="56" cy="56" r="40" fill="#2B2825"/>');
   S.push('<path d="M22 42 Q36 26 60 24" stroke="#FFFFFF" stroke-width="2.5" fill="none" opacity="0.35" stroke-linecap="round"/>');
+  S.push('<g class="wokspin">');   // everything in the wok stirs together, gently
   const prot=contents.filter(id=>(R.byId[id]||{}).category==="proteins");
   const veg =contents.filter(id=>(R.byId[id]||{}).category==="vegetables");
   const pspots=[[46,48],[68,52],[50,66]];
@@ -5834,6 +5877,7 @@ function wokDishArt(contents, dir, R){
   if(sauce.chillies){ S.push('<g fill="#B93A28" stroke="#7E2418" stroke-width="1"><rect x="40" y="42" width="14" height="5" rx="2.5" transform="rotate(-18 47 44)"/><rect x="60" y="60" width="14" height="5" rx="2.5" transform="rotate(14 67 62)"/><rect x="64" y="42" width="12" height="5" rx="2.5" transform="rotate(30 70 44)"/></g>'); }
   S.push('<g fill="#F2E8D8"><circle cx="50" cy="44" r="1.5"/><circle cx="64" cy="48" r="1.5"/><circle cx="56" cy="62" r="1.5"/></g>');
   S.push('<g stroke="#3E7D4F" stroke-width="2" stroke-linecap="round"><path d="M44 52 l10 -3"/><path d="M58 58 l10 -1"/></g>');
+  S.push('</g>');
   return '<svg viewBox="0 0 112 112" width="112" height="112" role="img" aria-label="dish illustration">'+S.join("")+'</svg>';
 }
 const ART_RICESAUCE={
@@ -6016,7 +6060,7 @@ function renderSteam(){
     rgroup(c,"Prep first");
     st.prep.forEach(p=>{
       const row=document.createElement("div"); row.className="wok-prep";
-      row.innerHTML="<span class=\"wp-n\">"+p.name+"</span><span class=\"wp-p\">"+p.prep+"</span>"+
+      row.innerHTML="<span class=\"wp-g\">"+prepGlyph(p.name,p.prep)+"</span><span class=\"wp-n\">"+p.name+"</span><span class=\"wp-p\">"+p.prep+"</span>"+
         (p.warn?"<span class=\"wp-w\">"+p.warn+"</span>":"");
       c.appendChild(row);
     });
@@ -6251,7 +6295,7 @@ function renderRice(){
     rgroup(c,"Prep first");
     rb.prep.forEach(p=>{
       const row=document.createElement("div"); row.className="wok-prep";
-      row.innerHTML="<span class=\"wp-n\">"+p.name+"</span><span class=\"wp-p\">"+p.prep+"</span>"+
+      row.innerHTML="<span class=\"wp-g\">"+prepGlyph(p.name,p.prep)+"</span><span class=\"wp-n\">"+p.name+"</span><span class=\"wp-p\">"+p.prep+"</span>"+
         (p.warn?"<span class=\"wp-w\">"+p.warn+"</span>":"");
       c.appendChild(row);
     });
@@ -6606,7 +6650,7 @@ function renderOnePot(){
     if(prepList.length){
       prepList.forEach(id=>{
         const row=document.createElement("div"); row.className="wok-prep";
-        row.innerHTML="<span class=\"wp-n\">"+nm(id)+"</span><span class=\"wp-p\">"+((REF.byId[id]||{}).prep_verb||"prep")+"</span>";
+        row.innerHTML="<span class=\"wp-g\">"+prepGlyph(nm(id),(REF.byId[id]||{}).prep_verb||"")+"</span><span class=\"wp-n\">"+nm(id)+"</span><span class=\"wp-p\">"+((REF.byId[id]||{}).prep_verb||"prep")+"</span>";
         c.appendChild(row);
       });
     } else {
