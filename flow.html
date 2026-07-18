@@ -491,9 +491,23 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .pa .pa-r{animation:pasplitr 1.7s ease-in-out infinite}
 @keyframes pasplitl{0%,42%{transform:translateX(0)}58%,86%{transform:translateX(-2.4px)}100%{transform:translateX(0)}}
 @keyframes pasplitr{0%,42%{transform:translateX(0)}58%,86%{transform:translateX(2.4px)}100%{transform:translateX(0)}}
+.pa .pa-drop{animation:padrop 1.9s ease-in infinite}
+@keyframes padrop{0%{transform:translateY(0);opacity:0}20%{opacity:.9}70%{transform:translateY(8px);opacity:.7}100%{transform:translateY(10px);opacity:0}}
+.pa .pa-sqz{animation:pasqz 1.7s ease-in-out infinite;transform-box:fill-box;transform-origin:center bottom}
+@keyframes pasqz{0%,38%,100%{transform:scaleY(1)}46%,58%{transform:scaleY(0.72)}}
+.pa .pa-whisk{animation:pawhisk 1.5s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes pawhisk{0%,100%{transform:rotate(0deg)}30%{transform:rotate(-14deg)}65%{transform:rotate(10deg)}}
+.dish-art .wokspin.wokgentle{animation:wokstirg 12s ease-in-out infinite}
+@keyframes wokstirg{0%,100%{transform:rotate(0deg)}30%{transform:rotate(0.9deg)}68%{transform:rotate(-0.7deg)}}
+.dish-art .pot-bubble{animation:potbub 2.8s ease-in infinite;opacity:0}
+@keyframes potbub{0%{transform:translateY(0) scale(.6);opacity:0}25%{opacity:.8}80%{opacity:.5}100%{transform:translateY(-26px) scale(1.1);opacity:0}}
+.dish-art .pot-shimmer{animation:potshim 3.4s ease-in-out infinite;opacity:0}
+@keyframes potshim{0%{transform:translateY(3px);opacity:0}40%{opacity:.6}100%{transform:translateY(-6px);opacity:0}}
 @media(prefers-reduced-motion:reduce){
-  .dish-art .wokspin,.dish-art .st-wisp,.pa .pa-k,.pa .pa-l,.pa .pa-r{animation:none}
+  .dish-art .wokspin,.dish-art .st-wisp,.pa .pa-k,.pa .pa-l,.pa .pa-r,.pa .pa-drop,.pa .pa-sqz,.pa .pa-whisk,.dish-art .pot-bubble,.dish-art .pot-shimmer{animation:none}
   .dish-art .st-wisp{opacity:.35}
+  .pa .pa-drop{opacity:.6}
+  .dish-art .pot-bubble{opacity:0}
 }
 .wp-n{font-size:13px;font-weight:600;min-width:110px}
 .wp-p{font-size:12px;color:var(--cool)}
@@ -686,7 +700,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.41</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.44</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5127,24 +5141,50 @@ function schedule(list){
 // bubbles, then the proportional bar — every column tracks a bar segment, so each tag and
 // each letter sits directly over its phase. Cards carry a `phase` matching a segment `kind`;
 // several steps can share one phase (they pack left-to-right in that column).
-/* a tiny animated prep glyph: a knife bobbing over a piece that splits — the piece's
-   shape follows the prep verb, its colour the ingredient's hue. Generative, per row. */
+/* a tiny animated prep glyph whose ACTION matches the instruction AND whose subject IS
+   the ingredient: the piece under the knife/pestle/water is drawn by the same artPiece /
+   artProtein library as the dish art — mushrooms look like mushrooms, pork belly keeps
+   its fat stripes, ribs their bone. Splitting is done with two clipped copies. */
 function prepGlyph(name, prepText){
   const ing=REF.list.find(i=>i.name===name)||{};
-  const hue=ing.hue||"#C9A254";
   const v=(prepText||ing.prep_verb||"").toLowerCase();
-  const stem=["bok_choy","chye_sim","kailan","napa_cabbage"].includes(ing.id);
-  let halves;
-  if(stem) halves='<path class="pa-l" d="M4 20 q2 -5 6 -5 l1 4 q-3 2 -7 1 Z" fill="#E8EFD8" stroke="#C9D4AE" stroke-width="0.8"/>'
-    +'<path class="pa-r" d="M14 15 q4 -4 8 -2 q-1 5 -6 6 Z" fill="'+hue+'"/>';
-  else if(v.indexOf("slice")>=0) halves='<circle class="pa-l" cx="9" cy="18" r="4" fill="'+hue+'"/><circle class="pa-r" cx="17" cy="18" r="4" fill="'+hue+'" opacity="0.8"/>';
-  else if(v.indexOf("baton")>=0||v.indexOf("length")>=0||v.indexOf("shred")>=0) halves='<rect class="pa-l" x="3" y="16" width="9" height="3.4" rx="1.7" fill="'+hue+'"/><rect class="pa-r" x="14" y="16" width="9" height="3.4" rx="1.7" fill="'+hue+'" opacity="0.85"/>';
-  else if(v.indexOf("dice")>=0||v.indexOf("chop")>=0||v.indexOf("mince")>=0) halves='<rect class="pa-l" x="5" y="15" width="5" height="5" rx="1.2" fill="'+hue+'"/><rect class="pa-r" x="15" y="15" width="5" height="5" rx="1.2" fill="'+hue+'" opacity="0.85"/><rect x="10.5" y="19" width="4.5" height="4.5" rx="1.2" fill="'+hue+'" opacity="0.65"/>';
-  else halves='<circle class="pa-l" cx="9" cy="18" r="4" fill="'+hue+'"/><circle class="pa-r" cx="17" cy="18" r="4" fill="'+hue+'" opacity="0.8"/>';
-  const delay=((artSeed(name)%8)/10).toFixed(1);
-  return '<svg class="pa" width="26" height="26" viewBox="0 0 26 26" style="animation-delay:'+delay+'s" aria-hidden="true">'
-    +'<g class="pa-k" style="animation-delay:'+delay+'s"><path d="M4 6 q7 -3 14 0 l0 3 q-7 2 -14 0 Z" fill="#C4BEB0"/><rect x="18" y="6.2" width="6" height="2.8" rx="1.4" fill="#8A6A4A"/></g>'
-    +'<g style="animation-delay:'+delay+'s">'+halves+'</g></svg>';
+  const dly=((artSeed(name)%8)/10).toFixed(1);
+  const D='style="animation-delay:'+dly+'s"';
+  const uid="pg"+artSeed(name+v)%100000;
+  // the ingredient itself, drawn small (real shapes from the shared library)
+  const mini=(sc,cy)=>{
+    const S=[];
+    if(ing.category==="proteins" && ing.id) artProtein(S,13,cy,0,ing.id,REF);
+    else if(ing.id) artPiece(S,13,cy,ing);
+    else { S.push('<circle cx="13" cy="'+cy+'" r="5" fill="#C9A254"/>'); }
+    return '<g transform="translate(13 '+cy+') scale('+sc+') translate(-13 -'+cy+')">'+S.join("")+'</g>';
+  };
+  let body;
+  if(/rinse|wash|soak|purge|scrub|clean/.test(v)){
+    body='<path d="M4 16 q9 8 18 0 l-2 6 q-7 4 -14 0 Z" fill="#BFD8DC"/>'
+      +mini(0.55,16)
+      +'<g fill="#8FB8C4"><circle class="pa-drop" '+D+' cx="8" cy="7" r="1.6"/><circle class="pa-drop" style="animation-delay:'+(0.6+parseFloat(dly)).toFixed(1)+'s" cx="14" cy="5" r="1.6"/><circle class="pa-drop" style="animation-delay:'+(1.1+parseFloat(dly)).toFixed(1)+'s" cx="19" cy="7" r="1.4"/></g>';
+  } else if(/mash|smash|crush|pound|press/.test(v)){
+    body='<g class="pa-k" '+D+'><rect x="10" y="2" width="6" height="11" rx="3" fill="#A89880"/></g>'
+      +'<g class="pa-sqz" '+D+'>'+mini(0.62,19)+'</g>';
+  } else if(/beat|whisk|crack|stir|brush|fry|toast/.test(v)){
+    body=mini(0.62,18)
+      +'<g class="pa-whisk" '+D+' stroke="#A89880" stroke-width="1.8" fill="none" stroke-linecap="round"><path d="M8 10 q5 -6 11 -3"/><path d="M9 13 q4 -4 9 -2"/></g>';
+  } else if(/measure|none needed|pat dry|leave whole/.test(v) && !/cut|slice|chop|dice|score|scale|joint/.test(v)){
+    body=mini(0.72,16);
+  } else if(/break|pick|separate|trim|pull|tear|debeard|shell/.test(v)){
+    body='<clipPath id="'+uid+'L"><rect x="0" y="0" width="13" height="26"/></clipPath>'
+      +'<clipPath id="'+uid+'R"><rect x="13" y="0" width="13" height="26"/></clipPath>'
+      +'<g class="pa-l" '+D+' clip-path="url(#'+uid+'L)">'+mini(0.72,17)+'</g>'
+      +'<g class="pa-r" '+D+' clip-path="url(#'+uid+'R)">'+mini(0.72,17)+'</g>';
+  } else {
+    body='<clipPath id="'+uid+'L"><rect x="0" y="0" width="13" height="26"/></clipPath>'
+      +'<clipPath id="'+uid+'R"><rect x="13" y="0" width="13" height="26"/></clipPath>'
+      +'<g class="pa-k" '+D+'><path d="M4 6 q7 -3 14 0 l0 3 q-7 2 -14 0 Z" fill="#C4BEB0"/><rect x="18" y="6.2" width="6" height="2.8" rx="1.4" fill="#8A6A4A"/></g>'
+      +'<g class="pa-l" '+D+' clip-path="url(#'+uid+'L)">'+mini(0.7,18)+'</g>'
+      +'<g class="pa-r" '+D+' clip-path="url(#'+uid+'R)">'+mini(0.7,18)+'</g>';
+  }
+  return '<svg class="pa" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">'+body+'</svg>';
 }
 
 function renderStepSlider(box, cards, segments){
@@ -5861,7 +5901,10 @@ function wokDishArt(contents, dir, R){
   S.push('<circle cx="56" cy="56" r="50" fill="none" stroke="#242220" stroke-width="2"/>');
   S.push('<circle cx="56" cy="56" r="40" fill="#2B2825"/>');
   S.push('<path d="M22 42 Q36 26 60 24" stroke="#FFFFFF" stroke-width="2.5" fill="none" opacity="0.35" stroke-linecap="round"/>');
-  S.push('<g class="wokspin">');   // everything in the wok stirs together, gently
+  // everything in the wok stirs together — but fish slices are FOLDED, not tossed,
+  // so a delicate wok barely sways
+  const gentle=contents.some(id=>((R.byId[id]||{}).provides||[]).includes("filleted"));
+  S.push('<g class="wokspin'+(gentle?" wokgentle":"")+'">');
   const prot=contents.filter(id=>(R.byId[id]||{}).category==="proteins");
   const veg =contents.filter(id=>(R.byId[id]||{}).category==="vegetables");
   const pspots=[[46,48],[68,52],[50,66]];
@@ -5974,6 +6017,21 @@ function potDishArt(modeKey, contents, R){
   veg.forEach((id,i)=>{ const [x,y]=vspots[i%vspots.length]; artPiece(S,x,y,R.byId[id]||{}); });
   if(baked) S.push('<path d="M30 40 q26 -14 52 0" stroke="#8E5A28" stroke-width="4" fill="none" opacity="0.5" stroke-linecap="round"/>');
   else S.push('<g stroke="#3E7D4F" stroke-width="2" stroke-linecap="round"><path d="M44 38 l10 -3"/><path d="M58 44 l10 -1"/></g>');
+  // it's on the heat: a simmer bubbles up through the broth (soup/braise), or the oven
+  // shimmers over a bake. Seeded so each pot has its own rhythm, clipped to the broth.
+  const pseed=artSeed("pot"+(contents[0]||"")+modeKey);
+  if(baked){
+    S.push('<g opacity="0.5"><path class="pot-shimmer" style="animation-delay:'+((pseed%6)/10)+'s" d="M40 46 q4 -5 0 -10" stroke="#F2E3CF" stroke-width="2" fill="none" stroke-linecap="round"/>'
+      +'<path class="pot-shimmer" style="animation-delay:'+(0.9+(pseed%5)/10)+'s" d="M56 44 q-4 -5 0 -11" stroke="#F2E3CF" stroke-width="2" fill="none" stroke-linecap="round"/>'
+      +'<path class="pot-shimmer" style="animation-delay:'+(1.7+(pseed%4)/10)+'s" d="M70 46 q4 -5 0 -10" stroke="#F2E3CF" stroke-width="2" fill="none" stroke-linecap="round"/></g>');
+  } else {
+    S.push('<clipPath id="pot-broth-'+pseed+'"><circle cx="56" cy="56" r="40"/></clipPath>');
+    let g='<g clip-path="url(#pot-broth-'+pseed+')" fill="#FBF1D6">';
+    const bx=[40,52,63,72,46,58,68];
+    for(let i=0;i<7;i++){ const r=(1.4+(pseed+i*13)%3*0.7).toFixed(1);
+      g+='<circle class="pot-bubble" style="animation-delay:'+((i*0.5+(pseed%10)/10).toFixed(1))+'s" cx="'+bx[i]+'" cy="74" r="'+r+'"/>'; }
+    S.push(g+'</g>');
+  }
   return '<svg viewBox="0 0 112 112" width="112" height="112" role="img" aria-label="dish illustration">'+S.join("")+'</svg>';
 }
 
