@@ -503,8 +503,8 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 @keyframes potbub{0%{transform:translateY(0) scale(.6);opacity:0}25%{opacity:.8}80%{opacity:.5}100%{transform:translateY(-26px) scale(1.1);opacity:0}}
 .dish-art .pot-shimmer{animation:potshim 3.4s ease-in-out infinite;opacity:0}
 @keyframes potshim{0%{transform:translateY(3px);opacity:0}40%{opacity:.6}100%{transform:translateY(-6px);opacity:0}}
-.dish-art .oil-stream{stroke-dasharray:42;stroke-dashoffset:42;animation:oilstream 4.6s ease-in infinite}
-@keyframes oilstream{0%{stroke-dashoffset:42;opacity:0}8%{opacity:.8}30%{stroke-dashoffset:0;opacity:.8}52%{stroke-dashoffset:0;opacity:.75}62%{opacity:0;stroke-dashoffset:-42}100%{opacity:0;stroke-dashoffset:-42}}
+.dish-art .oil-stream{transform-box:fill-box;transform-origin:100% 0;animation:oilstream 4.6s ease-in infinite;opacity:0}
+@keyframes oilstream{0%{transform:scale(1,0);opacity:0}8%{opacity:.85}28%{transform:scale(1,1);opacity:.85}55%{transform:scale(1,1);opacity:.8}64%,100%{transform:scale(1,1);opacity:0}}
 .dish-art .oil-drop{animation:oildrop 4.6s ease-in infinite;opacity:0}
 @keyframes oildrop{0%,6%{transform:translate(0,0);opacity:0}12%{opacity:.9}38%{transform:translate(-19px,34px);opacity:.8}44%{transform:translate(-20px,36px);opacity:0}100%{opacity:0}}
 .dish-art .oil-sizzle{animation:oilsizzle 4.6s ease-out infinite;opacity:0;transform-box:fill-box;transform-origin:center}
@@ -726,7 +726,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.47</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.48</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5869,7 +5869,7 @@ function steamDishArt(form, subjId, contents, dir, R){
   if(hasPour){
     const pd='style="animation-delay:'+((sseed%7)/10)+'s"';
     S.push('<g>'
-      +'<path class="oil-stream" '+pd+' d="M84 4 L64 40" stroke="#D9A83C" stroke-width="3.2" fill="none" stroke-linecap="round"/>'
+      +'<path class="oil-stream" '+pd+' d="M84 4 L64 40" stroke="#D9A83C" stroke-width="4" fill="none" stroke-linecap="round"/>'
       +'<circle class="oil-drop" style="animation-delay:'+((sseed%7)/10+0.15).toFixed(2)+'s" cx="82" cy="8" r="1.9" fill="#D9A83C"/>'
       +'<circle class="oil-drop" style="animation-delay:'+((sseed%7)/10+0.55).toFixed(2)+'s" cx="80" cy="11" r="1.6" fill="#D9A83C"/>'
       +'<g class="oil-sizzle" '+pd+' stroke="#F2C94C" stroke-width="1.8" fill="none" stroke-linecap="round">'
