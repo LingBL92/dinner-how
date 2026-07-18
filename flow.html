@@ -509,12 +509,31 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 @keyframes oildrop{0%,6%{transform:translate(0,0);opacity:0}12%{opacity:.9}38%{transform:translate(-19px,34px);opacity:.8}44%{transform:translate(-20px,36px);opacity:0}100%{opacity:0}}
 .dish-art .oil-sizzle{animation:oilsizzle 4.6s ease-out infinite;opacity:0;transform-box:fill-box;transform-origin:center}
 @keyframes oilsizzle{0%,30%{opacity:0;transform:scale(.6)}38%{opacity:.9;transform:scale(1)}55%{opacity:.45;transform:scale(1.15)}66%,100%{opacity:0;transform:scale(1.2)}}
+.ws-g{flex:0 0 auto;line-height:0;align-self:center}
+.pa .wg-jit{animation:wgjit 1.9s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes wgjit{0%,100%{transform:translate(0,0)}25%{transform:translate(.7px,-.5px)}55%{transform:translate(-.6px,.4px)}80%{transform:translate(.4px,.3px)}}
+.pa .wg-spark{animation:wgspark 1.9s ease-out infinite;opacity:0}
+@keyframes wgspark{0%,55%{opacity:0;transform:translateY(2px)}65%{opacity:.85}100%{opacity:0;transform:translateY(-4px)}}
+.pa .wg-bloom{animation:wgbloom 2.6s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes wgbloom{0%,100%{transform:scale(.85);opacity:.8}45%{transform:scale(1.08);opacity:1}}
+.pa .wg-sear{animation:wgsear 2.4s ease-in-out infinite;opacity:0}
+@keyframes wgsear{0%,20%{opacity:0}55%{opacity:.28}80%{opacity:.14}100%{opacity:0}}
+.pa .wg-toss{animation:wgtoss 2.1s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes wgtoss{0%,100%{transform:translateY(0) rotate(0deg)}30%{transform:translateY(-3px) rotate(-7deg)}48%{transform:translateY(0) rotate(3deg)}62%{transform:translateY(-1.2px) rotate(-2deg)}}
+.pa .wg-sweep{animation:wgsweep 2.8s ease-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes wgsweep{0%{transform:scale(.3);opacity:0}30%{transform:scale(1);opacity:.8}70%{opacity:.55}100%{transform:scale(1.05);opacity:0}}
+.pa .wg-wilt{animation:wgwilt 2.6s ease-in-out infinite;transform-box:fill-box;transform-origin:center bottom}
+@keyframes wgwilt{0%{transform:translateY(-4px) scaleY(1);opacity:0}18%{opacity:1}40%{transform:translateY(0) scaleY(1)}70%,100%{transform:translateY(0) scaleY(.86);opacity:1}}
+.pa .wg-fold{animation:wgfold 4.2s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes wgfold{0%,100%{transform:rotate(0deg)}35%{transform:rotate(6deg)}70%{transform:rotate(-5deg)}}
 @media(prefers-reduced-motion:reduce){
-  .dish-art .wokspin,.dish-art .st-wisp,.pa .pa-k,.pa .pa-l,.pa .pa-r,.pa .pa-drop,.pa .pa-sqz,.pa .pa-whisk,.dish-art .pot-bubble,.dish-art .pot-shimmer,.dish-art .oil-stream,.dish-art .oil-drop,.dish-art .oil-sizzle{animation:none}
+  .dish-art .wokspin,.dish-art .st-wisp,.pa .pa-k,.pa .pa-l,.pa .pa-r,.pa .pa-drop,.pa .pa-sqz,.pa .pa-whisk,.dish-art .pot-bubble,.dish-art .pot-shimmer,.dish-art .oil-stream,.dish-art .oil-drop,.dish-art .oil-sizzle,.pa .wg-jit,.pa .wg-spark,.pa .wg-bloom,.pa .wg-sear,.pa .wg-toss,.pa .wg-sweep,.pa .wg-wilt,.pa .wg-fold{animation:none}
   .dish-art .st-wisp{opacity:.35}
   .pa .pa-drop{opacity:.6}
   .dish-art .pot-bubble{opacity:0}
   .dish-art .oil-stream,.dish-art .oil-drop,.dish-art .oil-sizzle{opacity:0}
+  .pa .wg-spark,.pa .wg-sear{opacity:0}
+  .pa .wg-sweep{opacity:.55}
 }
 .wp-n{font-size:13px;font-weight:600;min-width:110px}
 .wp-p{font-size:12px;color:var(--cool)}
@@ -707,7 +726,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.46</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.47</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5194,6 +5213,44 @@ function prepGlyph(name, prepText){
   return '<svg class="pa" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">'+body+'</svg>';
 }
 
+/* a small animated glyph for each WOK STAGE, showing that stage's action on the actual
+   items: aromatics sizzle in oil, a paste blooms, the protein sears (char pulsing in),
+   vegetables toss with a little hop, the sauce sweeps in, leafy greens drop and wilt,
+   and delicate fish slices are folded — a slow rock, never a toss. */
+function wokStageGlyph(st){
+  const item=(st.items||[]).find(i=>i.id&&REF.byId[i.id]);
+  const ing=item?REF.byId[item.id]:null;
+  const dly=((artSeed(st.key+(item?item.id:""))%8)/10).toFixed(1);
+  const D='style="animation-delay:'+dly+'s"';
+  const mini=(sc,cy)=>{
+    const S=[];
+    if(ing&&ing.category==="proteins") artProtein(S,13,cy,0,ing.id,REF);
+    else if(ing) artPiece(S,13,cy,ing);
+    else S.push('<circle cx="13" cy="'+cy+'" r="5" fill="#C9A254"/>');
+    return '<g transform="translate(13 '+cy+') scale('+sc+') translate(-13 -'+cy+')">'+S.join("")+'</g>';
+  };
+  let body;
+  if(st.key==="aromatics"){
+    body='<ellipse cx="13" cy="18" rx="10" ry="5" fill="#E8D9A8" opacity="0.7"/>'
+      +'<g class="wg-jit" '+D+'><circle cx="9" cy="17" r="2.2" fill="#E3C97F"/><circle cx="15" cy="19" r="2" fill="#E3C97F"/><circle cx="17" cy="15" r="1.8" fill="#D9B96A"/></g>'
+      +'<g stroke="#D9A83C" stroke-width="1.4" fill="none" stroke-linecap="round"><path class="wg-spark" '+D+' d="M8 10 q1 -3 0 -5"/><path class="wg-spark" style="animation-delay:'+(0.7+parseFloat(dly)).toFixed(1)+'s" d="M18 9 q-1 -3 0 -5"/></g>';
+  } else if(st.key==="paste"){
+    body='<ellipse cx="13" cy="18" rx="10" ry="5.5" fill="#E8D9A8" opacity="0.6"/>'
+      +'<g class="wg-bloom" '+D+'><path d="'+artBlob(13,17,6.5,4.5,artSeed(st.key))+'" fill="#C43C2B"/></g>';
+  } else if(st.key==="protein"){
+    body='<g class="wg-jit" '+D+'>'+mini(0.66,17)+'<ellipse class="wg-sear" '+D+' cx="13" cy="17" rx="8" ry="5.5" fill="#3A2214"/></g>';
+  } else if(st.key==="sauce"){
+    body=mini(0.6,18)+'<g class="wg-sweep" '+D+'><path d="'+artBlob(13,16,8,5.5,artSeed("swp"+st.key))+'" fill="#8A5A2B" opacity="0.55"/></g>';
+  } else if(st.key==="leafy"){
+    body='<g class="wg-wilt" '+D+'>'+mini(0.72,17)+'</g>';
+  } else if(st.key==="delicate"){
+    body='<g class="wg-fold" '+D+'>'+mini(0.66,17)+'</g>';
+  } else { // dense, firm, quick — the toss
+    body='<g class="wg-toss" '+D+'>'+mini(0.72,17)+'</g>';
+  }
+  return '<svg class="pa" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">'+body+'</svg>';
+}
+
 function renderStepSlider(box, cards, segments){
   if(!cards.length) return;
   const LETTERS="ABCDEFGH";
@@ -5355,6 +5412,7 @@ function renderStirFry(){
     sf.steps.forEach(st=>{
       const row=document.createElement("div"); row.className="wok-step";
       row.innerHTML=
+        "<span class=\"ws-g\">"+wokStageGlyph(st)+"</span>"+
         "<span class=\"ws-t\">"+(st.at===0?"first":"+"+st.at+"m")+"</span>"+
         "<span class=\"ws-b\"><span class=\"ws-i\">"+st.items.map(i=>i.name).join(", ")+"</span>"+
           "<span class=\"ws-w\">"+st.why+"</span></span>"+
