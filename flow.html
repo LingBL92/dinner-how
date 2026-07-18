@@ -503,11 +503,18 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 @keyframes potbub{0%{transform:translateY(0) scale(.6);opacity:0}25%{opacity:.8}80%{opacity:.5}100%{transform:translateY(-26px) scale(1.1);opacity:0}}
 .dish-art .pot-shimmer{animation:potshim 3.4s ease-in-out infinite;opacity:0}
 @keyframes potshim{0%{transform:translateY(3px);opacity:0}40%{opacity:.6}100%{transform:translateY(-6px);opacity:0}}
+.dish-art .oil-stream{stroke-dasharray:42;stroke-dashoffset:42;animation:oilstream 4.6s ease-in infinite}
+@keyframes oilstream{0%{stroke-dashoffset:42;opacity:0}8%{opacity:.8}30%{stroke-dashoffset:0;opacity:.8}52%{stroke-dashoffset:0;opacity:.75}62%{opacity:0;stroke-dashoffset:-42}100%{opacity:0;stroke-dashoffset:-42}}
+.dish-art .oil-drop{animation:oildrop 4.6s ease-in infinite;opacity:0}
+@keyframes oildrop{0%,6%{transform:translate(0,0);opacity:0}12%{opacity:.9}38%{transform:translate(-19px,34px);opacity:.8}44%{transform:translate(-20px,36px);opacity:0}100%{opacity:0}}
+.dish-art .oil-sizzle{animation:oilsizzle 4.6s ease-out infinite;opacity:0;transform-box:fill-box;transform-origin:center}
+@keyframes oilsizzle{0%,30%{opacity:0;transform:scale(.6)}38%{opacity:.9;transform:scale(1)}55%{opacity:.45;transform:scale(1.15)}66%,100%{opacity:0;transform:scale(1.2)}}
 @media(prefers-reduced-motion:reduce){
-  .dish-art .wokspin,.dish-art .st-wisp,.pa .pa-k,.pa .pa-l,.pa .pa-r,.pa .pa-drop,.pa .pa-sqz,.pa .pa-whisk,.dish-art .pot-bubble,.dish-art .pot-shimmer{animation:none}
+  .dish-art .wokspin,.dish-art .st-wisp,.pa .pa-k,.pa .pa-l,.pa .pa-r,.pa .pa-drop,.pa .pa-sqz,.pa .pa-whisk,.dish-art .pot-bubble,.dish-art .pot-shimmer,.dish-art .oil-stream,.dish-art .oil-drop,.dish-art .oil-sizzle{animation:none}
   .dish-art .st-wisp{opacity:.35}
   .pa .pa-drop{opacity:.6}
   .dish-art .pot-bubble{opacity:0}
+  .dish-art .oil-stream,.dish-art .oil-drop,.dish-art .oil-sizzle{opacity:0}
 }
 .wp-n{font-size:13px;font-weight:600;min-width:110px}
 .wp-p{font-size:12px;color:var(--cool)}
@@ -700,7 +707,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.44</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.46</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5318,7 +5325,13 @@ function renderStirFry(){
   // ---- the steps, as an a,b,c card slider (prep · wok · sauce) ----
   const rgroup=(tgt,txt)=>{ const g=document.createElement("div"); g.className="rgroup"; g.textContent=txt; tgt.appendChild(g); };
   const CARDS=[];
-  if(sf.prep.length) CARDS.push({label:"Prep", phase:"prep", build:(c)=>{
+  // sauce steps that are MIXED or MASHED in a bowl belong to prep — you can't stir a
+  // bowl while the wok is roaring. They move to the Prep card; only the steps that
+  // happen AT the wok stay in the trailing Sauce card.
+  const isMixAhead=s=>/^(mix|mash|stir the|whisk|combine)/i.test(s.t)||/mix the sauce/i.test(s.t);
+  const mixAhead=(sf.sauceSteps||[]).filter(isMixAhead);
+  const atWok  =(sf.sauceSteps||[]).filter(s=>!isMixAhead(s));
+  if(sf.prep.length||mixAhead.length) CARDS.push({label:"Prep", phase:"prep", build:(c)=>{
     rgroup(c,"Prep everything first");
     sf.prep.forEach(p=>{
       const row=document.createElement("div"); row.className="wok-prep";
@@ -5326,6 +5339,16 @@ function renderStirFry(){
         (p.warn?"<span class=\"wp-w\">"+p.warn+"</span>":"");
       c.appendChild(row);
     });
+    if(mixAhead.length){
+      rgroup(c,"Mix the sauce ahead \u2014 it goes in fast later");
+      mixAhead.forEach(s=>{
+        const row=document.createElement("div"); row.className="wok-step";
+        row.innerHTML="<span class=\"ws-t\">\u2022</span>"+
+          "<span class=\"ws-b\"><span class=\"ws-i\">"+s.t+"</span>"+
+            "<span class=\"ws-w\">"+s.d+"</span></span>";
+        c.appendChild(row);
+      });
+    }
   }});
   const wokCard = {label:"Wok", phase:"cook", build:(c)=>{
     rgroup(c,"Then, in this order");
@@ -5340,9 +5363,9 @@ function renderStirFry(){
     });
   }};
   const isPaste = !!(dir && dir.paste);
-  const sauceCard = (sf.sauceSteps||[]).length ? {label: isPaste?"Paste":"Sauce", phase:"cook", build:(c)=>{
+  const sauceCard = atWok.length ? {label: isPaste?"Paste":"Sauce", phase:"cook", build:(c)=>{
     rgroup(c, dir ? "The "+(isPaste?"paste":"sauce")+" \u2014 "+dir.label.replace(/ \(.*\)/,"") : "The sauce");
-    (sf.sauceSteps||[]).forEach(s=>{
+    atWok.forEach(s=>{
       const row=document.createElement("div"); row.className="wok-step";
       row.innerHTML="<span class=\"ws-t\">\u2022</span>"+
         "<span class=\"ws-b\"><span class=\"ws-i\">"+s.t+"</span>"+
@@ -5781,6 +5804,19 @@ function steamDishArt(form, subjId, contents, dir, R){
     S.push('<g stroke="#3E7D4F" stroke-width="2.2" stroke-linecap="round"><path d="M44 44 l12 -4"/><path d="M52 52 l13 -2"/><path d="M46 62 l12 2"/></g>');
     if(dir.key==="chilli_lime"||dir.key==="rempah") S.push('<g stroke="#C43C2B" stroke-width="2.2" stroke-linecap="round"><path d="M62 44 l9 -3"/><path d="M64 58 l9 2"/></g>');
     if(dir.key==="ginger_scallion") S.push('<g stroke="#E8B94A" stroke-width="1.8" stroke-linecap="round"><path d="M58 48 l10 0"/><path d="M48 56 l9 2"/></g>');
+  }
+  // the finish: a stream of hot oil pours over the dish, sizzles, and leaves the sheen.
+  // Only for directions whose own steps call for hot oil — read from the data.
+  const hasPour = !!(dir && (dir.steps||[]).some(s=>/hot oil|smoking|sizzl/i.test((s.t||"")+" "+(s.d||""))));
+  if(hasPour){
+    const pd='style="animation-delay:'+((sseed%7)/10)+'s"';
+    S.push('<g>'
+      +'<path class="oil-stream" '+pd+' d="M84 4 L64 40" stroke="#D9A83C" stroke-width="3.2" fill="none" stroke-linecap="round"/>'
+      +'<circle class="oil-drop" style="animation-delay:'+((sseed%7)/10+0.15).toFixed(2)+'s" cx="82" cy="8" r="1.9" fill="#D9A83C"/>'
+      +'<circle class="oil-drop" style="animation-delay:'+((sseed%7)/10+0.55).toFixed(2)+'s" cx="80" cy="11" r="1.6" fill="#D9A83C"/>'
+      +'<g class="oil-sizzle" '+pd+' stroke="#F2C94C" stroke-width="1.8" fill="none" stroke-linecap="round">'
+        +'<path d="M58 36 l-4 -4"/><path d="M66 34 l3 -5"/><path d="M62 40 l-5 1"/><path d="M69 39 l5 -1"/></g>'
+      +'</g>');
   }
   // it just came off the steamer — wisps rising, staggered per plate (seeded)
   S.push('<g stroke="#B8B2A4" stroke-width="2.4" fill="none" stroke-linecap="round">'
