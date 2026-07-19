@@ -511,6 +511,12 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 @keyframes oilsizzle{0%,30%{opacity:0;transform:scale(.6)}38%{opacity:.9;transform:scale(1)}55%{opacity:.45;transform:scale(1.15)}66%,100%{opacity:0;transform:scale(1.2)}}
 .dish-art .oil-sheen{animation:oilsheen 4.6s ease-in infinite;opacity:0}
 @keyframes oilsheen{0%,30%{opacity:0}44%{opacity:1}92%{opacity:1}100%{opacity:0}}
+.dish-art .rc-crust{animation:rccrust 7.5s ease-in-out infinite;opacity:0}
+@keyframes rccrust{0%,15%{opacity:0}55%{opacity:.7}85%{opacity:.55}100%{opacity:0}}
+.dish-art .rc-grain{animation:rcgrain 8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes rcgrain{0%,86%,100%{transform:translateY(0) rotate(0deg)}90%{transform:translateY(-1.3px) rotate(4deg)}95%{transform:translateY(.4px) rotate(-2deg)}}
+.dish-art .rc-pool{animation:rcpool 6.2s ease-out infinite;transform-box:fill-box;transform-origin:center;opacity:0}
+@keyframes rcpool{0%{transform:scale(.82);opacity:0}16%{transform:scale(1);opacity:1}88%{transform:scale(1.02);opacity:1}100%{opacity:0}}
 .ws-g{flex:0 0 auto;line-height:0;align-self:center}
 .pa .wg-jit{animation:wgjit 1.9s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
 @keyframes wgjit{0%,100%{transform:translate(0,0)}25%{transform:translate(.7px,-.5px)}55%{transform:translate(-.6px,.4px)}80%{transform:translate(.4px,.3px)}}
@@ -529,13 +535,15 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .pa .wg-fold{animation:wgfold 4.2s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
 @keyframes wgfold{0%,100%{transform:rotate(0deg)}35%{transform:rotate(6deg)}70%{transform:rotate(-5deg)}}
 @media(prefers-reduced-motion:reduce){
-  .dish-art .wokspin,.dish-art .st-wisp,.pa .pa-k,.pa .pa-l,.pa .pa-r,.pa .pa-drop,.pa .pa-sqz,.pa .pa-whisk,.dish-art .pot-bubble,.dish-art .pot-shimmer,.dish-art .oil-stream,.dish-art .oil-drop,.dish-art .oil-sizzle,.dish-art .oil-sheen,.pa .wg-jit,.pa .wg-spark,.pa .wg-bloom,.pa .wg-sear,.pa .wg-toss,.pa .wg-sweep,.pa .wg-wilt,.pa .wg-fold{animation:none}
+  .dish-art .wokspin,.dish-art .st-wisp,.pa .pa-k,.pa .pa-l,.pa .pa-r,.pa .pa-drop,.pa .pa-sqz,.pa .pa-whisk,.dish-art .pot-bubble,.dish-art .pot-shimmer,.dish-art .oil-stream,.dish-art .oil-drop,.dish-art .oil-sizzle,.dish-art .oil-sheen,.dish-art .rc-crust,.dish-art .rc-grain,.dish-art .rc-pool,.pa .wg-jit,.pa .wg-spark,.pa .wg-bloom,.pa .wg-sear,.pa .wg-toss,.pa .wg-sweep,.pa .wg-wilt,.pa .wg-fold{animation:none}
   .dish-art .st-wisp{opacity:.35}
   .pa .pa-drop{opacity:.6}
   .dish-art .pot-bubble{opacity:0}
   .dish-art .oil-stream,.dish-art .oil-drop,.dish-art .oil-sizzle{opacity:0}
   .pa .wg-spark,.pa .wg-sear{opacity:0}
   .dish-art .oil-sheen{animation:none;opacity:1}
+  .dish-art .rc-pool{opacity:1}
+  .dish-art .rc-crust{opacity:.45}
   .pa .wg-sweep{opacity:.55}
 }
 .wp-n{font-size:13px;font-weight:600;min-width:110px}
@@ -729,7 +737,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.49</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.50</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -6052,6 +6060,8 @@ function riceDishArt(mode, dir, contents, R){
   S.push('<g clip-path="url(#rice-shadow-clip)"><path d="'+artEdgy(58,61,34,32,rseed)+'" fill="#1B100B" opacity="0.14"/></g>');
   S.push('<path d="'+rmound+'" fill="#F2ECDC"/>');
   S.push('<path d="'+rmound+'" fill="none" stroke="'+(clay?"#C98A3A":"#DDD3B8")+'" stroke-width="'+(clay?4:1.5)+'"'+(clay?' opacity="0.9"':'')+'/>');
+  // the crust keeps cooking: a darker scorch slowly deepens around the edge, then eases
+  if(clay) S.push('<path class="rc-crust" style="animation-delay:'+((rseed%9)/10)+'s" d="'+rmound+'" fill="none" stroke="#8E5A28" stroke-width="4"/>');
   { // deterministic grain scatter: little rice-shaped flecks, dark and light mixed
     let g1='<g fill="#E0D6BC">', g2='<g fill="#FBF7EA">';
     let s=rseed||1;
@@ -6060,7 +6070,8 @@ function riceDishArt(mode, dir, contents, R){
       const a=rnd()*2*Math.PI, r=Math.sqrt(rnd())*26;
       const x=(56+Math.cos(a)*r).toFixed(1), y=(56+Math.sin(a)*r*0.94).toFixed(1);
       const rot=Math.round(rnd()*180);
-      const e='<ellipse cx="'+x+'" cy="'+y+'" rx="2.6" ry="1.1" transform="rotate('+rot+' '+x+' '+y+')"/>';
+      const cls = (i%4===1) ? ' class="rc-grain" style="animation-delay:'+(i*0.9+(rseed%10)/10).toFixed(1)+'s"' : '';
+      const e='<ellipse'+cls+' cx="'+x+'" cy="'+y+'" rx="2.6" ry="1.1" transform="rotate('+rot+' '+x+' '+y+')"/>';
       if(i%3===2) g2+=e; else g1+=e;
     }
     S.push(g1+'</g>'+g2+'</g>');
@@ -6082,13 +6093,15 @@ function riceDishArt(mode, dir, contents, R){
     if(spec.pool){
       const cseed=artSeed("curry"+(contents[0]||""));
       const cpd=artBlob(44,58,25,25,cseed);
+      S.push('<g class="rc-pool" style="animation-delay:'+((cseed%8)/10)+'s">');
       S.push('<path d="'+cpd+'" fill="'+spec.pool+'" opacity="0.92"/>');
       S.push('<path d="'+cpd+'" fill="none" stroke="#B9761E" stroke-width="1.5" opacity="0.5"/>');
+      S.push('</g>');
       S.push('<g fill="#E08A2E"><circle cx="46" cy="70" r="5"/></g><g fill="#E3C88F"><circle cx="62" cy="74" r="5.5"/></g>');
     } else if(spec.top){
       const slice=(x,y,rot)=>{ S.push('<rect x="'+(x-11)+'" y="'+(y-5)+'" width="22" height="10" rx="4" transform="rotate('+rot+' '+x+' '+y+')" fill="'+spec.top+'" stroke="'+(spec.glaze||"#B98443")+'" stroke-width="1.2"/>'); };
       slice(46,46,-12); slice(64,50,8); slice(50,62,-4); slice(68,66,14);
-      if(spec.glaze) S.push('<path d="M38 50 q18 10 38 6" stroke="'+spec.glaze+'" stroke-width="3.5" fill="none" opacity="0.5" stroke-linecap="round"/>');
+      if(spec.glaze) S.push('<g class="rc-pool" style="animation-delay:'+((rseed%8)/10)+'s"><path d="M38 50 q18 10 38 6" stroke="'+spec.glaze+'" stroke-width="3.5" fill="none" opacity="0.5" stroke-linecap="round"/></g>');
       if(spec.egg){ S.push('<circle cx="56" cy="56" r="8" fill="#F2C94C"/><circle cx="56" cy="56" r="8" fill="none" stroke="#DFA92E" stroke-width="1.5"/><circle cx="53" cy="53" r="2.5" fill="#F9E9A8"/>'); }
       if(spec.cucumber){ S.push('<g fill="#8FBF6A" stroke="#5E8A3E" stroke-width="1"><ellipse cx="34" cy="70" rx="6" ry="4"/><ellipse cx="46" cy="76" rx="6" ry="4"/></g>'); }
     }
