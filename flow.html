@@ -305,7 +305,10 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .op-title{margin-bottom:12px}
 .dish-art{margin:2px 0 8px}
 .dish-art svg{display:block}
-.dish-photo{display:block;width:112px;height:112px;object-fit:cover;border-radius:12px}
+/* the SVG stays at its natural square footprint; a real photo shows wide (16:9),
+   full-frame and uncropped, filling the card width */
+.dish-art.has-photo{width:100%;max-width:320px;aspect-ratio:16/9;border-radius:12px;overflow:hidden}
+.dish-photo{display:block;width:100%;height:100%;object-fit:cover}
 .op-name{font-family:var(--font-title);font-size:23px;font-weight:600;line-height:1.15;letter-spacing:-.005em}
 .op-sub{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.4}
 .ing-tags{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin:2px 0 12px}
@@ -750,7 +753,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.61</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.62</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5792,7 +5795,7 @@ function dishArtSlot(svg, method, subject, dirKey){
     if(i>=DISH_IMAGE_EXTS.length) return;       // no photo found — keep the SVG
     const url=DISH_IMAGE_BASE+key+"."+DISH_IMAGE_EXTS[i++];
     const img=new Image();
-    img.onload=()=>{ wrap.innerHTML=""; img.className="dish-photo"; img.alt="dish"; wrap.appendChild(img); };
+    img.onload=()=>{ wrap.innerHTML=""; wrap.classList.add("has-photo"); img.className="dish-photo"; img.alt="dish"; wrap.appendChild(img); };
     img.onerror=tryNext;                        // this extension missing — try the next
     img.src=url;
   };
