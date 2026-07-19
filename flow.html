@@ -305,6 +305,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .op-title{margin-bottom:12px}
 .dish-art{margin:2px 0 8px}
 .dish-art svg{display:block}
+.dish-photo{display:block;width:112px;height:112px;object-fit:cover;border-radius:12px}
 .op-name{font-family:var(--font-title);font-size:23px;font-weight:600;line-height:1.15;letter-spacing:-.005em}
 .op-sub{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.4}
 .ing-tags{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin:2px 0 12px}
@@ -749,7 +750,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.60</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.61</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5419,9 +5420,7 @@ function renderStirFry(){
   const sf  = buildStirFry(chosen.contents, REF, DISHES, AFF, {direction:dir});
 
   // ---- headline + the Sauce button (radial, as in the pot) ----
-  { const art=document.createElement("div"); art.className="dish-art";
-    art.innerHTML=wokDishArt(chosen.contents, dir, REF);
-    box.appendChild(art); }
+  box.appendChild(dishArtSlot(wokDishArt(chosen.contents, dir, REF), "stirfry", chosen.contents[0], dir&&dir.key));
   const t=document.createElement("div"); t.className="op-title";
   const sauceLabel = dir ? dir.label.replace(/ \(.*\)/,"") : "Sauce";
   t.innerHTML="<div class=\"op-head\"><span class=\"op-name\">"+chosen.label+"</span>"+
@@ -5769,6 +5768,38 @@ function artEdgy(cx,cy,rx,ry,seed){
     d+=" Q"+p[0].toFixed(1)+" "+p[1].toFixed(1)+" "+((p[0]+q[0])/2).toFixed(1)+" "+((p[1]+q[1])/2).toFixed(1); }
   return d+" Z";
 }
+/* ===== DISH ART SLOT — the picture above the title.
+   It builds a stable KEY for the dish (method + subject + direction), then looks for a
+   photo at images/<key>.jpg (or .png). If that image loads, it shows the photo; if there
+   is no such file, it falls back to the generative SVG. So the app draws every dish for
+   free today, and the moment you drop images/<key>.jpg into the folder, that dish shows a
+   photo instead — no code change. Keys are lowercase, spaces/punctuation to underscores. */
+const DISH_IMAGE_BASE = "images/";           // folder the app reads from (next to this file)
+const DISH_IMAGE_EXTS = ["jpg","png","webp"]; // tried in order
+function dishKey(method, subject, dirKey){
+  return [method, subject||"", dirKey||"plain"].join("_")
+    .toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"");
+}
+/* returns the .dish-art element immediately (SVG inside), then swaps in a photo if one
+   exists. Non-blocking: the SVG shows first, the image replaces it only once it has loaded
+   cleanly, so a missing file simply leaves the drawing in place. */
+function dishArtSlot(svg, method, subject, dirKey){
+  const wrap=document.createElement("div"); wrap.className="dish-art";
+  wrap.innerHTML=svg;
+  const key=dishKey(method, subject, dirKey);
+  let i=0;
+  const tryNext=()=>{
+    if(i>=DISH_IMAGE_EXTS.length) return;       // no photo found — keep the SVG
+    const url=DISH_IMAGE_BASE+key+"."+DISH_IMAGE_EXTS[i++];
+    const img=new Image();
+    img.onload=()=>{ wrap.innerHTML=""; img.className="dish-photo"; img.alt="dish"; wrap.appendChild(img); };
+    img.onerror=tryNext;                        // this extension missing — try the next
+    img.src=url;
+  };
+  tryNext();
+  return wrap;
+}
+
 function steamDishArt(form, subjId, contents, dir, R){
   const S=[];
   const wrapped = !!(dir && (dir.paste || dir.wrap));
@@ -6240,9 +6271,7 @@ function renderSteam(){
   const st  = buildSteam(chosen.contents, REF, DISHES, AFF, {form:chosen.form, subject:chosen.subject, direction:dir});
 
   // ---- the dish, drawn from the same data the recipe is built from ----
-  { const art=document.createElement("div"); art.className="dish-art";
-    art.innerHTML=steamDishArt(chosen.form, chosen.subject, chosen.contents, dir, REF);
-    box.appendChild(art); }
+  box.appendChild(dishArtSlot(steamDishArt(chosen.form, chosen.subject, chosen.contents, dir, REF), "steam", chosen.subject, dir&&dir.key));
 
   // ---- headline + the Seasoning button (radial, as in the wok) ----
   const t=document.createElement("div"); t.className="op-title";
@@ -6486,9 +6515,7 @@ function renderRice(){
   const rb  = buildRice(chosen.contents, REF, DISHES, AFF, {mode:chosen.mode, subject:chosen.subject, direction:dir});
 
   // ---- the dish, drawn from the build ----
-  { const art=document.createElement("div"); art.className="dish-art";
-    art.innerHTML=riceDishArt(chosen.mode, dir, chosen.contents, REF);
-    box.appendChild(art); }
+  box.appendChild(dishArtSlot(riceDishArt(chosen.mode, dir, chosen.contents, REF), "rice", chosen.subject||chosen.contents[0], dir&&dir.key));
 
   // ---- headline + the Style button (radial) ----
   const t=document.createElement("div"); t.className="op-title";
@@ -6820,9 +6847,7 @@ function renderOnePot(){
     : buildOnePot(potIds, REF, DISHES, {appliance:vessel, applData:APPL_DATA[vessel]});
 
   /* ============ 1. THE HEADLINE — what this pot is, in one line ============ */
-  { const art=document.createElement("div"); art.className="dish-art";
-    art.innerHTML=potDishArt(mode.key, potIngredients, REF);
-    box.appendChild(art); }
+  box.appendChild(dishArtSlot(potDishArt(mode.key, potIngredients, REF), "onepot", potIngredients[0], mode.key));
   const title=document.createElement("div"); title.className="op-title";
   const seasonLabel = pathDir ? pathDir.label.replace(/ \u2014 .*/,"").replace(/ \(.*\)/,"") : "Season";
   title.innerHTML=
