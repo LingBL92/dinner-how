@@ -2689,11 +2689,37 @@ function steamCandidates(ingIds, R, dishes, AFF){
     const subj=ids[0];
     const bedFor = (form==="whole_fish"||form==="shellfish")
       ? COLLECTORS_C.filter(id=>real.includes(id) && id!==subj).slice(0,1) : [];
-    out.push({key:form, label:LABELS[form]+nm(subj), subject:subj, form,
-      contents:[subj].concat(bedFor).concat(topping),
+    // whole fish and shellfish are distinct dishes per species — a pomfret and a sea bass
+    // are different choices, not alternatives of one card. Give each its own candidate.
+    // Guard rails: processed fish (fish cake) never gets its own whole-fish card, and the
+    // split is capped at 4 so a big seafood haul can't flood the list — extras show as
+    // "left out" on the last card instead.
+    const PROCESSED_FISH=["fish_cake"];
+    const splitIds = form==="whole_fish" ? ids.filter(id=>!PROCESSED_FISH.includes(id)) : ids;
+    if((form==="whole_fish"||form==="shellfish") && splitIds.length>1){
+      const CAP=4;
+      const cardIds=splitIds.slice(0,CAP);
+      const overflow=splitIds.slice(CAP).concat(form==="whole_fish"?ids.filter(id=>PROCESSED_FISH.includes(id)):[]);
+      cardIds.forEach((fid,idx)=>{
+        const bed = COLLECTORS_C.filter(id=>real.includes(id) && id!==fid).slice(0,1);
+        out.push({key:form+"_"+fid, label:LABELS[form]+nm(fid), subject:fid, form,
+          contents:[fid].concat(bed).concat(topping),
+          note:NOTE[form],
+          leftOut: idx===cardIds.length-1 ? overflow : [],
+          alternatives: cardIds.filter(x=>x!==fid)});
+      });
+      return;
+    }
+    // single-card path: for whole fish, a real fish always beats processed (fish cake)
+    // as the card's subject, regardless of selection order
+    const subj2 = (form==="whole_fish" && splitIds.length) ? splitIds[0] : subj;
+    const bedFor2 = (form==="whole_fish"||form==="shellfish")
+      ? COLLECTORS_C.filter(id=>real.includes(id) && id!==subj2).slice(0,1) : [];
+    out.push({key:form, label:LABELS[form]+nm(subj2), subject:subj2, form,
+      contents:[subj2].concat(bedFor2).concat(topping),
       note:NOTE[form],
-      leftOut:ids.slice(1),
-      alternatives:ids.slice(1)});
+      leftOut:ids.filter(x=>x!==subj2),
+      alternatives:ids.filter(x=>x!==subj2)});
   });
 
   if(!out.length){
