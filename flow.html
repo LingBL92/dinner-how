@@ -749,7 +749,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.53</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.60</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5856,14 +5856,16 @@ function steamDishArt(form, subjId, contents, dir, R){
     } else {
       // prawns as curled crescents with a tail fan and segment ticks
       const prawn=(x,y,rot)=>{
-        S.push('<g transform="rotate('+rot+' '+x+' '+y+')">');
+        // measured bbox centre sits at (-0.5,+4.9) from the anchor; translate by the
+        // inverse so the prawn's true centre lands on (x,y)
+        S.push('<g transform="rotate('+rot+' '+x+' '+y+') translate(10.75 -4.9)">');
         S.push('<path d="M'+(x-10)+' '+(y-4)+' a11 11 0 1 0 16 10" fill="none" stroke="#EE9C72" stroke-width="8" stroke-linecap="round"/>');
         S.push('<path d="M'+(x+8)+' '+(y+8)+' l7 -2 l-3 7 Z" fill="#E07B4C"/>');
         S.push('<g stroke="#D07B52" stroke-width="1.4"><path d="M'+(x-11)+' '+(y+1)+' l-4 -2"/><path d="M'+(x-8)+' '+(y+7)+' l-4 1"/></g>');
         S.push('<path d="M'+(x-9)+' '+(y-7)+' q5 -3 9 -1" stroke="#FFFFFF" stroke-width="2" fill="none" opacity="0.7" stroke-linecap="round"/>');
         S.push('</g>');
       };
-      prawn(44,46,-15); prawn(68,52,25); prawn(48,68,10);
+      prawn(44,48,-15); prawn(68,54,25); prawn(48,66,10);
     }
   } else if(form==="ribs"){
     S.push('<g fill="#9A5A3A" stroke="#6E3D24" stroke-width="1.3"><rect x="32" y="44" width="17" height="13" rx="4" transform="rotate(-8 40 50)"/><rect x="52" y="40" width="17" height="13" rx="4" transform="rotate(9 60 46)"/><rect x="42" y="60" width="17" height="13" rx="4" transform="rotate(4 50 66)"/><rect x="62" y="58" width="16" height="12" rx="4" transform="rotate(-7 70 64)"/></g>');
@@ -6033,9 +6035,11 @@ function artProtein(S,x,y,rot,id,R){
     S.push('<g stroke="#6E4030" stroke-width="1"><path d="M'+(x-7)+' '+(y-2)+' l14 0"/><path d="M'+(x-7)+' '+(y+1.5)+' l14 0"/></g>');
     S.push('<path d="M'+(x-7)+' '+(y-3)+' q6 -1.5 11 0" stroke="#FFFFFF" stroke-width="1.4" fill="none" opacity="0.55" stroke-linecap="round"/>');
   } else if(sp==="prawn"){
+    S.push('<g transform="translate(8.9 -4)">');
     S.push('<path d="M'+(x-8)+' '+(y-3)+' a9 9 0 1 0 13 8" fill="none" stroke="#EE9C72" stroke-width="6.5" stroke-linecap="round"/>');
     S.push('<path d="M'+(x+6)+' '+(y+7)+' l6 -2 l-2 6 Z" fill="#E07B4C"/>');
     S.push('<path d="M'+(x-7)+' '+(y-6)+' q4 -2 7 -1" stroke="#FFFFFF" stroke-width="1.6" fill="none" opacity="0.65" stroke-linecap="round"/>');
+    S.push('</g>');
   } else if(sp==="tofu"){
     S.push('<rect x="'+(x-8)+'" y="'+(y-8)+'" width="16" height="16" rx="2" fill="#F7F3E8" stroke="#E0D8C5" stroke-width="1.4"/>');
     S.push('<path d="M'+(x-5)+' '+(y-5)+' l10 0" stroke="#FFFFFF" stroke-width="1.8" opacity="0.8" stroke-linecap="round"/>');
