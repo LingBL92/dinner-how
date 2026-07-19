@@ -517,6 +517,16 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 @keyframes rcgrain{0%,86%,100%{transform:translateY(0) rotate(0deg)}90%{transform:translateY(-1.3px) rotate(4deg)}95%{transform:translateY(.4px) rotate(-2deg)}}
 .dish-art .rc-pool{animation:rcpool 6.2s ease-out infinite;transform-box:fill-box;transform-origin:center;opacity:0}
 @keyframes rcpool{0%{transform:scale(.82);opacity:0}16%{transform:scale(1);opacity:1}88%{transform:scale(1.02);opacity:1}100%{opacity:0}}
+.pa .pg-stream{transform-box:fill-box;transform-origin:100% 0;animation:oilstream 3.4s ease-in infinite;opacity:0}
+.pa .pg-sizz{animation:oilsizzle 3.4s ease-out infinite;opacity:0;transform-box:fill-box;transform-origin:center}
+.pa .pg-wisp{animation:wisprise 3.2s ease-in-out infinite;opacity:0}
+.pa .pg-bub{animation:potbub 2.6s ease-in infinite;opacity:0}
+.pa .pg-place{animation:pgplace 3.6s ease-out infinite}
+@keyframes pgplace{0%{transform:translateY(-5px);opacity:0}18%{opacity:1}32%,86%{transform:translateY(0);opacity:1}100%{transform:translateY(0);opacity:0}}
+.pa .pg-plop{animation:pgplop 3.4s ease-in infinite}
+@keyframes pgplop{0%{transform:translateY(-7px);opacity:0}12%{opacity:1}26%{transform:translateY(2px)}34%,88%{transform:translateY(2px);opacity:1}100%{transform:translateY(2px);opacity:0}}
+.pa .pg-rip{animation:pgrip 3.4s ease-out infinite;opacity:0;transform-box:fill-box;transform-origin:center}
+@keyframes pgrip{0%,24%{transform:scale(.4);opacity:0}34%{opacity:.8;transform:scale(1)}52%{opacity:0;transform:scale(1.5)}100%{opacity:0}}
 .ws-g{flex:0 0 auto;line-height:0;align-self:center}
 .pa .wg-jit{animation:wgjit 1.9s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
 @keyframes wgjit{0%,100%{transform:translate(0,0)}25%{transform:translate(.7px,-.5px)}55%{transform:translate(-.6px,.4px)}80%{transform:translate(.4px,.3px)}}
@@ -535,7 +545,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .pa .wg-fold{animation:wgfold 4.2s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
 @keyframes wgfold{0%,100%{transform:rotate(0deg)}35%{transform:rotate(6deg)}70%{transform:rotate(-5deg)}}
 @media(prefers-reduced-motion:reduce){
-  .dish-art .wokspin,.dish-art .st-wisp,.pa .pa-k,.pa .pa-l,.pa .pa-r,.pa .pa-drop,.pa .pa-sqz,.pa .pa-whisk,.dish-art .pot-bubble,.dish-art .pot-shimmer,.dish-art .oil-stream,.dish-art .oil-drop,.dish-art .oil-sizzle,.dish-art .oil-sheen,.dish-art .rc-crust,.dish-art .rc-grain,.dish-art .rc-pool,.pa .wg-jit,.pa .wg-spark,.pa .wg-bloom,.pa .wg-sear,.pa .wg-toss,.pa .wg-sweep,.pa .wg-wilt,.pa .wg-fold{animation:none}
+  .dish-art .wokspin,.dish-art .st-wisp,.pa .pa-k,.pa .pa-l,.pa .pa-r,.pa .pa-drop,.pa .pa-sqz,.pa .pa-whisk,.dish-art .pot-bubble,.dish-art .pot-shimmer,.dish-art .oil-stream,.dish-art .oil-drop,.dish-art .oil-sizzle,.dish-art .oil-sheen,.dish-art .rc-crust,.dish-art .rc-grain,.dish-art .rc-pool,.pa .pg-stream,.pa .pg-sizz,.pa .pg-wisp,.pa .pg-bub,.pa .pg-place,.pa .pg-plop,.pa .pg-rip,.pa .wg-jit,.pa .wg-spark,.pa .wg-bloom,.pa .wg-sear,.pa .wg-toss,.pa .wg-sweep,.pa .wg-wilt,.pa .wg-fold{animation:none}
   .dish-art .st-wisp{opacity:.35}
   .pa .pa-drop{opacity:.6}
   .dish-art .pot-bubble{opacity:0}
@@ -543,6 +553,8 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .pa .wg-spark,.pa .wg-sear{opacity:0}
   .dish-art .oil-sheen{animation:none;opacity:1}
   .dish-art .rc-pool{opacity:1}
+  .pa .pg-wisp{opacity:.35}
+  .pa .pg-place,.pa .pg-plop{opacity:1}
   .dish-art .rc-crust{opacity:.45}
   .pa .wg-sweep{opacity:.55}
 }
@@ -737,7 +749,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.50</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.52</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5178,6 +5190,58 @@ function schedule(list){
 // bubbles, then the proportional bar — every column tracks a bar segment, so each tag and
 // each letter sits directly over its phase. Cards carry a `phase` matching a segment `kind`;
 // several steps can share one phase (they pack left-to-right in that column).
+/* the shared mini-ingredient: the real artPiece/artProtein drawing at glyph scale */
+function artMini(ing,sc,cy){
+  const S=[];
+  if(ing&&ing.category==="proteins"&&ing.id) artProtein(S,13,cy,0,ing.id,REF);
+  else if(ing&&ing.id) artPiece(S,13,cy,ing);
+  else S.push('<circle cx="13" cy="'+cy+'" r="5" fill="#C9A254"/>');
+  return '<g transform="translate(13 '+cy+') scale('+sc+') translate(-13 -'+cy+')">'+S.join("")+'</g>';
+}
+/* the steaming stage: a covered plate breathing wisps — rolling steams fast, gentle slow */
+function steamStageGlyph(vigour){
+  const dur = vigour==="gentle" ? "5.2s" : "2.8s";
+  return '<svg class="pa" width="34" height="34" viewBox="0 0 26 26" aria-hidden="true">'
+    +'<ellipse cx="13" cy="20" rx="11" ry="3.5" fill="#E8E4DB" stroke="#C9C3B4" stroke-width="1"/>'
+    +'<ellipse cx="13" cy="18.5" rx="7" ry="2.2" fill="#F4F1EA"/>'
+    +'<g stroke="#B8B2A4" stroke-width="1.8" fill="none" stroke-linecap="round">'
+    +'<path class="pg-wisp" style="animation-duration:'+dur+'" d="M9 14 q2 -4 0 -7"/>'
+    +'<path class="pg-wisp" style="animation-duration:'+dur+';animation-delay:1s" d="M14 13 q-2 -4 0 -8"/>'
+    +'<path class="pg-wisp" style="animation-duration:'+dur+';animation-delay:2s" d="M18 14 q2 -4 0 -7"/></g></svg>';
+}
+/* placing the subject on the plate: the piece lowers gently into position */
+function placeStageGlyph(subjId){
+  const ing=subjId?REF.byId[subjId]:null;
+  return '<svg class="pa" width="34" height="34" viewBox="0 0 26 26" aria-hidden="true">'
+    +'<ellipse cx="13" cy="21" rx="11" ry="3" fill="#E8E4DB" stroke="#C9C3B4" stroke-width="1"/>'
+    +'<g class="pg-place">'+artMini(ing,0.62,17)+'</g></svg>';
+}
+/* dropping into the pot: the actual piece falls into the broth with a ripple */
+function potPlopGlyph(st){
+  const item=(st.items||[]).find(i=>i.id&&REF.byId[i.id]);
+  const ing=item?REF.byId[item.id]:null;
+  const dly=((artSeed((item?item.id:"")+(st.kind||""))%8)/10).toFixed(1);
+  return '<svg class="pa" width="34" height="34" viewBox="0 0 26 26" aria-hidden="true">'
+    +'<path d="M3 15 q10 7 20 0 l-2 7 q-8 4 -16 0 Z" fill="#E8D9A8" stroke="#C9B478" stroke-width="1"/>'
+    +'<ellipse class="pg-rip" style="animation-delay:'+dly+'s" cx="13" cy="16" rx="6" ry="2" fill="none" stroke="#C9B478" stroke-width="1.2"/>'
+    +'<g class="pg-plop" style="animation-delay:'+dly+'s">'+artMini(ing,0.58,12)+'</g></svg>';
+}
+/* rice cook stages: the pot absorbing (wisp), a simmering track (bubbles), or hands-on */
+function riceStepGlyph(st){
+  const t=(st.label||"")+" "+(st.detail||"");
+  if(/assemble|ladle|spoon|over the rice/i.test(t)) return null;   // handled by pour family
+  if(st.handsoff && /rice/i.test(st.label||""))
+    return '<svg class="pa" width="34" height="34" viewBox="0 0 26 26" aria-hidden="true">'
+      +'<path d="M4 13 q9 -5 18 0 l-2 9 q-7 3 -14 0 Z" fill="#8A6A4A" stroke="#5F4630" stroke-width="1.2"/>'
+      +'<ellipse cx="13" cy="14" rx="6.5" ry="2" fill="#F2ECDC"/>'
+      +'<path class="pg-wisp" style="animation-duration:4s" d="M13 10 q-2 -4 0 -7" stroke="#B8B2A4" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>';
+  if(st.handsoff)
+    return '<svg class="pa" width="34" height="34" viewBox="0 0 26 26" aria-hidden="true">'
+      +'<path d="M4 12 q9 -5 18 0 l-2 10 q-7 3 -14 0 Z" fill="#C98B52" stroke="#8E5A28" stroke-width="1.2"/>'
+      +'<g fill="#F2E3CF"><circle class="pg-bub" cx="10" cy="18" r="1.4"/><circle class="pg-bub" style="animation-delay:1s" cx="15" cy="19" r="1.2"/><circle class="pg-bub" style="animation-delay:1.8s" cx="13" cy="17" r="1.3"/></g></svg>';
+  return null;
+}
+
 /* a tiny animated prep glyph whose ACTION matches the instruction AND whose subject IS
    the ingredient: the piece under the knife/pestle/water is drawn by the same artPiece /
    artProtein library as the dish art — mushrooms look like mushrooms, pork belly keeps
@@ -5189,15 +5253,18 @@ function prepGlyph(name, prepText){
   const D='style="animation-delay:'+dly+'s"';
   const uid="pg"+artSeed(name+v)%100000;
   // the ingredient itself, drawn small (real shapes from the shared library)
-  const mini=(sc,cy)=>{
-    const S=[];
-    if(ing.category==="proteins" && ing.id) artProtein(S,13,cy,0,ing.id,REF);
-    else if(ing.id) artPiece(S,13,cy,ing);
-    else { S.push('<circle cx="13" cy="'+cy+'" r="5" fill="#C9A254"/>'); }
-    return '<g transform="translate(13 '+cy+') scale('+sc+') translate(-13 -'+cy+')">'+S.join("")+'</g>';
-  };
+  const mini=(sc,cy)=>artMini(ing,sc,cy);
   let body;
-  if(/rinse|wash|soak|purge|scrub|clean/.test(v)){
+  if(/hot oil|smoking|sizzl|drizzle|pour/.test(v)){
+    // POUR: a stream comes down onto the piece, sparks on impact
+    body=mini(0.6,19)
+      +'<path class="pg-stream" '+D+' d="M21 2 L14 13" stroke="#D9A83C" stroke-width="3" fill="none" stroke-linecap="round"/>'
+      +'<g class="pg-sizz" '+D+' stroke="#F2C94C" stroke-width="1.4" fill="none" stroke-linecap="round"><path d="M10 12 l-3 -2"/><path d="M17 11 l2 -3"/><path d="M12 15 l-3 1"/></g>';
+  } else if(/scatter|sprinkle/.test(v)){
+    // SCATTER: bits falling onto the piece
+    body=mini(0.6,19)
+      +'<g fill="#3E7D4F"><rect class="pa-drop" '+D+' x="8" y="4" width="4" height="2" rx="1"/><rect class="pa-drop" style="animation-delay:'+(0.6+parseFloat(dly)).toFixed(1)+'s" x="14" y="3" width="4" height="2" rx="1"/><rect class="pa-drop" style="animation-delay:'+(1.1+parseFloat(dly)).toFixed(1)+'s" x="11" y="6" width="3.5" height="2" rx="1"/></g>';
+  } else if(/rinse|wash|soak|purge|scrub|clean/.test(v)){
     body='<path d="M4 16 q9 8 18 0 l-2 6 q-7 4 -14 0 Z" fill="#BFD8DC"/>'
       +mini(0.55,16)
       +'<g fill="#8FB8C4"><circle class="pa-drop" '+D+' cx="8" cy="7" r="1.6"/><circle class="pa-drop" style="animation-delay:'+(0.6+parseFloat(dly)).toFixed(1)+'s" cx="14" cy="5" r="1.6"/><circle class="pa-drop" style="animation-delay:'+(1.1+parseFloat(dly)).toFixed(1)+'s" cx="19" cy="7" r="1.4"/></g>';
@@ -5221,7 +5288,7 @@ function prepGlyph(name, prepText){
       +'<g class="pa-l" '+D+' clip-path="url(#'+uid+'L)">'+mini(0.7,18)+'</g>'
       +'<g class="pa-r" '+D+' clip-path="url(#'+uid+'R)">'+mini(0.7,18)+'</g>';
   }
-  return '<svg class="pa" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">'+body+'</svg>';
+  return '<svg class="pa" width="34" height="34" viewBox="0 0 26 26" aria-hidden="true">'+body+'</svg>';
 }
 
 /* a small animated glyph for each WOK STAGE, showing that stage's action on the actual
@@ -5259,7 +5326,7 @@ function wokStageGlyph(st){
   } else { // dense, firm, quick — the toss
     body='<g class="wg-toss" '+D+'>'+mini(0.72,17)+'</g>';
   }
-  return '<svg class="pa" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">'+body+'</svg>';
+  return '<svg class="pa" width="34" height="34" viewBox="0 0 26 26" aria-hidden="true">'+body+'</svg>';
 }
 
 function renderStepSlider(box, cards, segments){
@@ -6217,7 +6284,8 @@ function renderSteam(){
   const seasonAfter =(st.sauceSteps||[]).filter(s=> AFTER_TITLES.has(s.t));
   const sauceRows=(arr,tgt)=>arr.forEach(s=>{
     const row=document.createElement("div"); row.className="wok-step";
-    row.innerHTML="<span class=\"ws-t\">\u2022</span>"+
+    row.innerHTML="<span class=\"ws-g\">"+prepGlyph(s.t, s.t+" "+s.d)+"</span>"+
+      "<span class=\"ws-t\">\u2022</span>"+
       "<span class=\"ws-b\"><span class=\"ws-i\">"+s.t+"</span>"+
         "<span class=\"ws-w\">"+s.d+"</span></span>";
     tgt.appendChild(row);
@@ -6242,13 +6310,15 @@ function renderSteam(){
   CARDS.push({label:"Steam", phase:"cook", build:(c)=>{
     rgroup(c,"Assemble on the plate");
     const arow=document.createElement("div"); arow.className="wok-step";
-    arow.innerHTML="<span class=\"ws-t\">plate</span>"+
+    arow.innerHTML="<span class=\"ws-g\">"+placeStageGlyph(chosen.subject)+"</span>"+
+      "<span class=\"ws-t\">plate</span>"+
       "<span class=\"ws-b\"><span class=\"ws-i\">"+st.assemble+"</span></span>";
     c.appendChild(arow);
     rgroup(c,"Then steam \u2014 and walk away");
     const vig = st.steam.vigour==="gentle" ? "GENTLE" : "rolling";
     const srow=document.createElement("div"); srow.className="wok-step steam-step"+(st.steam.vigour==="gentle"?" gentle":"");
     srow.innerHTML=
+      "<span class=\"ws-g\">"+steamStageGlyph(st.steam.vigour)+"</span>"+
       "<span class=\"ws-t\">"+st.steam.mins+"m</span>"+
       "<span class=\"ws-b\"><span class=\"ws-i\">"+vig+" steam</span>"+
         "<span class=\"ws-w\">"+st.steam.why+"</span></span>"+
@@ -6474,7 +6544,9 @@ function renderRice(){
     rgroup(c, rb.mode==="in_rice" ? "One pot \u2014 then walk away" : "Two tracks \u2014 rice, and the topping");
     rb.steps.forEach(st=>{
       const row=document.createElement("div"); row.className="wok-step"+(st.handsoff?" steam-step":"");
+      const rg=riceStepGlyph(st)||prepGlyph(st.label||"", (st.label||"")+" "+(st.detail||""));
       row.innerHTML=
+        "<span class=\"ws-g\">"+rg+"</span>"+
         "<span class=\"ws-t\">"+(st.mins?st.mins+"m":"\u2014")+"</span>"+
         "<span class=\"ws-b\"><span class=\"ws-i\">"+st.label+"</span>"+
           "<span class=\"ws-w\">"+st.detail+"</span></span>"+
@@ -6486,7 +6558,8 @@ function renderRice(){
     rgroup(c, dir ? "The sauce \u2014 "+dir.label.replace(/ \(.*\)/,"") : "The sauce");
     (rb.sauceSteps||[]).forEach(s=>{
       const row=document.createElement("div"); row.className="wok-step";
-      row.innerHTML="<span class=\"ws-t\">\u2022</span>"+
+      row.innerHTML="<span class=\"ws-g\">"+prepGlyph(s.t, s.t+" "+s.d)+"</span>"+
+        "<span class=\"ws-t\">\u2022</span>"+
         "<span class=\"ws-b\"><span class=\"ws-i\">"+s.t+"</span>"+
           "<span class=\"ws-w\">"+s.d+"</span></span>";
       c.appendChild(row);
@@ -6835,6 +6908,7 @@ function renderOnePot(){
       const names = st.items.map(x=>x.name).join(", ");
       const row=document.createElement("div"); row.className="wok-step"+(st.kind==="season"?" steam-step":"");
       row.innerHTML=
+        "<span class=\"ws-g\">"+potPlopGlyph(st)+"</span>"+
         "<span class=\"ws-t\">\u2022</span>"+
         "<span class=\"ws-b\"><span class=\"ws-i\">"+names+" <span class=\"ps-when\">("+whenOf(st)+")</span></span>"+
           "<span class=\"ws-w\">"+st.why+"</span></span>";
