@@ -509,6 +509,8 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 @keyframes oildrop{0%,6%{transform:translate(0,0);opacity:0}12%{opacity:.9}38%{transform:translate(-19px,34px);opacity:.8}44%{transform:translate(-20px,36px);opacity:0}100%{opacity:0}}
 .dish-art .oil-sizzle{animation:oilsizzle 4.6s ease-out infinite;opacity:0;transform-box:fill-box;transform-origin:center}
 @keyframes oilsizzle{0%,30%{opacity:0;transform:scale(.6)}38%{opacity:.9;transform:scale(1)}55%{opacity:.45;transform:scale(1.15)}66%,100%{opacity:0;transform:scale(1.2)}}
+.dish-art .oil-sheen{animation:oilsheen 4.6s ease-in infinite;opacity:0}
+@keyframes oilsheen{0%,30%{opacity:0}44%{opacity:1}92%{opacity:1}100%{opacity:0}}
 .ws-g{flex:0 0 auto;line-height:0;align-self:center}
 .pa .wg-jit{animation:wgjit 1.9s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
 @keyframes wgjit{0%,100%{transform:translate(0,0)}25%{transform:translate(.7px,-.5px)}55%{transform:translate(-.6px,.4px)}80%{transform:translate(.4px,.3px)}}
@@ -527,12 +529,13 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .pa .wg-fold{animation:wgfold 4.2s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
 @keyframes wgfold{0%,100%{transform:rotate(0deg)}35%{transform:rotate(6deg)}70%{transform:rotate(-5deg)}}
 @media(prefers-reduced-motion:reduce){
-  .dish-art .wokspin,.dish-art .st-wisp,.pa .pa-k,.pa .pa-l,.pa .pa-r,.pa .pa-drop,.pa .pa-sqz,.pa .pa-whisk,.dish-art .pot-bubble,.dish-art .pot-shimmer,.dish-art .oil-stream,.dish-art .oil-drop,.dish-art .oil-sizzle,.pa .wg-jit,.pa .wg-spark,.pa .wg-bloom,.pa .wg-sear,.pa .wg-toss,.pa .wg-sweep,.pa .wg-wilt,.pa .wg-fold{animation:none}
+  .dish-art .wokspin,.dish-art .st-wisp,.pa .pa-k,.pa .pa-l,.pa .pa-r,.pa .pa-drop,.pa .pa-sqz,.pa .pa-whisk,.dish-art .pot-bubble,.dish-art .pot-shimmer,.dish-art .oil-stream,.dish-art .oil-drop,.dish-art .oil-sizzle,.dish-art .oil-sheen,.pa .wg-jit,.pa .wg-spark,.pa .wg-bloom,.pa .wg-sear,.pa .wg-toss,.pa .wg-sweep,.pa .wg-wilt,.pa .wg-fold{animation:none}
   .dish-art .st-wisp{opacity:.35}
   .pa .pa-drop{opacity:.6}
   .dish-art .pot-bubble{opacity:0}
   .dish-art .oil-stream,.dish-art .oil-drop,.dish-art .oil-sizzle{opacity:0}
   .pa .wg-spark,.pa .wg-sear{opacity:0}
+  .dish-art .oil-sheen{animation:none;opacity:1}
   .pa .wg-sweep{opacity:.55}
 }
 .wp-n{font-size:13px;font-weight:600;min-width:110px}
@@ -726,7 +729,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.48</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.49</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5825,9 +5828,13 @@ function steamDishArt(form, subjId, contents, dir, R){
     S.push('<g stroke="#F5A093" stroke-width="1.5" fill="none"><path d="M29 52 q-3 8 2 12"/><path d="M83 60 q3 -8 -2 -12"/></g>');
   }
   const sseed=artSeed(subjId+(dir?dir.key:""));
+  // does this seasoning finish with a hot-oil pour? (read from its own steps)
+  const hasPour = !!(dir && (dir.steps||[]).some(s=>/hot oil|smoking|sizzl/i.test((s.t||"")+" "+(s.d||""))));
   if(sauce.coat) S.push('<path d="'+artBlob(56,55,29,17,sseed)+'" fill="'+sauce.coat+'" opacity="0.45"/>');
   if(sauce.pool) S.push('<path d="M34 50 q12 8 22 6 q14 -2 22 4" stroke="'+sauce.pool+'" stroke-width="4" fill="none" opacity="0.45" stroke-linecap="round"/>');
-  if(sauce.oil)  S.push('<g transform="rotate(-10 55 54)"><path d="'+artBlob(55,54,30,15,sseed+1)+'" fill="'+sauce.oil+'" opacity="0.38"/></g>');
+  // the oil sheen is what the jet DEPOSITS — with a pour, it only appears once the
+  // stream touches the fish (synced to the same cycle); without one, it's just there
+  if(sauce.oil)  S.push('<g transform="rotate(-10 55 54)"'+(hasPour?' class="oil-sheen" style="animation-delay:'+((sseed%7)/10)+'s"':'')+'><path d="'+artBlob(55,54,30,15,sseed+1)+'" fill="'+sauce.oil+'" opacity="0.38"/></g>');
   if(sauce.specks){ S.push('<g fill="'+sauce.specks+'"><circle cx="44" cy="50" r="1.8"/><circle cx="58" cy="46" r="1.8"/><circle cx="66" cy="56" r="1.8"/><circle cx="50" cy="60" r="1.8"/><circle cx="60" cy="64" r="1.6"/><circle cx="38" cy="58" r="1.6"/></g>'); }
   // dollops of chilli paste sitting on the food
   if(sauce.dollops){
@@ -5864,8 +5871,6 @@ function steamDishArt(form, subjId, contents, dir, R){
     if(dir.key==="ginger_scallion") S.push('<g stroke="#E8B94A" stroke-width="1.8" stroke-linecap="round"><path d="M58 48 l10 0"/><path d="M48 56 l9 2"/></g>');
   }
   // the finish: a stream of hot oil pours over the dish, sizzles, and leaves the sheen.
-  // Only for directions whose own steps call for hot oil — read from the data.
-  const hasPour = !!(dir && (dir.steps||[]).some(s=>/hot oil|smoking|sizzl/i.test((s.t||"")+" "+(s.d||""))));
   if(hasPour){
     const pd='style="animation-delay:'+((sseed%7)/10)+'s"';
     S.push('<g>'
