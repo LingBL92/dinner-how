@@ -6,7 +6,7 @@
    "provides": "property flags inherited from parent categories (protein, collagen_rich, sugar, salt, acid, fat_solid, fat_liquid, water, starch, aromatic...)",
    "aisle": "shopping-list section",
    "prep_verb": "how it is prepped, shown in the timeline",
-   "cut_role": "braise | quick | mince \u2014 only on meat cuts; drives cut-aware reasoning",
+   "cut_role": "braise | quick | mince — only on meat cuts; drives cut-aware reasoning",
    "parent": "the broader ingredient this is a kind of; 'pork ribs' has parent 'pork'"
   }
  },
@@ -264,7 +264,7 @@
    "parent": "chicken",
    "category": "proteins",
    "cut": "quick",
-   "cut_note": "dark meat on the bone \u2014 forgiving"
+   "cut_note": "dark meat on the bone — forgiving"
   },
   {
    "id": "chicken_wing",
@@ -284,7 +284,7 @@
    "parent": "chicken",
    "category": "proteins",
    "cut": "quick",
-   "cut_note": "skin and collagen \u2014 crisps well, stays moist"
+   "cut_note": "skin and collagen — crisps well, stays moist"
   },
   {
    "id": "chicken_whole",
@@ -304,7 +304,7 @@
    "parent": "chicken",
    "category": "proteins",
    "cut": "braise",
-   "cut_note": "the whole bird \u2014 poach, roast or braise"
+   "cut_note": "the whole bird — poach, roast or braise"
   },
   {
    "id": "chicken_mince",
@@ -478,7 +478,7 @@
    "prep_verb": "scale and gut",
    "parent": "fish",
    "category": "proteins",
-   "cut_note": "steam whole \u2014 sweet, delicate white flesh"
+   "cut_note": "steam whole — sweet, delicate white flesh"
   },
   {
    "id": "fish_slices",
@@ -520,7 +520,7 @@
    "prep_verb": "scale and gut",
    "parent": "fish",
    "category": "proteins",
-   "cut_note": "firm white flesh \u2014 the fish-head-curry fish"
+   "cut_note": "firm white flesh — the fish-head-curry fish"
   },
   {
    "id": "mackerel",
@@ -541,7 +541,7 @@
    "prep_verb": "pat dry",
    "parent": "fish",
    "category": "proteins",
-   "cut_note": "oily and robust \u2014 stands up to sambal and grilling"
+   "cut_note": "oily and robust — stands up to sambal and grilling"
   },
   {
    "id": "seabass",
@@ -561,7 +561,7 @@
    "prep_verb": "scale and gut",
    "parent": "fish",
    "category": "proteins",
-   "cut_note": "clean white flesh \u2014 steams beautifully"
+   "cut_note": "clean white flesh — steams beautifully"
   },
   {
    "id": "threadfin",
@@ -580,7 +580,7 @@
    "prep_verb": "scale and gut",
    "parent": "fish",
    "category": "proteins",
-   "cut_note": "prized for steaming \u2014 sweet and tender"
+   "cut_note": "prized for steaming — sweet and tender"
   },
   {
    "id": "grouper",
@@ -600,7 +600,7 @@
    "prep_verb": "scale and gut",
    "parent": "fish",
    "category": "proteins",
-   "cut_note": "meaty and gelatinous \u2014 good for soup and steaming"
+   "cut_note": "meaty and gelatinous — good for soup and steaming"
   },
   {
    "id": "cod",
@@ -620,7 +620,7 @@
    "prep_verb": "pat dry",
    "parent": "fish",
    "category": "proteins",
-   "cut_note": "buttery, flaky \u2014 forgiving"
+   "cut_note": "buttery, flaky — forgiving"
   },
   {
    "id": "tuna",
@@ -638,7 +638,7 @@
    "prep_verb": "pat dry",
    "parent": "fish",
    "category": "proteins",
-   "cut_note": "firm and steak-like \u2014 sear it, don't overcook"
+   "cut_note": "firm and steak-like — sear it, don't overcook"
   },
   {
    "id": "sardine",
@@ -705,7 +705,9 @@
    "aisle": "Meat & protein",
    "prep_verb": "cube",
    "parent": "proteins",
-   "category": "proteins"
+   "category": "proteins",
+   "cuisine_affinity": 3,
+   "bed_commonness": 5
   },
   {
    "id": "beans",
@@ -1667,7 +1669,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "fruiting",
-   "hue": "#E85B4B"
+   "hue": "#E85B4B",
+   "cuisine_affinity": 2,
+   "bed_commonness": 4
   },
   {
    "id": "broccoli",
@@ -1684,7 +1688,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "florets",
-   "hue": "#5A9A50"
+   "hue": "#5A9A50",
+   "cuisine_affinity": 1,
+   "bed_commonness": 3
   },
   {
    "id": "carrot",
@@ -1706,7 +1712,9 @@
    "category": "vegetables",
    "group": "root",
    "browse_group": "fungi_roots",
-   "hue": "#E08A2E"
+   "hue": "#E08A2E",
+   "cuisine_affinity": 2,
+   "bed_commonness": 5
   },
   {
    "id": "mushroom",
@@ -1728,7 +1736,9 @@
    "category": "vegetables",
    "group": "fungi",
    "browse_group": "fungi_roots",
-   "hue": "#8A6A4A"
+   "hue": "#8A6A4A",
+   "cuisine_affinity": 3,
+   "bed_commonness": 5
   },
   {
    "id": "cabbage",
@@ -1746,7 +1756,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "leafy",
-   "hue": "#A8C878"
+   "hue": "#A8C878",
+   "cuisine_affinity": 2,
+   "bed_commonness": 4
   },
   {
    "id": "celery",
@@ -1763,7 +1775,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "aromatic",
-   "hue": "#A8C878"
+   "hue": "#A8C878",
+   "cuisine_affinity": 1,
+   "bed_commonness": 3
   },
   {
    "id": "bell_pepper",
@@ -1790,7 +1804,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "fruiting",
-   "hue": "#D84B2F"
+   "hue": "#D84B2F",
+   "cuisine_affinity": 2,
+   "bed_commonness": 3
   },
   {
    "id": "spinach",
@@ -1807,7 +1823,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "leafy",
-   "hue": "#3E7D4F"
+   "hue": "#3E7D4F",
+   "cuisine_affinity": 1,
+   "bed_commonness": 3
   },
   {
    "id": "zucchini",
@@ -1827,7 +1845,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "fruiting",
-   "hue": "#7BA84E"
+   "hue": "#7BA84E",
+   "cuisine_affinity": 1,
+   "bed_commonness": 2
   },
   {
    "id": "eggplant",
@@ -1845,7 +1865,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "fruiting",
-   "hue": "#6B4A8A"
+   "hue": "#6B4A8A",
+   "cuisine_affinity": 3,
+   "bed_commonness": 4
   },
   {
    "id": "green_bean",
@@ -1864,7 +1886,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "pods",
-   "hue": "#6BA55A"
+   "hue": "#6BA55A",
+   "cuisine_affinity": 2,
+   "bed_commonness": 3
   },
   {
    "id": "peas",
@@ -1883,7 +1907,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "pods",
-   "hue": "#7BB661"
+   "hue": "#7BB661",
+   "cuisine_affinity": 2,
+   "bed_commonness": 3
   },
   {
    "id": "corn",
@@ -1903,7 +1929,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "fruiting",
-   "hue": "#F2C94C"
+   "hue": "#F2C94C",
+   "cuisine_affinity": 2,
+   "bed_commonness": 4
   },
   {
    "id": "lettuce",
@@ -1922,7 +1950,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "leafy",
-   "hue": "#9CC26B"
+   "hue": "#9CC26B",
+   "cuisine_affinity": 1,
+   "bed_commonness": 3
   },
   {
    "id": "cauliflower",
@@ -1939,7 +1969,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "florets",
-   "hue": "#F0EAD8"
+   "hue": "#F0EAD8",
+   "cuisine_affinity": 2,
+   "bed_commonness": 3
   },
   {
    "id": "cucumber",
@@ -1956,7 +1988,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "fruiting",
-   "hue": "#8FBF6A"
+   "hue": "#8FBF6A",
+   "cuisine_affinity": 2,
+   "bed_commonness": 3
   },
   {
    "id": "kailan",
@@ -1976,7 +2010,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "leafy",
-   "hue": "#4E8A4E"
+   "hue": "#4E8A4E",
+   "cuisine_affinity": 3,
+   "bed_commonness": 4
   },
   {
    "id": "bok_choy",
@@ -1996,7 +2032,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "leafy",
-   "hue": "#6FA05A"
+   "hue": "#6FA05A",
+   "cuisine_affinity": 3,
+   "bed_commonness": 5
   },
   {
    "id": "long_beans",
@@ -2016,7 +2054,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "pods",
-   "hue": "#6BA55A"
+   "hue": "#6BA55A",
+   "cuisine_affinity": 3,
+   "bed_commonness": 4
   },
   {
    "id": "watercress",
@@ -2033,7 +2073,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "leafy",
-   "hue": "#4E8A4E"
+   "hue": "#4E8A4E",
+   "cuisine_affinity": 2,
+   "bed_commonness": 2
   },
   {
    "id": "lemongrass",
@@ -2085,7 +2127,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "fruiting",
-   "hue": "#6BA55A"
+   "hue": "#6BA55A",
+   "cuisine_affinity": 3,
+   "bed_commonness": 3
   },
   {
    "id": "kangkong",
@@ -2105,7 +2149,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "leafy",
-   "hue": "#4E8A4E"
+   "hue": "#4E8A4E",
+   "cuisine_affinity": 3,
+   "bed_commonness": 3
   },
   {
    "id": "beansprouts",
@@ -2124,7 +2170,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "pods",
-   "hue": "#EFE8D0"
+   "hue": "#EFE8D0",
+   "cuisine_affinity": 3,
+   "bed_commonness": 4
   },
   {
    "id": "nori",
@@ -2143,7 +2191,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "fungi",
-   "hue": "#2E4034"
+   "hue": "#2E4034",
+   "cuisine_affinity": 2,
+   "bed_commonness": 2
   },
   {
    "id": "wakame",
@@ -2161,7 +2211,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "fungi",
-   "hue": "#3A5A44"
+   "hue": "#3A5A44",
+   "cuisine_affinity": 2,
+   "bed_commonness": 2
   },
   {
    "id": "daikon",
@@ -2181,7 +2233,9 @@
    "category": "vegetables",
    "group": "root",
    "browse_group": "fungi_roots",
-   "hue": "#EFEADF"
+   "hue": "#EFEADF",
+   "cuisine_affinity": 3,
+   "bed_commonness": 4
   },
   {
    "id": "pumpkin",
@@ -2202,7 +2256,9 @@
    "category": "vegetables",
    "group": "root",
    "browse_group": "fungi_roots",
-   "hue": "#E39A3B"
+   "hue": "#E39A3B",
+   "cuisine_affinity": 2,
+   "bed_commonness": 3
   },
   {
    "id": "lotus_root",
@@ -2223,7 +2279,9 @@
    "category": "vegetables",
    "group": "root",
    "browse_group": "fungi_roots",
-   "hue": "#EFE6D2"
+   "hue": "#EFE6D2",
+   "cuisine_affinity": 3,
+   "bed_commonness": 3
   },
   {
    "id": "enoki",
@@ -2238,7 +2296,9 @@
    "category": "vegetables",
    "group": "fungi",
    "browse_group": "fungi_roots",
-   "hue": "#EFE8D6"
+   "hue": "#EFE8D6",
+   "cuisine_affinity": 3,
+   "bed_commonness": 3
   },
   {
    "id": "napa_cabbage",
@@ -2256,7 +2316,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "leafy",
-   "hue": "#C9DCA8"
+   "hue": "#C9DCA8",
+   "cuisine_affinity": 3,
+   "bed_commonness": 4
   },
   {
    "id": "laksa_leaf",
@@ -2290,7 +2352,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "leafy",
-   "hue": "#5A9A50"
+   "hue": "#5A9A50",
+   "cuisine_affinity": 3,
+   "bed_commonness": 4
   },
   {
    "id": "petai",
@@ -2309,7 +2373,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "pods",
-   "hue": "#7BA84E"
+   "hue": "#7BA84E",
+   "cuisine_affinity": 3,
+   "bed_commonness": 2
   },
   {
    "id": "bittergourd",
@@ -2328,7 +2394,9 @@
    "parent": "vegetables",
    "category": "vegetables",
    "group": "fruiting",
-   "hue": "#7BA84E"
+   "hue": "#7BA84E",
+   "cuisine_affinity": 3,
+   "bed_commonness": 2
   },
   {
    "id": "sweeteners",
@@ -4017,7 +4085,9 @@
    "aisle": "Rice, grains & bread",
    "prep_verb": "soak in warm water until pliable",
    "parent": "starches",
-   "category": "starches"
+   "category": "starches",
+   "cuisine_affinity": 3,
+   "bed_commonness": 4
   },
   {
    "id": "clams",
@@ -4115,7 +4185,9 @@
    "prep_verb": "peel and finely dice",
    "parent": "vegetables",
    "category": "vegetables",
-   "hue": "#F0E8D2"
+   "hue": "#F0E8D2",
+   "cuisine_affinity": 3,
+   "bed_commonness": 2
   },
   {
    "id": "scallops",
@@ -4198,7 +4270,9 @@
    "prep_verb": "peel",
    "parent": "vegetables",
    "category": "vegetables",
-   "hue": "#9A6A3E"
+   "hue": "#9A6A3E",
+   "cuisine_affinity": 2,
+   "bed_commonness": 2
   },
   {
    "id": "banana_leaf",
