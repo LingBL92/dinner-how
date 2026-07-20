@@ -71,6 +71,16 @@ function buildReference(ingData){
   list.forEach(i=>{const s=new Set();let p=i.parent;while(p){s.add(p);p=byId[p]?byId[p].parent:null;}anc[i.id]=s;});
   const R={list,byId,anc,GROC_CAT,PREP_VERB,isLeaf:id=>!hasChild.has(id),
           match:makeMatcher(list),taste:ingData.taste_rules};
+  // rank partner/bed candidates by culinary fit: cuisine_affinity (desc) -> bed_commonness
+  // (desc) -> name (asc, stable). Missing scores default low so unscored items sink.
+  R.rankPartners=function(ids){
+    return [...ids].sort((a,b)=>{
+      const ia=byId[a]||{}, ib=byId[b]||{};
+      return (ib.cuisine_affinity||1)-(ia.cuisine_affinity||1)
+          || (ib.bed_commonness||1)-(ia.bed_commonness||1)
+          || String(ia.name||a).localeCompare(String(ib.name||b));
+    });
+  };
   CHARACTER_SET=buildCharacterSet(R);   // derived from the taxonomy — never hand-written
   return R;
 }
@@ -2645,7 +2655,11 @@ function steamCandidates(ingIds, R, dishes, AFF){
   ingIds.forEach(id=>{ const f=steamFormOf(id,R); if(f){ (byForm[f]=byForm[f]||[]).push(id); } });
 
   // the only real "bed" is a single absorbent collector under fish or prawns.
-  const COLLECTORS_C=["glass_noodles","tofu","napa_cabbage","tomato","lettuce"];
+  // the bed under fish/prawns: the curated collectors PLUS leafy core-affinity greens and
+    // beansprouts (which genuinely go under a steamed fish). rankPartners then orders the
+    // combined pool by affinity -> commonness, so the best-fitting bed present wins.
+    const BED_LEAFY=["bok_choy","kailan","kangkong","chye_sim","beansprouts"];
+    const COLLECTORS_C=["glass_noodles","tofu","napa_cabbage","tomato","lettuce"].concat(BED_LEAFY);
   const topping=real.filter(id=>CHARACTER_SEASONINGS.has(id));
 
   const out=[];
@@ -2688,7 +2702,7 @@ function steamCandidates(ingIds, R, dishes, AFF){
     }
     const subj=ids[0];
     const bedFor = (form==="whole_fish"||form==="shellfish")
-      ? COLLECTORS_C.filter(id=>real.includes(id) && id!==subj).slice(0,1) : [];
+      ? R.rankPartners(COLLECTORS_C.filter(id=>real.includes(id) && id!==subj)).slice(0,1) : [];
     // whole fish and shellfish are distinct dishes per species — a pomfret and a sea bass
     // are different choices, not alternatives of one card. Give each its own candidate.
     // Guard rails: processed fish (fish cake) never gets its own whole-fish card, and the
@@ -2701,7 +2715,7 @@ function steamCandidates(ingIds, R, dishes, AFF){
       const cardIds=splitIds.slice(0,CAP);
       const overflow=splitIds.slice(CAP).concat(form==="whole_fish"?ids.filter(id=>PROCESSED_FISH.includes(id)):[]);
       cardIds.forEach((fid,idx)=>{
-        const bed = COLLECTORS_C.filter(id=>real.includes(id) && id!==fid).slice(0,1);
+        const bed = R.rankPartners(COLLECTORS_C.filter(id=>real.includes(id) && id!==fid)).slice(0,1);
         out.push({key:form+"_"+fid, label:LABELS[form]+nm(fid), subject:fid, form,
           contents:[fid].concat(bed).concat(topping),
           note:NOTE[form],
@@ -2714,7 +2728,7 @@ function steamCandidates(ingIds, R, dishes, AFF){
     // as the card's subject, regardless of selection order
     const subj2 = (form==="whole_fish" && splitIds.length) ? splitIds[0] : subj;
     const bedFor2 = (form==="whole_fish"||form==="shellfish")
-      ? COLLECTORS_C.filter(id=>real.includes(id) && id!==subj2).slice(0,1) : [];
+      ? R.rankPartners(COLLECTORS_C.filter(id=>real.includes(id) && id!==subj2)).slice(0,1) : [];
     out.push({key:form, label:LABELS[form]+nm(subj2), subject:subj2, form,
       contents:[subj2].concat(bedFor2).concat(topping),
       note:NOTE[form],
