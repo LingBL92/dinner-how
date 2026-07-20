@@ -753,7 +753,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.65</span></h1><a href="index.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.67</span></h1><a href="index.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5449,7 +5449,7 @@ function renderStirFry(){
   const sf  = buildStirFry(chosen.contents, REF, DISHES, AFF, {direction:dir});
 
   // ---- headline + the Sauce button (radial, as in the pot) ----
-  box.appendChild(dishArtSlot(wokDishArt(chosen.contents, dir, REF), "stirfry", chosen.contents[0], dir&&dir.key));
+  box.appendChild(dishArtSlot(wokDishArt(chosen.contents, dir, REF), "stirfry", chosen.contents[0], dir&&dir.key, chosen.contents, REF));
   const t=document.createElement("div"); t.className="op-title";
   const sauceLabel = dir ? dir.label.replace(/ \(.*\)/,"") : "Sauce";
   t.innerHTML="<div class=\"op-head\"><span class=\"op-name\">"+chosen.label+"</span>"+
@@ -5809,20 +5809,103 @@ function dishKey(method, subject, dirKey){
   return [method, subject||"", dirKey||"plain"].join("_")
     .toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"");
 }
+
+/* which extra ingredients are SIGNIFICANT enough to name in the title — substantial,
+   visible components (proteins, real vegetables), not aromatics, seasonings, pantry, or
+   the subject itself. These are the extras that actually change the picture. */
+const TITLE_AROMATICS = new Set(["garlic","ginger","onion","shallot","spring_onion","scallion","chilli","chili","lemongrass","galangal","curry_leaf","kaffir_lime"]);
+function significantExtras(subject, contents, R){
+  const out=[];
+  (contents||[]).forEach(id=>{
+    if(id===subject) return;
+    const i=(R&&R.byId&&R.byId[id])||{};
+    if(i.category!=="proteins" && i.category!=="vegetables") return; // only real components
+    if(TITLE_AROMATICS.has(id)) return;                              // aromatic = seasoning
+    if(i.measure==="assumed") return;                                // pantry staple
+    out.push(id);
+  });
+  return [...new Set(out)].sort().slice(0,2);   // capped + stable order (tomato_tofu==tofu_tomato)
+}
+/* the FINE key: coarse dish key + significant extras, e.g. steam_pomfret_ginger_scallion_tomato */
+function dishKeyFine(method, subject, dirKey, contents, R){
+  const extras=significantExtras(subject, contents, R);
+  const base=dishKey(method, subject, dirKey);
+  return extras.length ? (base+"_"+extras.join("_")) : base;
+}
+
+/* ===== IMAGE MANIFEST =====
+   The key is deliberately coarse (method_subject_direction) so common dishes share one
+   photo. But the coarse key forgets the *extra* ingredients — and sometimes those matter
+   (a pomfret WITH tomato really is a different picture from one without). So we keep a
+   manifest: a record of what each image actually depicts, and a WISHLIST the app grows
+   whenever it renders a dish whose exact ingredient set isn't represented by an image yet.
+   You curate from the wishlist — generate a finer image only when the extra ingredient is
+   worth it — rather than being forced to make one for every trivial combination.
+
+   images-manifest.json (you maintain it, sits next to this file) looks like:
+   { "steam_pomfret_ginger_scallion":       { "contents":["pomfret"] },
+     "steam_pomfret_ginger_scallion__tomato":{ "contents":["pomfret","tomato"], "file":"steam_pomfret_ginger_scallion__tomato.jpg" } }
+   A "__" suffix on a key is a FINER variant: same coarse dish, specific extra contents. */
+let DISH_MANIFEST = {};                 // loaded from images-manifest.json if present
+const DISH_WISHLIST = {};               // dishes seen this session with no exact-content image
+fetch(DISH_IMAGE_BASE+"images-manifest.json").then(r=>r.ok?r.json():{}).then(m=>{DISH_MANIFEST=m||{};}).catch(()=>{});
+
+/* stable signature of the meaningful contents (sorted, so order doesn't matter) */
+function contentSig(contents){
+  return [...new Set((contents||[]).filter(Boolean))].sort().join(",");
+}
+/* find the best image key for this exact dish: a finer variant whose contents match, else
+   the coarse key. Also records a wishlist entry when the exact contents aren't covered. */
+function resolveImageKey(coarseKey, contents){
+  const sig=contentSig(contents);
+  // 1. exact finer variant present in the manifest?
+  for(const k in DISH_MANIFEST){
+    if(k===coarseKey || k.indexOf(coarseKey+"__")===0){
+      const mc=contentSig(DISH_MANIFEST[k].contents||[]);
+      if(mc===sig) return k;               // exact content match — use this image
+    }
+  }
+  // 2. no exact match: note it on the wishlist (once), then fall back to the coarse image
+  const coarseCovered = DISH_MANIFEST[coarseKey];
+  const coarseSig = coarseCovered ? contentSig(DISH_MANIFEST[coarseKey].contents||[]) : null;
+  if(coarseSig!==sig){                     // the coarse image doesn't depict these exact contents
+    DISH_WISHLIST[coarseKey+"|"+sig]={coarseKey, contents:[...new Set((contents||[]).filter(Boolean))]};
+  }
+  return coarseKey;                         // still show the coarse image (or SVG if none)
+}
+/* call from the console: dishImageWishlist() -> prints the JSON of dishes worth a finer image */
+if(typeof window!=="undefined") window.dishImageWishlist=function(){
+  const list=Object.values(DISH_WISHLIST);
+  const out=JSON.stringify(list,null,2);
+  console.log("%c"+list.length+" dish(es) seen without an exact-content image:","font-weight:bold");
+  console.log(out);
+  return out;
+};
+
 /* returns the .dish-art element immediately (SVG inside), then swaps in a photo if one
    exists. Non-blocking: the SVG shows first, the image replaces it only once it has loaded
    cleanly, so a missing file simply leaves the drawing in place. */
-function dishArtSlot(svg, method, subject, dirKey){
+function dishArtSlot(svg, method, subject, dirKey, contents, R){
   const wrap=document.createElement("div"); wrap.className="dish-art";
   wrap.innerHTML=svg;
-  const key=dishKey(method, subject, dirKey);
+  const coarse=dishKey(method, subject, dirKey);
+  const fine=dishKeyFine(method, subject, dirKey, contents, R);
+  const manifestKey=resolveImageKey(coarse, contents);      // logs wishlist, returns best manifest key
+  const manifestFile = DISH_MANIFEST[manifestKey] && DISH_MANIFEST[manifestKey].file;
+  // preference order: exact fine title -> manifest's named file -> coarse title -> SVG.
+  // De-duped so we never request the same URL twice.
+  const names=[];
+  DISH_IMAGE_EXTS.forEach(e=>names.push(fine+"."+e));       // 1. self-describing fine filename
+  if(manifestFile) names.push(manifestFile);                // 2. manifest-specified file
+  if(coarse!==fine) DISH_IMAGE_EXTS.forEach(e=>names.push(coarse+"."+e)); // 3. coarse fallback
+  const candidates=[...new Set(names)];
   let i=0;
   const tryNext=()=>{
-    if(i>=DISH_IMAGE_EXTS.length) return;       // no photo found — keep the SVG
-    const url=DISH_IMAGE_BASE+key+"."+DISH_IMAGE_EXTS[i++];
+    if(i>=candidates.length) return;            // nothing matched — keep the SVG
+    const url=DISH_IMAGE_BASE+candidates[i++];
     const img=new Image();
     img.onload=()=>{ wrap.innerHTML=""; wrap.classList.add("has-photo"); img.className="dish-photo"; img.alt="dish"; wrap.appendChild(img); };
-    img.onerror=tryNext;                        // this extension missing — try the next
+    img.onerror=tryNext;                        // this one missing — try the next
     img.src=url;
   };
   tryNext();
@@ -6300,7 +6383,7 @@ function renderSteam(){
   const st  = buildSteam(chosen.contents, REF, DISHES, AFF, {form:chosen.form, subject:chosen.subject, direction:dir});
 
   // ---- the dish, drawn from the same data the recipe is built from ----
-  box.appendChild(dishArtSlot(steamDishArt(chosen.form, chosen.subject, chosen.contents, dir, REF), "steam", chosen.subject, dir&&dir.key));
+  box.appendChild(dishArtSlot(steamDishArt(chosen.form, chosen.subject, chosen.contents, dir, REF), "steam", chosen.subject, dir&&dir.key, chosen.contents, REF));
 
   // ---- headline + the Seasoning button (radial, as in the wok) ----
   const t=document.createElement("div"); t.className="op-title";
@@ -6544,7 +6627,7 @@ function renderRice(){
   const rb  = buildRice(chosen.contents, REF, DISHES, AFF, {mode:chosen.mode, subject:chosen.subject, direction:dir});
 
   // ---- the dish, drawn from the build ----
-  box.appendChild(dishArtSlot(riceDishArt(chosen.mode, dir, chosen.contents, REF), "rice", chosen.subject||chosen.contents[0], dir&&dir.key));
+  box.appendChild(dishArtSlot(riceDishArt(chosen.mode, dir, chosen.contents, REF), "rice", chosen.subject||chosen.contents[0], dir&&dir.key, chosen.contents, REF));
 
   // ---- headline + the Style button (radial) ----
   const t=document.createElement("div"); t.className="op-title";
@@ -6876,7 +6959,7 @@ function renderOnePot(){
     : buildOnePot(potIds, REF, DISHES, {appliance:vessel, applData:APPL_DATA[vessel]});
 
   /* ============ 1. THE HEADLINE — what this pot is, in one line ============ */
-  box.appendChild(dishArtSlot(potDishArt(mode.key, potIngredients, REF), "onepot", potIngredients[0], mode.key));
+  box.appendChild(dishArtSlot(potDishArt(mode.key, potIngredients, REF), "onepot", potIngredients[0], mode.key, potIngredients, REF));
   const title=document.createElement("div"); title.className="op-title";
   const seasonLabel = pathDir ? pathDir.label.replace(/ \u2014 .*/,"").replace(/ \(.*\)/,"") : "Season";
   title.innerHTML=
