@@ -297,6 +297,36 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
   background:var(--panel);color:var(--muted);font-size:14px}
 .sug-cancel{padding:10px 16px;border:1px solid rgba(50,117,100,.25);border-radius:10px;
   background:transparent;color:var(--muted);font-size:14px;cursor:pointer}
+/* ---- basket: pill, add-button, drawer ---- */
+.basket-pill{position:fixed;left:14px;bottom:14px;z-index:150;border:none;cursor:pointer;
+  background:var(--cool);color:#fff;border-radius:24px;padding:11px 17px;font-size:14px;font-weight:600;
+  box-shadow:0 3px 14px rgba(27,16,11,.22);display:flex;align-items:center;gap:8px}
+.basket-pill .bp-ic{font-size:13px}
+.add-basket-btn{margin-top:14px;width:100%;padding:12px;border:none;border-radius:11px;
+  background:var(--cool);color:#fff;font-size:14.5px;font-weight:600;cursor:pointer}
+.add-basket-btn.in{background:var(--panel);color:var(--muted);border:1px solid rgba(50,117,100,.25)}
+.basket-panel{background:var(--paper);width:100%;max-width:460px;border-radius:18px 18px 0 0;
+  padding:8px 18px 26px;box-shadow:0 -8px 32px rgba(27,16,11,.22);max-height:84vh;overflow-y:auto}
+.bk-grab{width:38px;height:4px;background:var(--line,rgba(50,117,100,.3));border-radius:2px;margin:8px auto 14px}
+.bk-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px}
+.bk-title{font-family:var(--font-title);font-size:19px;font-weight:600;color:var(--ink)}
+.bk-sub{font-size:12.5px;color:var(--muted)}
+.bk-lab{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.12em;
+  color:var(--cool);margin:14px 0 8px;font-weight:700}
+.bk-dishes{display:flex;flex-direction:column;gap:8px}
+.bk-dish{display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--panel);border-radius:9px}
+.bk-flame{color:var(--cool);font-size:13px}
+.bk-dn{flex:1;font-size:14px;color:var(--ink)}
+.bk-rm{border:none;background:transparent;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;padding:0 4px}
+.bk-chips{display:flex;flex-wrap:wrap;gap:6px}
+.bk-chip{font-size:12.5px;padding:5px 11px;border-radius:20px;background:var(--panel);color:var(--ink);
+  border:1px solid rgba(50,117,100,.15)}
+.bk-chip.sourced{background:rgba(50,117,100,.12);color:var(--cool);border-color:rgba(50,117,100,.3)}
+.bk-empty{font-size:13px;color:var(--muted)}
+.bk-note{font-family:var(--font-mono);font-size:9.5px;color:var(--muted);margin-top:8px}
+.bk-btns{display:flex;gap:8px;margin-top:20px}
+.bk-copy{flex:1;padding:12px;border:none;border-radius:11px;background:var(--cool);color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+.bk-clear{padding:12px 16px;border:1px solid rgba(50,117,100,.25);border-radius:11px;background:transparent;color:var(--muted);font-size:14px;cursor:pointer}
 .rs-head{font-size:13.5px;line-height:1.45;color:var(--muted);margin-bottom:14px}
 .rs-lab{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.12em;
   color:var(--cool);margin:14px 0 6px;font-weight:700}
@@ -778,7 +808,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.77</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.79</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -4263,12 +4293,97 @@ function openSuggestCard(id){
   card.querySelector(".sug-cancel").onclick=closeSuggestCard;
   const go=card.querySelector(".sug-go");
   if(go) go.onclick=function(){
+    const ing=R.byId[id];
+    if(ing && !PANTRY_ITEMS.includes(id)){
+      // register the component group exactly like a normal add, so other ingredients aren't dropped
+      let comp=FLOW.comps.find(c=>c.key===groupFor(ing).key);
+      if(!comp){ const g=groupFor(ing); comp={key:g.key,title:g.title,leaves:g.leaves,dx:0,dy:0}; FLOW.comps.push(comp); }
+    }
     FLOW.active.add(id);
+    if(!FLOW.suggestedIds) FLOW.suggestedIds=new Set();
+    FLOW.suggestedIds.add(id);
     TRACK.log("ingredient_added", {id:id, basket_size:FLOW.active.size, source:"suggestion"});
     closeSuggestCard(); renderComps(); recompute();
   };
 }
 function closeSuggestCard(){ const c=el("sugcard"); if(c&&c.remove) c.remove(); }
+
+/* ===== BASKET DRAWER =====
+   A cart-style basket: users tap "+ Add to basket" on a composed dish to save it, then open
+   a slide-up drawer to see all saved dishes and one consolidated, de-duplicated shopping
+   list across them. Works for a single dish or a week's worth. Persists across composes.
+   FLOW.basket = [ {name, method, buy:[{id,name}], sourced:{id:true}} ] */
+if(!FLOW.basket) FLOW.basket=[];
+
+/* snapshot the CURRENT composed dish (its name + its to-buy list) and add to the basket */
+function addCurrentDishToBasket(name, method, buyList){
+  if(!name) return;
+  if(FLOW.basket.some(d=>d.name===name)) { openBasket(); return; }   // already saved — just show it
+  // which of these to-buy items were added via a suggestion this session?
+  const sourced={};
+  (buyList||[]).forEach(b=>{ if(FLOW.suggestedIds && FLOW.suggestedIds.has(b.id)) sourced[b.id]=true; });
+  FLOW.basket.push({name, method, buy:(buyList||[]).map(b=>({id:b.id,name:b.name})), sourced});
+  TRACK.log("dish_added_to_basket", {dish:name, method:method, buy_count:(buyList||[]).length, basket_dishes:FLOW.basket.length});
+  updateBasketPill();
+  openBasket();
+}
+/* the consolidated, de-duplicated to-buy list across every saved dish */
+function basketBuyList(){
+  const seen={};
+  FLOW.basket.forEach(d=>{
+    (d.buy||[]).forEach(b=>{
+      if(!seen[b.id]) seen[b.id]={id:b.id, name:b.name, dishes:[], sourced:false};
+      seen[b.id].dishes.push(d.name);
+      if(d.sourced && d.sourced[b.id]) seen[b.id].sourced=true;
+    });
+  });
+  return Object.values(seen);
+}
+/* the little always-visible pill that opens the drawer */
+function updateBasketPill(){
+  let pill=el("basket-pill");
+  const items=basketBuyList().length, dishes=FLOW.basket.length;
+  if(!dishes){ if(pill) pill.remove(); return; }
+  if(!pill){
+    pill=document.createElement("button"); pill.id="basket-pill"; pill.className="basket-pill";
+    pill.onclick=openBasket; document.body.appendChild(pill);
+  }
+  pill.innerHTML="<span class=\"bp-ic\">\u25a3</span> Basket \u00b7 "+dishes+(dishes===1?" dish":" dishes");
+}
+function openBasket(){
+  closeBasket();
+  const buy=basketBuyList();
+  const wrap=document.createElement("div"); wrap.className="radial sheet"; wrap.id="basket";
+  wrap.onclick=(e)=>{ if(e.target===wrap) closeBasket(); };
+  const panel=document.createElement("div"); panel.className="basket-panel";
+  const dishRows=FLOW.basket.map((d,idx)=>
+    "<div class=\"bk-dish\"><span class=\"bk-flame\">\u25c9</span><span class=\"bk-dn\">"+d.name+"</span>"+
+    "<button class=\"bk-rm\" data-rm=\""+idx+"\" aria-label=\"remove\">\u00d7</button></div>").join("");
+  const buyChips=buy.length? buy.map(b=>
+    "<span class=\"bk-chip"+(b.sourced?" sourced":"")+"\">"+b.name+(b.sourced?" \u2726":"")+"</span>").join("")
+    : "<span class=\"bk-empty\">Nothing to buy \u2014 you have it all.</span>";
+  panel.innerHTML=
+    "<div class=\"bk-grab\"></div>"+
+    "<div class=\"bk-head\"><span class=\"bk-title\">Your basket</span>"+
+      "<span class=\"bk-sub\">"+FLOW.basket.length+(FLOW.basket.length===1?" dish":" dishes")+" \u00b7 "+buy.length+" to buy</span></div>"+
+    "<div class=\"bk-lab\">Cooking</div><div class=\"bk-dishes\">"+(dishRows||"<span class=\"bk-empty\">No dishes yet.</span>")+"</div>"+
+    "<div class=\"bk-lab\">To buy \u00b7 "+buy.length+"</div><div class=\"bk-chips\">"+buyChips+"</div>"+
+    (buy.some(b=>b.sourced)?"<div class=\"bk-note\">\u2726 added from a suggestion</div>":"")+
+    "<div class=\"bk-btns\"><button class=\"bk-copy\">Copy shopping list</button>"+
+      "<button class=\"bk-clear\">Clear</button></div>";
+  wrap.appendChild(panel); document.body.appendChild(wrap);
+  requestAnimationFrame(()=>wrap.classList.add("in"));
+  panel.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{
+    FLOW.basket.splice(+b.getAttribute("data-rm"),1); updateBasketPill(); openBasket();
+  });
+  panel.querySelector(".bk-clear").onclick=()=>{ FLOW.basket=[]; updateBasketPill(); closeBasket(); };
+  panel.querySelector(".bk-copy").onclick=()=>{
+    const text=buy.map(b=>"\u2022 "+b.name).join("\n");
+    const done=()=>{ TRACK.log("list_copied", {items:buy.length, dishes:FLOW.basket.length}); const c=panel.querySelector(".bk-copy"); if(c){ c.textContent="Copied \u2713"; setTimeout(()=>{c.textContent="Copy shopping list";},1600);} };
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+  };
+}
+function closeBasket(){ const b=el("basket"); if(b&&b.remove) b.remove(); }
 
 function toggleIng(id){
   const adding=!FLOW.active.has(id);
@@ -5103,6 +5218,15 @@ function renderGrocery(){
   }
   section("You need to buy", buy, "buy");
   section("You already have", have, "have");
+
+  // + Add to basket — snapshot this composed meal into the basket drawer
+  const dishLabel=dishNames.join(" + ");
+  const addBtn=document.createElement("button"); addBtn.className="add-basket-btn";
+  const inBasket=FLOW.basket && FLOW.basket.some(d=>d.name===dishLabel);
+  addBtn.innerHTML=inBasket ? "\u2713 In your basket" : "+ Add to basket";
+  if(inBasket) addBtn.classList.add("in");
+  addBtn.onclick=()=>{ addCurrentDishToBasket(dishLabel, FLOW.compose, buy.map(b=>({id:b.id,name:b.name}))); renderGrocery(); };
+  box.appendChild(addBtn);
 }
 function openIngredient(n){
   const ing=REF.byId[n.id]||{};
