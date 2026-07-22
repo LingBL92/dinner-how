@@ -279,6 +279,22 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .radial.sheet{display:flex;align-items:flex-end;justify-content:center;background:rgba(27,16,11,.45)}
 .rad-sheet{background:var(--paper);width:100%;max-height:82vh;overflow-y:auto;
   border-radius:16px 16px 0 0;padding:18px 16px 28px}
+/* suggestion reason card — a small centred sheet explaining why an ingredient fits */
+.sug-card{background:var(--paper);width:100%;max-width:420px;border-radius:16px;margin:auto 12px 12px;
+  padding:20px 20px 18px;box-shadow:0 -4px 24px rgba(27,16,11,.18)}
+.sug-name{font-family:var(--font-title);font-size:20px;font-weight:600;color:var(--ink);margin-bottom:10px}
+.sug-adds{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.sug-taste{font-size:11.5px;padding:3px 9px;border-radius:20px;background:rgba(50,117,100,.10);
+  color:var(--cool);border:1px solid rgba(50,117,100,.20)}
+.sug-line{font-size:13.5px;line-height:1.5;color:var(--muted);margin-bottom:16px}
+.sug-btns{display:flex;gap:8px}
+.sug-go{flex:1;padding:10px;border:none;border-radius:10px;background:var(--cool);color:#fff;
+  font-size:14px;font-weight:600;cursor:pointer}
+.sug-go:active{transform:scale(.98)}
+.sug-in{flex:1;padding:10px;border:1px solid rgba(50,117,100,.25);border-radius:10px;
+  background:var(--panel);color:var(--muted);font-size:14px}
+.sug-cancel{padding:10px 16px;border:1px solid rgba(50,117,100,.25);border-radius:10px;
+  background:transparent;color:var(--muted);font-size:14px;cursor:pointer}
 .rs-head{font-size:13.5px;line-height:1.45;color:var(--muted);margin-bottom:14px}
 .rs-lab{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.12em;
   color:var(--cool);margin:14px 0 6px;font-weight:700}
@@ -760,7 +776,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.75</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.76</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -4202,24 +4218,54 @@ function suggestReason(id, R){
    Fires a tracked event flagged source:"suggestion" so the pilot can measure engine-driven adds. */
 function suggestChip(id, R){
   const already=FLOW.active.has(id);
-  const reason=suggestReason(id, R);
   return "<button class=\"ps-chip ps-add"+(already?" in-basket":"")+"\" "+
-    "data-add=\""+id+"\" title=\""+reason.replace(/"/g,"&quot;")+"\">"+
-    (R.byId[id]||{}).name+"<em>"+(already?"in basket":"+ add")+"</em></button>";
+    "data-add=\""+id+"\">"+
+    (R.byId[id]||{}).name+"<em>"+(already?"in basket":"why?")+"</em></button>";
 }
-/* wire suggestion-chip clicks once, event-delegated */
+/* wire suggestion-chip clicks once, event-delegated. Tapping opens a card that explains WHY
+   the ingredient fits, and lets the person choose to add it — rather than adding silently. */
 let SUGGEST_WIRED=false;
 function wireSuggestions(){
   if(SUGGEST_WIRED) return; SUGGEST_WIRED=true;
   document.addEventListener("click", function(e){
     const b=e.target.closest("[data-add]"); if(!b) return;
     const id=b.getAttribute("data-add");
-    if(FLOW.active.has(id)) return;
-    FLOW.active.add(id);
-    TRACK.log("ingredient_added", {id:id, basket_size:FLOW.active.size, source:"suggestion"});
-    renderComps(); recompute();
+    openSuggestCard(id);
   });
 }
+/* the reason-card popup: name, the "why", and an Add button (or "already in basket") */
+function openSuggestCard(id){
+  closeSuggestCard();
+  const R=REF, i=(R.byId[id]||{});
+  const already=FLOW.active.has(id);
+  const wrap=document.createElement("div"); wrap.className="radial sheet"; wrap.id="sugcard";
+  wrap.onclick=(e)=>{ if(e.target===wrap) closeSuggestCard(); };
+  const card=document.createElement("div"); card.className="sug-card";
+  // taste chips from provides
+  const adds=(i.provides||[]).map(p=>PROVIDES_ADDS[p]).filter(Boolean);
+  const aff=i.cuisine_affinity, com=i.bed_commonness;
+  const affText = aff>=3?"A staple of these dishes":aff===2?"Common in home cooking here":aff===1?"A lighter, Western-leaning choice":"";
+  const comText = com>=5?"used very often":com===4?"used often":com===3?"used sometimes":com?"used occasionally":"";
+  card.innerHTML=
+    "<div class=\"sug-name\">"+(i.name||id)+"</div>"+
+    (adds.length?"<div class=\"sug-adds\">"+adds.map(a=>"<span class=\"sug-taste\">"+a+"</span>").join("")+"</div>":"")+
+    (affText?"<div class=\"sug-line\">"+affText+(comText?", "+comText:"")+".</div>":"")+
+    "<div class=\"sug-btns\">"+
+      (already
+        ? "<button class=\"sug-in\" disabled>Already in your basket</button>"
+        : "<button class=\"sug-go\" data-confirm=\""+id+"\">Add to basket</button>")+
+      "<button class=\"sug-cancel\">Close</button>"+
+    "</div>";
+  wrap.appendChild(card); document.body.appendChild(wrap);
+  card.querySelector(".sug-cancel").onclick=closeSuggestCard;
+  const go=card.querySelector(".sug-go");
+  if(go) go.onclick=function(){
+    FLOW.active.add(id);
+    TRACK.log("ingredient_added", {id:id, basket_size:FLOW.active.size, source:"suggestion"});
+    closeSuggestCard(); renderComps(); recompute();
+  };
+}
+function closeSuggestCard(){ const c=el("sugcard"); if(c&&c.remove) c.remove(); }
 
 function toggleIng(id){
   const adding=!FLOW.active.has(id);
