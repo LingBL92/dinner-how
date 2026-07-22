@@ -2761,7 +2761,9 @@ const RICE_MODES={
   in_rice:{key:"in_rice", label:"Cooked in the rice", tag:"one pot \u00b7 renders in \u00b7 crust",
     why:"the topping cooks on the rice and its fat and moisture render down into the grain; a golden crust forms at the bottom"},
   over_rice:{key:"over_rice", label:"Rice cooked separately", tag:"topping ladled over \u00b7 rice can be leftover",
-    why:"a braise, simmer or roast in its own pot, ladled over plain rice \u2014 the sauce is the moisture, and the rice can be one you already have"}
+    why:"a braise, simmer or roast in its own pot, ladled over plain rice \u2014 the sauce is the moisture, and the rice can be one you already have"},
+  congee:{key:"congee", label:"Simmered to porridge", tag:"much water \u00b7 breaks down \u00b7 soupy",
+    why:"rice simmered in many times its volume of water or stock until the grains burst and collapse into a soft, soupy porridge \u2014 comfort food, gentle on the stomach"}
 };
 
 /* ---- RICE-BOWL DIRECTIONS ---- each carries the MODE it implies. AUTHORED. */
@@ -2829,6 +2831,13 @@ const RICE_DIRS=[
      {t:"Toast in butter", d:"Sizzle aromatics in butter, then add the rice and toast it a minute so the grains stay separate."},
      {t:"Cook in stock", d:"Cook the rice in stock (not water) with bay and thyme for flavour and moisture."},
      {t:"Fold herbs", d:"Fold fresh herbs through at the end and fluff with a fork."}]},
+  {key:"congee", label:"Congee / porridge", region:"Cantonese", mode:"congee",
+   markers:["century_egg","preserved_egg","dried_scallop","chicken_whole"], need:0,
+   note:"rice simmered in lots of water or stock until it breaks down into a soft, soupy porridge \u2014 topped simply and eaten with a spoon",
+   steps:[
+     {t:"Rice and lots of water", d:"Rinse the rice, then simmer it in about 8 times its volume of water or stock \u2014 far more than for steamed rice."},
+     {t:"Low and slow", d:"Keep it at a gentle simmer, stirring now and then so it doesn't catch, until the grains burst and it turns thick and soupy \u2014 40 minutes or more."},
+     {t:"Top and serve", d:"Season with a little salt and white pepper, add the topping to just cook through, and finish with scallion, ginger and a few drops of sesame oil."}]},
   {key:"plain", label:"Just soy & egg", region:"\u2014", mode:"over_rice",
    markers:[], need:0,
    note:"a fried egg, a spoon of soy, a little sesame oil. The lazy bowl \u2014 but a good one.",
@@ -2886,7 +2895,8 @@ function riceMoisture(ingIds, mode){
   const hasProtein = ingIds.some(id=>id!=="egg" && RICE_TOPPING_PROTEINS.has(id));
   // over-rice is ladled with a sauce; in-rice needs rendering fat, an egg or a juicy
   // vegetable. A plain veg or herb rice (no meat) is cooked in stock and is fine on its own.
-  const ok = mode==="over_rice" || rendersFat || egg || juicy || !hasProtein;
+  // Congee is swimming in liquid, so it can never run dry — always fine.
+  const ok = mode==="congee" || mode==="over_rice" || rendersFat || egg || juicy || !hasProtein;
   return {ok, rendersFat, egg, juicy,
     warn: ok?null:"a lean cut cooked in the rice runs dry \u2014 use a cut that renders (thigh, belly, lap cheong), add a soft egg or a juicy vegetable like corn, or ladle a sauce over instead"};
 }
@@ -2961,7 +2971,25 @@ function buildRice(ingIds, R, dishes, AFF, opts){
   let handsOff=0;
   let separate=[];  // add-ins that can't cook in the rice — a different heat/time/appliance
 
-  if(mode==="in_rice"){
+  if(mode==="congee"){
+    // rice swimming in stock, simmered until it breaks down. Topping goes in near the end.
+    const solids=real.filter(id=>{
+      if(RICE_BASE_IDS.has(id)) return false;
+      if(CHARACTER_SEASONINGS.has(id)) return false;
+      return ["proteins","vegetables"].includes((R.byId[id]||{}).category);
+    });
+    const nms = solids.length ? solids.map(nm).join(", ").replace(/, ([^,]*)$/," and $1") : null;
+    if(solids.some(id=>/^chicken/.test(id))) prep.push({name:"Chicken", prep:"cut into small pieces or thin slices so it cooks quickly in the porridge", warn:null});
+    if(has("century_egg")||has("preserved_egg")) prep.push({name:"Century egg", prep:"peel and cut into wedges", warn:null});
+    if(has("dried_scallop")) prep.push({name:"Dried scallop", prep:"soak until soft, then shred \u2014 it dissolves into the congee", warn:null});
+    steps.push({label:"Rice and lots of liquid", detail:"Rinse the rice, then bring it to a boil in about 8 times its volume of water or stock \u2014 far more than steamed rice.", mins:0, handsoff:false});
+    steps.push({label:"Simmer low and slow", detail:"Drop to a gentle simmer, stirring now and then so it doesn't catch on the bottom, until the grains burst and it turns thick and soupy.", mins:40, handsoff:true});
+    steps.push({label: nms?"Cook the topping in":"Season", detail: nms
+        ? "Slip "+nms+" into the hot congee for the last few minutes to just cook through."
+        : "Season with a little salt and white pepper.", mins:5, handsoff:false});
+    steps.push({label:"Finish", detail:"Finish with scallion, fine ginger and a few drops of sesame oil. Serve hot in a bowl.", mins:1, handsoff:false});
+    handsOff=45;
+  } else if(mode==="in_rice"){
     // stage every add-in by whether (and when) it can share the rice's pot, heat and time.
     // Only real SOLIDS are staged — sauces and seasonings live in the marinade, not the pot.
     const others=real.filter(id=>{
