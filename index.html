@@ -279,9 +279,11 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .radial.sheet{display:flex;align-items:flex-end;justify-content:center;background:rgba(27,16,11,.45)}
 .rad-sheet{background:var(--paper);width:100%;max-height:82vh;overflow-y:auto;
   border-radius:16px 16px 0 0;padding:18px 16px 28px}
-/* suggestion reason card — a small centred sheet explaining why an ingredient fits */
-.sug-card{background:var(--paper);width:100%;max-width:420px;border-radius:16px;margin:auto 12px 12px;
-  padding:20px 20px 18px;box-shadow:0 -4px 24px rgba(27,16,11,.18)}
+/* suggestion reason card — a small centred sheet explaining why an ingredient fits.
+   Own overlay alignment (centre) so it doesn't inherit the bottom-sheet flex-end. */
+#sugcard{align-items:center}
+.sug-card{background:var(--paper);width:calc(100% - 32px);max-width:400px;border-radius:16px;
+  padding:20px 20px 18px;box-shadow:0 8px 32px rgba(27,16,11,.28)}
 .sug-name{font-family:var(--font-title);font-size:20px;font-weight:600;color:var(--ink);margin-bottom:10px}
 .sug-adds{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 .sug-taste{font-size:11.5px;padding:3px 9px;border-radius:20px;background:rgba(50,117,100,.10);
@@ -776,7 +778,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.76</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.77</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -4257,6 +4259,7 @@ function openSuggestCard(id){
       "<button class=\"sug-cancel\">Close</button>"+
     "</div>";
   wrap.appendChild(card); document.body.appendChild(wrap);
+  requestAnimationFrame(()=>wrap.classList.add("in"));   // .radial starts at opacity:0; .in fades it in
   card.querySelector(".sug-cancel").onclick=closeSuggestCard;
   const go=card.querySelector(".sug-go");
   if(go) go.onclick=function(){
