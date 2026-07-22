@@ -327,6 +327,19 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .bk-btns{display:flex;gap:8px;margin-top:20px}
 .bk-copy{flex:1;padding:12px;border:none;border-radius:11px;background:var(--cool);color:#fff;font-size:14px;font-weight:600;cursor:pointer}
 .bk-clear{padding:12px 16px;border:1px solid rgba(50,117,100,.25);border-radius:11px;background:transparent;color:var(--muted);font-size:14px;cursor:pointer}
+/* cook-together schedule inside the basket */
+.ck-ready{font-family:var(--font-title);font-size:16px;font-weight:600;color:var(--cool);margin-bottom:10px}
+.ck-rows{display:flex;flex-direction:column;gap:6px}
+.ck-row{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--panel);border-radius:8px}
+.ck-when{font-family:var(--font-mono);font-size:10px;color:var(--cool);min-width:56px;font-weight:700}
+.ck-dn{flex:1;font-size:13.5px;color:var(--ink)}
+.ck-ap{font-family:var(--font-mono);font-size:9.5px;color:var(--muted)}
+.ck-note{font-family:var(--font-mono);font-size:9px;color:var(--muted);margin-top:8px;line-height:1.5}
+/* desktop: center the basket panel as a modal; mobile keeps the bottom sheet */
+@media(min-width:760px){
+  #basket{align-items:center}
+  .basket-panel{border-radius:18px;max-width:440px;max-height:80vh}
+}
 .rs-head{font-size:13.5px;line-height:1.45;color:var(--muted);margin-bottom:14px}
 .rs-lab{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.12em;
   color:var(--cool);margin:14px 0 6px;font-weight:700}
@@ -808,7 +821,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.79</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.83</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -3088,7 +3101,7 @@ function buildStirFry(ingIds, R, dishes, AFF, opts){
   push("delicate",byClass.delicate||[]);
 
   const totalSecs=steps.reduce((n,s)=>n+s.secs,0);
-  const total=Math.max(4, Math.ceil(totalSecs/60));
+  const cookMins=Math.max(4, Math.ceil(totalSecs/60));
 
   // PREP is where a stir-fry is won or lost \u2014 you cannot chop while the wok is hot
   const prep=behaviours.filter(w=>w.prep).map(w=>({name:w.name, prep:w.prep, warn:w.warn}));
@@ -3105,8 +3118,9 @@ function buildStirFry(ingIds, R, dishes, AFF, opts){
   const sauceSteps = (dir&&dir.steps) ? dir.steps
     : [{t:"Garlic in the oil", d:"Fry chopped garlic in the hot oil until just golden, then toss everything through over high heat with a pinch of salt and a splash of water or stock."}];
 
+  const total=prepMins+cookMins;
   return {
-    steps, prep, prepMins, total, handsOn: total+prepMins, handsOff: 0,
+    steps, prep, prepMins, total, cookMins, handsOn: total, handsOff: 0,
     direction: dir, sauceSteps,
     suggest,
     warnings: behaviours.map(w=>w.warn).filter(Boolean),
@@ -4316,16 +4330,68 @@ function closeSuggestCard(){ const c=el("sugcard"); if(c&&c.remove) c.remove(); 
 if(!FLOW.basket) FLOW.basket=[];
 
 /* snapshot the CURRENT composed dish (its name + its to-buy list) and add to the basket */
-function addCurrentDishToBasket(name, method, buyList){
+function addCurrentDishToBasket(name, method, buyList, timing){
   if(!name) return;
   if(FLOW.basket.some(d=>d.name===name)) { openBasket(); return; }   // already saved — just show it
   // which of these to-buy items were added via a suggestion this session?
   const sourced={};
   (buyList||[]).forEach(b=>{ if(FLOW.suggestedIds && FLOW.suggestedIds.has(b.id)) sourced[b.id]=true; });
-  FLOW.basket.push({name, method, buy:(buyList||[]).map(b=>({id:b.id,name:b.name})), sourced});
+  FLOW.basket.push({name, method, buy:(buyList||[]).map(b=>({id:b.id,name:b.name})), sourced,
+    timing: timing||{total:null,handsOn:null,handsOff:null}});
   TRACK.log("dish_added_to_basket", {dish:name, method:method, buy_count:(buyList||[]).length, basket_dishes:FLOW.basket.length});
   updateBasketPill();
   openBasket();
+}
+/* build the to-buy list for a composed dish from its contents: the ingredients it needs that
+   you don't already have (not in active basket or pantry). Reused by every composer. */
+function buyListForContents(contents){
+  const haveSet=new Set([...FLOW.active, ...FLOW.pantry]);
+  const buy=[];
+  (contents||[]).forEach(id=>{
+    const ing=REF.byId[id]||{};
+    if(id==="water") return;
+    if(measureTypeOf(ing)==="assumed") return;         // pantry staples/aromatics: not a shop item
+    if(haveSet.has(id)) return;                          // you already have it
+    // a descendant you own satisfies it (you own pomfret, dish needs fish)
+    if([...haveSet].some(h=>(REF.anc[h]||new Set()).has(id))) return;
+    buy.push({id, name:ing.name||id});
+  });
+  return buy;
+}
+/* a reusable "+ Add to basket" button for the single-dish composers */
+function addBasketButtonFor(label, contents, method, timing){
+  const buy=buyListForContents(contents);
+  const btn=document.createElement("button"); btn.className="add-basket-btn";
+  const inBasket=FLOW.basket && FLOW.basket.some(d=>d.name===label);
+  btn.innerHTML=inBasket ? "\u2713 In your basket" : "+ Add to basket";
+  if(inBasket) btn.classList.add("in");
+  btn.onclick=()=>{ addCurrentDishToBasket(label, method, buy, timing); if(btn.isConnected){ btn.innerHTML="\u2713 In your basket"; btn.classList.add("in"); } };
+  return btn;
+}
+/* map a composed dish's method to the appliance it uses — the one inference the scheduler
+   needs that the dish doesn't state. Deterministic and safe. */
+function applianceForMethod(method){
+  return method==="steam" ? "steamer"
+       : method==="ricebowl" ? "rice_cooker"
+       : "stovetop";   // stir-fry and one-pot both use the stovetop
+}
+/* THE COOK-TOGETHER SCHEDULER — uses each dish's real total + hands-off split, plus the
+   appliance mapping, to work out a start order so everything finishes together. This is an
+   ESTIMATE: it assumes each appliance can run one dish (no batching/capacity modelling).
+   Returns {ready, rows:[{name, start, total, appliance}]} with rows ordered by start time. */
+function cookTogetherPlan(basket){
+  const dishes=basket.filter(d=>d.timing && d.timing.total!=null);
+  if(dishes.length<2) return null;
+  // longest dish sets the finish line; every dish ends at READY, so start = ready - its total.
+  const ready=Math.max(...dishes.map(d=>d.timing.total));
+  const rows=dishes.map(d=>({
+    name:d.name,
+    total:d.timing.total,
+    handsOff:d.timing.handsOff||0,
+    appliance:applianceForMethod(d.method),
+    start:ready - d.timing.total       // 0 = start now; the longest dish starts at 0
+  })).sort((a,b)=>a.start-b.start);
+  return {ready, rows};
 }
 /* the consolidated, de-duplicated to-buy list across every saved dish */
 function basketBuyList(){
@@ -4362,6 +4428,21 @@ function openBasket(){
   const buyChips=buy.length? buy.map(b=>
     "<span class=\"bk-chip"+(b.sourced?" sourced":"")+"\">"+b.name+(b.sourced?" \u2726":"")+"</span>").join("")
     : "<span class=\"bk-empty\">Nothing to buy \u2014 you have it all.</span>";
+  // cook-together schedule — only when 2+ dishes carry timing
+  const plan=cookTogetherPlan(FLOW.basket);
+  let cookHtml="";
+  if(plan){
+    const APN={steamer:"steamer",rice_cooker:"rice cooker",stovetop:"stove"};
+    const rowsHtml=plan.rows.map(r=>
+      "<div class=\"ck-row\"><span class=\"ck-when\">"+(r.start===0?"start now":"at +"+r.start+"m")+"</span>"+
+      "<span class=\"ck-dn\">"+r.name+"</span>"+
+      "<span class=\"ck-ap\">"+(APN[r.appliance]||r.appliance)+" \u00b7 "+r.total+"m</span></div>").join("");
+    cookHtml=
+      "<div class=\"bk-lab\">Cook it together</div>"+
+      "<div class=\"ck-ready\">Everything ready in about "+plan.ready+" min</div>"+
+      "<div class=\"ck-rows\">"+rowsHtml+"</div>"+
+      "<div class=\"ck-note\">Estimate \u2014 assumes each dish gets its own appliance (steamer, stove, rice cooker) running in parallel.</div>";
+  }
   panel.innerHTML=
     "<div class=\"bk-grab\"></div>"+
     "<div class=\"bk-head\"><span class=\"bk-title\">Your basket</span>"+
@@ -4369,6 +4450,7 @@ function openBasket(){
     "<div class=\"bk-lab\">Cooking</div><div class=\"bk-dishes\">"+(dishRows||"<span class=\"bk-empty\">No dishes yet.</span>")+"</div>"+
     "<div class=\"bk-lab\">To buy \u00b7 "+buy.length+"</div><div class=\"bk-chips\">"+buyChips+"</div>"+
     (buy.some(b=>b.sourced)?"<div class=\"bk-note\">\u2726 added from a suggestion</div>":"")+
+    cookHtml+
     "<div class=\"bk-btns\"><button class=\"bk-copy\">Copy shopping list</button>"+
       "<button class=\"bk-clear\">Clear</button></div>";
   wrap.appendChild(panel); document.body.appendChild(wrap);
@@ -5813,7 +5895,7 @@ function renderStirFry(){
   // ---- times: a wok has NO hands-off. That's the point. ----
   const hero=document.createElement("div"); hero.className="op-hero";
   hero.innerHTML="<div class=\"op-times\">"+
-    "<span class=\"op-big\">"+sf.total+"<em>min in the wok</em></span>"+
+    "<span class=\"op-big\">"+sf.cookMins+"<em>min in the wok</em></span>"+
     "<span class=\"op-free wok\">"+sf.prepMins+" min prep first \u2014 you can\u2019t chop while it\u2019s hot</span></div>";
   box.appendChild(hero);
 
@@ -5876,7 +5958,7 @@ function renderStirFry(){
   if(sauceCard && !isPaste) CARDS.push(sauceCard);
   renderStepSlider(box, CARDS, [
     {label:"Prep", mins:sf.prepMins, kind:"prep"},
-    {label:"Wok",  mins:sf.total,    kind:"cook"}
+    {label:"Wok",  mins:sf.cookMins,    kind:"cook"}
   ]);
 
   // ---- what's not in this wok (tap a chip to learn why, or whether it's a good swap) ----
@@ -5942,6 +6024,7 @@ function renderStirFry(){
     box.appendChild(o);
     wireSuggestions();
   }
+  box.appendChild(addBasketButtonFor(chosen.label, chosen.contents, "stirfry", {total:sf.total, handsOn:sf.handsOn, handsOff:sf.handsOff}));
 }
 
 /* the sauce radial — the same interaction as the pot's Season button */
@@ -6840,6 +6923,7 @@ function renderSteam(){
     box.appendChild(o);
     wireSuggestions();
   }
+  box.appendChild(addBasketButtonFor(chosen.label, chosen.contents, "steam", {total:st.total, handsOn:st.handsOn, handsOff:st.handsOff}));
 }
 
 /* the topping radial — the same interaction as the wok's Sauce button */
@@ -7080,6 +7164,7 @@ function renderRice(){
     box.appendChild(o);
     wireSuggestions();
   }
+  box.appendChild(addBasketButtonFor(chosen.label, chosen.contents, "ricebowl", {total:rb.total, handsOn:rb.handsOn, handsOff:rb.handsOff}));
 }
 
 /* the style radial — the same interaction as the wok's Sauce button */
@@ -7451,16 +7536,13 @@ function renderOnePot(){
       lab.textContent="Goes well with "+chosen.baseNames.join(" or ").toLowerCase();
       o.appendChild(lab);
       const row=document.createElement("div"); row.className="ps-row";
-      sug.buy.slice(0,5).forEach(x=>{
-        const c=document.createElement("span"); c.className="ps-chip";
-        c.innerHTML=x.name+"<em>"+(x.n>1?"seen "+x.n+"\u00d7":"seen once")+"</em>";
-        row.appendChild(c);
-      });
+      row.innerHTML=sug.buy.slice(0,4).map(x=>suggestChip(x.id, REF)).join("");
       o.appendChild(row);
       const note=document.createElement("div"); note.className="ps-note";
-      note.textContent="From our recipes \u2014 you\u2019d need to buy "+(sug.buy.length>1?"these":"this")+".";
+      note.textContent="From our recipes \u2014 tap a chip to add it to your basket.";
       o.appendChild(note);
       box.appendChild(o);
+      wireSuggestions();
     }
     // which of YOUR additions are well-trodden, and which are your own invention?
     if(chosen.uncertain && chosen.uncertain.length){
@@ -7480,6 +7562,10 @@ function renderOnePot(){
     w.innerHTML="<strong>It wants "+g.what+".</strong> "+g.why+".";
     box.appendChild(w);
   });
+  if(chosen){
+    const potLabel = (chosen.baseNames&&chosen.baseNames.length) ? (chosen.baseNames.join(" & ")+" pot") : "One-pot dish";
+    box.appendChild(addBasketButtonFor(potLabel, chosen.contents, "onepot", {total:p.total, handsOn:p.handsOn, handsOff:Math.max(0,p.total-p.handsOn)}));
+  }
 }
 function simpleCard(item){
   const {r,idx,d}=item;

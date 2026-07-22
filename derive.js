@@ -2212,7 +2212,7 @@ function buildStirFry(ingIds, R, dishes, AFF, opts){
   push("delicate",byClass.delicate||[]);
 
   const totalSecs=steps.reduce((n,s)=>n+s.secs,0);
-  const total=Math.max(4, Math.ceil(totalSecs/60));
+  const cookMins=Math.max(4, Math.ceil(totalSecs/60));
 
   // PREP is where a stir-fry is won or lost \u2014 you cannot chop while the wok is hot
   const prep=behaviours.filter(w=>w.prep).map(w=>({name:w.name, prep:w.prep, warn:w.warn}));
@@ -2229,8 +2229,12 @@ function buildStirFry(ingIds, R, dishes, AFF, opts){
   const sauceSteps = (dir&&dir.steps) ? dir.steps
     : [{t:"Garlic in the oil", d:"Fry chopped garlic in the hot oil until just golden, then toss everything through over high heat with a pinch of salt and a splash of water or stock."}];
 
+  // total is the WHOLE dish (prep + cook), matching steam's convention so the scheduler can
+  // compare dishes on the same basis. A stir-fry is entirely hands-on: you chop, then you're
+  // at the wok the whole cook. So handsOn = total, handsOff = 0.
+  const total=prepMins+cookMins;
   return {
-    steps, prep, prepMins, total, handsOn: total+prepMins, handsOff: 0,
+    steps, prep, prepMins, total, cookMins, handsOn: total, handsOff: 0,
     direction: dir, sauceSteps,
     suggest,
     warnings: behaviours.map(w=>w.warn).filter(Boolean),
