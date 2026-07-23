@@ -821,7 +821,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.83</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.84</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -4332,7 +4332,7 @@ if(!FLOW.basket) FLOW.basket=[];
 /* snapshot the CURRENT composed dish (its name + its to-buy list) and add to the basket */
 function addCurrentDishToBasket(name, method, buyList, timing){
   if(!name) return;
-  if(FLOW.basket.some(d=>d.name===name)) { openBasket(); return; }   // already saved — just show it
+  if(FLOW.basket.some(d=>d.name===name)) { return; }   // already saved — the pill already reflects it
   // which of these to-buy items were added via a suggestion this session?
   const sourced={};
   (buyList||[]).forEach(b=>{ if(FLOW.suggestedIds && FLOW.suggestedIds.has(b.id)) sourced[b.id]=true; });
@@ -4340,7 +4340,6 @@ function addCurrentDishToBasket(name, method, buyList, timing){
     timing: timing||{total:null,handsOn:null,handsOff:null}});
   TRACK.log("dish_added_to_basket", {dish:name, method:method, buy_count:(buyList||[]).length, basket_dishes:FLOW.basket.length});
   updateBasketPill();
-  openBasket();
 }
 /* build the to-buy list for a composed dish from its contents: the ingredients it needs that
    you don't already have (not in active basket or pantry). Reused by every composer. */
@@ -4371,9 +4370,10 @@ function addBasketButtonFor(label, contents, method, timing){
 /* map a composed dish's method to the appliance it uses — the one inference the scheduler
    needs that the dish doesn't state. Deterministic and safe. */
 function applianceForMethod(method){
-  return method==="steam" ? "steamer"
-       : method==="ricebowl" ? "rice_cooker"
-       : "stovetop";   // stir-fry and one-pot both use the stovetop
+  const have=id=>FLOW.appl && FLOW.appl.has(id);
+  if(method==="steam")    return have("steamer") ? "steamer" : (have("stovetop") ? "stovetop" : "steamer");
+  if(method==="ricebowl") return have("rice_cooker") ? "rice_cooker" : (have("stovetop") ? "stovetop" : "rice_cooker");
+  return "stovetop";   // stir-fry and one-pot both use the stovetop
 }
 /* THE COOK-TOGETHER SCHEDULER — uses each dish's real total + hands-off split, plus the
    appliance mapping, to work out a start order so everything finishes together. This is an
