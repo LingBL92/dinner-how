@@ -614,7 +614,8 @@
     "fat_solid",
     "fish_family",
     "protein",
-    "umami"
+    "umami",
+    "filleted"
    ],
    "aisle": "Fish & seafood",
    "prep_verb": "pat dry",
@@ -632,7 +633,8 @@
    "provides": [
     "fish_family",
     "protein",
-    "umami"
+    "umami",
+    "filleted"
    ],
    "aisle": "Fish & seafood",
    "prep_verb": "pat dry",
@@ -845,7 +847,8 @@
    "provides": [
     "fish_family",
     "protein",
-    "umami"
+    "umami",
+    "filleted"
    ],
    "aisle": "Fish & seafood",
    "prep_verb": "cut into pieces",
@@ -3408,17 +3411,25 @@
   },
   {
    "id": "bkt_pack",
-   "name": "Bkt Pack",
+   "name": "Bak Kut Teh Spice Packet",
    "aliases": [
-    "bak kut teh spice pack",
+    "bak kut teh spice packet",
+    "bak kut teh packet",
     "bak kut teh pack",
-    "bkt pack"
+    "bkt packet",
+    "bkt pack",
+    "bak kut teh sachet",
+    "bkt sachet",
+    "bak kut teh mix"
    ],
-   "provides": [],
-   "aisle": "Condiments & sauces",
-   "prep_verb": "measure",
-   "parent": "condiments",
-   "category": "condiments"
+   "provides": [
+    "aromatic",
+    "umami"
+   ],
+   "aisle": "Pastes & flavour bases",
+   "prep_verb": "drop in the sachet",
+   "parent": "pastes",
+   "category": "pastes"
   },
   {
    "id": "salted_egg",
@@ -4304,6 +4315,99 @@
    "prep_verb": "soak until pliable, then trim the stem",
    "parent": "wrappers",
    "category": "wrappers"
+  },
+  {
+   "id": "tau_kee",
+   "name": "Tau Kee (Beancurd Skin)",
+   "aliases": [
+    "tau kee",
+    "taukee",
+    "beancurd skin",
+    "beancurd stick",
+    "bean curd skin",
+    "foo chuk",
+    "fu zhu",
+    "dried beancurd"
+   ],
+   "provides": [
+    "protein",
+    "holds_shape"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "soak until soft",
+   "parent": "proteins",
+   "category": "proteins",
+   "cuisine_affinity": 3,
+   "bed_commonness": 3
+  },
+  {
+   "id": "tau_pok",
+   "name": "Tau Pok (Tofu Puffs)",
+   "aliases": [
+    "tau pok",
+    "taupok",
+    "tofu puff",
+    "tofu puffs",
+    "fried tofu puff",
+    "beancurd puff"
+   ],
+   "provides": [
+    "protein",
+    "holds_shape"
+   ],
+   "aisle": "Meat & protein",
+   "prep_verb": "halve",
+   "parent": "proteins",
+   "category": "proteins",
+   "cuisine_affinity": 3,
+   "bed_commonness": 4
+  },
+  {
+   "id": "salted_veg",
+   "name": "Salted Vegetable",
+   "aliases": [
+    "salted vegetable",
+    "salted veg",
+    "preserved vegetable",
+    "kiam chye",
+    "haam choy",
+    "preserved mustard greens",
+    "salted mustard greens"
+   ],
+   "provides": [
+    "salty",
+    "umami"
+   ],
+   "aisle": "Vegetables",
+   "prep_verb": "rinse and slice",
+   "parent": "vegetables",
+   "category": "vegetables",
+   "group": "leafy",
+   "hue": "#B8B06A",
+   "cuisine_affinity": 3,
+   "bed_commonness": 3
+  },
+  {
+   "id": "you_tiao",
+   "name": "You Tiao (Dough Fritter)",
+   "aliases": [
+    "you tiao",
+    "youtiao",
+    "dough fritter",
+    "chinese cruller",
+    "yau char kwai",
+    "fried dough stick"
+   ],
+   "provides": [
+    "starch",
+    "crunch"
+   ],
+   "aisle": "Bakery",
+   "prep_verb": "cut into lengths",
+   "parent": "starches",
+   "category": "starches",
+   "cuisine_affinity": 3,
+   "bed_commonness": 2
   }
  ]
 }
