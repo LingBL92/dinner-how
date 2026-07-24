@@ -532,10 +532,10 @@ function swapSafety(arch,curBehaviour,newBehaviour){
   // coupled wet methods: braise / simmer / poach / steam
   if(newBehaviour===curBehaviour) return {safe:true,flag:null};
   if(curBehaviour==="braise"&&newBehaviour!=="braise")
-    return {safe:true,flag:"cooks much faster than a braise \\u2014 shorten it to a simmer"};
+    return {safe:true,flag:"cooks much faster than a braise — shorten it to a simmer"};
   if(curBehaviour!=="braise"&&newBehaviour==="braise")
-    return {safe:true,flag:"needs a long braise \\u2014 a quick simmer won't tenderise it"};
-  return {safe:true,flag:"cooks differently \\u2014 adjust the time"};
+    return {safe:true,flag:"needs a long braise — a quick simmer won't tenderise it"};
+  return {safe:true,flag:"cooks differently — adjust the time"};
 }
 
 /* ============================================================

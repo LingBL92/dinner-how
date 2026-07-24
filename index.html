@@ -821,7 +821,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.97</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.98</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -1415,10 +1415,10 @@ function swapSafety(arch,curBehaviour,newBehaviour){
   // coupled wet methods: braise / simmer / poach / steam
   if(newBehaviour===curBehaviour) return {safe:true,flag:null};
   if(curBehaviour==="braise"&&newBehaviour!=="braise")
-    return {safe:true,flag:"cooks much faster than a braise \\u2014 shorten it to a simmer"};
+    return {safe:true,flag:"cooks much faster than a braise — shorten it to a simmer"};
   if(curBehaviour!=="braise"&&newBehaviour==="braise")
-    return {safe:true,flag:"needs a long braise \\u2014 a quick simmer won't tenderise it"};
-  return {safe:true,flag:"cooks differently \\u2014 adjust the time"};
+    return {safe:true,flag:"needs a long braise — a quick simmer won't tenderise it"};
+  return {safe:true,flag:"cooks differently — adjust the time"};
 }
 
 /* ============================================================
@@ -7632,7 +7632,7 @@ function noodleDishArt(mode, dir, contents, R){
 
   if(!fried) S.push('<g stroke="#FFFFFF" stroke-width="2" fill="none" opacity="0.32" stroke-linecap="round">'+
     '<path class="steam-w" d="M46 26 q4 -7 0 -13"/><path class="steam-w" style="animation-delay:.7s" d="M64 24 q4 -7 0 -13"/></g>');
-  return '<svg viewBox="0 0 112 112" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="noodle dish">'+S.join("")+'</svg>';
+  return '<svg viewBox="0 0 112 112" width="112" height="112" role="img" aria-label="dish illustration">'+S.join("")+'</svg>';
 }
 
 function renderNoodle(){
@@ -7646,14 +7646,14 @@ function renderNoodle(){
     return measureTypeOf(ing)!=="assumed" || CHARACTER_SEASONINGS.has(id);
   });
   if(!ids.length){
-    box.innerHTML="<div class=\"hint\">Add a noodle \\u2014 bee hoon, kway teow, yellow mee or mee pok \\u2014 and the bowl builds around it.</div>";
+    box.innerHTML="<div class=\"hint\">Add a noodle — bee hoon, kway teow, yellow mee or mee pok — and the bowl builds around it.</div>";
     return;
   }
   const nm=id=>((REF.byId[id]||{}).name)||id;
 
   const cands=noodleCandidates(ids, REF, DISHES, AFF);
   if(!cands.length){
-    box.innerHTML="<div class=\"hint\">No noodle in the basket yet \\u2014 add bee hoon, kway teow, yellow mee, mee pok or hor fun.</div>";
+    box.innerHTML="<div class=\"hint\">No noodle yet — add one to the basket, or tick bee hoon, kway teow, yellow mee or mee pok in your Pantry.</div>";
     return;
   }
   if(!FLOW.noodlePick || !cands.some(c=>c.key===FLOW.noodlePick)) FLOW.noodlePick=cands[0].key;
@@ -7699,8 +7699,8 @@ function renderNoodle(){
   const hero=document.createElement("div"); hero.className="op-hero";
   hero.innerHTML="<div class=\"op-times\">"+
     "<span class=\"op-big\">"+nd.total+"<em>min, start to finish</em></span>"+
-    (nd.handsOff?"<span class=\"op-free\">"+nd.handsOff+" min hands-off \\u2014 the broth simmers on its own</span>":"")+
-    "<span class=\"op-free wok\">"+nd.handsOn+" min hands-on \\u2014 prep, and the bowl comes together fast</span></div>";
+    (nd.handsOff?"<span class=\"op-free\">"+nd.handsOff+" min hands-off — the broth simmers on its own</span>":"")+
+    "<span class=\"op-free wok\">"+nd.handsOn+" min hands-on — prep, and the bowl comes together fast</span></div>";
   box.appendChild(hero);
 
   const rgroup=(tgt,txt)=>{ const g=document.createElement("div"); g.className="rgroup"; g.textContent=txt; tgt.appendChild(g); };
@@ -7708,7 +7708,7 @@ function renderNoodle(){
   // ---- cards ----
   const CARDS=[];
   if(nd.prep.length) CARDS.push({label:"Prep", phase:"prep", build:(c)=>{
-    rgroup(c,"Prep first \\u2014 the noodle above all");
+    rgroup(c,"Prep first — the noodle above all");
     nd.prep.forEach(p=>{
       const row=document.createElement("div"); row.className="wok-prep";
       row.innerHTML="<span class=\"wp-g\">"+prepGlyph(p.name,p.prep)+"</span><span class=\"wp-n\">"+p.name+"</span><span class=\"wp-p\">"+p.prep+"</span>"+
@@ -7717,21 +7717,21 @@ function renderNoodle(){
     });
   }});
   if((nd.sauceSteps||[]).length) CARDS.push({label:"Style", phase:"prep", build:(c)=>{
-    rgroup(c, dir ? "The style \\u2014 "+dir.label.replace(/ \(.*\)/,"") : "The style");
+    rgroup(c, dir ? "The style — "+dir.label.replace(/ \(.*\)/,"") : "The style");
     nd.sauceSteps.forEach(s=>{
       const row=document.createElement("div"); row.className="wok-step";
       row.innerHTML="<span class=\"ws-g\">"+prepGlyph(s.t, s.t+" "+s.d)+"</span>"+
-        "<span class=\"ws-t\">\\u2022</span>"+
+        "<span class=\"ws-t\">•</span>"+
         "<span class=\"ws-b\"><span class=\"ws-i\">"+s.t+"</span><span class=\"ws-w\">"+s.d+"</span></span>";
       c.appendChild(row);
     });
   }});
   CARDS.push({label: nd.mode==="fried"?"Wok":"Broth", phase:"cook", build:(c)=>{
-    rgroup(c, nd.mode==="fried" ? "Into the wok \\u2014 order matters" : "Broth, then assemble");
+    rgroup(c, nd.mode==="fried" ? "Into the wok — order matters" : "Broth, then assemble");
     nd.steps.forEach(s=>{
       const row=document.createElement("div"); row.className="wok-step"+(s.handsoff?" steam-step":"");
       row.innerHTML="<span class=\"ws-g\">"+prepGlyph(s.label, s.label+" "+s.detail)+"</span>"+
-        "<span class=\"ws-t\">"+(s.mins?s.mins+"m":"\\u2022")+"</span>"+
+        "<span class=\"ws-t\">"+(s.mins?s.mins+"m":"•")+"</span>"+
         "<span class=\"ws-b\"><span class=\"ws-i\">"+s.label+"</span><span class=\"ws-w\">"+s.detail+"</span></span>"+
         (s.handsoff?"<span class=\"ws-s\">hands-off</span>":"");
       c.appendChild(row);
@@ -7749,7 +7749,7 @@ function renderNoodle(){
     const lab=document.createElement("span"); lab.className="po-l"; lab.textContent="cook separately";
     o.appendChild(lab);
     nd.separate.forEach(a=>{
-      const c=document.createElement("span"); c.className="po-c"; c.textContent=a.name+(a.alt?" \\u2014 "+a.alt:""); o.appendChild(c);
+      const c=document.createElement("span"); c.className="po-c"; c.textContent=a.name+(a.alt?" — "+a.alt:""); o.appendChild(c);
     });
     const w=document.createElement("span"); w.className="po-w";
     w.textContent=nd.separate[0].note||"these want a different heat than the bowl gives";
