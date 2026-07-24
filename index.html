@@ -821,7 +821,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.98</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.04</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -939,9 +939,9 @@ function buildCharacterSet(R){
   R.list.forEach(i=>{ if(i.category==="pastes") s.add(i.id); });   // every paste, automatically
   // a handful of condiments genuinely name a dish (soy-braised, oyster-sauce kailan)
   ["oyster_sauce","dark_soy_sauce","fish_sauce","dashi","tamarind","coconut_milk",
-   "dried_shrimp","salted_fish","salted_vegetable","star_anise","dang_gui","white_pepper",
+   "dried_shrimp","salted_fish","salted_veg","star_anise","dang_gui","white_pepper",
    "kaffir_lime","lemongrass","galangal","turmeric","curry_leaves","shaoxing","mirin",
-   "wolfberry","kimchi","salted_egg","century_egg"].forEach(x=>{ if(R.byId[x]) s.add(x); });
+   "wolfberry","kimchi","salted_egg","century_egg","ketchup","kombu"].forEach(x=>{ if(R.byId[x]) s.add(x); });
   return s;
 }
 const CHARACTER_SEASONINGS={ has(id){ return CHARACTER_SET.has(id); } };
@@ -3862,6 +3862,52 @@ function starchAlong(id, R, starch){
   }
   return out("base_in","cooks along with the rice");
 }
+
+/* ---- WHICH VEGETABLES ACTUALLY GO IN? ----------------------------------
+   A basket often holds four greens. A cook does not put four greens in one bowl —
+   they are interchangeable, so you pick the best one. A green PLUS a root or a
+   fruiting vegetable is a different matter: those play different roles and can
+   share a dish. So: cap the leafy greens at one, allow a couple of others, and
+   hand back everything else as leftOut so the app can say why.                */
+const LEAFY_GREENS=new Set(["bok_choy","kailan","chye_sim","kangkong","spinach",
+  "watercress","lettuce","cabbage","napa_cabbage","beansprouts"]);
+function pickDishVeg(ids, R, opts){
+  opts=opts||{};
+  const maxGreens=opts.greens==null?1:opts.greens;
+  const maxOthers=opts.others==null?2:opts.others;
+  const prefer=new Set(opts.prefer||[]);      // the vegetables THIS sauce actually wants
+  const veg=ids.filter(id=>((R.byId[id]||{}).category)==="vegetables" &&
+                            measureTypeOf(R.byId[id]||{})!=="assumed");
+  const ranked=R.rankPartners?R.rankPartners(veg):veg;
+  // If the dish states which vegetables belong in it, that list is a BOUNDARY, not a
+  // starting point. Topping a bowl up to a quota with whatever else is in the fridge is
+  // exactly how cucumber ends up in laksa and mushroom in char kway teow.
+  // Only when the dish's own vegetables are absent do we fall back — and then to a single
+  // green, because a bowl with no vegetable at all is worse than a sensible substitute.
+  let pool, usedOwnList=false;
+  if(prefer.size){
+    const wanted=ranked.filter(id=>prefer.has(id));
+    usedOwnList = wanted.length>0;
+    pool = usedOwnList ? wanted : ranked.filter(id=>LEAFY_GREENS.has(id)).slice(0,1);
+  } else {
+    pool = ranked;                      // the dish has no opinion — use general culinary fit
+  }
+  const greens=pool.filter(id=>LEAFY_GREENS.has(id));
+  const others=pool.filter(id=>!LEAFY_GREENS.has(id));
+  const useG=greens.slice(0,maxGreens), useO=others.slice(0,maxOthers);
+  const used=new Set([...useG,...useO]);
+  const leftOut=[];
+  greens.slice(maxGreens).forEach(id=>leftOut.push({id,
+    why:"one green is enough in a bowl \u2014 "+((R.byId[useG[0]]||{}).name||"the first")+" suits this better"}));
+  others.slice(maxOthers).forEach(id=>leftOut.push({id, why:"the bowl is already carrying enough"}));
+  // only claim "this dish isn't made with it" when we actually honoured the dish's own
+  // list — if we fell back to a general green, the honest reason is simply that one is enough
+  if(prefer.size) veg.filter(id=>!pool.includes(id)).forEach(id=>leftOut.push({id,
+    why: usedOwnList ? "not something this dish is made with"
+                     : "one vegetable is enough for this bowl"}));
+  return {used:ids.filter(id=>!veg.includes(id) || used.has(id)), leftOut};
+}
+
 /* rice keeps its exact previous behaviour */
 function riceAlong(id, R){ return starchAlong(id, R, "rice"); }
 
@@ -4003,7 +4049,8 @@ function riceCandidates(ingIds, R, dishes, AFF){
   const out=[];
   const add=(key,label,mode,subject,note)=>{
     out.push({key,label,mode,subject,note,
-      contents:real, leftOut:[]});
+      contents:pickDishVeg(real.filter(x=>!NOODLE_BASE_IDS.has(x)), R, {greens:1, others:2}).used,
+      leftOut:pickDishVeg(real.filter(x=>!NOODLE_BASE_IDS.has(x)), R, {greens:1, others:2}).leftOut});
   };
 
   // strong claypot / cook-in signals
@@ -4100,7 +4147,8 @@ const NOODLE_MODES={
 const NOODLE_DIRS=[
   /* ---- FRIED ---- */
   {key:"mee_goreng", label:"Mee goreng", region:"Malay/Indian-Muslim", mode:"fried",
-   canonical:["yellow_noodle"], works:["noodles","bee_hoon","hor_fun"], markers:["tomato","chilli","egg","tau_pok","potato","ketchup"], need:1,
+   canonical:["yellow_noodle"], works:["noodles","bee_hoon","hor_fun"], markers:["ketchup","tau_pok"], need:1,
+   veg:["cabbage","tomato","potato","beansprouts"],
    note:"sweet, spicy and tomato-red \u2014 yellow noodles fried hard with egg and tofu puff",
    steps:[
      {t:"The sauce", d:"Mix chilli paste with tomato ketchup, a little dark soy and sugar \u2014 it should taste sweet, sour and hot at once."},
@@ -4109,6 +4157,7 @@ const NOODLE_DIRS=[
      {t:"At the table", d:"Serve with lime and sliced green chilli."}]},
   {key:"char_kway_teow", label:"Char kway teow", region:"Teochew/Hokkien", mode:"fried",
    canonical:["hor_fun"], works:["bee_hoon","yellow_noodle"], markers:["cockles","lap_cheong","dark_soy_sauce"], need:1,
+   veg:["beansprouts","chye_sim"],
    note:"flat rice noodle over ferocious heat \u2014 dark soy, egg, beansprouts and smoke",
    steps:[
      {t:"Get the wok screaming", d:"This dish is made by heat. The wok must be smoking before anything goes in."},
@@ -4117,6 +4166,7 @@ const NOODLE_DIRS=[
      {t:"Beansprouts last", d:"In at the very end for ten seconds \u2014 they should still snap."}]},
   {key:"hokkien_mee", label:"Hokkien prawn mee", region:"Hokkien", mode:"fried",
    canonical:["yellow_noodle","bee_hoon"], works:["hor_fun","mee_pok"], markers:["prawn","squid","sambal","lime","pork_belly"], need:1,
+   veg:["beansprouts","chye_sim","kangkong"],
    note:"yellow noodle and bee hoon braised in prawn stock until it is drunk up \u2014 lime and sambal at the table",
    steps:[
      {t:"Make the stock", d:"Fry the prawn heads and shells hard, then simmer them with water for twenty minutes \u2014 this stock is the whole dish."},
@@ -4125,6 +4175,7 @@ const NOODLE_DIRS=[
      {t:"At the table", d:"Sambal on the side and a wedge of calamansi or lime."}]},
   {key:"bee_hoon_goreng", label:"Fried bee hoon", neutralLabel:"Simple fried noodles", region:"Singaporean", mode:"fried",
    canonical:["bee_hoon"], works:["yellow_noodle","hor_fun","noodles"], markers:[], need:0,
+   veg:["cabbage","carrot","beansprouts","chye_sim"],
    note:"the everyday plate \u2014 soft bee hoon fried light with whatever is in the fridge",
    steps:[
      {t:"Soak, don't boil", d:"Soak the bee hoon in warm water until pliable but still firm \u2014 boiled bee hoon breaks in the wok."},
@@ -4132,6 +4183,7 @@ const NOODLE_DIRS=[
      {t:"Toss with chopsticks", d:"Lift and separate rather than stir, or the strands clump and tear."}]},
   {key:"dark_soy_fried", label:"Dark soy fried noodles", region:"Cantonese", mode:"fried",
    canonical:null, works:null, markers:["dark_soy_sauce"], need:1,
+   veg:["kailan","cabbage","beansprouts"],
    note:"soy-dark and glossy \u2014 the simplest fried noodle there is",
    steps:[
      {t:"Colour, then season", d:"Dark soy for colour and light soy for salt \u2014 dark soy alone tastes flat and looks muddy."},
@@ -4141,6 +4193,7 @@ const NOODLE_DIRS=[
   /* ---- SOUP ---- */
   {key:"laksa", label:"Laksa", region:"Peranakan", mode:"soup",
    canonical:["bee_hoon"], works:["hor_fun","yellow_noodle","mee_pok"], markers:["laksa_paste","coconut_milk","laksa_leaf"], need:1,
+   veg:["beansprouts","long_beans"],
    note:"coconut and rempah broth over thick bee hoon, with tau pok soaking it up",
    steps:[
      {t:"Fry the rempah", d:"Fry the laksa paste in oil until it splits and smells sweet \u2014 raw paste tastes harsh."},
@@ -4148,7 +4201,8 @@ const NOODLE_DIRS=[
      {t:"Assemble", d:"Blanched thick bee hoon in the bowl, then the broth, then prawns, fish cake and tau pok."},
      {t:"Finish", d:"A spoon of sambal and torn laksa leaf on top."}]},
   {key:"fishball_soup", label:"Fishball noodle soup", region:"Teochew", mode:"soup",
-   canonical:["mee_pok"], works:["bee_hoon","yellow_noodle","noodles"], markers:["fish_cake","white_pepper","lettuce","beansprouts"], need:1,
+   canonical:["mee_pok"], works:["bee_hoon","yellow_noodle","noodles"], markers:["fish_cake"], need:1,
+   veg:["lettuce","beansprouts","chye_sim"],
    note:"a clean peppery broth with springy noodles and fish cake \u2014 the everyday bowl",
    steps:[
      {t:"Keep the broth clear", d:"A gentle simmer only; a hard boil turns it cloudy."},
@@ -4157,6 +4211,7 @@ const NOODLE_DIRS=[
      {t:"Season the bowl", d:"White pepper and a few drops of sesame oil go in the bowl, not the pot."}]},
   {key:"tom_yum", label:"Tom yum noodles", region:"Thai", mode:"soup",
    canonical:["bee_hoon"], works:null, markers:["tom_yum_paste","lemongrass","lime","galangal","kaffir_lime"], need:1,
+   veg:["tomato","mushroom","enoki"],
    note:"hot and sour \u2014 lemongrass, lime and chilli carried in the broth",
    steps:[
      {t:"Bruise the aromatics", d:"Crush the lemongrass and galangal so they give up their oils in the simmer."},
@@ -4165,6 +4220,7 @@ const NOODLE_DIRS=[
   {key:"fish_soup", label:"Sliced fish bee hoon", region:"Teochew/Singaporean", mode:"soup",
    canonical:["bee_hoon"], works:["mee_pok","hor_fun","yellow_noodle"],
    markers:["fish_slices"], need:1,
+   veg:["tomato","salted_veg","lettuce"],
    note:"a clean or milky peppery broth with tender fish slices \u2014 tomato and salted vegetable for the sour edge",
    steps:[
      {t:"Fry the ginger", d:"Ginger in the oil first \u2014 it is what keeps a fish broth from tasting muddy."},
@@ -4173,6 +4229,7 @@ const NOODLE_DIRS=[
      {t:"Sour and sharp", d:"Tomato wedges and salted vegetable go in near the end; white pepper and fried shallots in the bowl."}]},
   {key:"sliced_meat", label:"Sliced meat noodle soup", region:"Chinese", mode:"soup",
    markers:["beef_slices","pork_loin","chicken_breast","pork_mince"], need:1,
+   veg:["chye_sim","lettuce","bok_choy"],
    note:"thin slices of meat cooked in the broth at the last moment, over noodles \u2014 the everyday bowl",
    steps:[
      {t:"Slice thin, against the grain", d:"Thin slices cook through in the broth in under a minute and stay tender; thick ones go tough."},
@@ -4181,7 +4238,8 @@ const NOODLE_DIRS=[
      {t:"Assemble", d:"Noodles in the bowl, meat and greens on top, broth ladled over."}]},
   {key:"dashi_noodle", label:"Dashi noodle soup", region:"Japanese", mode:"soup",
    canonical:["udon","soba"], works:["noodles","bee_hoon"],
-   markers:["dashi","kombu","mirin","soy_sauce"], need:1,
+   markers:["dashi","kombu","mirin"], need:1,
+   veg:["spinach","mushroom","enoki"],
    note:"a clear dashi and shoyu broth \u2014 restrained, and all about the stock",
    steps:[
      {t:"Dashi first", d:"Kombu steeped below a simmer, never boiled \u2014 boiling kombu turns the stock bitter and slippery."},
@@ -4190,6 +4248,7 @@ const NOODLE_DIRS=[
      {t:"Finish", d:"Scallion, and a soft egg if you have one."}]},
   {key:"clear_soup", label:"Clear soup noodles", region:"Chinese", mode:"soup",
    canonical:null, works:null, markers:["ginger","scallion"], need:0,
+   veg:["bok_choy","chye_sim","lettuce"],
    note:"noodles in a clear broth \u2014 the broth does all the talking",
    steps:[
      {t:"Build the broth", d:"Ginger, scallion and salt, simmered gently \u2014 nothing else needed."},
@@ -4228,6 +4287,16 @@ function noodleCandidates(ingIds, R, dishes, AFF){
   if(!base) return [];                       // no noodle, no noodle dish
   const baseName=(R.byId[base]||{}).name||base;
   const set=new Set(real);
+  // A noodle dish uses ONE noodle. Rice and every other noodle in the basket belong to a
+  // different dish, so keep them out of this dish's contents — they were leaking into the
+  // ingredient tags, the art and (worse) the shopping list.
+  const mineAll=real.filter(id=>{
+    if(RICE_BASE_IDS.has(id)) return false;
+    if(NOODLE_BASE_IDS.has(id) && id!==base) return false;
+    return true;
+  });
+  // NOTE: the vegetable pick happens per-direction below, because which vegetables belong
+  // depends on the sauce — laksa wants beansprouts, a dashi bowl wants spinach.
   const out=[];
   NOODLE_DIRS.forEach(dir=>{
     // enough of its markers must be present
@@ -4242,12 +4311,15 @@ function noodleCandidates(ingIds, R, dishes, AFF){
     const fitNote = fit==="canonical" ? null
       : fit==="works" ? baseName.replace(/ \(.*\)/,"")+" is a common swap for this"
       : "usually made with "+((dir.canonical||[]).map(n=>(R.byId[n]||{}).name||n).join(" or ").replace(/ \(.*?\)/g,""))+" \u2014 this is your own take";
+    // a bowl takes one green and a couple of others — chosen for THIS sauce
+    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[]});
+    const mine=vpick.used;
     out.push({
       key:"noodle_"+dir.key,
       label, mode:dir.mode, dirKey:dir.key, direction:dir,
       subject:base, subjectName:baseName,
       note:dir.note, fit, fitNote, hits,
-      contents:real, leftOut:[]
+      contents:mine, leftOut:vpick.leftOut
     });
   });
   // strongest signal first, then the pairing that suits the noodle best
@@ -4255,10 +4327,12 @@ function noodleCandidates(ingIds, R, dishes, AFF){
   // always leave a plain fallback so a lone packet of noodles still cooks
   if(!out.length){
     const fallback=NOODLE_DIRS.find(d=>d.key==="clear_soup");
+    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:(fallback&&fallback.veg)||[]});
+    const mine=vpick.used;
     out.push({key:"noodle_clear_soup", label:"Noodles in broth", mode:"soup",
       dirKey:"clear_soup", direction:fallback, subject:base,
       subjectName:(R.byId[base]||{}).name||base,
-      note:fallback.note, contents:real, leftOut:[]});
+      note:fallback.note, contents:mine, leftOut:vpick.leftOut});
   }
   return out.slice(0,4);
 }
@@ -4606,7 +4680,7 @@ function suggestChip(id, R){
   const already=FLOW.active.has(id);
   return "<button class=\"ps-chip ps-add"+(already?" in-basket":"")+"\" "+
     "data-add=\""+id+"\">"+
-    (R.byId[id]||{}).name+"<em>"+(already?"in basket":"why?")+"</em></button>";
+    (R.byId[id]||{}).name+"<em>"+(already?"in dish":"why?")+"</em></button>";
 }
 /* wire suggestion-chip clicks once, event-delegated. Tapping opens a card that explains WHY
    the ingredient fits, and lets the person choose to add it — rather than adding silently. */
@@ -4638,8 +4712,8 @@ function openSuggestCard(id){
     (affText?"<div class=\"sug-line\">"+affText+(comText?", "+comText:"")+".</div>":"")+
     "<div class=\"sug-btns\">"+
       (already
-        ? "<button class=\"sug-in\" disabled>Already in your basket</button>"
-        : "<button class=\"sug-go\" data-confirm=\""+id+"\">Add to basket</button>")+
+        ? "<button class=\"sug-in\" disabled>Already in this dish</button>"
+        : "<button class=\"sug-go\" data-confirm=\""+id+"\">Add to this dish</button>")+
       "<button class=\"sug-cancel\">Close</button>"+
     "</div>";
   wrap.appendChild(card); document.body.appendChild(wrap);
@@ -4670,13 +4744,18 @@ function closeSuggestCard(){ const c=el("sugcard"); if(c&&c.remove) c.remove(); 
 if(!FLOW.basket) FLOW.basket=[];
 
 /* snapshot the CURRENT composed dish (its name + its to-buy list) and add to the basket */
-function addCurrentDishToBasket(name, method, buyList, timing){
+function addCurrentDishToBasket(name, method, buyList, timing, detail){
   if(!name) return;
   if(FLOW.basket.some(d=>d.name===name)) { return; }   // already saved — the pill already reflects it
   // which of these to-buy items were added via a suggestion this session?
   const sourced={};
   (buyList||[]).forEach(b=>{ if(FLOW.suggestedIds && FLOW.suggestedIds.has(b.id)) sourced[b.id]=true; });
+  // keep the prep jobs and the first cooking move, so the basket can lay out a real plan
+  // rather than just a bar — the same detail the family-meal planner shows.
+  const prep=((detail&&detail.prep)||[]).map(p=>p.name+" \u2014 "+(p.prep||"prep"));
+  const steps=((detail&&detail.steps)||[]).map(s=>(s.label||s.t||"")+(s.detail?": "+s.detail:(s.d?": "+s.d:"")));
   FLOW.basket.push({name, method, buy:(buyList||[]).map(b=>({id:b.id,name:b.name})), sourced,
+    prep, firstStep:steps[0]||"",
     timing: timing||{total:null,handsOn:null,handsOff:null}});
   TRACK.log("dish_added_to_basket", {dish:name, method:method, buy_count:(buyList||[]).length, basket_dishes:FLOW.basket.length});
   updateBasketPill();
@@ -4698,13 +4777,13 @@ function buyListForContents(contents){
   return buy;
 }
 /* a reusable "+ Add to basket" button for the single-dish composers */
-function addBasketButtonFor(label, contents, method, timing){
+function addBasketButtonFor(label, contents, method, timing, detail){
   const buy=buyListForContents(contents);
   const btn=document.createElement("button"); btn.className="add-basket-btn";
   const inBasket=FLOW.basket && FLOW.basket.some(d=>d.name===label);
   btn.innerHTML=inBasket ? "\u2713 In your basket" : "+ Add to basket";
   if(inBasket) btn.classList.add("in");
-  btn.onclick=()=>{ addCurrentDishToBasket(label, method, buy, timing); if(btn.isConnected){ btn.innerHTML="\u2713 In your basket"; btn.classList.add("in"); } };
+  btn.onclick=()=>{ addCurrentDishToBasket(label, method, buy, timing, detail); if(btn.isConnected){ btn.innerHTML="\u2713 In your basket"; btn.classList.add("in"); } };
   return btn;
 }
 /* map a composed dish's method to the appliance it uses — the one inference the scheduler
@@ -4756,6 +4835,71 @@ function updateBasketPill(){
   }
   pill.innerHTML="<span class=\"bp-ic\">\u25a3</span> Basket \u00b7 "+dishes+(dishes===1?" dish":" dishes");
 }
+
+/* The basket's cook-together plan, laid out in the SAME language as the family-meal
+   planner: one bar per dish on a shared clock, the hands-on portion shaded, prep jobs
+   in the tooltip, and the appliance conflicts named. */
+function renderBasketSchedule(plan){
+  const APN={steamer:"Steamer", rice_cooker:"Rice cooker", stovetop:"Stove", oven:"Oven"};
+  const wrap=document.createElement("div"); wrap.className="sched";
+  const handsOn=plan.rows.reduce((n,r)=>n+Math.max(0,r.total-(r.handsOff||0)),0);
+  const h=document.createElement("div"); h.className="sc-head";
+  h.innerHTML="<span class=\"sc-t\">All ready together in</span>"+
+    "<span class=\"sc-w\">"+plan.ready+"<em>min</em></span>"+
+    "<span class=\"sc-ho\">"+handsOn+" min hands-on</span>";
+  wrap.appendChild(h);
+
+  // name the conflicts, the way the planner does
+  const byAppl={};
+  plan.rows.forEach(r=>{ (byAppl[r.appliance]=byAppl[r.appliance]||[]).push(r); });
+  const notes=[];
+  Object.keys(byAppl).forEach(ap=>{
+    const n=byAppl[ap].length;
+    if(n>1) notes.push("You\u2019ve got "+n+" dishes on the "+(APN[ap]||ap).toLowerCase()+
+      " \u2014 unless you have "+n+" burners going, they\u2019ll have to queue.");
+  });
+  if(handsOn>plan.ready) notes.push("These need "+handsOn+" min of your hands inside a "+plan.ready+
+    " min window \u2014 something will have to wait or be kept warm.");
+  notes.forEach(t=>{ const n=document.createElement("div"); n.className="sc-note"; n.textContent=t; wrap.appendChild(n); });
+
+  const W=Math.max(plan.ready,1);
+  const pct=v=>(100*v/W).toFixed(2)+"%";
+  const rows=document.createElement("div"); rows.className="sc-rows";
+  plan.rows.forEach(r=>{
+    const d=FLOW.basket.find(x=>x.name===r.name)||{};
+    const active=Math.max(0,r.total-(r.handsOff||0)), off=r.handsOff||0;
+    const jobs=[];
+    if((d.prep||[]).length) jobs.push("Prep: "+d.prep.join("; "));
+    if(d.firstStep) jobs.push(d.firstStep);
+    if(off) jobs.push("Then leave it \u2014 "+off+" min hands-off.");
+    const row=document.createElement("div"); row.className="sc-row";
+    row.title=r.name+" \u2014 "+(APN[r.appliance]||r.appliance).toLowerCase()+"\n"+
+      (r.start===0?"Start straight away":"Start "+r.start+" min in")+"\n"+jobs.join("\n");
+    row.innerHTML=
+      "<div class=\"sc-name\">"+r.name+"<em>"+(APN[r.appliance]||r.appliance)+"</em></div>"+
+      "<div class=\"sc-track\">"+
+        "<div class=\"sc-bar\" style=\"left:"+pct(r.start)+";width:"+pct(Math.max(1,r.total))+"\">"+
+          "<span class=\"sc-active\" style=\"width:"+pct(active)+"\"></span>"+
+        "</div>"+
+        "<div class=\"sc-tip\">"+
+          "<strong>"+r.name+"</strong>"+
+          "<span class=\"st-l\">"+(APN[r.appliance]||r.appliance)+" \u00b7 "+
+            (r.start===0?"start now":"+"+r.start+" min")+" \u00b7 done at "+plan.ready+" min</span>"+
+          jobs.map(j=>"<span class=\"st-job\">"+j+"</span>").join("")+
+          "<span class=\"st-r\">"+active+" min hands-on"+(off?" \u00b7 "+off+" min free":"")+"</span>"+
+        "</div>"+
+      "</div>"+
+      "<div class=\"sc-when\">"+(r.start===0?"start now":"+"+r.start+"m")+"</div>";
+    rows.appendChild(row);
+  });
+  wrap.appendChild(rows);
+  const key=document.createElement("div"); key.className="sc-key";
+  key.innerHTML="<span><i class=\"k-act\"></i>hands-on</span><span><i class=\"k-off\"></i>walk away</span>"+
+    "<span>estimate \u2014 assumes each dish gets its own appliance</span>";
+  wrap.appendChild(key);
+  return wrap;
+}
+
 function openBasket(){
   closeBasket();
   const buy=basketBuyList();
@@ -4771,7 +4915,7 @@ function openBasket(){
   // cook-together schedule — only when 2+ dishes carry timing
   const plan=cookTogetherPlan(FLOW.basket);
   let cookHtml="";
-  if(plan){
+  if(false){
     const APN={steamer:"steamer",rice_cooker:"rice cooker",stovetop:"stove"};
     const rowsHtml=plan.rows.map(r=>
       "<div class=\"ck-row\"><span class=\"ck-when\">"+(r.start===0?"start now":"at +"+r.start+"m")+"</span>"+
@@ -4793,6 +4937,13 @@ function openBasket(){
     cookHtml+
     "<div class=\"bk-btns\"><button class=\"bk-copy\">Copy shopping list</button>"+
       "<button class=\"bk-clear\">Clear</button></div>";
+  // the cook-together plan, in the same language as the family-meal planner
+  if(plan){
+    const lab=document.createElement("div"); lab.className="bk-lab"; lab.textContent="Cook it together";
+    const btns=panel.querySelector(".bk-btns");
+    if(btns){ panel.insertBefore(lab, btns); panel.insertBefore(renderBasketSchedule(plan), btns); }
+    else { panel.appendChild(lab); panel.appendChild(renderBasketSchedule(plan)); }
+  }
   wrap.appendChild(panel); document.body.appendChild(wrap);
   requestAnimationFrame(()=>wrap.classList.add("in"));
   panel.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{
@@ -6361,11 +6512,11 @@ function renderStirFry(){
     const o=document.createElement("div"); o.className="pot-sug";
     o.innerHTML="<div class=\"ps-lab\">Goes well in a wok with these &mdash; tap to add</div>"+
       "<div class=\"ps-row\">"+sf.suggest.buy.slice(0,4).map(x=>suggestChip(x.id, REF)).join("")+"</div>"+
-      "<div class=\"ps-note\">From our stir-fries. Tap a chip to add it to your basket.</div>";
+      "<div class=\"ps-note\">From our stir-fries. Tap a chip to add it to the dish.</div>";
     box.appendChild(o);
     wireSuggestions();
   }
-  box.appendChild(addBasketButtonFor(chosen.label, chosen.contents, "stirfry", {total:sf.total, handsOn:sf.handsOn, handsOff:sf.handsOff}));
+  box.appendChild(addBasketButtonFor(chosen.label, chosen.contents, "stirfry", {total:sf.total, handsOn:sf.handsOn, handsOff:sf.handsOff}, sf));
 }
 
 /* the sauce radial — the same interaction as the pot's Season button */
@@ -7276,11 +7427,11 @@ function renderSteam(){
     const o=document.createElement("div"); o.className="pot-sug";
     o.innerHTML="<div class=\"ps-lab\">Steams well with these &mdash; tap to add</div>"+
       "<div class=\"ps-row\">"+st.suggest.buy.slice(0,4).map(x=>suggestChip(x.id, REF)).join("")+"</div>"+
-      "<div class=\"ps-note\">From our steamed dishes. Tap a chip to add it to your basket.</div>";
+      "<div class=\"ps-note\">From our steamed dishes. Tap a chip to add it to the dish.</div>";
     box.appendChild(o);
     wireSuggestions();
   }
-  box.appendChild(addBasketButtonFor(chosen.label, chosen.contents, "steam", {total:st.total, handsOn:st.handsOn, handsOff:st.handsOff}));
+  box.appendChild(addBasketButtonFor(chosen.label, chosen.contents, "steam", {total:st.total, handsOn:st.handsOn, handsOff:st.handsOff}, st));
 }
 
 /* the topping radial — the same interaction as the wok's Sauce button */
@@ -7517,11 +7668,11 @@ function renderRice(){
     const o=document.createElement("div"); o.className="pot-sug";
     o.innerHTML="<div class=\"ps-lab\">Goes in a bowl with these &mdash; tap to add</div>"+
       "<div class=\"ps-row\">"+rb.suggest.buy.slice(0,4).map(x=>suggestChip(x.id, REF)).join("")+"</div>"+
-      "<div class=\"ps-note\">From our rice bowls. Tap a chip to add it to your basket.</div>";
+      "<div class=\"ps-note\">From our rice bowls. Tap a chip to add it to the dish.</div>";
     box.appendChild(o);
     wireSuggestions();
   }
-  box.appendChild(addBasketButtonFor(chosen.label, chosen.contents, "ricebowl", {total:rb.total, handsOn:rb.handsOn, handsOff:rb.handsOff}));
+  box.appendChild(addBasketButtonFor(chosen.label, chosen.contents, "ricebowl", {total:rb.total, handsOn:rb.handsOn, handsOff:rb.handsOff}, rb));
 }
 
 
@@ -7743,6 +7894,21 @@ function renderNoodle(){
     {label: nd.mode==="fried"?"Wok":"Broth", mins:Math.max(1, nd.total-nd.prepMins), kind:"cook"}
   ]);
 
+  // ---- greens the bowl didn't need ----
+  if(chosen.leftOut && chosen.leftOut.length){
+    const o=document.createElement("div"); o.className="pot-out";
+    const lab=document.createElement("span"); lab.className="po-l"; lab.textContent="left out";
+    o.appendChild(lab);
+    chosen.leftOut.forEach(l=>{
+      const c=document.createElement("span"); c.className="po-c";
+      c.textContent=(REF.byId[l.id]||{}).name||l.id; o.appendChild(c);
+    });
+    const w=document.createElement("span"); w.className="po-w";
+    w.textContent=chosen.leftOut[0].why;
+    o.appendChild(w);
+    box.appendChild(o);
+  }
+
   // ---- what can't go in the bowl ----
   if(nd.separate && nd.separate.length){
     const o=document.createElement("div"); o.className="pot-out";
@@ -7769,12 +7935,12 @@ function renderNoodle(){
     const o=document.createElement("div"); o.className="pot-sug";
     o.innerHTML="<div class=\"ps-lab\">Goes in this bowl &mdash; tap to add</div>"+
       "<div class=\"ps-row\">"+nd.suggest.buy.slice(0,4).map(x=>suggestChip(x.id, REF)).join("")+"</div>"+
-      "<div class=\"ps-note\">From our noodle bowls. Tap a chip to add it to your basket.</div>";
+      "<div class=\"ps-note\">From our noodle bowls. Tap a chip to add it to the dish.</div>";
     box.appendChild(o);
     wireSuggestions();
   }
   box.appendChild(addBasketButtonFor(chosen.label, chosen.contents, "noodles",
-    {total:nd.total, handsOn:nd.handsOn, handsOff:nd.handsOff}));
+    {total:nd.total, handsOn:nd.handsOn, handsOff:nd.handsOff}, nd));
 }
 
 /* the style radial — mirrors openSteamRadial exactly: sheet on mobile, hub on desktop */
@@ -8274,7 +8440,7 @@ function renderOnePot(){
   });
   if(chosen){
     const potLabel = (chosen.baseNames&&chosen.baseNames.length) ? (chosen.baseNames.join(" & ")+" pot") : "One-pot dish";
-    box.appendChild(addBasketButtonFor(potLabel, chosen.contents, "onepot", {total:p.total, handsOn:p.handsOn, handsOff:Math.max(0,p.total-p.handsOn)}));
+    box.appendChild(addBasketButtonFor(potLabel, chosen.contents, "onepot", {total:p.total, handsOn:p.handsOn, handsOff:Math.max(0,p.total-p.handsOn)}, p));
   }
 }
 function simpleCard(item){
