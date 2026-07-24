@@ -305,7 +305,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .add-basket-btn{margin-top:14px;width:100%;padding:12px;border:none;border-radius:11px;
   background:var(--cool);color:#fff;font-size:14.5px;font-weight:600;cursor:pointer}
 .add-basket-btn.in{background:var(--panel);color:var(--muted);border:1px solid rgba(50,117,100,.25)}
-.basket-panel{background:var(--paper);width:100%;max-width:460px;border-radius:18px 18px 0 0;
+.basket-panel{background:var(--paper);width:100%;max-width:720px;border-radius:18px 18px 0 0;
   padding:8px 18px 26px;box-shadow:0 -8px 32px rgba(27,16,11,.22);max-height:84vh;overflow-y:auto}
 .bk-grab{width:38px;height:4px;background:var(--line,rgba(50,117,100,.3));border-radius:2px;margin:8px auto 14px}
 .bk-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px}
@@ -338,7 +338,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 /* desktop: center the basket panel as a modal; mobile keeps the bottom sheet */
 @media(min-width:760px){
   #basket{align-items:center}
-  .basket-panel{border-radius:18px;max-width:440px;max-height:80vh}
+  .basket-panel{border-radius:18px;max-width:720px;max-height:82vh}
 }
 .rs-head{font-size:13.5px;line-height:1.45;color:var(--muted);margin-bottom:14px}
 .rs-lab{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.12em;
@@ -821,7 +821,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.04</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.05</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -3537,7 +3537,14 @@ function buildSteam(ingIds, R, dishes, AFF, opts){
    Offer coherent options the way the wok and the pot do: one fish, or the prawns, or a
    custard \u2014 each a complete dish, with a plain honest note.
    ============================================================ */
-function steamCandidates(ingIds, R, dishes, AFF){
+function steamCandidates(ingIds, R, dishes, AFF, opts){
+  // Something the cook ASKED for outranks anything the engine would have chosen.
+  // Affinity ranks; it must never quietly drop a deliberate choice.
+  const EXPL=(opts&&opts.explicit)||null;
+  const rankBed=list=>{
+    const r=R.rankPartners?R.rankPartners(list):list;
+    return EXPL ? r.slice().sort((a,b)=>(EXPL.has&&EXPL.has(b)?1:0)-(EXPL.has&&EXPL.has(a)?1:0)) : r;
+  };
   const real=[...new Set(ingIds.filter(id=>{
     const i=R.byId[id]||{};
     if(i.id==="water") return false;
@@ -3597,7 +3604,7 @@ function steamCandidates(ingIds, R, dishes, AFF){
     }
     const subj=ids[0];
     const bedFor = (form==="whole_fish"||form==="shellfish")
-      ? R.rankPartners(COLLECTORS_C.filter(id=>real.includes(id) && id!==subj)).slice(0,1) : [];
+      ? rankBed(COLLECTORS_C.filter(id=>real.includes(id) && id!==subj)).slice(0,1) : [];
     // whole fish and shellfish are distinct dishes per species — a pomfret and a sea bass
     // are different choices, not alternatives of one card. Give each its own candidate.
     // Guard rails: processed fish (fish cake) never gets its own whole-fish card, and the
@@ -3610,7 +3617,7 @@ function steamCandidates(ingIds, R, dishes, AFF){
       const cardIds=splitIds.slice(0,CAP);
       const overflow=splitIds.slice(CAP).concat(form==="whole_fish"?ids.filter(id=>PROCESSED_FISH.includes(id)):[]);
       cardIds.forEach((fid,idx)=>{
-        const bed = R.rankPartners(COLLECTORS_C.filter(id=>real.includes(id) && id!==fid)).slice(0,1);
+        const bed = rankBed(COLLECTORS_C.filter(id=>real.includes(id) && id!==fid)).slice(0,1);
         out.push({key:form+"_"+fid, label:LABELS[form]+nm(fid), subject:fid, form,
           contents:[fid].concat(bed).concat(topping),
           note:NOTE[form],
@@ -3623,7 +3630,7 @@ function steamCandidates(ingIds, R, dishes, AFF){
     // as the card's subject, regardless of selection order
     const subj2 = (form==="whole_fish" && splitIds.length) ? splitIds[0] : subj;
     const bedFor2 = (form==="whole_fish"||form==="shellfish")
-      ? R.rankPartners(COLLECTORS_C.filter(id=>real.includes(id) && id!==subj2)).slice(0,1) : [];
+      ? rankBed(COLLECTORS_C.filter(id=>real.includes(id) && id!==subj2)).slice(0,1) : [];
     out.push({key:form, label:LABELS[form]+nm(subj2), subject:subj2, form,
       contents:[subj2].concat(bedFor2).concat(topping),
       note:NOTE[form],
@@ -4929,7 +4936,12 @@ function openBasket(){
   }
   panel.innerHTML=
     "<div class=\"bk-grab\"></div>"+
-    "<div class=\"bk-head\"><span class=\"bk-title\">Your basket</span>"+
+    "<div class=\"bk-head\"><span class=\"bk-title\">"+
+      "<svg viewBox=\"0 0 24 24\" width=\"17\" height=\"17\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" "+
+      "stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"vertical-align:-2px;margin-right:7px\">"+
+      "<path d=\"M4 9h16l-1.4 9.2a2 2 0 0 1-2 1.8H7.4a2 2 0 0 1-2-1.8L4 9Z\"/>"+
+      "<path d=\"M8.5 9 11 3.6M15.5 9 13 3.6\"/><path d=\"M9.5 13v3M14.5 13v3\"/></svg>"+
+      "Your basket</span>"+
       "<span class=\"bk-sub\">"+FLOW.basket.length+(FLOW.basket.length===1?" dish":" dishes")+" \u00b7 "+buy.length+" to buy</span></div>"+
     "<div class=\"bk-lab\">Cooking</div><div class=\"bk-dishes\">"+(dishRows||"<span class=\"bk-empty\">No dishes yet.</span>")+"</div>"+
     "<div class=\"bk-lab\">To buy \u00b7 "+buy.length+"</div><div class=\"bk-chips\">"+buyChips+"</div>"+
@@ -7297,7 +7309,7 @@ function renderSteam(){
   }
   const nm=id=>((REF.byId[id]||{}).name)||id;
 
-  const cands=steamCandidates(ids, REF, DISHES, AFF);
+  const cands=steamCandidates(ids, REF, DISHES, AFF, {explicit:FLOW.suggestedIds});
   if(!FLOW.steamPick || !cands.some(c=>c.key===FLOW.steamPick)) FLOW.steamPick=cands[0]?cands[0].key:null;
   const chosen=cands.find(c=>c.key===FLOW.steamPick)||cands[0];
   if(!chosen){ box.innerHTML="<div class=\"hint\">Nothing here suits a steamer.</div>"; return; }
@@ -8272,6 +8284,8 @@ function renderOnePot(){
         : "")+
     "</div>";
   box.appendChild(title);
+  // the ingredient list under the title — every other composer shows this
+  { const tg=ingredientTags(chosen?chosen.contents:potIds); if(tg) box.appendChild(tg); }
 
   /* ============ 2. THE SCHEDULE — the hero. This is the answer. ============ */
   const hero=document.createElement("div"); hero.className="op-hero";

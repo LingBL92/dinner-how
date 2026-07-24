@@ -56,9 +56,9 @@ function buildCharacterSet(R){
   R.list.forEach(i=>{ if(i.category==="pastes") s.add(i.id); });   // every paste, automatically
   // a handful of condiments genuinely name a dish (soy-braised, oyster-sauce kailan)
   ["oyster_sauce","dark_soy_sauce","fish_sauce","dashi","tamarind","coconut_milk",
-   "dried_shrimp","salted_fish","salted_vegetable","star_anise","dang_gui","white_pepper",
+   "dried_shrimp","salted_fish","salted_veg","star_anise","dang_gui","white_pepper",
    "kaffir_lime","lemongrass","galangal","turmeric","curry_leaves","shaoxing","mirin",
-   "wolfberry","kimchi","salted_egg","century_egg"].forEach(x=>{ if(R.byId[x]) s.add(x); });
+   "wolfberry","kimchi","salted_egg","century_egg","ketchup","kombu"].forEach(x=>{ if(R.byId[x]) s.add(x); });
   return s;
 }
 const CHARACTER_SEASONINGS={ has(id){ return CHARACTER_SET.has(id); } };
@@ -2651,7 +2651,14 @@ function buildSteam(ingIds, R, dishes, AFF, opts){
    Offer coherent options the way the wok and the pot do: one fish, or the prawns, or a
    custard \u2014 each a complete dish, with a plain honest note.
    ============================================================ */
-function steamCandidates(ingIds, R, dishes, AFF){
+function steamCandidates(ingIds, R, dishes, AFF, opts){
+  // Something the cook ASKED for outranks anything the engine would have chosen.
+  // Affinity ranks; it must never quietly drop a deliberate choice.
+  const EXPL=(opts&&opts.explicit)||null;
+  const rankBed=list=>{
+    const r=R.rankPartners?R.rankPartners(list):list;
+    return EXPL ? r.slice().sort((a,b)=>(EXPL.has&&EXPL.has(b)?1:0)-(EXPL.has&&EXPL.has(a)?1:0)) : r;
+  };
   const real=[...new Set(ingIds.filter(id=>{
     const i=R.byId[id]||{};
     if(i.id==="water") return false;
@@ -2711,7 +2718,7 @@ function steamCandidates(ingIds, R, dishes, AFF){
     }
     const subj=ids[0];
     const bedFor = (form==="whole_fish"||form==="shellfish")
-      ? R.rankPartners(COLLECTORS_C.filter(id=>real.includes(id) && id!==subj)).slice(0,1) : [];
+      ? rankBed(COLLECTORS_C.filter(id=>real.includes(id) && id!==subj)).slice(0,1) : [];
     // whole fish and shellfish are distinct dishes per species — a pomfret and a sea bass
     // are different choices, not alternatives of one card. Give each its own candidate.
     // Guard rails: processed fish (fish cake) never gets its own whole-fish card, and the
@@ -2724,7 +2731,7 @@ function steamCandidates(ingIds, R, dishes, AFF){
       const cardIds=splitIds.slice(0,CAP);
       const overflow=splitIds.slice(CAP).concat(form==="whole_fish"?ids.filter(id=>PROCESSED_FISH.includes(id)):[]);
       cardIds.forEach((fid,idx)=>{
-        const bed = R.rankPartners(COLLECTORS_C.filter(id=>real.includes(id) && id!==fid)).slice(0,1);
+        const bed = rankBed(COLLECTORS_C.filter(id=>real.includes(id) && id!==fid)).slice(0,1);
         out.push({key:form+"_"+fid, label:LABELS[form]+nm(fid), subject:fid, form,
           contents:[fid].concat(bed).concat(topping),
           note:NOTE[form],
@@ -2737,7 +2744,7 @@ function steamCandidates(ingIds, R, dishes, AFF){
     // as the card's subject, regardless of selection order
     const subj2 = (form==="whole_fish" && splitIds.length) ? splitIds[0] : subj;
     const bedFor2 = (form==="whole_fish"||form==="shellfish")
-      ? R.rankPartners(COLLECTORS_C.filter(id=>real.includes(id) && id!==subj2)).slice(0,1) : [];
+      ? rankBed(COLLECTORS_C.filter(id=>real.includes(id) && id!==subj2)).slice(0,1) : [];
     out.push({key:form, label:LABELS[form]+nm(subj2), subject:subj2, form,
       contents:[subj2].concat(bedFor2).concat(topping),
       note:NOTE[form],
@@ -2976,6 +2983,52 @@ function starchAlong(id, R, starch){
   }
   return out("base_in","cooks along with the rice");
 }
+
+/* ---- WHICH VEGETABLES ACTUALLY GO IN? ----------------------------------
+   A basket often holds four greens. A cook does not put four greens in one bowl —
+   they are interchangeable, so you pick the best one. A green PLUS a root or a
+   fruiting vegetable is a different matter: those play different roles and can
+   share a dish. So: cap the leafy greens at one, allow a couple of others, and
+   hand back everything else as leftOut so the app can say why.                */
+const LEAFY_GREENS=new Set(["bok_choy","kailan","chye_sim","kangkong","spinach",
+  "watercress","lettuce","cabbage","napa_cabbage","beansprouts"]);
+function pickDishVeg(ids, R, opts){
+  opts=opts||{};
+  const maxGreens=opts.greens==null?1:opts.greens;
+  const maxOthers=opts.others==null?2:opts.others;
+  const prefer=new Set(opts.prefer||[]);      // the vegetables THIS sauce actually wants
+  const veg=ids.filter(id=>((R.byId[id]||{}).category)==="vegetables" &&
+                            measureTypeOf(R.byId[id]||{})!=="assumed");
+  const ranked=R.rankPartners?R.rankPartners(veg):veg;
+  // If the dish states which vegetables belong in it, that list is a BOUNDARY, not a
+  // starting point. Topping a bowl up to a quota with whatever else is in the fridge is
+  // exactly how cucumber ends up in laksa and mushroom in char kway teow.
+  // Only when the dish's own vegetables are absent do we fall back — and then to a single
+  // green, because a bowl with no vegetable at all is worse than a sensible substitute.
+  let pool, usedOwnList=false;
+  if(prefer.size){
+    const wanted=ranked.filter(id=>prefer.has(id));
+    usedOwnList = wanted.length>0;
+    pool = usedOwnList ? wanted : ranked.filter(id=>LEAFY_GREENS.has(id)).slice(0,1);
+  } else {
+    pool = ranked;                      // the dish has no opinion — use general culinary fit
+  }
+  const greens=pool.filter(id=>LEAFY_GREENS.has(id));
+  const others=pool.filter(id=>!LEAFY_GREENS.has(id));
+  const useG=greens.slice(0,maxGreens), useO=others.slice(0,maxOthers);
+  const used=new Set([...useG,...useO]);
+  const leftOut=[];
+  greens.slice(maxGreens).forEach(id=>leftOut.push({id,
+    why:"one green is enough in a bowl \u2014 "+((R.byId[useG[0]]||{}).name||"the first")+" suits this better"}));
+  others.slice(maxOthers).forEach(id=>leftOut.push({id, why:"the bowl is already carrying enough"}));
+  // only claim "this dish isn't made with it" when we actually honoured the dish's own
+  // list — if we fell back to a general green, the honest reason is simply that one is enough
+  if(prefer.size) veg.filter(id=>!pool.includes(id)).forEach(id=>leftOut.push({id,
+    why: usedOwnList ? "not something this dish is made with"
+                     : "one vegetable is enough for this bowl"}));
+  return {used:ids.filter(id=>!veg.includes(id) || used.has(id)), leftOut};
+}
+
 /* rice keeps its exact previous behaviour */
 function riceAlong(id, R){ return starchAlong(id, R, "rice"); }
 
@@ -3120,7 +3173,8 @@ function riceCandidates(ingIds, R, dishes, AFF){
   const out=[];
   const add=(key,label,mode,subject,note)=>{
     out.push({key,label,mode,subject,note,
-      contents:real, leftOut:[]});
+      contents:pickDishVeg(real.filter(x=>!NOODLE_BASE_IDS.has(x)), R, {greens:1, others:2}).used,
+      leftOut:pickDishVeg(real.filter(x=>!NOODLE_BASE_IDS.has(x)), R, {greens:1, others:2}).leftOut});
   };
 
   // strong claypot / cook-in signals
@@ -3217,7 +3271,8 @@ const NOODLE_MODES={
 const NOODLE_DIRS=[
   /* ---- FRIED ---- */
   {key:"mee_goreng", label:"Mee goreng", region:"Malay/Indian-Muslim", mode:"fried",
-   canonical:["yellow_noodle"], works:["noodles","bee_hoon","hor_fun"], markers:["tomato","chilli","egg","tau_pok","potato","ketchup"], need:1,
+   canonical:["yellow_noodle"], works:["noodles","bee_hoon","hor_fun"], markers:["ketchup","tau_pok"], need:1,
+   veg:["cabbage","tomato","potato","beansprouts"],
    note:"sweet, spicy and tomato-red \u2014 yellow noodles fried hard with egg and tofu puff",
    steps:[
      {t:"The sauce", d:"Mix chilli paste with tomato ketchup, a little dark soy and sugar \u2014 it should taste sweet, sour and hot at once."},
@@ -3226,6 +3281,7 @@ const NOODLE_DIRS=[
      {t:"At the table", d:"Serve with lime and sliced green chilli."}]},
   {key:"char_kway_teow", label:"Char kway teow", region:"Teochew/Hokkien", mode:"fried",
    canonical:["hor_fun"], works:["bee_hoon","yellow_noodle"], markers:["cockles","lap_cheong","dark_soy_sauce"], need:1,
+   veg:["beansprouts","chye_sim"],
    note:"flat rice noodle over ferocious heat \u2014 dark soy, egg, beansprouts and smoke",
    steps:[
      {t:"Get the wok screaming", d:"This dish is made by heat. The wok must be smoking before anything goes in."},
@@ -3234,6 +3290,7 @@ const NOODLE_DIRS=[
      {t:"Beansprouts last", d:"In at the very end for ten seconds \u2014 they should still snap."}]},
   {key:"hokkien_mee", label:"Hokkien prawn mee", region:"Hokkien", mode:"fried",
    canonical:["yellow_noodle","bee_hoon"], works:["hor_fun","mee_pok"], markers:["prawn","squid","sambal","lime","pork_belly"], need:1,
+   veg:["beansprouts","chye_sim","kangkong"],
    note:"yellow noodle and bee hoon braised in prawn stock until it is drunk up \u2014 lime and sambal at the table",
    steps:[
      {t:"Make the stock", d:"Fry the prawn heads and shells hard, then simmer them with water for twenty minutes \u2014 this stock is the whole dish."},
@@ -3242,6 +3299,7 @@ const NOODLE_DIRS=[
      {t:"At the table", d:"Sambal on the side and a wedge of calamansi or lime."}]},
   {key:"bee_hoon_goreng", label:"Fried bee hoon", neutralLabel:"Simple fried noodles", region:"Singaporean", mode:"fried",
    canonical:["bee_hoon"], works:["yellow_noodle","hor_fun","noodles"], markers:[], need:0,
+   veg:["cabbage","carrot","beansprouts","chye_sim"],
    note:"the everyday plate \u2014 soft bee hoon fried light with whatever is in the fridge",
    steps:[
      {t:"Soak, don't boil", d:"Soak the bee hoon in warm water until pliable but still firm \u2014 boiled bee hoon breaks in the wok."},
@@ -3249,6 +3307,7 @@ const NOODLE_DIRS=[
      {t:"Toss with chopsticks", d:"Lift and separate rather than stir, or the strands clump and tear."}]},
   {key:"dark_soy_fried", label:"Dark soy fried noodles", region:"Cantonese", mode:"fried",
    canonical:null, works:null, markers:["dark_soy_sauce"], need:1,
+   veg:["kailan","cabbage","beansprouts"],
    note:"soy-dark and glossy \u2014 the simplest fried noodle there is",
    steps:[
      {t:"Colour, then season", d:"Dark soy for colour and light soy for salt \u2014 dark soy alone tastes flat and looks muddy."},
@@ -3258,6 +3317,7 @@ const NOODLE_DIRS=[
   /* ---- SOUP ---- */
   {key:"laksa", label:"Laksa", region:"Peranakan", mode:"soup",
    canonical:["bee_hoon"], works:["hor_fun","yellow_noodle","mee_pok"], markers:["laksa_paste","coconut_milk","laksa_leaf"], need:1,
+   veg:["beansprouts","long_beans"],
    note:"coconut and rempah broth over thick bee hoon, with tau pok soaking it up",
    steps:[
      {t:"Fry the rempah", d:"Fry the laksa paste in oil until it splits and smells sweet \u2014 raw paste tastes harsh."},
@@ -3265,7 +3325,8 @@ const NOODLE_DIRS=[
      {t:"Assemble", d:"Blanched thick bee hoon in the bowl, then the broth, then prawns, fish cake and tau pok."},
      {t:"Finish", d:"A spoon of sambal and torn laksa leaf on top."}]},
   {key:"fishball_soup", label:"Fishball noodle soup", region:"Teochew", mode:"soup",
-   canonical:["mee_pok"], works:["bee_hoon","yellow_noodle","noodles"], markers:["fish_cake","white_pepper","lettuce","beansprouts"], need:1,
+   canonical:["mee_pok"], works:["bee_hoon","yellow_noodle","noodles"], markers:["fish_cake"], need:1,
+   veg:["lettuce","beansprouts","chye_sim"],
    note:"a clean peppery broth with springy noodles and fish cake \u2014 the everyday bowl",
    steps:[
      {t:"Keep the broth clear", d:"A gentle simmer only; a hard boil turns it cloudy."},
@@ -3274,6 +3335,7 @@ const NOODLE_DIRS=[
      {t:"Season the bowl", d:"White pepper and a few drops of sesame oil go in the bowl, not the pot."}]},
   {key:"tom_yum", label:"Tom yum noodles", region:"Thai", mode:"soup",
    canonical:["bee_hoon"], works:null, markers:["tom_yum_paste","lemongrass","lime","galangal","kaffir_lime"], need:1,
+   veg:["tomato","mushroom","enoki"],
    note:"hot and sour \u2014 lemongrass, lime and chilli carried in the broth",
    steps:[
      {t:"Bruise the aromatics", d:"Crush the lemongrass and galangal so they give up their oils in the simmer."},
@@ -3282,6 +3344,7 @@ const NOODLE_DIRS=[
   {key:"fish_soup", label:"Sliced fish bee hoon", region:"Teochew/Singaporean", mode:"soup",
    canonical:["bee_hoon"], works:["mee_pok","hor_fun","yellow_noodle"],
    markers:["fish_slices"], need:1,
+   veg:["tomato","salted_veg","lettuce"],
    note:"a clean or milky peppery broth with tender fish slices \u2014 tomato and salted vegetable for the sour edge",
    steps:[
      {t:"Fry the ginger", d:"Ginger in the oil first \u2014 it is what keeps a fish broth from tasting muddy."},
@@ -3290,6 +3353,7 @@ const NOODLE_DIRS=[
      {t:"Sour and sharp", d:"Tomato wedges and salted vegetable go in near the end; white pepper and fried shallots in the bowl."}]},
   {key:"sliced_meat", label:"Sliced meat noodle soup", region:"Chinese", mode:"soup",
    markers:["beef_slices","pork_loin","chicken_breast","pork_mince"], need:1,
+   veg:["chye_sim","lettuce","bok_choy"],
    note:"thin slices of meat cooked in the broth at the last moment, over noodles \u2014 the everyday bowl",
    steps:[
      {t:"Slice thin, against the grain", d:"Thin slices cook through in the broth in under a minute and stay tender; thick ones go tough."},
@@ -3298,7 +3362,8 @@ const NOODLE_DIRS=[
      {t:"Assemble", d:"Noodles in the bowl, meat and greens on top, broth ladled over."}]},
   {key:"dashi_noodle", label:"Dashi noodle soup", region:"Japanese", mode:"soup",
    canonical:["udon","soba"], works:["noodles","bee_hoon"],
-   markers:["dashi","kombu","mirin","soy_sauce"], need:1,
+   markers:["dashi","kombu","mirin"], need:1,
+   veg:["spinach","mushroom","enoki"],
    note:"a clear dashi and shoyu broth \u2014 restrained, and all about the stock",
    steps:[
      {t:"Dashi first", d:"Kombu steeped below a simmer, never boiled \u2014 boiling kombu turns the stock bitter and slippery."},
@@ -3307,6 +3372,7 @@ const NOODLE_DIRS=[
      {t:"Finish", d:"Scallion, and a soft egg if you have one."}]},
   {key:"clear_soup", label:"Clear soup noodles", region:"Chinese", mode:"soup",
    canonical:null, works:null, markers:["ginger","scallion"], need:0,
+   veg:["bok_choy","chye_sim","lettuce"],
    note:"noodles in a clear broth \u2014 the broth does all the talking",
    steps:[
      {t:"Build the broth", d:"Ginger, scallion and salt, simmered gently \u2014 nothing else needed."},
@@ -3345,6 +3411,16 @@ function noodleCandidates(ingIds, R, dishes, AFF){
   if(!base) return [];                       // no noodle, no noodle dish
   const baseName=(R.byId[base]||{}).name||base;
   const set=new Set(real);
+  // A noodle dish uses ONE noodle. Rice and every other noodle in the basket belong to a
+  // different dish, so keep them out of this dish's contents — they were leaking into the
+  // ingredient tags, the art and (worse) the shopping list.
+  const mineAll=real.filter(id=>{
+    if(RICE_BASE_IDS.has(id)) return false;
+    if(NOODLE_BASE_IDS.has(id) && id!==base) return false;
+    return true;
+  });
+  // NOTE: the vegetable pick happens per-direction below, because which vegetables belong
+  // depends on the sauce — laksa wants beansprouts, a dashi bowl wants spinach.
   const out=[];
   NOODLE_DIRS.forEach(dir=>{
     // enough of its markers must be present
@@ -3359,12 +3435,15 @@ function noodleCandidates(ingIds, R, dishes, AFF){
     const fitNote = fit==="canonical" ? null
       : fit==="works" ? baseName.replace(/ \(.*\)/,"")+" is a common swap for this"
       : "usually made with "+((dir.canonical||[]).map(n=>(R.byId[n]||{}).name||n).join(" or ").replace(/ \(.*?\)/g,""))+" \u2014 this is your own take";
+    // a bowl takes one green and a couple of others — chosen for THIS sauce
+    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[]});
+    const mine=vpick.used;
     out.push({
       key:"noodle_"+dir.key,
       label, mode:dir.mode, dirKey:dir.key, direction:dir,
       subject:base, subjectName:baseName,
       note:dir.note, fit, fitNote, hits,
-      contents:real, leftOut:[]
+      contents:mine, leftOut:vpick.leftOut
     });
   });
   // strongest signal first, then the pairing that suits the noodle best
@@ -3372,10 +3451,12 @@ function noodleCandidates(ingIds, R, dishes, AFF){
   // always leave a plain fallback so a lone packet of noodles still cooks
   if(!out.length){
     const fallback=NOODLE_DIRS.find(d=>d.key==="clear_soup");
+    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:(fallback&&fallback.veg)||[]});
+    const mine=vpick.used;
     out.push({key:"noodle_clear_soup", label:"Noodles in broth", mode:"soup",
       dirKey:"clear_soup", direction:fallback, subject:base,
       subjectName:(R.byId[base]||{}).name||base,
-      note:fallback.note, contents:real, leftOut:[]});
+      note:fallback.note, contents:mine, leftOut:vpick.leftOut});
   }
   return out.slice(0,4);
 }
