@@ -306,6 +306,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .sug-drop:active{transform:scale(.98)}
 button.ing-tag{cursor:pointer;font:inherit}
 button.ing-tag:hover{border-color:var(--cool)}
+.sug-meal-note{margin-top:11px;font-size:12px;color:var(--muted);line-height:1.45;font-style:italic}
 .sug-cancel{padding:10px 16px;border:1px solid rgba(50,117,100,.25);border-radius:10px;
   background:transparent;color:var(--muted);font-size:14px;cursor:pointer}
 /* ---- basket: pill, add-button, drawer ---- */
@@ -837,7 +838,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.07</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.08</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -3931,6 +3932,36 @@ function pickDishVeg(ids, R, opts){
   return {used:ids.filter(id=>!veg.includes(id) || used.has(id)), leftOut};
 }
 
+
+/* When several proteins are in the basket, a single bowl has ONE main. Noodle and rice
+   dishes were dumping every protein in; this picks the lead the way steam does — by form
+   priority — and returns the rest so the dish can decide (a soup noodle takes a second
+   sliced meat happily; a claypot rice does not). */
+const PROTEIN_LEAD_PRIORITY=["whole_fish","fish_slices","shellfish","ribs","poultry",
+  "red_meat","mince","beancurd","egg"];
+function proteinRoleOf(id){
+  if(/prawn|clam|squid|crab|scallop|oyster|cockle|mussel|sotong/.test(id)) return "shellfish";
+  if(/pomfret|seabass|snapper|threadfin|grouper|sardine|mackerel|whole_fish/.test(id)) return "whole_fish";
+  if(/fish_slice|cod|salmon|tuna|fish_cake|fish_ball/.test(id)) return "fish_slices";
+  if(/ribs/.test(id)) return "ribs";
+  if(/chicken|duck/.test(id)) return "poultry";
+  if(/beef|pork_belly|pork_loin|pork_shoulder|char_siu|lap_cheong|mutton|lamb|beef_slices|pork_slice/.test(id)) return "red_meat";
+  if(/mince/.test(id)) return "mince";
+  if(/tofu|tau_kee|tau_pok|tempeh/.test(id)) return "beancurd";
+  if(/egg/.test(id)) return "egg";
+  return null;
+}
+function pickLeadProtein(ids, R){
+  const proteins=ids.filter(id=>((R.byId[id]||{}).category)==="proteins");
+  if(proteins.length<=1) return {lead:proteins[0]||null, extras:[]};
+  const ranked=proteins.slice().sort((a,b)=>{
+    const ra=PROTEIN_LEAD_PRIORITY.indexOf(proteinRoleOf(a));
+    const rb=PROTEIN_LEAD_PRIORITY.indexOf(proteinRoleOf(b));
+    return (ra<0?99:ra)-(rb<0?99:rb);
+  });
+  return {lead:ranked[0], extras:ranked.slice(1)};
+}
+
 /* rice keeps its exact previous behaviour */
 function riceAlong(id, R){ return starchAlong(id, R, "rice"); }
 
@@ -4071,9 +4102,20 @@ function riceCandidates(ingIds, R, dishes, AFF){
   const proteins=real.filter(id=>RICE_TOPPING_PROTEINS.has(id));
   const out=[];
   const add=(key,label,mode,subject,note)=>{
-    out.push({key,label,mode,subject,note,
-      contents:pickDishVeg(real.filter(x=>!NOODLE_BASE_IDS.has(x)), R, {greens:1, others:2}).used,
-      leftOut:pickDishVeg(real.filter(x=>!NOODLE_BASE_IDS.has(x)), R, {greens:1, others:2}).leftOut});
+    const base=real.filter(x=>!NOODLE_BASE_IDS.has(x));
+    const vp=pickDishVeg(base, R, {greens:1, others:2});
+    // The dish's OWN subject is the main (claypot=chicken, curry=chicken, braise=pork).
+    // lap cheong/egg/char siu/dried shrimp are allowed to ride along; every other protein
+    // belongs to a different dish and is dropped.
+    const keep=new Set([subject].filter(Boolean));
+    base.forEach(id=>{ if(/lap_cheong|^egg$|char_siu|dried_shrimp/.test(id)) keep.add(id); });
+    const contents=vp.used.filter(id=>{
+      if(((R.byId[id]||{}).category)!=="proteins") return true;
+      return keep.has(id);
+    });
+    const dropped=base.filter(id=>((R.byId[id]||{}).category)==="proteins" && !keep.has(id))
+      .map(id=>({id, why:"one main is enough \u2014 "+((R.byId[subject]||{}).name||"the first")+" leads this bowl"}));
+    out.push({key,label,mode,subject,note, contents, leftOut:vp.leftOut.concat(dropped)});
   };
 
   // strong claypot / cook-in signals
@@ -4336,13 +4378,24 @@ function noodleCandidates(ingIds, R, dishes, AFF){
       : "usually made with "+((dir.canonical||[]).map(n=>(R.byId[n]||{}).name||n).join(" or ").replace(/ \(.*?\)/g,""))+" \u2014 this is your own take";
     // a bowl takes one green and a couple of others — chosen for THIS sauce
     const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[]});
-    const mine=vpick.used;
+    // one main protein per bowl. A soup can carry a second (sliced meat + a fishball);
+    // a fried noodle should not read as three meats piled on.
+    const pj=pickLeadProtein(mineAll, R);
+    const keepProteins = new Set([pj.lead].filter(Boolean));
+    if(dir.mode==="soup" && pj.extras[0]) keepProteins.add(pj.extras[0]);
+    const mine=vpick.used.filter(id=>{
+      if(((R.byId[id]||{}).category)!=="proteins") return true;
+      return keepProteins.has(id);
+    });
+    const droppedProteins=pj.extras.filter(id=>!keepProteins.has(id));
     out.push({
       key:"noodle_"+dir.key,
       label, mode:dir.mode, dirKey:dir.key, direction:dir,
       subject:base, subjectName:baseName,
       note:dir.note, fit, fitNote, hits,
-      contents:mine, leftOut:vpick.leftOut
+      contents:mine,
+      leftOut:vpick.leftOut.concat(droppedProteins.map(id=>({id,
+        why:"one main is enough in a bowl \u2014 "+((R.byId[pj.lead]||{}).name||"the first")+" leads this one"})))
     });
   });
   // strongest signal first, then the pairing that suits the noodle best
@@ -4708,7 +4761,8 @@ function suggestChip(id, R){
 /* wire suggestion-chip clicks once, event-delegated. Tapping opens a card that explains WHY
    the ingredient fits, and lets the person choose to add it — rather than adding silently. */
 let SUGGEST_WIRED=false;
-function wireSuggestions(){
+function wireSuggestions(mealCtx){
+  window.__suggMeal = !!mealCtx;
   if(SUGGEST_WIRED) return; SUGGEST_WIRED=true;
   document.addEventListener("click", function(e){
     const b=e.target.closest("[data-add]"); if(!b) return;
@@ -4736,9 +4790,10 @@ function openSuggestCard(id){
     "<div class=\"sug-btns\">"+
       (already
         ? "<button class=\"sug-in\" disabled>Already in this dish</button>"
-        : "<button class=\"sug-go\" data-confirm=\""+id+"\">Add to this dish</button>")+
+        : "<button class=\"sug-go\" data-confirm=\""+id+"\">"+(window.__suggMeal?"Add to my ingredients":"Add to this dish")+"</button>")+
       "<button class=\"sug-cancel\">Close</button>"+
-    "</div>";
+    "</div>"+
+    (window.__suggMeal?"<div class=\"sug-meal-note\">This goes into your ingredients \u2014 open a composer and it\u2019ll shape a new dish for the meal.</div>":"");
   wrap.appendChild(card); document.body.appendChild(wrap);
   requestAnimationFrame(()=>wrap.classList.add("in"));   // .radial starts at opacity:0; .in fades it in
   card.querySelector(".sug-cancel").onclick=closeSuggestCard;
@@ -4949,7 +5004,7 @@ function renderBasketSchedule(plan){
       "<div class=\"ps-row\">"+sug.map(s=>suggestChip(s.id, REF)).join("")+"</div>"+
       "<div class=\"ps-note\">"+sug[0].why+"</div>";
     wrap.appendChild(o);
-    wireSuggestions();
+    wireSuggestions(true);   // meal-level: adds to the ingredient pool, not one dish
   }
   return wrap;
 }

@@ -3029,6 +3029,36 @@ function pickDishVeg(ids, R, opts){
   return {used:ids.filter(id=>!veg.includes(id) || used.has(id)), leftOut};
 }
 
+
+/* When several proteins are in the basket, a single bowl has ONE main. Noodle and rice
+   dishes were dumping every protein in; this picks the lead the way steam does — by form
+   priority — and returns the rest so the dish can decide (a soup noodle takes a second
+   sliced meat happily; a claypot rice does not). */
+const PROTEIN_LEAD_PRIORITY=["whole_fish","fish_slices","shellfish","ribs","poultry",
+  "red_meat","mince","beancurd","egg"];
+function proteinRoleOf(id){
+  if(/prawn|clam|squid|crab|scallop|oyster|cockle|mussel|sotong/.test(id)) return "shellfish";
+  if(/pomfret|seabass|snapper|threadfin|grouper|sardine|mackerel|whole_fish/.test(id)) return "whole_fish";
+  if(/fish_slice|cod|salmon|tuna|fish_cake|fish_ball/.test(id)) return "fish_slices";
+  if(/ribs/.test(id)) return "ribs";
+  if(/chicken|duck/.test(id)) return "poultry";
+  if(/beef|pork_belly|pork_loin|pork_shoulder|char_siu|lap_cheong|mutton|lamb|beef_slices|pork_slice/.test(id)) return "red_meat";
+  if(/mince/.test(id)) return "mince";
+  if(/tofu|tau_kee|tau_pok|tempeh/.test(id)) return "beancurd";
+  if(/egg/.test(id)) return "egg";
+  return null;
+}
+function pickLeadProtein(ids, R){
+  const proteins=ids.filter(id=>((R.byId[id]||{}).category)==="proteins");
+  if(proteins.length<=1) return {lead:proteins[0]||null, extras:[]};
+  const ranked=proteins.slice().sort((a,b)=>{
+    const ra=PROTEIN_LEAD_PRIORITY.indexOf(proteinRoleOf(a));
+    const rb=PROTEIN_LEAD_PRIORITY.indexOf(proteinRoleOf(b));
+    return (ra<0?99:ra)-(rb<0?99:rb);
+  });
+  return {lead:ranked[0], extras:ranked.slice(1)};
+}
+
 /* rice keeps its exact previous behaviour */
 function riceAlong(id, R){ return starchAlong(id, R, "rice"); }
 
@@ -3172,9 +3202,20 @@ function riceCandidates(ingIds, R, dishes, AFF){
   const proteins=real.filter(id=>RICE_TOPPING_PROTEINS.has(id));
   const out=[];
   const add=(key,label,mode,subject,note)=>{
-    out.push({key,label,mode,subject,note,
-      contents:pickDishVeg(real.filter(x=>!NOODLE_BASE_IDS.has(x)), R, {greens:1, others:2}).used,
-      leftOut:pickDishVeg(real.filter(x=>!NOODLE_BASE_IDS.has(x)), R, {greens:1, others:2}).leftOut});
+    const base=real.filter(x=>!NOODLE_BASE_IDS.has(x));
+    const vp=pickDishVeg(base, R, {greens:1, others:2});
+    // The dish's OWN subject is the main (claypot=chicken, curry=chicken, braise=pork).
+    // lap cheong/egg/char siu/dried shrimp are allowed to ride along; every other protein
+    // belongs to a different dish and is dropped.
+    const keep=new Set([subject].filter(Boolean));
+    base.forEach(id=>{ if(/lap_cheong|^egg$|char_siu|dried_shrimp/.test(id)) keep.add(id); });
+    const contents=vp.used.filter(id=>{
+      if(((R.byId[id]||{}).category)!=="proteins") return true;
+      return keep.has(id);
+    });
+    const dropped=base.filter(id=>((R.byId[id]||{}).category)==="proteins" && !keep.has(id))
+      .map(id=>({id, why:"one main is enough \u2014 "+((R.byId[subject]||{}).name||"the first")+" leads this bowl"}));
+    out.push({key,label,mode,subject,note, contents, leftOut:vp.leftOut.concat(dropped)});
   };
 
   // strong claypot / cook-in signals
@@ -3437,13 +3478,24 @@ function noodleCandidates(ingIds, R, dishes, AFF){
       : "usually made with "+((dir.canonical||[]).map(n=>(R.byId[n]||{}).name||n).join(" or ").replace(/ \(.*?\)/g,""))+" \u2014 this is your own take";
     // a bowl takes one green and a couple of others — chosen for THIS sauce
     const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[]});
-    const mine=vpick.used;
+    // one main protein per bowl. A soup can carry a second (sliced meat + a fishball);
+    // a fried noodle should not read as three meats piled on.
+    const pj=pickLeadProtein(mineAll, R);
+    const keepProteins = new Set([pj.lead].filter(Boolean));
+    if(dir.mode==="soup" && pj.extras[0]) keepProteins.add(pj.extras[0]);
+    const mine=vpick.used.filter(id=>{
+      if(((R.byId[id]||{}).category)!=="proteins") return true;
+      return keepProteins.has(id);
+    });
+    const droppedProteins=pj.extras.filter(id=>!keepProteins.has(id));
     out.push({
       key:"noodle_"+dir.key,
       label, mode:dir.mode, dirKey:dir.key, direction:dir,
       subject:base, subjectName:baseName,
       note:dir.note, fit, fitNote, hits,
-      contents:mine, leftOut:vpick.leftOut
+      contents:mine,
+      leftOut:vpick.leftOut.concat(droppedProteins.map(id=>({id,
+        why:"one main is enough in a bowl \u2014 "+((R.byId[pj.lead]||{}).name||"the first")+" leads this one"})))
     });
   });
   // strongest signal first, then the pairing that suits the noodle best
