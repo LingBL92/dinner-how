@@ -837,7 +837,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.06</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.07</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -4943,7 +4943,9 @@ function renderBasketSchedule(plan){
   const sug=mealGapSuggestions();
   if(sug.length){
     const o=document.createElement("div"); o.className="pot-sug";
-    o.innerHTML="<div class=\"ps-lab\">Would round the meal out &mdash; tap to add</div>"+
+    const HEAD={gap:"Worth adding", balance:"To balance the table",
+                variety:"To vary the table", extra:"To make it generous"};
+    o.innerHTML="<div class=\"ps-lab\">"+(HEAD[sug[0].tag]||"Would round the meal out")+" &mdash; tap to add</div>"+
       "<div class=\"ps-row\">"+sug.map(s=>suggestChip(s.id, REF)).join("")+"</div>"+
       "<div class=\"ps-note\">"+sug[0].why+"</div>";
     wrap.appendChild(o);
@@ -4960,26 +4962,71 @@ function mealGapSuggestions(){
   const inMeal=new Set();
   FLOW.basket.forEach(d=>(d.buy||[]).forEach(b=>inMeal.add(b.id)));
   [...FLOW.active].forEach(id=>inMeal.add(id));
-  const has=cat=>[...inMeal].some(id=>((R.byId[id]||{}).category)===cat);
+  const ing=id=>R.byId[id]||{};
+  const has=cat=>[...inMeal].some(id=>ing(id).category===cat);
   const hasGreen=[...inMeal].some(id=>typeof LEAFY_GREENS!=="undefined" && LEAFY_GREENS.has(id));
   const methods=new Set(FLOW.basket.map(d=>d.method));
-  const out=[];
-  const pick=(list,why)=>{
-    const ok=(R.rankPartners?R.rankPartners(list):list).filter(x=>R.byId[x] && !inMeal.has(x));
-    if(ok.length) out.push({id:ok[0], why:why});
+
+  // classify each protein in the meal so we can spot a one-note table
+  const proteinKind=id=>{
+    if(/chicken|duck/.test(id)) return "poultry";
+    if(/beef|pork|mutton|lamb|lap_cheong|char_siu|bak_kwa/.test(id)) return "red meat";
+    if(/prawn|squid|clam|fish|crab|scallop|oyster|cockle|mussel|sotong/.test(id)) return "seafood";
+    if(/tofu|tau|tempeh/.test(id)) return "beancurd";
+    if(/egg/.test(id)) return "egg";
+    return null;
   };
-  if(!hasGreen) pick(["bok_choy","kailan","chye_sim","kangkong","spinach"],
-    "There\u2019s no green on the table \u2014 one simple vegetable balances the whole meal.");
+  const kindsInMeal=new Set([...inMeal].map(proteinKind).filter(Boolean));
+  const richMethods=FLOW.basket.filter(d=>d.method==="stirfry"||d.method==="onepot").length;
+  const lightMethods=FLOW.basket.filter(d=>d.method==="steam").length;
+  const dishCount=FLOW.basket.length;
+
+  const out=[];
+  const seen=new Set();
+  const add=(list, why, tag)=>{
+    const ok=(R.rankPartners?R.rankPartners(list):list)
+      .filter(x=>R.byId[x] && !inMeal.has(x) && !seen.has(x));
+    if(ok.length){ out.push({id:ok[0], why, tag}); seen.add(ok[0]); }
+  };
+
+  /* ---- 1. GAPS: something the meal is simply missing (kept from before) ---- */
+  if(!hasGreen) add(["bok_choy","kailan","chye_sim","kangkong","spinach"],
+    "There\u2019s no green on the table \u2014 one simple vegetable balances the whole meal.", "gap");
   if(!has("starches") && !methods.has("ricebowl") && !methods.has("noodles"))
-    pick(["rice","bee_hoon","noodles"], "Nothing to eat it with yet \u2014 a starch pulls the meal together.");
-  if(FLOW.basket.length>=2 && !methods.has("onepot"))
-    pick(["napa_cabbage","daikon","winter_melon","tomato"],
-      "A light soup would give the table something to drink alongside the richer dishes.");
-  if(!has("proteins")) pick(["egg","tofu","chicken_thigh"],
-    "There\u2019s no protein yet \u2014 even an egg or some tofu would anchor it.");
+    add(["rice","bee_hoon","noodles"], "Nothing to eat it with yet \u2014 a starch pulls the meal together.", "gap");
+  if(!has("proteins")) add(["egg","tofu","chicken_thigh"],
+    "There\u2019s no protein yet \u2014 even an egg or some tofu would anchor it.", "gap");
+
+  /* ---- 2. BALANCE: the meal leans one way ---- */
+  // all rich/fried and nothing fresh — a steamed or raw-crunch item lightens it
+  if(richMethods>=2 && lightMethods===0)
+    add(["cucumber","tomato","napa_cabbage","beansprouts","lettuce"],
+      "The table is all rich, wok-fried dishes \u2014 something fresh and cool cuts through it.", "balance");
+  // two or more dishes and no soup — a soup to drink alongside
+  if(dishCount>=2 && !methods.has("onepot"))
+    add(["napa_cabbage","daikon","winter_melon","watercress"],
+      "A light soup would give the table something to drink alongside.", "balance");
+
+  /* ---- 3. VARIETY: diversify the protein, even when the meal is 'complete' ---- */
+  // everything is the same kind of protein — suggest a different kind
+  if(has("proteins") && kindsInMeal.size===1){
+    const only=[...kindsInMeal][0];
+    if(only!=="seafood") add(["prawn","fish_slices","squid","clams"],
+      "Every dish is "+only+" \u2014 a seafood dish would vary the table.", "variety");
+    else if(only==="seafood") add(["chicken_thigh","tofu","egg"],
+      "It\u2019s all seafood \u2014 a meat or tofu dish would round it out.", "variety");
+    else if(only!=="beancurd") add(["tofu","tau_kee","tempeh"],
+      "A tofu dish would add something lighter next to the "+only+".", "variety");
+  }
+
+  /* ---- 4. a gentle nudge even for a well-formed meal ---- */
+  // a complete, varied meal still enjoys one more vegetable for the table
+  if(!out.length && dishCount>=1)
+    add(["broccoli","cauliflower","long_beans","kailan","eggplant","okra"],
+      "This is a solid meal \u2014 an extra vegetable dish would make it generous.", "extra");
+
   return out.slice(0,3);
 }
-
 function openBasket(){
   closeBasket();
   const buy=basketBuyList();
