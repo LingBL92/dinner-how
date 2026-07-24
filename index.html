@@ -295,6 +295,17 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .sug-go:active{transform:scale(.98)}
 .sug-in{flex:1;padding:10px;border:1px solid rgba(50,117,100,.25);border-radius:10px;
   background:var(--panel);color:var(--muted);font-size:14px}
+.sug-swaplab{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.12em;
+  color:var(--cool);margin:14px 0 7px;font-weight:700}
+.sug-swaps{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
+.sug-swap{font-size:12.5px;padding:6px 11px;border-radius:20px;background:var(--panel);color:var(--ink);
+  border:1px solid rgba(50,117,100,.2);cursor:pointer}
+.sug-swap:hover{border-color:var(--cool);background:rgba(50,117,100,.08)}
+.sug-drop{flex:1;padding:10px;border:1px solid rgba(168,114,24,.4);border-radius:10px;
+  background:rgba(168,114,24,.08);color:var(--gold);font-size:14px;font-weight:600;cursor:pointer}
+.sug-drop:active{transform:scale(.98)}
+button.ing-tag{cursor:pointer;font:inherit}
+button.ing-tag:hover{border-color:var(--cool)}
 .sug-cancel{padding:10px 16px;border:1px solid rgba(50,117,100,.25);border-radius:10px;
   background:transparent;color:var(--muted);font-size:14px;cursor:pointer}
 /* ---- basket: pill, add-button, drawer ---- */
@@ -725,6 +736,11 @@ button.ps-add.in-basket em{color:var(--muted)}
 .sc-bar{position:absolute;top:0;height:20px;border-radius:5px;background:rgba(50,117,100,.22);overflow:hidden}
 .sc-active{position:absolute;left:0;top:0;height:20px;background:var(--cool);border-radius:5px 0 0 5px}
 .sc-when{width:62px;flex:none;text-align:right;font-family:var(--font-mono);font-size:10.5px;color:var(--cool);font-weight:700}
+/* basket timeline: prep is gold, cooking is teal, the rest is walk-away */
+.sc-prepseg{position:absolute;left:0;top:0;height:20px;background:var(--gold);border-radius:5px 0 0 5px}
+.sc-bar .sc-active{position:absolute;top:0;height:20px;background:var(--cool);border-radius:0}
+.sc-notes{margin:14px 0 18px;display:flex;flex-direction:column;gap:6px}
+.sc-key .k-prep{background:var(--gold)}
 .sc-key{display:flex;gap:14px;margin-top:8px;font-family:var(--font-mono);font-size:9px;color:var(--muted)}
 .sc-key i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
 .sc-key .k-act{background:var(--cool)}
@@ -821,7 +837,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.05</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.06</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -4762,7 +4778,7 @@ function addCurrentDishToBasket(name, method, buyList, timing, detail){
   const prep=((detail&&detail.prep)||[]).map(p=>p.name+" \u2014 "+(p.prep||"prep"));
   const steps=((detail&&detail.steps)||[]).map(s=>(s.label||s.t||"")+(s.detail?": "+s.detail:(s.d?": "+s.d:"")));
   FLOW.basket.push({name, method, buy:(buyList||[]).map(b=>({id:b.id,name:b.name})), sourced,
-    prep, firstStep:steps[0]||"",
+    prep, firstStep:steps[0]||"", prepMins:(detail&&detail.prepMins)||0,
     timing: timing||{total:null,handsOn:null,handsOff:null}});
   TRACK.log("dish_added_to_basket", {dish:name, method:method, buy_count:(buyList||[]).length, basket_dishes:FLOW.basket.length});
   updateBasketPill();
@@ -4848,6 +4864,17 @@ function updateBasketPill(){
    in the tooltip, and the appliance conflicts named. */
 function renderBasketSchedule(plan){
   const APN={steamer:"Steamer", rice_cooker:"Rice cooker", stovetop:"Stove", oven:"Oven"};
+  // a small line-art mark per appliance, in the same style as the rest of the UI
+  const APICON={
+    steamer:'<path d="M4 10h16v7a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-7Z"/><path d="M8 6.5c0-1.5 1.5-1.5 1.5-3M12 6.5c0-1.5 1.5-1.5 1.5-3M16 6.5c0-1.5 1.5-1.5 1.5-3"/>',
+    stovetop:'<circle cx="12" cy="13" r="5.5"/><path d="M12 7.5V4M7 9 4.8 6.8M17 9l2.2-2.2"/>',
+    rice_cooker:'<path d="M4 11h16v6a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-6Z"/><path d="M3 11h18"/><path d="M9 7.5c0-1.2 1.2-1.2 1.2-2.5M14 7.5c0-1.2 1.2-1.2 1.2-2.5"/>',
+    oven:'<rect x="4" y="4" width="16" height="16" rx="2.5"/><path d="M4 9h16"/><circle cx="8" cy="6.5" r=".9"/>'
+  };
+  const icon=ap=>'<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" '+
+    'stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px">'+
+    (APICON[ap]||APICON.stovetop)+'</svg>';
+
   const wrap=document.createElement("div"); wrap.className="sched";
   const handsOn=plan.rows.reduce((n,r)=>n+Math.max(0,r.total-(r.handsOff||0)),0);
   const h=document.createElement("div"); h.className="sc-head";
@@ -4856,7 +4883,6 @@ function renderBasketSchedule(plan){
     "<span class=\"sc-ho\">"+handsOn+" min hands-on</span>";
   wrap.appendChild(h);
 
-  // name the conflicts, the way the planner does
   const byAppl={};
   plan.rows.forEach(r=>{ (byAppl[r.appliance]=byAppl[r.appliance]||[]).push(r); });
   const notes=[];
@@ -4867,14 +4893,20 @@ function renderBasketSchedule(plan){
   });
   if(handsOn>plan.ready) notes.push("These need "+handsOn+" min of your hands inside a "+plan.ready+
     " min window \u2014 something will have to wait or be kept warm.");
-  notes.forEach(t=>{ const n=document.createElement("div"); n.className="sc-note"; n.textContent=t; wrap.appendChild(n); });
+  if(notes.length){
+    const nb=document.createElement("div"); nb.className="sc-notes";
+    notes.forEach(t=>{ const n=document.createElement("div"); n.className="sc-note"; n.textContent=t; nb.appendChild(n); });
+    wrap.appendChild(nb);
+  }
 
   const W=Math.max(plan.ready,1);
   const pct=v=>(100*v/W).toFixed(2)+"%";
   const rows=document.createElement("div"); rows.className="sc-rows";
   plan.rows.forEach(r=>{
     const d=FLOW.basket.find(x=>x.name===r.name)||{};
-    const active=Math.max(0,r.total-(r.handsOff||0)), off=r.handsOff||0;
+    const off=r.handsOff||0;
+    const prepM=Math.min(d.prepMins||0, Math.max(0, r.total-off));   // prep sits at the front
+    const cookActive=Math.max(0, r.total-off-prepM);                 // active time at the stove
     const jobs=[];
     if((d.prep||[]).length) jobs.push("Prep: "+d.prep.join("; "));
     if(d.firstStep) jobs.push(d.firstStep);
@@ -4883,17 +4915,19 @@ function renderBasketSchedule(plan){
     row.title=r.name+" \u2014 "+(APN[r.appliance]||r.appliance).toLowerCase()+"\n"+
       (r.start===0?"Start straight away":"Start "+r.start+" min in")+"\n"+jobs.join("\n");
     row.innerHTML=
-      "<div class=\"sc-name\">"+r.name+"<em>"+(APN[r.appliance]||r.appliance)+"</em></div>"+
+      "<div class=\"sc-name\">"+r.name+"<em>"+icon(r.appliance)+(APN[r.appliance]||r.appliance)+"</em></div>"+
       "<div class=\"sc-track\">"+
         "<div class=\"sc-bar\" style=\"left:"+pct(r.start)+";width:"+pct(Math.max(1,r.total))+"\">"+
-          "<span class=\"sc-active\" style=\"width:"+pct(active)+"\"></span>"+
+          (prepM?"<span class=\"sc-prepseg\" style=\"width:"+pct(prepM)+"\"></span>":"")+
+          "<span class=\"sc-active\" style=\"left:"+pct(prepM)+";width:"+pct(cookActive)+"\"></span>"+
         "</div>"+
         "<div class=\"sc-tip\">"+
           "<strong>"+r.name+"</strong>"+
           "<span class=\"st-l\">"+(APN[r.appliance]||r.appliance)+" \u00b7 "+
             (r.start===0?"start now":"+"+r.start+" min")+" \u00b7 done at "+plan.ready+" min</span>"+
           jobs.map(j=>"<span class=\"st-job\">"+j+"</span>").join("")+
-          "<span class=\"st-r\">"+active+" min hands-on"+(off?" \u00b7 "+off+" min free":"")+"</span>"+
+          "<span class=\"st-r\">"+(prepM?prepM+" min prep \u00b7 ":"")+cookActive+" min at the "+
+            (APN[r.appliance]||r.appliance).toLowerCase()+(off?" \u00b7 "+off+" min free":"")+"</span>"+
         "</div>"+
       "</div>"+
       "<div class=\"sc-when\">"+(r.start===0?"start now":"+"+r.start+"m")+"</div>";
@@ -4901,10 +4935,49 @@ function renderBasketSchedule(plan){
   });
   wrap.appendChild(rows);
   const key=document.createElement("div"); key.className="sc-key";
-  key.innerHTML="<span><i class=\"k-act\"></i>hands-on</span><span><i class=\"k-off\"></i>walk away</span>"+
-    "<span>estimate \u2014 assumes each dish gets its own appliance</span>";
+  key.innerHTML="<span><i class=\"k-prep\"></i>prep</span><span><i class=\"k-act\"></i>at the stove</span>"+
+    "<span><i class=\"k-off\"></i>walk away</span>";
   wrap.appendChild(key);
+
+  // what would round the WHOLE meal out — judged across every dish, not one of them
+  const sug=mealGapSuggestions();
+  if(sug.length){
+    const o=document.createElement("div"); o.className="pot-sug";
+    o.innerHTML="<div class=\"ps-lab\">Would round the meal out &mdash; tap to add</div>"+
+      "<div class=\"ps-row\">"+sug.map(s=>suggestChip(s.id, REF)).join("")+"</div>"+
+      "<div class=\"ps-note\">"+sug[0].why+"</div>";
+    wrap.appendChild(o);
+    wireSuggestions();
+  }
   return wrap;
+}
+
+/* Look at everything in the basket together and name what the MEAL is missing —
+   a green if it is all meat, something fresh if it is all rich, a starch if there is
+   nothing to eat it with. Ranked by cuisine fit, and never something already in. */
+function mealGapSuggestions(){
+  const R=REF; if(!R) return [];
+  const inMeal=new Set();
+  FLOW.basket.forEach(d=>(d.buy||[]).forEach(b=>inMeal.add(b.id)));
+  [...FLOW.active].forEach(id=>inMeal.add(id));
+  const has=cat=>[...inMeal].some(id=>((R.byId[id]||{}).category)===cat);
+  const hasGreen=[...inMeal].some(id=>typeof LEAFY_GREENS!=="undefined" && LEAFY_GREENS.has(id));
+  const methods=new Set(FLOW.basket.map(d=>d.method));
+  const out=[];
+  const pick=(list,why)=>{
+    const ok=(R.rankPartners?R.rankPartners(list):list).filter(x=>R.byId[x] && !inMeal.has(x));
+    if(ok.length) out.push({id:ok[0], why:why});
+  };
+  if(!hasGreen) pick(["bok_choy","kailan","chye_sim","kangkong","spinach"],
+    "There\u2019s no green on the table \u2014 one simple vegetable balances the whole meal.");
+  if(!has("starches") && !methods.has("ricebowl") && !methods.has("noodles"))
+    pick(["rice","bee_hoon","noodles"], "Nothing to eat it with yet \u2014 a starch pulls the meal together.");
+  if(FLOW.basket.length>=2 && !methods.has("onepot"))
+    pick(["napa_cabbage","daikon","winter_melon","tomato"],
+      "A light soup would give the table something to drink alongside the richer dishes.");
+  if(!has("proteins")) pick(["egg","tofu","chicken_thigh"],
+    "There\u2019s no protein yet \u2014 even an egg or some tofu would anchor it.");
+  return out.slice(0,3);
 }
 
 function openBasket(){
@@ -6635,11 +6708,89 @@ function ingredientTags(ids){
   const wrap=document.createElement("div"); wrap.className="ing-tags";
   const lab=document.createElement("span"); lab.className="ing-lab"; lab.textContent="Ingredients"; wrap.appendChild(lab);
   list.forEach(id=>{
-    const s=document.createElement("span"); s.className="ing-tag";
+    const s=document.createElement("button"); s.className="ing-tag";
     s.textContent=((REF.byId[id]||{}).name)||id;
+    s.title="why this is here \u2014 and how to change it";
+    s.onclick=(e)=>{ e.stopPropagation(); openIngredientCard(id); };
     wrap.appendChild(s);
   });
   return wrap;
+}
+
+/* Tap an ingredient in the dish to find out why it is there, drop it, or swap it for
+   something that plays the same role. The engine already knows the role (starchAlong) and
+   the ranking (rankPartners) — this just surfaces both. */
+function openIngredientCard(id){
+  closeSuggestCard();
+  const R=REF, i=(R.byId[id]||{});
+  const wrap=document.createElement("div"); wrap.className="radial sheet"; wrap.id="sugcard";
+  wrap.onclick=(e)=>{ if(e.target===wrap) closeSuggestCard(); };
+  const card=document.createElement("div"); card.className="sug-card";
+
+  // why is it in the dish?
+  const stage=(typeof starchAlong==="function") ? starchAlong(id, R, "rice").stage : null;
+  const ROLE={base_in:"cooks along with everything else", lay_on:"goes in near the end",
+              fold_end:"folded through at the very end so it stays bright",
+              no_along:"needs its own pan \u2014 it can't just go in"};
+  const bits=[];
+  const adds=(i.provides||[]).map(p=>PROVIDES_ADDS[p]).filter(Boolean);
+  if(adds.length) bits.push("adds "+adds.slice(0,2).join(" and "));
+  if(i.cuisine_affinity>=3) bits.push("a staple of these dishes");
+  else if(i.cuisine_affinity===2) bits.push("common in home cooking here");
+  else if(i.cuisine_affinity===1) bits.push("a lighter, Western-leaning choice");
+  const why=bits.length ? bits.join(", ")+"." : "it works here.";
+
+  // what could stand in for it? same role, ranked by fit, and NOT already in the dish
+  let swaps=[];
+  if(i.category==="vegetables"){
+    const sameRole = (typeof LEAFY_GREENS!=="undefined" && LEAFY_GREENS.has(id))
+      ? [...LEAFY_GREENS] : ["carrot","daikon","mushroom","tomato","eggplant","long_beans","potato","cauliflower"];
+    swaps=(R.rankPartners?R.rankPartners(sameRole):sameRole)
+      .filter(x=>x!==id && R.byId[x] && !FLOW.active.has(x)).slice(0,4);
+  }
+  card.innerHTML=
+    "<div class=\"sug-name\">"+(i.name||id)+"</div>"+
+    (adds.length?"<div class=\"sug-adds\">"+adds.map(a=>"<span class=\"sug-taste\">"+a+"</span>").join("")+"</div>":"")+
+    "<div class=\"sug-line\">"+why.charAt(0).toUpperCase()+why.slice(1)+
+      (stage&&ROLE[stage]?" In this dish it "+ROLE[stage]+".":"")+"</div>"+
+    (swaps.length?"<div class=\"sug-swaplab\">swap for</div><div class=\"sug-swaps\">"+
+      swaps.map(x=>"<button class=\"sug-swap\" data-swap=\""+x+"\">"+((R.byId[x]||{}).name||x)+"</button>").join("")+
+      "</div>":"")+
+    "<div class=\"sug-btns\">"+
+      "<button class=\"sug-drop\">Remove from dish</button>"+
+      "<button class=\"sug-cancel\">Close</button>"+
+    "</div>";
+  wrap.appendChild(card); document.body.appendChild(wrap);
+  requestAnimationFrame(()=>wrap.classList.add("in"));
+  card.querySelector(".sug-cancel").onclick=closeSuggestCard;
+  card.querySelector(".sug-drop").onclick=()=>{ removeIngredientFromDish(id); closeSuggestCard(); };
+  card.querySelectorAll("[data-swap]").forEach(b=>b.onclick=()=>{
+    const to=b.getAttribute("data-swap");
+    removeIngredientFromDish(id, true);
+    const ing=R.byId[to];
+    if(ing && !PANTRY_ITEMS.includes(to)){
+      let comp=FLOW.comps.find(c=>c.key===groupFor(ing).key);
+      if(!comp){ const g=groupFor(ing); FLOW.comps.push({key:g.key,title:g.title,leaves:g.leaves,dx:0,dy:0}); }
+    }
+    FLOW.active.add(to);
+    if(!FLOW.suggestedIds) FLOW.suggestedIds=new Set();
+    FLOW.suggestedIds.add(to);
+    TRACK.log("ingredient_swapped", {from:id, to:to});
+    closeSuggestCard(); renderComps(); recompute();
+  });
+}
+function removeIngredientFromDish(id, quiet){
+  FLOW.active.delete(id);
+  if(FLOW.suggestedIds) FLOW.suggestedIds.delete(id);
+  // drop the component group too if nothing in it is still active
+  const ing=REF.byId[id];
+  if(ing){
+    const key=groupFor(ing).key;
+    const comp=FLOW.comps.find(c=>c.key===key);
+    if(comp && !comp.leaves.some(l=>FLOW.active.has(l.id))) FLOW.comps=FLOW.comps.filter(c=>c.key!==key);
+  }
+  if(!quiet) TRACK.log("ingredient_removed", {id:id, basket_size:FLOW.active.size, source:"dish_card"});
+  renderComps(); recompute();
 }
 /* ===== DISH ART — a small overhead illustration of the dish, generated from the same
    data the recipe is built from: the subject's form, the plate partners, and the chosen
