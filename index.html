@@ -821,7 +821,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.89</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.96</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -4393,7 +4393,7 @@ const PANTRY_ON=PANTRY_ITEMS.filter(id=>!PANTRY_OFF.has(id));
    the meat. */
 const MEAL_ROLES=[["base","Rice"],["veg","Vegetable"],["meat","Meat"],["fish","Fish"],["soup","Soup"],["dessert","Dessert"]];
 const MEAL_DEFAULT={base:1,veg:1,meat:1,fish:0,soup:0,dessert:0};
-const FLOW={comps:[],active:new Set(),pantry:new Set(PANTRY_ON),appl:new Set(["stovetop","oven"]),taste:new Set(),types:new Set(),compose:null,mode:"compose",time:{total:null,active:null,cook:null},potPath:null,potMode:"soup",wokDir:null,wokPick:null,steamDir:null,steamPick:null,riceDir:null,ricePick:null,mealShape:{...MEAL_DEFAULT},results:[]};
+const FLOW={comps:[],active:new Set(),pantry:new Set(PANTRY_ON),appl:new Set(["stovetop","oven"]),taste:new Set(),types:new Set(),compose:null,mode:"compose",time:{total:null,active:null,cook:null},potPath:null,potMode:"soup",wokDir:null,wokPick:null,steamDir:null,steamPick:null,riceDir:null,ricePick:null,noodleDir:null,noodlePick:null,mealShape:{...MEAL_DEFAULT},results:[]};
 let REF=null,DISHES=[],APPL={},APPL_DATA={},APPLIANCE_ORDER=[],AFF=null;
 
 /* ===== PILOT TRACKING =====
@@ -4466,7 +4466,7 @@ const owned=new Set();   // kept in step with FLOW.appl
 const TASTE_AXES=["sweet","sour","salty","umami","fat","heat"];
 const TASTE_LABEL={sweet:"sweet",sour:"sour",salty:"salty",umami:"umami",fat:"rich",heat:"spicy"};
 const TYPE_OPTS=[["soup","Soup"],["base","Rice & noodles"],["veg","Vegetable"],["meat","Meat"],["fish","Fish"],["dessert","Dessert"]];
-const COMPOSE_OPTS=[["family_meal","Family meal"],["onepot","One-pot"],["stirfry","Stir-fry"],["steam","Steam"],["ricebowl","One-dish rice"]];
+const COMPOSE_OPTS=[["family_meal","Family meal"],["onepot","One-pot"],["stirfry","Stir-fry"],["steam","Steam"],["ricebowl","One-dish rice"],["noodles","Noodles"]];
 
 function isOnePot(d){ return d.role==="soup" || (["braise","simmer"].includes(d.build) && (d.appliance_options||[]).length<=2); }
 const TIME_FILTERS=[["total","Total time","ready start to finish"],
@@ -5111,6 +5111,7 @@ function renderRecipes(){
   if(FLOW.compose==="stirfry"){ clearGrocery(); renderStirFry(); return; }
   if(FLOW.compose==="steam"){ clearGrocery(); renderSteam(); return; }
   if(FLOW.compose==="ricebowl"){ clearGrocery(); renderRice(); return; }
+  if(FLOW.compose==="noodles"){ clearGrocery(); renderNoodle(); return; }
 
   // which of MY ingredients does a result use (dish has it, or a sub maps to it)
   function usesOf(r){
@@ -6048,7 +6049,7 @@ function prepGlyph(name, prepText){
     // SCATTER: bits falling onto the piece
     body=mini(0.6,19)
       +'<g fill="#3E7D4F"><rect class="pa-drop" '+D+' x="8" y="4" width="4" height="2" rx="1"/><rect class="pa-drop" style="animation-delay:'+(0.6+parseFloat(dly)).toFixed(1)+'s" x="14" y="3" width="4" height="2" rx="1"/><rect class="pa-drop" style="animation-delay:'+(1.1+parseFloat(dly)).toFixed(1)+'s" x="11" y="6" width="3.5" height="2" rx="1"/></g>';
-  } else if(/rinse|wash|soak|purge|scrub|clean/.test(v)){
+  } else if(/rinse|wash|soak|purge|scrub|clean|blanch/.test(v)){
     body='<path d="M4 16 q9 8 18 0 l-2 6 q-7 4 -14 0 Z" fill="#BFD8DC"/>'
       +mini(0.55,16)
       +'<g fill="#8FB8C4"><circle class="pa-drop" '+D+' cx="8" cy="7" r="1.6"/><circle class="pa-drop" style="animation-delay:'+(0.6+parseFloat(dly)).toFixed(1)+'s" cx="14" cy="5" r="1.6"/><circle class="pa-drop" style="animation-delay:'+(1.1+parseFloat(dly)).toFixed(1)+'s" cx="19" cy="7" r="1.4"/></g>';
@@ -6060,7 +6061,7 @@ function prepGlyph(name, prepText){
       +'<g class="pa-whisk" '+D+' stroke="#A89880" stroke-width="1.8" fill="none" stroke-linecap="round"><path d="M8 10 q5 -6 11 -3"/><path d="M9 13 q4 -4 9 -2"/></g>';
   } else if(/measure|none needed|pat dry|leave whole/.test(v) && !/cut|slice|chop|dice|score|scale|joint/.test(v)){
     body=mini(0.72,16);
-  } else if(/break|pick|separate|trim|pull|tear|debeard|shell/.test(v)){
+  } else if(/break|pick|separate|trim|pull|tear|debeard|shell|loosen/.test(v)){
     body='<clipPath id="'+uid+'L"><rect x="0" y="0" width="13" height="26"/></clipPath>'
       +'<clipPath id="'+uid+'R"><rect x="13" y="0" width="13" height="26"/></clipPath>'
       +'<g class="pa-l" '+D+' clip-path="url(#'+uid+'L)">'+mini(0.72,17)+'</g>'
@@ -6871,7 +6872,23 @@ function artPiece(S,x,y,ing){
   const g=ing.group, id=ing.id||"", v=(ing.prep_verb||"").toLowerCase();
   const col=ing.hue||ART_VEG[g]||"#7AA061";
   const shade=(c,f)=>c; // hue used flat; darker accents are fixed tones
-  if(id==="lotus_root"){ // the iconic slice: pale coin with the ring of holes
+  // NOODLES: a small nest of strands, drawn at the width the real noodle has —
+  // fine for bee hoon, a broad ribbon for kway teow. Without this they fall through
+  // to the generic green blob, which is wrong for every noodle and for rice.
+  const NOODLE_MINI={bee_hoon:[1.5,"#F3EAD6"], glass_noodles:[1.3,"#EDE8DC"],
+    shirataki:[1.4,"#F0EDE3"], soba:[1.9,"#B9926A"], mee_pok:[2.8,"#EBD79A"],
+    yellow_noodle:[2.3,"#E8C55C"], noodles:[2.2,"#E8CE9A"], udon:[3.3,"#F2E9D6"],
+    hor_fun:[3.6,"#EFE6D2"]};
+  if(NOODLE_MINI[id]){
+    const w=NOODLE_MINI[id][0], c=NOODLE_MINI[id][1];
+    S.push('<g fill="none" stroke="#00000022" stroke-width="'+(w+0.8).toFixed(1)+'" stroke-linecap="round" transform="translate(0.3 0.8)">'+
+      '<path d="M'+(x-8)+' '+(y+2)+' q4 -6 8 -3 q4 3 8 -3"/>'+
+      '<path d="M'+(x-8)+' '+(y+6)+' q5 -5 9 -1 q4 4 7 -2"/></g>');
+    S.push('<g fill="none" stroke="'+c+'" stroke-width="'+w+'" stroke-linecap="round">'+
+      '<path d="M'+(x-8)+' '+(y+2)+' q4 -6 8 -3 q4 3 8 -3"/>'+
+      '<path d="M'+(x-8)+' '+(y+6)+' q5 -5 9 -1 q4 4 7 -2"/>'+
+      '<path d="M'+(x-7)+' '+(y-2)+' q5 -4 9 -1 q3 3 6 -1"/></g>');
+  } else if(id==="lotus_root"){ // the iconic slice: pale coin with the ring of holes
     S.push('<circle cx="'+x+'" cy="'+y+'" r="8" fill="'+col+'" stroke="#D9CBA8" stroke-width="1.2"/>');
     S.push('<g fill="#D9CBA8"><circle cx="'+x+'" cy="'+(y-4)+'" r="1.4"/><circle cx="'+(x+3.5)+'" cy="'+(y-1.5)+'" r="1.4"/><circle cx="'+(x+2.5)+'" cy="'+(y+3)+'" r="1.4"/><circle cx="'+(x-2.5)+'" cy="'+(y+3)+'" r="1.4"/><circle cx="'+(x-3.5)+'" cy="'+(y-1.5)+'" r="1.4"/><circle cx="'+x+'" cy="'+y+'" r="1.2"/></g>');
   } else if(id==="onion"){ // ring arcs
@@ -7507,7 +7524,356 @@ function renderRice(){
   box.appendChild(addBasketButtonFor(chosen.label, chosen.contents, "ricebowl", {total:rb.total, handsOn:rb.handsOn, handsOff:rb.handsOff}));
 }
 
-/* the style radial — the same interaction as the wok's Sauce button */
+
+/* ---- NOODLE ART ---- a bowl of strands, or a wok of them for a fried noodle.
+   Same visual language as the rice bowl: 112x112, cast shadow, organic edges. */
+function noodleDishArt(mode, dir, contents, R){
+  const S=[];
+  const fried = mode==="fried";
+  const seed=artSeed("noodle"+(contents[0]||"")+(dir?dir.key:""));
+  let s=seed||1;
+  const rnd=()=>{ s=(s*1103515245+12345)&0x7fffffff; return (s%1000)/1000; };
+  const uid="nd"+(seed%9999);
+
+  S.push('<ellipse cx="59" cy="62" rx="52" ry="50" fill="#1B100B" opacity="0.12"/>');
+  // the bowl: a dark rim and a clean, UNIFORM circle of broth (or a dark wok face)
+  S.push('<circle cx="56" cy="56" r="52" fill="'+(fried?"#332C29":"#2E2A28")+'"/>');
+  const broth = fried ? "#241E1B"
+    : dir&&/laksa/.test(dir.key)      ? "#E09A3C"
+    : dir&&/tom_yum|assam/.test(dir.key) ? "#C9553C"
+    : dir&&/dashi/.test(dir.key)      ? "#8A6534"
+    : dir&&/dark_soy|mee_goreng/.test(dir.key) ? "#6B3A22"
+    : dir&&/fish_soup|milky/.test(dir.key) ? "#EFE3CE" : "#D8C7A4";
+  S.push('<circle cx="56" cy="56" r="44" fill="'+broth+'"/>');
+  if(!fried) S.push('<circle cx="56" cy="56" r="44" fill="none" stroke="#FFFFFF" stroke-width="1" opacity="0.15"/>');
+
+  // keep everything inside the bowl
+  S.push('<defs><clipPath id="'+uid+'"><circle cx="56" cy="56" r="43"/></clipPath></defs>');
+  S.push('<g clip-path="url(#'+uid+')">');
+
+  // ---- the noodles: long shoestring strands that travel right across the bowl ----
+  // The noodle in hand decides how the strand is DRAWN. Bee hoon is fine vermicelli,
+  // kway teow is a broad flat ribbon, mee pok sits between, udon is thick and round.
+  const NPREF=["bee_hoon","yellow_noodle","mee_pok","hor_fun","noodles","udon","soba","glass_noodles","shirataki"];
+  const nBase=NPREF.find(n=>contents.indexOf(n)>=0)||"noodles";
+  const NW={bee_hoon:1.9, glass_noodles:1.6, shirataki:1.8, soba:2.5, mee_pok:3.9,
+            yellow_noodle:3.1, noodles:3.0, udon:4.7, hor_fun:5.4};
+  const NCOL={bee_hoon:"#F3EAD6", glass_noodles:"#EDE8DC", shirataki:"#F0EDE3",
+              soba:"#B9926A", mee_pok:"#EBD79A", yellow_noodle:"#E8C55C",
+              noodles:"#E8CE9A", udon:"#F2E9D6", hor_fun:"#EFE6D2"};
+  const NEDGE={bee_hoon:"#D6C7A4", glass_noodles:"#CFC8B6", shirataki:"#D2CCBE",
+               soba:"#8E6C48", mee_pok:"#C9AE5E", yellow_noodle:"#C9A43C",
+               noodles:"#C9AE7E", udon:"#D3C4A6", hor_fun:"#D2C6A8"};
+  const nw=NW[nBase]||3.0;
+  const nCol=NCOL[nBase]||"#E8CE9A";
+  const nEdge=NEDGE[nBase]||"#C9AE7E";
+  // Strands are drawn in POLAR space: the angle sweeps around the bowl while the radius
+  // breathes in and out. That makes each strand CURVE with the bowl instead of running
+  // straight into the rim and being sliced off — and every end finishes inside the bowl.
+  const strand=(a0, sweep, rBase, rAmp, freq, phase)=>{
+    const n=14, pts=[];
+    for(let i=0;i<=n;i++){
+      const t=i/n;
+      const a=a0+t*sweep;
+      const r=rBase+rAmp*Math.sin(t*Math.PI*freq+phase);
+      pts.push([56+r*Math.cos(a), 56+r*Math.sin(a)]);
+    }
+    let d='M'+pts[0][0].toFixed(1)+' '+pts[0][1].toFixed(1);
+    for(let i=1;i<pts.length;i++){
+      const px=pts[i-1], p=pts[i];
+      const mx=(px[0]+p[0])/2, my=(px[1]+p[1])/2;
+      d+=' Q'+px[0].toFixed(1)+' '+px[1].toFixed(1)+' '+mx.toFixed(1)+' '+my.toFixed(1);
+    }
+    d+=' T'+pts[pts.length-1][0].toFixed(1)+' '+pts[pts.length-1][1].toFixed(1);
+    return d;
+  };
+  const LINES=[];
+  const NS=Math.max(11, Math.min(20, Math.round(23-nw*2)));  // fine noodles: more strands
+  for(let i=0;i<NS;i++){
+    const a0=(i/NS)*6.283 + (rnd()-0.5)*1.1;      // start angle, fanned around the bowl
+    const sweep=(1.4+rnd()*2.6)*(rnd()<0.5?-1:1); // how far it curls, either direction
+    // rBase reaches in to 6 so strands cross the middle — the centre must not read empty.
+    // rBase(max 28) + rAmp(max 9.5) = 37.5, still inside the r=38 safe zone.
+    const rBase=6+rnd()*22;
+    const rAmp=3.5+rnd()*6;
+    LINES.push(strand(a0, sweep, rBase, rAmp, 2+rnd()*2.5, rnd()*6.3));
+  }
+  // Draw them ONE AT A TIME — shadow, then body — so each strand casts onto the strands
+  // already laid down. Drawing all shadows first (as before) gives a flat mat with no depth.
+  LINES.forEach(d=>{
+    S.push('<path d="'+d+'" fill="none" stroke="#1B100B" stroke-width="'+(nw+1.1).toFixed(1)+'" stroke-linecap="round" opacity="0.15" transform="translate(0.3 0.9)"/>');
+    S.push('<path d="'+d+'" fill="none" stroke="'+nEdge+'" stroke-width="'+(nw+1.0).toFixed(1)+'" stroke-linecap="round" opacity="0.85"/>');
+    S.push('<path d="'+d+'" fill="none" stroke="'+nCol+'" stroke-width="'+nw.toFixed(1)+'" stroke-linecap="round"/>');
+  });
+
+  // ---- toppings, spread around the bowl rather than clustered ----
+  const tops=(contents||[]).filter(id=>["proteins","vegetables"].includes(((R&&R.byId[id])||{}).category)).slice(0,4);
+  const TOPC={prawn:"#E98B62", fish_slices:"#F6EFE2", fish_cake:"#F7F2E6", egg:"#F2C14E",
+              beef_slices:"#9C5A46", chicken_thigh:"#D9B27C", pork_belly:"#D8B08C",
+              tau_pok:"#C99153", tau_kee:"#D8B471", cockles:"#B4553F",
+              bok_choy:"#4F8442", chye_sim:"#4F8442", kailan:"#3F7A38",
+              beansprouts:"#F0EAD2", tomato:"#C4463A", cabbage:"#E3E0C8",
+              napa_cabbage:"#E7E4CC", enoki:"#F4F0DE", mushroom:"#A5825C", tofu:"#F4EBD4"};
+  const SPOTS=[[40,38],[72,42],[38,68],[74,70]];
+  tops.forEach((id,i)=>{
+    const p=SPOTS[i%SPOTS.length];
+    const cx=p[0]+(rnd()*4-2), cy=p[1]+(rnd()*4-2);
+    const col=(TOPC[id]||"#C08A55").slice(0,7);
+    S.push('<path d="'+artEdgy(cx,cy,11,10,seed+i*23)+'" fill="#1B100B" opacity="0.13" transform="translate(0 1.6)"/>');
+    S.push('<path d="'+artEdgy(cx,cy,11,10,seed+i*23)+'" fill="'+col+'"/>');
+    if(id==="egg") S.push('<circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="4" fill="#E88F2A"/>');
+  });
+  // a scatter of scallion so the surface isn't bare
+  let sc='<g fill="#5C9147" opacity="0.9">';
+  for(let i=0;i<7;i++){ const a=rnd()*6.28, rr=16+rnd()*22;
+    sc+='<circle cx="'+(56+Math.cos(a)*rr).toFixed(1)+'" cy="'+(56+Math.sin(a)*rr).toFixed(1)+'" r="'+(1.6+rnd()).toFixed(1)+'"/>'; }
+  S.push(sc+'</g>');
+  S.push('</g>');
+
+  if(!fried) S.push('<g stroke="#FFFFFF" stroke-width="2" fill="none" opacity="0.32" stroke-linecap="round">'+
+    '<path class="steam-w" d="M46 26 q4 -7 0 -13"/><path class="steam-w" style="animation-delay:.7s" d="M64 24 q4 -7 0 -13"/></g>');
+  return '<svg viewBox="0 0 112 112" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="noodle dish">'+S.join("")+'</svg>';
+}
+
+function renderNoodle(){
+  const box=el("recipes"); if(!box)return; box.innerHTML="";
+  const ids=[...FLOW.active].filter(id=>{
+    const ing=REF.byId[id]||{};
+    return measureTypeOf(ing)!=="assumed" || CHARACTER_SEASONINGS.has(id);
+  });
+  if(!ids.length){
+    box.innerHTML="<div class=\"hint\">Add a noodle \\u2014 bee hoon, kway teow, yellow mee or mee pok \\u2014 and the bowl builds around it.</div>";
+    return;
+  }
+  const nm=id=>((REF.byId[id]||{}).name)||id;
+
+  const cands=noodleCandidates(ids, REF, DISHES, AFF);
+  if(!cands.length){
+    box.innerHTML="<div class=\"hint\">No noodle in the basket yet \\u2014 add bee hoon, kway teow, yellow mee, mee pok or hor fun.</div>";
+    return;
+  }
+  if(!FLOW.noodlePick || !cands.some(c=>c.key===FLOW.noodlePick)) FLOW.noodlePick=cands[0].key;
+  const chosen=cands.find(c=>c.key===FLOW.noodlePick)||cands[0];
+
+  const dir = FLOW.noodleDir ? NOODLE_DIRS.find(d=>d.key===FLOW.noodleDir) : chosen.direction;
+  const nd  = buildNoodle(chosen.contents, REF, DISHES, AFF,
+                {subject:chosen.subject, direction:dir, mode:(dir&&dir.mode)||chosen.mode});
+
+  // ---- the dish ----
+  box.appendChild(dishArtSlot(noodleDishArt(nd.mode, dir, chosen.contents, REF),
+    "noodle", chosen.subject, dir&&dir.key, chosen.contents, REF));
+
+  // ---- headline + style button ----
+  const t=document.createElement("div"); t.className="op-title";
+  const topLabel = dir ? dir.label.replace(/ \(.*\)/,"") : "Style";
+  t.innerHTML="<div class=\"op-head\"><span class=\"op-name\">"+chosen.label+"</span>"+
+    "<button class=\"op-season"+(dir?" on":"")+"\" id=\"noodle-top-btn\">"+
+      "<span class=\"os-dot\"></span>"+topLabel+"</button></div>"+
+    "<div class=\"op-sub\">"+(dir?dir.note:chosen.note)+"</div>";
+  box.appendChild(t);
+  const nb=el("noodle-top-btn");
+  if(nb) nb.onclick=(e)=>{ e.stopPropagation(); openNoodleRadial(); };
+  { const tg=ingredientTags(chosen.contents); if(tg) box.appendChild(tg); }
+
+  // ---- other styles this basket could make ----
+  {
+    const alts=cands.filter(c=>c.key!==FLOW.noodlePick);
+    if(alts.length){
+      const pick=document.createElement("div"); pick.className="alt-pick";
+      const pl=document.createElement("span"); pl.className="alt-lab"; pl.textContent="or"; pick.appendChild(pl);
+      alts.forEach(c=>{
+        const b=document.createElement("button"); b.className="alt-chip";
+        b.textContent=c.label; b.title=c.note;
+        b.onclick=()=>{ FLOW.noodlePick=c.key; FLOW.noodleDir=null; renderNoodle(); };
+        pick.appendChild(b);
+      });
+      box.appendChild(pick);
+    }
+  }
+
+  // ---- times ----
+  const hero=document.createElement("div"); hero.className="op-hero";
+  hero.innerHTML="<div class=\"op-times\">"+
+    "<span class=\"op-big\">"+nd.total+"<em>min, start to finish</em></span>"+
+    (nd.handsOff?"<span class=\"op-free\">"+nd.handsOff+" min hands-off \\u2014 the broth simmers on its own</span>":"")+
+    "<span class=\"op-free wok\">"+nd.handsOn+" min hands-on \\u2014 prep, and the bowl comes together fast</span></div>";
+  box.appendChild(hero);
+
+  const rgroup=(tgt,txt)=>{ const g=document.createElement("div"); g.className="rgroup"; g.textContent=txt; tgt.appendChild(g); };
+
+  // ---- cards ----
+  const CARDS=[];
+  if(nd.prep.length) CARDS.push({label:"Prep", phase:"prep", build:(c)=>{
+    rgroup(c,"Prep first \\u2014 the noodle above all");
+    nd.prep.forEach(p=>{
+      const row=document.createElement("div"); row.className="wok-prep";
+      row.innerHTML="<span class=\"wp-g\">"+prepGlyph(p.name,p.prep)+"</span><span class=\"wp-n\">"+p.name+"</span><span class=\"wp-p\">"+p.prep+"</span>"+
+        (p.warn?"<span class=\"wp-w\">"+p.warn+"</span>":"");
+      c.appendChild(row);
+    });
+  }});
+  if((nd.sauceSteps||[]).length) CARDS.push({label:"Style", phase:"prep", build:(c)=>{
+    rgroup(c, dir ? "The style \\u2014 "+dir.label.replace(/ \(.*\)/,"") : "The style");
+    nd.sauceSteps.forEach(s=>{
+      const row=document.createElement("div"); row.className="wok-step";
+      row.innerHTML="<span class=\"ws-g\">"+prepGlyph(s.t, s.t+" "+s.d)+"</span>"+
+        "<span class=\"ws-t\">\\u2022</span>"+
+        "<span class=\"ws-b\"><span class=\"ws-i\">"+s.t+"</span><span class=\"ws-w\">"+s.d+"</span></span>";
+      c.appendChild(row);
+    });
+  }});
+  CARDS.push({label: nd.mode==="fried"?"Wok":"Broth", phase:"cook", build:(c)=>{
+    rgroup(c, nd.mode==="fried" ? "Into the wok \\u2014 order matters" : "Broth, then assemble");
+    nd.steps.forEach(s=>{
+      const row=document.createElement("div"); row.className="wok-step"+(s.handsoff?" steam-step":"");
+      row.innerHTML="<span class=\"ws-g\">"+prepGlyph(s.label, s.label+" "+s.detail)+"</span>"+
+        "<span class=\"ws-t\">"+(s.mins?s.mins+"m":"\\u2022")+"</span>"+
+        "<span class=\"ws-b\"><span class=\"ws-i\">"+s.label+"</span><span class=\"ws-w\">"+s.detail+"</span></span>"+
+        (s.handsoff?"<span class=\"ws-s\">hands-off</span>":"");
+      c.appendChild(row);
+    });
+  }});
+
+  renderStepSlider(box, CARDS, [
+    {label:"Prep", mins:nd.prepMins, kind:"prep"},
+    {label: nd.mode==="fried"?"Wok":"Broth", mins:Math.max(1, nd.total-nd.prepMins), kind:"cook"}
+  ]);
+
+  // ---- what can't go in the bowl ----
+  if(nd.separate && nd.separate.length){
+    const o=document.createElement("div"); o.className="pot-out";
+    const lab=document.createElement("span"); lab.className="po-l"; lab.textContent="cook separately";
+    o.appendChild(lab);
+    nd.separate.forEach(a=>{
+      const c=document.createElement("span"); c.className="po-c"; c.textContent=a.name+(a.alt?" \\u2014 "+a.alt:""); o.appendChild(c);
+    });
+    const w=document.createElement("span"); w.className="po-w";
+    w.textContent=nd.separate[0].note||"these want a different heat than the bowl gives";
+    o.appendChild(w);
+    box.appendChild(o);
+  }
+
+  // ---- warnings ----
+  (nd.warnings||[]).forEach(txt=>{
+    const w=document.createElement("div"); w.className="pot-unc";
+    w.innerHTML="<strong>Watch this.</strong> "+txt;
+    box.appendChild(w);
+  });
+
+  // ---- goes well with ----
+  if(nd.suggest && nd.suggest.buy && nd.suggest.buy.length){
+    const o=document.createElement("div"); o.className="pot-sug";
+    o.innerHTML="<div class=\"ps-lab\">Goes in this bowl &mdash; tap to add</div>"+
+      "<div class=\"ps-row\">"+nd.suggest.buy.slice(0,4).map(x=>suggestChip(x.id, REF)).join("")+"</div>"+
+      "<div class=\"ps-note\">From our noodle bowls. Tap a chip to add it to your basket.</div>";
+    box.appendChild(o);
+    wireSuggestions();
+  }
+  box.appendChild(addBasketButtonFor(chosen.label, chosen.contents, "noodles",
+    {total:nd.total, handsOn:nd.handsOn, handsOff:nd.handsOff}));
+}
+
+/* the style radial — mirrors openSteamRadial exactly: sheet on mobile, hub on desktop */
+function openNoodleRadial(){
+  closeRadial();
+  const base=noodleBaseOf([...FLOW.active].filter(id=>NOODLE_BASE_IDS.has(id)));
+  const nameOfN=id=>((REF.byId[id]||{}).name)||id;
+  const subLabel=o=>{
+    if(!o.canonical||!o.canonical.length) return o.note;
+    const wants=nameOfN(o.canonical[0]);
+    const fit=base?noodleFitOf(o,base):"canonical";
+    return fit==="canonical" ? o.note : o.note+" \u2014 usually "+wants;
+  };
+  const byRegion={};
+  NOODLE_DIRS.forEach(o=>{ const r=o.region||"Other"; (byRegion[r]=byRegion[r]||[]).push(o); });
+  const ORDER=["Singaporean","Hokkien","Teochew/Hokkien","Teochew","Peranakan","Malay/Indian-Muslim","Cantonese","Chinese","Japanese","Thai","Other"];
+  const regions=ORDER.filter(r=>byRegion[r]).concat(Object.keys(byRegion).filter(r=>ORDER.indexOf(r)<0));
+
+  const btn=el("noodle-top-btn");
+  const r0=btn&&btn.getBoundingClientRect?btn.getBoundingClientRect():{left:120,top:150,width:80,height:28};
+  const cx=r0.left+r0.width/2, cy=r0.top+r0.height/2;
+  const VW=window.innerWidth||1200, VH=window.innerHeight||800;
+
+  const wrap=document.createElement("div"); wrap.className="radial"; wrap.id="radial";
+  wrap.onclick=(e)=>{ if(e.target===wrap) closeRadial(); };
+
+  if(VW<760){
+    wrap.classList.add("sheet");
+    const panel=document.createElement("div"); panel.className="rad-sheet";
+    const h2=document.createElement("div"); h2.className="rs-head";
+    h2.textContent="The broth or sauce is the dish — the noodle is your choice";
+    panel.appendChild(h2);
+    regions.forEach(rg=>{
+      const lab=document.createElement("div"); lab.className="rs-lab"; lab.textContent=rg;
+      panel.appendChild(lab);
+      const row=document.createElement("div"); row.className="rs-row";
+      byRegion[rg].forEach(o=>{
+        const b=document.createElement("div");
+        b.className="rad-btn"+(FLOW.noodleDir===o.key?" on":"");
+        b.textContent=o.label.replace(/ \(.*\)/,"");
+        b.title=subLabel(o);
+        b.onclick=(e)=>{ e.stopPropagation(); FLOW.noodleDir=o.key; closeRadial(); renderNoodle(); };
+        row.appendChild(b);
+      });
+      panel.appendChild(row);
+    });
+    wrap.appendChild(panel);
+    document.body.appendChild(wrap);
+    requestAnimationFrame(()=>wrap.classList.add("in"));
+    return;
+  }
+
+  const hub=document.createElement("div"); hub.className="rad-hub";
+  hub.style.left=cx+"px"; hub.style.top=cy+"px";
+  wrap.appendChild(hub);
+  const tip=document.createElement("div"); tip.className="rad-tip";
+  tip.style.left=cx+"px"; tip.style.top=(cy+22)+"px";
+  tip.textContent="The broth or sauce is the dish";
+  wrap.appendChild(tip);
+
+  const N=regions.length;
+  const topY=Math.max(90, cy-300), botY=Math.min(VH-100, cy+300);
+  const BOW=Math.min(260, Math.max(150, (VW-cx-300)*0.5));
+  regions.forEach((rg,i)=>{
+    const tt = N>1 ? i/(N-1) : 0.5;
+    const y = topY + tt*(botY-topY);
+    const x = cx + 120 + Math.sin(tt*Math.PI)*BOW;
+    const multi = byRegion[rg].length>1;
+    const clu=document.createElement("div"); clu.className="rad-clu"+(multi?" multi":"");
+    const halfW = multi ? byRegion[rg].length*80 : 70;
+    clu.style.left=Math.max(halfW+16, Math.min(VW-halfW-16, x))+"px";
+    clu.style.top=y+"px";
+    const lab=document.createElement("div"); lab.className="rad-lab"; lab.textContent=rg;
+    clu.appendChild(lab);
+    const row=document.createElement("div"); row.className="rad-btns";
+    byRegion[rg].forEach(o=>{
+      const b=document.createElement("div");
+      b.className="rad-btn"+(FLOW.noodleDir===o.key?" on":"");
+      b.textContent=o.label.replace(/ \(.*\)/,"");
+      b.title=subLabel(o);
+      b.onclick=(e)=>{ e.stopPropagation(); FLOW.noodleDir=o.key; closeRadial(); renderNoodle(); };
+      row.appendChild(b);
+    });
+    clu.appendChild(row);
+    wrap.appendChild(clu);
+  });
+
+  wrap.addEventListener("pointermove",(e)=>{
+    wrap.querySelectorAll(".rad-btn").forEach(b=>{
+      const r=b.getBoundingClientRect?b.getBoundingClientRect():null;
+      if(!r) return;
+      const dx=e.clientX-(r.left+r.width/2), dy=e.clientY-(r.top+r.height/2);
+      const d=Math.sqrt(dx*dx+dy*dy);
+      const sc=1 + Math.max(0, 0.5*(1 - d/170));
+      b.style.transform="scale("+sc.toFixed(3)+")";
+      b.style.zIndex=String(100-Math.round(d/4));
+    });
+  });
+
+  document.body.appendChild(wrap);
+  requestAnimationFrame(()=>wrap.classList.add("in"));
+}
+
 function openRiceRadial(){
   closeRadial();
   const byRegion={};
