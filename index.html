@@ -821,7 +821,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.85</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v3.89</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2385,7 +2385,7 @@ const SEASONING_DIRS=[
    exclude:["dang_gui","dark_soy_sauce","star_anise","cinnamon","cloves_spice","white_sugar","soy_sauce"],
    note:"peppery and garlicky, kept clear \u2014 no herbs, no dark soy"},
   {key:"bkt_hokkien", label:"Bak kut teh \u2014 Hokkien", region:"Hokkien/Klang",
-   markers:["dang_gui","star_anise","cinnamon","cloves_spice","goji","wolfberry","dark_soy_sauce"],
+   markers:["dang_gui","star_anise","cinnamon","cloves_spice","wolfberry","dark_soy_sauce"],
    need:2, needsLiquid:true, bakeNote:"the herbs infuse into a simmering broth", note:"dark and herbal \u2014 medicinal warmth"},
   {key:"bkt_pack", label:"Bak kut teh \u2014 from a packet", region:"Singaporean",
    markers:["bkt_pack"], need:1, needsLiquid:true, bakeNote:"the broth IS the dish \u2014 there is nothing to bake",
@@ -3728,7 +3728,7 @@ const RICE_DIRS=[
      {t:"Cook in stock", d:"Cook the rice in stock (not water) with bay and thyme for flavour and moisture."},
      {t:"Fold herbs", d:"Fold fresh herbs through at the end and fluff with a fork."}]},
   {key:"congee", label:"Congee / porridge", region:"Cantonese", mode:"congee",
-   markers:["century_egg","preserved_egg","dried_scallop","chicken_whole"], need:0,
+   markers:["century_egg","dried_scallop","chicken_whole"], need:0,
    note:"rice simmered in lots of water or stock until it breaks down into a soft, soupy porridge \u2014 topped simply and eaten with a spoon",
    steps:[
      {t:"Rice and lots of water", d:"Rinse the rice, then simmer it in about 8 times its volume of water or stock \u2014 far more than for steamed rice."},
@@ -3817,27 +3817,53 @@ function riceTexture(ingIds){
                   pork belly a long braise) — cook it separately.
    This is exactly the "same temperature and appliance" test: only things whose cooking
    profile matches gentle moist absorption can share the pot. */
-function riceAlong(id, R){
+/* how does an ingredient JOIN a starch dish? The judgement is the same whether the
+   starch is rice or noodles — prawns want a few gentle minutes, leafy greens go in at
+   the very end, tough beef cannot simply be dumped in. What changes is the wording and,
+   for fried noodles, the ORDER: there is no base to go into, so "base_in" means cook it
+   before the noodles hit the wok.
+   starch: "rice" | "fried" | "soup"                                                    */
+function alongNote(stage, starch, riceNote){
+  if(starch==="rice") return riceNote;
+  const N={
+    base_in:{fried:"fry it first, before the noodles go into the wok",
+             soup:"simmer it in the broth until cooked through"},
+    lay_on:{fried:"add it near the end of the toss, once the noodles are coated",
+            soup:"poach it in the broth for the last few minutes, or arrange it on the bowl"},
+    fold_end:{fried:"in for the last ten seconds only \u2014 it should still have snap",
+              soup:"blanch it briefly and lay it on top, so it stays bright"},
+    no_along:{fried:"cook it separately and add it at the end",
+              soup:"cook it separately \u2014 it will not come good in the broth"}
+  };
+  return (N[stage]||{})[starch] || riceNote;
+}
+function starchAlong(id, R, starch){
+  starch=starch||"rice";
   const i=R.byId[id]||{}; const p=new Set(i.provides||[]);
   const FISH=["fish","salmon","cod","snapper","seabass","threadfin","pomfret","mackerel","tuna","sardine","grouper"];
-  if(id==="egg") return {stage:"lay_on", note:"crack it on top for the last few minutes so it steams into the rice, or stir it through the hot rice at the end"};
-  if(id==="lap_cheong") return {stage:"base_in", note:"slice it in from the start \u2014 the fat renders into the rice"};
-  if(id==="char_siu") return {stage:"lay_on", note:"already cooked \u2014 lay it on to warm through for the last few minutes"};
-  if(id==="dried_shrimp") return {stage:"base_in", note:"in from the start \u2014 it perfumes the whole pot"};
-  if(FISH.includes(id)) return {stage:"lay_on", note:"lay the fillet on the rice for the last 10 minutes \u2014 it steams through gently"};
-  if(["prawn","squid","clams","oyster"].includes(id)) return {stage:"lay_on", note:"scatter on top for the last 6\u20138 minutes, just until opaque"};
-  if(id==="beef_slices") return {stage:"lay_on", note:"thin slices laid on for the last few minutes"};
-  if(p.has("collagen_rich") || i.cut_role==="braise") return {stage:"no_along", alt:"a slow braise", note:"needs 45+ minutes of braising \u2014 far longer than the rice takes"};
-  if(["beef","beef_steak","beef_chuck","pork_loin","pork_shoulder","mutton"].includes(id)) return {stage:"no_along", alt:"a hot sear", note:"wants dry, high heat \u2014 not gentle steam"};
-  if(/^chicken/.test(id)) return {stage:"base_in", note:"marinate it and cook it on the rice from the start"};
-  if(id==="tofu") return {stage:"base_in", note:"firm tofu holds up cooked in the rice"};
+  const out=(stage, riceNote, extra)=>Object.assign({stage, note:alongNote(stage,starch,riceNote)}, extra||{});
+  if(id==="egg") return out("lay_on","crack it on top for the last few minutes so it steams into the rice, or stir it through the hot rice at the end");
+  if(id==="lap_cheong") return out("base_in","slice it in from the start \u2014 the fat renders into the rice");
+  if(id==="char_siu") return out("lay_on","already cooked \u2014 lay it on to warm through for the last few minutes");
+  if(id==="dried_shrimp") return out("base_in","in from the start \u2014 it perfumes the whole pot");
+  if(FISH.includes(id)) return out("lay_on","lay the fillet on the rice for the last 10 minutes \u2014 it steams through gently");
+  if(id==="fish_slices") return out("lay_on","slip the slices in for the last few minutes \u2014 they cook in moments and break if stirred");
+  if(["prawn","squid","clams","oyster","cockles","scallops","mussels"].includes(id)) return out("lay_on","scatter on top for the last 6\u20138 minutes, just until opaque");
+  if(id==="beef_slices") return out("lay_on","thin slices laid on for the last few minutes");
+  if(p.has("collagen_rich") || i.cut_role==="braise") return out("no_along","needs 45+ minutes of braising \u2014 far longer than the rice takes",{alt:"a slow braise"});
+  if(["beef","beef_steak","beef_chuck","pork_loin","pork_shoulder","mutton"].includes(id)) return out("no_along","wants dry, high heat \u2014 not gentle steam",{alt:"a hot sear"});
+  if(/^chicken/.test(id)) return out("base_in","marinate it and cook it on the rice from the start");
+  if(id==="tofu"||id==="tau_kee"||id==="tau_pok") return out("base_in","firm tofu holds up cooked in the rice");
+  if(id==="fish_cake") return out("lay_on","already cooked \u2014 in for the last few minutes to warm through");
   if(i.category==="vegetables"){
     if(["peas","beansprouts","spinach","bok_choy","chye_sim","kangkong","kailan","watercress","lettuce"].includes(id))
-      return {stage:"fold_end", note:"fold through at the very end \u2014 residual heat is enough, and it stays bright"};
-    return {stage:"base_in", note:"cooks in the same time and heat \u2014 stir it in with the rice"};
+      return out("fold_end","fold through at the very end \u2014 residual heat is enough, and it stays bright");
+    return out("base_in","cooks in the same time and heat \u2014 stir it in with the rice");
   }
-  return {stage:"base_in", note:"cooks along with the rice"};
+  return out("base_in","cooks along with the rice");
 }
+/* rice keeps its exact previous behaviour */
+function riceAlong(id, R){ return starchAlong(id, R, "rice"); }
 
 /* ---- BUILD A RICE BOWL ---- */
 function buildRice(ingIds, R, dishes, AFF, opts){
@@ -4045,6 +4071,315 @@ function riceCandidates(ingIds, R, dishes, AFF){
     add("herb","Herb rice","in_rice",null,"rice cooked with aromatics and herbs, in stock instead of water \u2014 a fragrant pilaf");
   }
   return out;
+}
+
+/* ============================================================
+   NOODLES — the fifth composer.
+
+   A noodle dish is built FROM the noodle: it is the base, not an add-in.
+   Two modes for now:
+     fried — the noodle goes into the wok last and the sauce coats it
+     soup  — the noodle is blanched on its own and broth is poured over
+
+   What makes noodles different from rice: the noodle TYPE constrains the
+   dish. Char kway teow needs a flat rice noodle; laksa needs thick bee hoon;
+   mee goreng needs yellow noodle. Each direction lists the noodles it works
+   with, so the engine never offers a dish the noodle in hand cannot make.
+   A direction with noodles:null works with any noodle.
+   ============================================================ */
+const NOODLE_BASE_IDS=new Set(["bee_hoon","yellow_noodle","mee_pok","hor_fun",
+  "udon","soba","noodles","glass_noodles","shirataki"]);
+
+const NOODLE_MODES={
+  fried:{key:"fried", label:"Fried in the wok", tag:"high heat \u00b7 sauce coats \u00b7 wok hei",
+    why:"everything else is cooked first; the noodle goes in last and takes up the sauce over high heat, so it never stews"},
+  soup:{key:"soup", label:"In broth", tag:"noodle blanched \u00b7 broth poured over",
+    why:"the noodle is blanched on its own and the broth goes over at the end \u2014 cook it in the soup and it turns soft and clouds the broth"}
+};
+
+const NOODLE_DIRS=[
+  /* ---- FRIED ---- */
+  {key:"mee_goreng", label:"Mee goreng", region:"Malay/Indian-Muslim", mode:"fried",
+   canonical:["yellow_noodle"], works:["noodles","bee_hoon","hor_fun"], markers:["tomato","chilli","egg","tau_pok","potato","ketchup"], need:1,
+   note:"sweet, spicy and tomato-red \u2014 yellow noodles fried hard with egg and tofu puff",
+   steps:[
+     {t:"The sauce", d:"Mix chilli paste with tomato ketchup, a little dark soy and sugar \u2014 it should taste sweet, sour and hot at once."},
+     {t:"Egg first", d:"Scramble the egg in the hot wok and push it aside before the noodles go in."},
+     {t:"Fry hard", d:"Toss the noodles through the sauce over the highest heat until the edges catch and colour."},
+     {t:"At the table", d:"Serve with lime and sliced green chilli."}]},
+  {key:"char_kway_teow", label:"Char kway teow", region:"Teochew/Hokkien", mode:"fried",
+   canonical:["hor_fun"], works:["bee_hoon","yellow_noodle"], markers:["cockles","lap_cheong","dark_soy_sauce"], need:1,
+   note:"flat rice noodle over ferocious heat \u2014 dark soy, egg, beansprouts and smoke",
+   steps:[
+     {t:"Get the wok screaming", d:"This dish is made by heat. The wok must be smoking before anything goes in."},
+     {t:"Lard and aromatics", d:"Fry garlic (and lap cheong if you have it) until fragrant, then push aside."},
+     {t:"Noodle, then egg", d:"Sear the kway teow in dark and light soy without stirring too much, then crack the egg against the wok and fold it through."},
+     {t:"Beansprouts last", d:"In at the very end for ten seconds \u2014 they should still snap."}]},
+  {key:"hokkien_mee", label:"Hokkien prawn mee", region:"Hokkien", mode:"fried",
+   canonical:["yellow_noodle","bee_hoon"], works:["hor_fun","mee_pok"], markers:["prawn","squid","sambal","lime","pork_belly"], need:1,
+   note:"yellow noodle and bee hoon braised in prawn stock until it is drunk up \u2014 lime and sambal at the table",
+   steps:[
+     {t:"Make the stock", d:"Fry the prawn heads and shells hard, then simmer them with water for twenty minutes \u2014 this stock is the whole dish."},
+     {t:"Both noodles", d:"Use yellow noodle and bee hoon together \u2014 the mix is the point."},
+     {t:"Braise, don't fry", d:"Add the stock and let the noodles drink it up over medium heat until barely wet."},
+     {t:"At the table", d:"Sambal on the side and a wedge of calamansi or lime."}]},
+  {key:"bee_hoon_goreng", label:"Fried bee hoon", neutralLabel:"Simple fried noodles", region:"Singaporean", mode:"fried",
+   canonical:["bee_hoon"], works:["yellow_noodle","hor_fun","noodles"], markers:[], need:0,
+   note:"the everyday plate \u2014 soft bee hoon fried light with whatever is in the fridge",
+   steps:[
+     {t:"Soak, don't boil", d:"Soak the bee hoon in warm water until pliable but still firm \u2014 boiled bee hoon breaks in the wok."},
+     {t:"Season light", d:"Light soy, white pepper and a splash of stock; dark soy only for colour."},
+     {t:"Toss with chopsticks", d:"Lift and separate rather than stir, or the strands clump and tear."}]},
+  {key:"dark_soy_fried", label:"Dark soy fried noodles", region:"Cantonese", mode:"fried",
+   canonical:null, works:null, markers:["dark_soy_sauce"], need:1,
+   note:"soy-dark and glossy \u2014 the simplest fried noodle there is",
+   steps:[
+     {t:"Colour, then season", d:"Dark soy for colour and light soy for salt \u2014 dark soy alone tastes flat and looks muddy."},
+     {t:"High heat, little sauce", d:"Too much liquid steams the noodle instead of frying it."},
+     {t:"Finish", d:"Scallion and a few drops of sesame oil off the heat."}]},
+
+  /* ---- SOUP ---- */
+  {key:"laksa", label:"Laksa", region:"Peranakan", mode:"soup",
+   canonical:["bee_hoon"], works:["hor_fun","yellow_noodle","mee_pok"], markers:["laksa_paste","coconut_milk","laksa_leaf"], need:1,
+   note:"coconut and rempah broth over thick bee hoon, with tau pok soaking it up",
+   steps:[
+     {t:"Fry the rempah", d:"Fry the laksa paste in oil until it splits and smells sweet \u2014 raw paste tastes harsh."},
+     {t:"Coconut last", d:"Add stock first, then the coconut milk near the end, and never let it boil hard or it will split."},
+     {t:"Assemble", d:"Blanched thick bee hoon in the bowl, then the broth, then prawns, fish cake and tau pok."},
+     {t:"Finish", d:"A spoon of sambal and torn laksa leaf on top."}]},
+  {key:"fishball_soup", label:"Fishball noodle soup", region:"Teochew", mode:"soup",
+   canonical:["mee_pok"], works:["bee_hoon","yellow_noodle","noodles"], markers:["fish_cake","white_pepper","lettuce","beansprouts"], need:1,
+   note:"a clean peppery broth with springy noodles and fish cake \u2014 the everyday bowl",
+   steps:[
+     {t:"Keep the broth clear", d:"A gentle simmer only; a hard boil turns it cloudy."},
+     {t:"Blanch the noodle", d:"Ten to fifteen seconds in boiling water, then shake it dry \u2014 mee pok goes soft fast."},
+     {t:"Assemble", d:"Noodles in the bowl, fish cake and greens on top, then ladle the broth over."},
+     {t:"Season the bowl", d:"White pepper and a few drops of sesame oil go in the bowl, not the pot."}]},
+  {key:"tom_yum", label:"Tom yum noodles", region:"Thai", mode:"soup",
+   canonical:["bee_hoon"], works:null, markers:["tom_yum_paste","lemongrass","lime","galangal","kaffir_lime"], need:1,
+   note:"hot and sour \u2014 lemongrass, lime and chilli carried in the broth",
+   steps:[
+     {t:"Bruise the aromatics", d:"Crush the lemongrass and galangal so they give up their oils in the simmer."},
+     {t:"Lime off the heat", d:"Lime juice goes in once the pot is off the flame \u2014 boiled lime turns bitter."},
+     {t:"Assemble", d:"Blanched noodles in the bowl, broth over, coriander on top."}]},
+  {key:"fish_soup", label:"Sliced fish bee hoon", region:"Teochew/Singaporean", mode:"soup",
+   canonical:["bee_hoon"], works:["mee_pok","hor_fun","yellow_noodle"],
+   markers:["fish_slices"], need:1,
+   note:"a clean or milky peppery broth with tender fish slices \u2014 tomato and salted vegetable for the sour edge",
+   steps:[
+     {t:"Fry the ginger", d:"Ginger in the oil first \u2014 it is what keeps a fish broth from tasting muddy."},
+     {t:"The broth", d:"Pork or anchovy stock, brought to a gentle simmer. A splash of evaporated milk turns it the milky white version."},
+     {t:"Fish in last", d:"Slip the slices in off the boil for two minutes only \u2014 they cook in moments and break if stirred."},
+     {t:"Sour and sharp", d:"Tomato wedges and salted vegetable go in near the end; white pepper and fried shallots in the bowl."}]},
+  {key:"sliced_meat", label:"Sliced meat noodle soup", region:"Chinese", mode:"soup",
+   markers:["beef_slices","pork_loin","chicken_breast","pork_mince"], need:1,
+   note:"thin slices of meat cooked in the broth at the last moment, over noodles \u2014 the everyday bowl",
+   steps:[
+     {t:"Slice thin, against the grain", d:"Thin slices cook through in the broth in under a minute and stay tender; thick ones go tough."},
+     {t:"Keep the broth clear", d:"A gentle simmer only. Skim what rises."},
+     {t:"Meat at the last moment", d:"Slide the slices in off the boil and take the pot off the heat \u2014 they finish in the residual heat."},
+     {t:"Assemble", d:"Noodles in the bowl, meat and greens on top, broth ladled over."}]},
+  {key:"dashi_noodle", label:"Dashi noodle soup", region:"Japanese", mode:"soup",
+   canonical:["udon","soba"], works:["noodles","bee_hoon"],
+   markers:["dashi","kombu","mirin","soy_sauce"], need:1,
+   note:"a clear dashi and shoyu broth \u2014 restrained, and all about the stock",
+   steps:[
+     {t:"Dashi first", d:"Kombu steeped below a simmer, never boiled \u2014 boiling kombu turns the stock bitter and slippery."},
+     {t:"Season lightly", d:"Shoyu and mirin only. The broth should stay clear enough to see the bottom of the bowl."},
+     {t:"Noodles separately", d:"Cook and rinse the noodles in cold water to stop them, then warm them through before the broth goes over."},
+     {t:"Finish", d:"Scallion, and a soft egg if you have one."}]},
+  {key:"clear_soup", label:"Clear soup noodles", region:"Chinese", mode:"soup",
+   canonical:null, works:null, markers:["ginger","scallion"], need:0,
+   note:"noodles in a clear broth \u2014 the broth does all the talking",
+   steps:[
+     {t:"Build the broth", d:"Ginger, scallion and salt, simmered gently \u2014 nothing else needed."},
+     {t:"Blanch separately", d:"Never cook the noodles in the broth, or the starch clouds it."},
+     {t:"Assemble", d:"Noodles in the bowl, toppings on, broth over at the last moment."}]}
+];
+
+/* which noodle is the base? the first one present, by a sensible preference */
+function noodleBaseOf(ids){
+  const order=["bee_hoon","yellow_noodle","mee_pok","hor_fun","noodles","udon","soba","glass_noodles","shirataki"];
+  return order.find(n=>ids.includes(n)) || ids.find(id=>NOODLE_BASE_IDS.has(id)) || null;
+}
+
+/* how well does this noodle suit this style?
+   canonical = what it's traditionally made with; works = commonly ordered that way;
+   unusual = you can, and the engine will let you, but it's not what the dish normally is.
+   Nothing is forbidden — the stall will make laksa with hor fun if you ask. */
+function noodleFitOf(dir, base){
+  if(!dir.canonical) return "canonical";            // style has no fixed noodle
+  if((dir.canonical||[]).includes(base)) return "canonical";
+  if(!dir.works) return "unusual";
+  return (dir.works||[]).includes(base) ? "works" : "unusual";
+}
+const NOODLE_FIT_RANK={canonical:0, works:1, unusual:2};
+
+/* the dishes this basket can make. Each candidate is one noodle style.
+   TWO independent layers: the STYLE (broth or sauce) and the NOODLE. Any noodle can
+   carry any style — the engine ranks the pairing rather than blocking it. */
+function noodleCandidates(ingIds, R, dishes, AFF){
+  const real=[...new Set(ingIds.filter(id=>{
+    const i=R.byId[id]||{};
+    if(i.id==="water") return false;
+    return measureTypeOf(i)!=="assumed" || CHARACTER_SEASONINGS.has(id);
+  }))];
+  const base=noodleBaseOf(real);
+  if(!base) return [];                       // no noodle, no noodle dish
+  const baseName=(R.byId[base]||{}).name||base;
+  const set=new Set(real);
+  const out=[];
+  NOODLE_DIRS.forEach(dir=>{
+    // enough of its markers must be present
+    const hits=(dir.markers||[]).filter(m=>set.has(m)).length;
+    if(hits < (dir.need||0)) return;
+    const fit=noodleFitOf(dir, base);
+    // name it honestly: the proper name when it's the usual noodle, otherwise say which
+    // when a style is named after its noodle ("fried bee hoon"), swapping the noodle makes
+    // that name contradictory — fall back to a neutral name for the style.
+    const styleName = fit==="canonical" ? dir.label : (dir.neutralLabel||dir.label);
+    const label = fit==="canonical" ? dir.label : styleName+" with "+baseName.replace(/ \(.*\)/,"");
+    const fitNote = fit==="canonical" ? null
+      : fit==="works" ? baseName.replace(/ \(.*\)/,"")+" is a common swap for this"
+      : "usually made with "+((dir.canonical||[]).map(n=>(R.byId[n]||{}).name||n).join(" or ").replace(/ \(.*?\)/g,""))+" \u2014 this is your own take";
+    out.push({
+      key:"noodle_"+dir.key,
+      label, mode:dir.mode, dirKey:dir.key, direction:dir,
+      subject:base, subjectName:baseName,
+      note:dir.note, fit, fitNote, hits,
+      contents:real, leftOut:[]
+    });
+  });
+  // strongest signal first, then the pairing that suits the noodle best
+  out.sort((a,b)=> b.hits - a.hits || NOODLE_FIT_RANK[a.fit] - NOODLE_FIT_RANK[b.fit]);
+  // always leave a plain fallback so a lone packet of noodles still cooks
+  if(!out.length){
+    const fallback=NOODLE_DIRS.find(d=>d.key==="clear_soup");
+    out.push({key:"noodle_clear_soup", label:"Noodles in broth", mode:"soup",
+      dirKey:"clear_soup", direction:fallback, subject:base,
+      subjectName:(R.byId[base]||{}).name||base,
+      note:fallback.note, contents:real, leftOut:[]});
+  }
+  return out.slice(0,4);
+}
+
+/* THE SECOND LAYER — given a style, which noodles can carry it, best first?
+   This is what a "change the noodle" picker reads: every noodle is offered, ordered
+   canonical → works → unusual, each with a plain-language note. Nothing is hidden,
+   because a stall will swap the noodle for you if you ask. */
+function noodleOptionsFor(dirKey, R, opts){
+  opts=opts||{};
+  const dir=NOODLE_DIRS.find(d=>d.key===dirKey);
+  if(!dir) return [];
+  const have=new Set(opts.have||[]);
+  const all=["bee_hoon","yellow_noodle","mee_pok","hor_fun","noodles","udon","glass_noodles","soba","shirataki"];
+  return all.map(id=>{
+    const fit=noodleFitOf(dir, id);
+    const name=(R.byId[id]||{}).name||id;
+    return {
+      id, name, fit,
+      owned:have.has(id),
+      note: fit==="canonical" ? "what it's usually made with"
+          : fit==="works"     ? "a common swap"
+          : "unusual, but it will work"
+    };
+  }).sort((a,b)=> NOODLE_FIT_RANK[a.fit]-NOODLE_FIT_RANK[b.fit] || (b.owned?1:0)-(a.owned?1:0) || a.name.localeCompare(b.name));
+}
+
+/* the recipe for one noodle candidate */
+function buildNoodle(ingIds, R, dishes, AFF, opts){
+  opts=opts||{};
+  const real=[...new Set(ingIds.filter(id=>{
+    const i=R.byId[id]||{};
+    if(i.id==="water") return false;
+    return measureTypeOf(i)!=="assumed" || CHARACTER_SEASONINGS.has(id);
+  }))];
+  const nm=id=>((R.byId[id]||{}).name)||id;
+  const base=opts.subject||noodleBaseOf(real);
+  const dir=opts.direction||NOODLE_DIRS.find(d=>d.key===opts.dirKey)||NOODLE_DIRS.find(d=>d.key==="clear_soup");
+  const mode=opts.mode||dir.mode;
+  const modeInfo=NOODLE_MODES[mode]||NOODLE_MODES.soup;
+
+  const prep=[];
+  const steps=[];
+  let handsOff=0;
+
+  // the noodle's own prep — this is where noodle dishes go wrong
+  if(base==="bee_hoon")
+    prep.push({name:nm(base), prep:"soak in warm water until pliable but still firm \u2014 boiled bee hoon breaks apart in the wok", warn:null});
+  else if(base==="mee_pok")
+    prep.push({name:nm(base), prep:"loosen the strands before blanching so they don't cook in a clump", warn:null});
+  else if(base==="yellow_noodle")
+    prep.push({name:nm(base), prep:"rinse under running water to wash off the alkaline smell, then drain well", warn:null});
+  else if(base==="hor_fun")
+    prep.push({name:nm(base), prep:"separate the sheets gently by hand \u2014 they tear if you pull", warn:"cold kway teow breaks; let it come to room temperature first"});
+  else if(base)
+    prep.push({name:nm(base), prep:"cook just short of done, then drain and rinse", warn:null});
+
+  // the other solids — staged by HOW they join the dish, using the shared starch model
+  const starchKind = mode==="fried" ? "fried" : "soup";
+  const others=real.filter(id=>id!==base && !NOODLE_BASE_IDS.has(id) &&
+    ["proteins","vegetables"].includes((R.byId[id]||{}).category));
+  const staged=others.map(id=>Object.assign({id, name:nm(id)}, starchAlong(id, R, starchKind)));
+  // rank within each stage by cuisine fit so the core ingredients lead
+  const rank=ids=>R.rankPartners?R.rankPartners(ids):ids;
+  const byStage=s=>rank(staged.filter(a=>a.stage===s).map(a=>a.id))
+                    .map(id=>staged.find(a=>a.id===id));
+  const early=byStage("base_in"), late=byStage("lay_on"),
+        endFold=byStage("fold_end"), apart=byStage("no_along");
+  staged.forEach(a=>{
+    const i=R.byId[a.id]||{};
+    prep.push({name:a.name, prep:i.prep_verb||"prepare", warn:null});
+  });
+  const listOf=arr=>arr.length ? arr.map(a=>a.name).join(", ").replace(/, ([^,]*)$/," and $1") : null;
+  const otherNames=listOf(staged);
+
+  if(mode==="fried"){
+    steps.push({label:"Heat the wok hard", detail:"A fried noodle is made by heat. Get the wok smoking before anything goes in \u2014 a cool wok steams the noodle instead of frying it.", mins:2, handsoff:false});
+    steps.push({label:"Aromatics first", detail:"Garlic and the other aromatics into the hot oil until fragrant.", mins:1, handsoff:false});
+    if(early.length) steps.push({label:"Cook "+listOf(early)+" through",
+      detail:"These need real cooking time, so they go in before the noodles: "+early.map(a=>a.name.toLowerCase()+" \u2014 "+a.note).join("; ")+".", mins:3, handsoff:false});
+    steps.push({label:"Noodles in last", detail:"In with the noodles and the sauce. Toss by lifting and separating rather than stirring, so the strands don't clump or tear.", mins:3, handsoff:false});
+    if(late.length) steps.push({label:"Add "+listOf(late),
+      detail:late.map(a=>a.name.toLowerCase()+" \u2014 "+a.note).join("; ")+".", mins:2, handsoff:false});
+    if(endFold.length) steps.push({label:"Greens at the very end",
+      detail:listOf(endFold)+" \u2014 "+endFold[0].note+".", mins:1, handsoff:false});
+    steps.push({label:"Finish", detail:"Scallion off the heat, and serve straight away \u2014 fried noodles go soft as they sit.", mins:1, handsoff:false});
+  } else {
+    steps.push({label:"Build the broth", detail: early.length
+      ? "Get the broth simmering, then "+early.map(a=>a.name.toLowerCase()+" \u2014 "+a.note).join("; ")+"."
+      : "Get the broth simmering and season it.", mins:15, handsoff:true});
+    handsOff=15;
+    if(late.length) steps.push({label:"Add "+listOf(late),
+      detail:late.map(a=>a.name.toLowerCase()+" \u2014 "+a.note).join("; ")+".", mins:3, handsoff:false});
+    steps.push({label:"Blanch the noodles separately", detail:"In boiling water for seconds only, then shake dry. Cooking them in the broth clouds it with starch and turns them soft.", mins:2, handsoff:false});
+    steps.push({label:"Assemble the bowl", detail:"Noodles in first, toppings arranged on top, then ladle the hot broth over at the last moment.", mins:2, handsoff:false});
+    steps.push({label:"Season the bowl", detail:"White pepper, a few drops of sesame oil \u2014 in the bowl, not the pot, so each bowl is seasoned to taste.", mins:1, handsoff:false});
+  }
+
+  const prepMins=Math.max(4, 3+prep.length*2);
+  const cookMins=steps.reduce((n,s)=>n+(s.mins||0),0);
+  const total=prepMins+cookMins;
+
+  let suggest={yours:[],buy:[]};
+  if(AFF){
+    const key=others.length?others:[base].filter(Boolean);
+    if(key.length) suggest=potSuggestions(key, mode==="fried"?"stir_fry":"soup", R, AFF, {have:real});
+  }
+
+  return {
+    mode, modeInfo, subject:base, subjectName:nm(base),
+    separate: apart.map(a=>({name:a.name, alt:a.alt, note:a.note})),
+    label:dir.label, dirKey:dir.key, direction:dir,
+    prep, prepMins, steps, total, cookMins,
+    handsOn:total-handsOff, handsOff,
+    sauceSteps: dir.steps||[],
+    suggest,
+    warnings: mode==="soup"
+      ? ["Never boil the noodles in the broth \u2014 the starch clouds it."]
+      : ["Serve fried noodles immediately; they soften as they sit."],
+    reminds: []
+  };
 }
 
 
