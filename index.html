@@ -549,6 +549,9 @@ button.ps-add:active{transform:scale(.96)}
 button.ps-add em{color:var(--cool)}
 button.ps-add.in-basket{opacity:.6;cursor:default}
 button.ps-add.in-basket em{color:var(--muted)}
+.ps-list{display:flex;flex-direction:column;gap:7px;margin:8px 0}
+.ps-item{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ps-where{font-size:12px;color:var(--muted);font-style:italic}
 .ps-note{font-family:var(--font-mono);font-size:9.5px;color:var(--muted);margin-top:7px;opacity:.85}
 .pot-unc{margin-top:8px;padding:9px 12px;background:rgba(168,114,24,.07);border-left:3px solid var(--gold);
   border-radius:7px;font-size:12px;line-height:1.5;color:var(--muted)}
@@ -838,7 +841,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.08</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.09</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -4841,15 +4844,18 @@ function addCurrentDishToBasket(name, method, buyList, timing, detail){
 /* build the to-buy list for a composed dish from its contents: the ingredients it needs that
    you don't already have (not in active basket or pantry). Reused by every composer. */
 function buyListForContents(contents){
-  const haveSet=new Set([...FLOW.active, ...FLOW.pantry]);
+  // What you'd actually buy for this dish: the proteins and vegetables you're cooking with —
+  // including the ones you picked, since the basket is a plan, not your fridge inventory.
+  // Pantry staples (rice, oil, sauces) and aromatics stay off the list; things you've ticked
+  // as ALREADY in your pantry are dropped too.
   const buy=[];
   (contents||[]).forEach(id=>{
     const ing=REF.byId[id]||{};
     if(id==="water") return;
-    if(measureTypeOf(ing)==="assumed") return;         // pantry staples/aromatics: not a shop item
-    if(haveSet.has(id)) return;                          // you already have it
+    if(measureTypeOf(ing)==="assumed") return;          // aromatics/seasonings: not a shop item
+    if(FLOW.pantry.has(id)) return;                      // you keep this in the cupboard already
     // a descendant you own satisfies it (you own pomfret, dish needs fish)
-    if([...haveSet].some(h=>(REF.anc[h]||new Set()).has(id))) return;
+    if([...FLOW.pantry].some(h=>(REF.anc[h]||new Set()).has(id))) return;
     buy.push({id, name:ing.name||id});
   });
   return buy;
@@ -4998,10 +5004,16 @@ function renderBasketSchedule(plan){
   const sug=mealGapSuggestions();
   if(sug.length){
     const o=document.createElement("div"); o.className="pot-sug";
-    const HEAD={gap:"Worth adding", balance:"To balance the table",
-                variety:"To vary the table", extra:"To make it generous"};
-    o.innerHTML="<div class=\"ps-lab\">"+(HEAD[sug[0].tag]||"Would round the meal out")+" &mdash; tap to add</div>"+
-      "<div class=\"ps-row\">"+sug.map(s=>suggestChip(s.id, REF)).join("")+"</div>"+
+    o.innerHTML="<div class=\"ps-lab\">Worth adding to the meal &mdash; tap to add</div>"+
+      "<div class=\"ps-list\">"+sug.map(s=>{
+        const cat=(REF.byId[s.id]||{}).category;
+        const where = s.forDish ? "goes with your "+s.forDish
+                    : cat==="starches" ? "a starch on the side"
+                    : cat==="proteins" ? "as its own dish"
+                    : "as its own dish";
+        return "<div class=\"ps-item\">"+suggestChip(s.id, REF)+
+          "<span class=\"ps-where\">"+where+"</span></div>";
+      }).join("")+"</div>"+
       "<div class=\"ps-note\">"+sug[0].why+"</div>";
     wrap.appendChild(o);
     wireSuggestions(true);   // meal-level: adds to the ingredient pool, not one dish
@@ -5012,6 +5024,28 @@ function renderBasketSchedule(plan){
 /* Look at everything in the basket together and name what the MEAL is missing —
    a green if it is all meat, something fresh if it is all rich, a starch if there is
    nothing to eat it with. Ranked by cuisine fit, and never something already in. */
+/* Which dish already in the basket could take a suggested ingredient? A green joins any
+   stir-fry or one-pot; a protein wants its own dish, so it reads as "a new dish". */
+function dishThatTakes(id){
+  const R=REF, ing=R.byId[id]||{};
+  const cat=ing.category;
+  // a starch is never "added to" another dish — it IS a dish (rice, a bowl of noodles)
+  if(cat==="starches") return null;
+  // a second protein wants its own dish
+  if(cat==="proteins") return null;
+  if(cat==="vegetables"){
+    const LEAF=(typeof LEAFY_GREENS!=="undefined" && LEAFY_GREENS.has(id));
+    const soupVeg=/daikon|winter_melon|lotus_root|watercress|napa_cabbage/.test(id);
+    // soup vegetables want a pot; leafy greens go in a stir-fry or a pot; firm veg, a stir-fry
+    const wants = soupVeg ? ["onepot"]
+                : LEAF   ? ["stirfry","onepot","noodles"]
+                         : ["stirfry","onepot"];
+    const host=FLOW.basket.find(d=>wants.includes(d.method));
+    if(host) return host.name;
+    return null;   // no dish of the right kind yet -> "as its own dish"
+  }
+  return null;
+}
 function mealGapSuggestions(){
   const R=REF; if(!R) return [];
   const inMeal=new Set();
@@ -5075,12 +5109,15 @@ function mealGapSuggestions(){
   }
 
   /* ---- 4. a gentle nudge even for a well-formed meal ---- */
-  // a complete, varied meal still enjoys one more vegetable for the table
-  if(!out.length && dishCount>=1)
-    add(["broccoli","cauliflower","long_beans","kailan","eggplant","okra"],
-      "This is a solid meal \u2014 an extra vegetable dish would make it generous.", "extra");
+  // top up toward five with extra vegetables that would sit well on the table
+  add(["broccoli","cauliflower","long_beans","kailan","eggplant","okra","french_beans","cabbage","spinach","chye_sim"],
+    "An extra vegetable dish would make the meal more generous.", "extra");
+  add(["mushroom","tomato","carrot","beansprouts","lotus_root"],
+    "Another vegetable would add colour and texture to the table.", "extra");
 
-  return out.slice(0,3);
+  // for each suggestion, work out which dish in the basket could actually take it
+  out.forEach(s=>{ s.forDish = dishThatTakes(s.id); });
+  return out.slice(0,5);
 }
 function openBasket(){
   closeBasket();
