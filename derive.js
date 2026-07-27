@@ -2260,7 +2260,8 @@ function buildStirFry(ingIds, R, dishes, AFF, opts){
 const WOK_SAUCE_NAME={
   sambal:"Sambal", dark_soy_sauce:"Dark soy", fermented_beancurd:"Fu yu", dried_chilli:"Dried chilli",
   salted_fish:"Salted fish", doubanjiang:"Mapo", fermented_black_bean:"Black bean", kung_pao:"Kung pao",
-  salted_egg:"Salted egg", curry_powder:"Curry", oyster_sauce:"", garlic:"", ginger:""
+  salted_egg:"Salted egg", curry_powder:"Curry", sichuan_peppercorn:"Mala", cereal:"Cereal",
+  oyster_sauce:"", garlic:"", ginger:""
 };
 function contents0(ids,pick,rest){ return [ids[0]].concat(pick||[]).concat(rest||[]); }
 function wokSauceOf(ids, R){
@@ -2276,7 +2277,15 @@ function wokSauceKey(ids, R){
   for(const id of ids){ if(id in WOK_SAUCE_NAME && WOK_SAUCE_NAME[id]) return id; }
   return "plain";
 }
-function wokCandidates(ingIds, R, dishes, AFF){
+function wokCandidates(ingIds, R, dishes, AFF, opts){
+  // vegetables the cook explicitly added should never be capped away silently
+  const EXPL=(opts&&opts.explicit)||null;
+  const keepExpl=list=>{
+    if(!EXPL) return list;
+    const chosen=list.filter(id=>EXPL.has&&EXPL.has(id));
+    const rest=list.filter(id=>!(EXPL.has&&EXPL.has(id)));
+    return chosen.concat(rest);   // explicit first, so the slice keeps them
+  };
   const real=[...new Set(ingIds.filter(id=>{
     const i=R.byId[id]||{};
     if(i.id==="water") return false;
@@ -2313,7 +2322,10 @@ function wokCandidates(ingIds, R, dishes, AFF){
     let pick, basis;
     if(anyPrecedent){
       scored.sort((a,b)=>b.n-a.n);
-      pick=scored.filter(x=>x.n>0).slice(0,2).map(x=>x.id);
+      { const ranked=scored.filter(x=>x.n>0).map(x=>x.id);
+        const expl=EXPL?ranked.filter(id=>EXPL.has&&EXPL.has(id)):[];
+        const other=ranked.filter(id=>!expl.includes(id));
+        pick=expl.concat(other.slice(0, Math.max(0, 2-expl.length))); }
       basis="precedent";
     } else {
       /* Physics: a stir-fry wants CONTRAST — something with bite against something soft,
@@ -2327,7 +2339,10 @@ function wokCandidates(ingIds, R, dishes, AFF){
         if(w.cls==="dense") return 0;      // needs blanching; more work, but fine
         return 1;
       };
-      pick=veg.slice().sort((a,b)=>rank(b)-rank(a)).slice(0,2);
+      { const ranked=veg.slice().sort((a,b)=>rank(b)-rank(a));
+        const expl=EXPL?ranked.filter(id=>EXPL.has&&EXPL.has(id)):[];
+        const other=ranked.filter(id=>!expl.includes(id));
+        pick=expl.concat(other.slice(0, Math.max(0, 2-expl.length))); }
       basis="physics";
     }
 
@@ -2347,6 +2362,7 @@ function wokCandidates(ingIds, R, dishes, AFF){
       contents:[lead].concat(pick).concat(rest),
       basis,
       note: !pick.length ? "just the "+((R.byId[lead]||{}).name||"").toLowerCase()
+          : pick.length>3 ? "with "+names.join(", ")+" — that\u2019s a lot for one wok; fry in two batches so it sears instead of steams"
           : basis==="precedent" ? "with "+names.join(" and ")
           : "with "+names.join(" and ")+" — our call, no recipe pairs these yet",
       leftOut: veg.filter(v=>!pick.includes(v)),
@@ -2356,10 +2372,16 @@ function wokCandidates(ingIds, R, dishes, AFF){
 
   // a vegetable-only stir-fry \u2014 the commonest Singaporean side, and often the right answer
   if(veg.length){
-    const pick=veg.slice(0,2);
+    const _ve=EXPL?veg.filter(id=>EXPL.has&&EXPL.has(id)):[];
+    const _vo=veg.filter(id=>!_ve.includes(id));
+    const pick=_ve.concat(_vo.slice(0, Math.max(0, 2-_ve.length)));
+    const vSauce=wokSauceOf(ingIds, R);
+    const vKey=wokSauceKey(ingIds, R);
+    const vName=pick.length>1?"vegetables":((R.byId[pick[0]]||{}).name.toLowerCase());
     out.push({
-      key:"veg",
-      label:(pick.length>1?"Vegetable stir-fry":((R.byId[pick[0]]||{}).name+" stir-fry")),
+      key: vKey==="plain" ? "veg" : vKey+"_veg",
+      label: vSauce ? vSauce+" "+vName
+            : (pick.length>1?"Vegetable stir-fry":((R.byId[pick[0]]||{}).name+" stir-fry")),
       lead:[],
       contents:pick.concat(rest),
       note: pick.length>1 ? pick.map(v=>(R.byId[v]||{}).name.toLowerCase()).join(" and ")
