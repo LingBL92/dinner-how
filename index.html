@@ -355,6 +355,9 @@ button.ing-tag:hover{border-color:var(--cool)}
 .bk-ing{font-size:12.5px;padding:5px 11px;border-radius:20px;background:var(--panel);color:var(--ink);border:1px solid rgba(50,117,100,.2);cursor:pointer}
 .bk-ing:hover{border-color:var(--cool);background:rgba(50,117,100,.08)}
 .sc-ings{padding:2px 0 4px;margin-top:6px}
+.sc-ings-lab{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:6px 0 7px}
+.bk-ing-main{border-color:var(--cool)!important;background:rgba(50,117,100,.1)!important}
+.bk-ing-main em{font-style:normal;font-size:9px;color:var(--cool);margin-left:5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
 .sc-ings-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .sc-row-x .sc-ings{display:none}
 .sc-row-x.open .sc-ings{display:block}
@@ -892,7 +895,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.17</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.19</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -3663,6 +3666,13 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
   // Something the cook ASKED for outranks anything the engine would have chosen.
   // Affinity ranks; it must never quietly drop a deliberate choice.
   const EXPL=(opts&&opts.explicit)||null;
+  // when the single bed is chosen, the OTHER eligible bed vegetables are set aside — report
+  // them so the UI can say "a fish takes one bed" rather than dropping them silently.
+  const bedLeftOut=(chosen, subj)=>{
+    const eligible=COLLECTORS_C.filter(id=>real.includes(id) && id!==subj);
+    return eligible.filter(id=>!chosen.includes(id)).map(id=>({id,
+      why:"a steamed fish sits on one vegetable bed \u2014 "+((R.byId[chosen[0]]||{}).name||"the first")+" is under it"}));
+  };
   const rankBed=list=>{
     const r=R.rankPartners?R.rankPartners(list):list;
     return EXPL ? r.slice().sort((a,b)=>(EXPL.has&&EXPL.has(b)?1:0)-(EXPL.has&&EXPL.has(a)?1:0)) : r;
@@ -3737,13 +3747,14 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
     if((form==="whole_fish"||form==="shellfish") && splitIds.length>1){
       const CAP=4;
       const cardIds=splitIds.slice(0,CAP);
-      const overflow=splitIds.slice(CAP).concat(form==="whole_fish"?ids.filter(id=>PROCESSED_FISH.includes(id)):[]);
+      const overflowIds=splitIds.slice(CAP).concat(form==="whole_fish"?ids.filter(id=>PROCESSED_FISH.includes(id)):[]);
+      const overflow=overflowIds.map(id=>({id, why:"steam it as its own dish \u2014 one steamer plates one subject"}));
       cardIds.forEach((fid,idx)=>{
         const bed = rankBed(COLLECTORS_C.filter(id=>real.includes(id) && id!==fid)).slice(0,1);
         out.push({key:form+"_"+fid, label:LABELS[form]+nm(fid), subject:fid, form,
           contents:[fid].concat(bed).concat(topping),
           note:NOTE[form],
-          leftOut: idx===cardIds.length-1 ? overflow : [],
+          leftOut: (idx===cardIds.length-1 ? overflow : []).concat(bedLeftOut(bed, fid)),
           alternatives: cardIds.filter(x=>x!==fid)});
       });
       return;
@@ -3753,10 +3764,17 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
     const subj2 = (form==="whole_fish" && splitIds.length) ? splitIds[0] : subj;
     const bedFor2 = (form==="whole_fish"||form==="shellfish")
       ? rankBed(COLLECTORS_C.filter(id=>real.includes(id) && id!==subj2)).slice(0,1) : [];
+    // things not in the dish: the bed vegetables that lost the single bed slot get a clear
+    // reason; anything else set aside is reported plainly.
+    const inDish=new Set([subj2].concat(bedFor2).concat(topping));
+    const bedDrops=bedLeftOut(bedFor2, subj2);
+    const bedDropIds=new Set(bedDrops.map(x=>x.id));
+    const otherDrops=ids.filter(x=>!inDish.has(x) && !bedDropIds.has(x))
+      .map(id=>({id, why:"set aside \u2014 not part of this steamed dish"}));
     out.push({key:form, label:LABELS[form]+nm(subj2), subject:subj2, form,
       contents:[subj2].concat(bedFor2).concat(topping),
       note:NOTE[form],
-      leftOut:ids.filter(x=>x!==subj2),
+      leftOut: bedDrops.concat(otherDrops),
       alternatives:ids.filter(x=>x!==subj2)});
   });
 
@@ -4988,6 +5006,7 @@ function addCurrentDishToBasket(name, method, buyList, timing, detail){
   const steps=((detail&&detail.steps)||[]).map(s=>(s.label||s.t||"")+(s.detail?": "+s.detail:(s.d?": "+s.d:"")));
   FLOW.basket.push({name, method, buy:(buyList||[]).map(b=>({id:b.id,name:b.name})), sourced,
     contents:(window.__lastContents||[]).slice(),   // the ingredients that make this dish
+    subject:(window.__lastSubject||null),           // the main, so edits don't flip the dish
     prep, firstStep:steps[0]||"", prepMins:(detail&&detail.prepMins)||0,
     timing: timing||{total:null,handsOn:null,handsOff:null}});
   persistSession();
@@ -5017,6 +5036,7 @@ function buyListForContents(contents){
 function addBasketButtonFor(label, contents, method, timing, detail){
   const buy=buyListForContents(contents);
   window.__lastContents=contents;   // remember the full selection for basket editing
+  window.__lastSubject=(detail&&detail.subject)||null;   // and the main, to keep edits honest
   const btn=document.createElement("button"); btn.className="add-basket-btn";
   const inBasket=FLOW.basket && FLOW.basket.some(d=>d.name===label);
   btn.innerHTML=inBasket ? "\u2713 In your basket" : "+ Add to basket";
@@ -5173,10 +5193,13 @@ function renderBasketSchedule(plan){
     });
     if(dIdx>=0){
       const strip=document.createElement("div"); strip.className="sc-ings";
+      // mark the protein so it's obvious which chip changes the main
+      const isProt=id=>((REF.byId[id]||{}).category)==="proteins";
       strip.innerHTML=
+        "<div class=\"sc-ings-lab\">Tap an ingredient to swap it or change the dish \u00b7 or add one</div>"+
         "<div class=\"sc-ings-row\">"+
-          items.map(id=>"<button class=\"bk-ing\" data-scedit=\""+dIdx+"\" data-ing=\""+id+"\">"+
-            ((REF.byId[id]||{}).name||id)+"</button>").join("")+
+          items.map(id=>"<button class=\"bk-ing"+(isProt(id)?" bk-ing-main":"")+"\" data-scedit=\""+dIdx+"\" data-ing=\""+id+"\">"+
+            ((REF.byId[id]||{}).name||id)+(isProt(id)?"<em>main</em>":"")+"</button>").join("")+
           "<button class=\"sc-add\" data-scadd=\""+dIdx+"\">+ add</button>"+
         "</div>";
       row.appendChild(strip);
@@ -5540,15 +5563,22 @@ function rebuildBasketDish(dishIdx){
   const d=FLOW.basket[dishIdx]; if(!d) return;
   const R=REF, ids=d.contents||[];
   let built=null, label=d.name;
+  // keep the SAME main this dish had — adding a vegetable to steamed chicken must not turn it
+  // into steamed bok choy just because the veg candidate sorts first.
+  const pickCand=(cands)=>{
+    if(!cands||!cands.length) return null;
+    if(d.subject){ const keep=cands.find(c=>c.subject===d.subject); if(keep) return keep; }
+    return cands[0];
+  };
   try{
-    if(d.method==="noodles"){ const c=noodleCandidates(ids,R,DISHES,AFF)[0];
-      if(c){ label=c.label; built=buildNoodle(c.contents,R,DISHES,AFF,{subject:c.subject,direction:c.direction,mode:c.mode}); } }
-    else if(d.method==="steam"){ const c=steamCandidates(ids,R,DISHES,AFF)[0];
-      if(c){ label=c.label||c.subjectName; built=buildSteam(c.contents,R,DISHES,AFF,c); } }
-    else if(d.method==="stirfry"){ const c=wokCandidates(ids,R,DISHES,AFF)[0];
-      if(c){ label=c.label; built=buildStirFry(c.contents,R,DISHES,AFF,c); } }
-    else if(d.method==="ricebowl"){ const c=riceCandidates(ids,R,DISHES,AFF)[0];
-      if(c){ label=c.label; built=buildRice(c.contents,R,DISHES,AFF,{subject:c.subject,direction:c.direction,mode:c.mode}); } }
+    if(d.method==="noodles"){ const c=pickCand(noodleCandidates(ids,R,DISHES,AFF));
+      if(c){ label=c.label; d.subject=c.subject; built=buildNoodle(c.contents,R,DISHES,AFF,{subject:c.subject,direction:c.direction,mode:c.mode}); } }
+    else if(d.method==="steam"){ const c=pickCand(steamCandidates(ids,R,DISHES,AFF));
+      if(c){ label=c.label||c.subjectName; d.subject=c.subject; built=buildSteam(c.contents,R,DISHES,AFF,c); } }
+    else if(d.method==="stirfry"){ const c=pickCand(wokCandidates(ids,R,DISHES,AFF));
+      if(c){ label=c.label; d.subject=c.subject!=null?c.subject:d.subject; built=buildStirFry(c.contents,R,DISHES,AFF,c); } }
+    else if(d.method==="ricebowl"){ const c=pickCand(riceCandidates(ids,R,DISHES,AFF));
+      if(c){ label=c.label; d.subject=c.subject; built=buildRice(c.contents,R,DISHES,AFF,{subject:c.subject,direction:c.direction,mode:c.mode}); } }
     else if(d.method==="onepot"){ const c=potCandidates(ids,R,DISHES,AFF)[0];
       if(c){ built=c; } }
   }catch(e){/* keep the old dish if re-derivation fails */}
@@ -5629,18 +5659,20 @@ function fillBasketPanel(panel){
       "<path d=\"M8.5 9 11 3.6M15.5 9 13 3.6\"/><path d=\"M9.5 13v3M14.5 13v3\"/></svg>"+
       "Your basket</span>"+
       "<span class=\"bk-sub\">"+FLOW.basket.length+(FLOW.basket.length===1?" dish":" dishes")+" \u00b7 "+buy.length+" to buy</span></div>"+
-    "<div class=\"bk-lab\">Cooking</div><div class=\"bk-dishes\">"+(dishRows||"<span class=\"bk-empty\">No dishes yet.</span>")+"</div>"+
+    (plan ? "" : "<div class=\"bk-lab\">Cooking</div><div class=\"bk-dishes\">"+(dishRows||"<span class=\"bk-empty\">No dishes yet.</span>")+"</div>")+
     "<div class=\"bk-lab\">To buy \u00b7 "+buy.length+"</div><div class=\"bk-chips\">"+buyChips+"</div>"+
     (buy.some(b=>b.sourced)?"<div class=\"bk-note\">\u2726 added from a suggestion</div>":"")+
     cookHtml+
     "<div class=\"bk-btns\"><button class=\"bk-copy\">Copy shopping list</button>"+
       "<button class=\"bk-clear\">Clear</button></div>";
-  // the cook-together plan, in the same language as the family-meal planner
+  // the cook-together plan IS the dish list now — each row is a dish, expandable to edit.
+  // Placed near the top, right after the header, so dishes and their timing are one thing.
   if(plan){
-    const lab=document.createElement("div"); lab.className="bk-lab"; lab.textContent="Cook it together";
-    const btns=panel.querySelector(".bk-btns");
-    if(btns){ panel.insertBefore(lab, btns); panel.insertBefore(renderBasketSchedule(plan), btns); }
-    else { panel.appendChild(lab); panel.appendChild(renderBasketSchedule(plan)); }
+    const lab=document.createElement("div"); lab.className="bk-lab"; lab.textContent="Your dishes, on one clock";
+    const sched=renderBasketSchedule(plan);
+    const toBuyLab=panel.querySelector(".bk-lab");   // the first "To buy" label
+    if(toBuyLab){ panel.insertBefore(lab, toBuyLab); panel.insertBefore(sched, toBuyLab); }
+    else { panel.appendChild(lab); panel.appendChild(sched); }
   }
   wireBasketPanel(panel);
 }
@@ -8217,13 +8249,17 @@ function renderSteam(){
   // ---- what's not on this plate ----
   if(chosen.leftOut && chosen.leftOut.length){
     const o=document.createElement("div"); o.className="pot-out";
-    const lab=document.createElement("span"); lab.className="po-l"; lab.textContent="not on this plate";
+    const lab=document.createElement("span"); lab.className="po-l"; lab.textContent="set aside";
     o.appendChild(lab);
-    chosen.leftOut.forEach(id=>{
+    // leftOut items may be plain ids or {id, why} — handle both, and show the specific reason
+    let reason="";
+    chosen.leftOut.forEach(it=>{
+      const id=(it && it.id)?it.id:it;
+      if(it && it.why && !reason) reason=it.why;
       const c=document.createElement("span"); c.className="po-c"; c.textContent=nm(id); o.appendChild(c);
     });
     const w=document.createElement("span"); w.className="po-w";
-    w.textContent="a steamer plates one subject \u2014 steam a second dish alongside, not piled on";
+    w.textContent=reason || "a steamer plates one subject \u2014 steam a second dish alongside, not piled on";
     o.appendChild(w);
     box.appendChild(o);
   }

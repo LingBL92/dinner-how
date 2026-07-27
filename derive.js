@@ -2706,6 +2706,13 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
   // Something the cook ASKED for outranks anything the engine would have chosen.
   // Affinity ranks; it must never quietly drop a deliberate choice.
   const EXPL=(opts&&opts.explicit)||null;
+  // when the single bed is chosen, the OTHER eligible bed vegetables are set aside — report
+  // them so the UI can say "a fish takes one bed" rather than dropping them silently.
+  const bedLeftOut=(chosen, subj)=>{
+    const eligible=COLLECTORS_C.filter(id=>real.includes(id) && id!==subj);
+    return eligible.filter(id=>!chosen.includes(id)).map(id=>({id,
+      why:"a steamed fish sits on one vegetable bed \u2014 "+((R.byId[chosen[0]]||{}).name||"the first")+" is under it"}));
+  };
   const rankBed=list=>{
     const r=R.rankPartners?R.rankPartners(list):list;
     return EXPL ? r.slice().sort((a,b)=>(EXPL.has&&EXPL.has(b)?1:0)-(EXPL.has&&EXPL.has(a)?1:0)) : r;
@@ -2780,13 +2787,14 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
     if((form==="whole_fish"||form==="shellfish") && splitIds.length>1){
       const CAP=4;
       const cardIds=splitIds.slice(0,CAP);
-      const overflow=splitIds.slice(CAP).concat(form==="whole_fish"?ids.filter(id=>PROCESSED_FISH.includes(id)):[]);
+      const overflowIds=splitIds.slice(CAP).concat(form==="whole_fish"?ids.filter(id=>PROCESSED_FISH.includes(id)):[]);
+      const overflow=overflowIds.map(id=>({id, why:"steam it as its own dish \u2014 one steamer plates one subject"}));
       cardIds.forEach((fid,idx)=>{
         const bed = rankBed(COLLECTORS_C.filter(id=>real.includes(id) && id!==fid)).slice(0,1);
         out.push({key:form+"_"+fid, label:LABELS[form]+nm(fid), subject:fid, form,
           contents:[fid].concat(bed).concat(topping),
           note:NOTE[form],
-          leftOut: idx===cardIds.length-1 ? overflow : [],
+          leftOut: (idx===cardIds.length-1 ? overflow : []).concat(bedLeftOut(bed, fid)),
           alternatives: cardIds.filter(x=>x!==fid)});
       });
       return;
@@ -2796,10 +2804,17 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
     const subj2 = (form==="whole_fish" && splitIds.length) ? splitIds[0] : subj;
     const bedFor2 = (form==="whole_fish"||form==="shellfish")
       ? rankBed(COLLECTORS_C.filter(id=>real.includes(id) && id!==subj2)).slice(0,1) : [];
+    // things not in the dish: the bed vegetables that lost the single bed slot get a clear
+    // reason; anything else set aside is reported plainly.
+    const inDish=new Set([subj2].concat(bedFor2).concat(topping));
+    const bedDrops=bedLeftOut(bedFor2, subj2);
+    const bedDropIds=new Set(bedDrops.map(x=>x.id));
+    const otherDrops=ids.filter(x=>!inDish.has(x) && !bedDropIds.has(x))
+      .map(id=>({id, why:"set aside \u2014 not part of this steamed dish"}));
     out.push({key:form, label:LABELS[form]+nm(subj2), subject:subj2, form,
       contents:[subj2].concat(bedFor2).concat(topping),
       note:NOTE[form],
-      leftOut:ids.filter(x=>x!==subj2),
+      leftOut: bedDrops.concat(otherDrops),
       alternatives:ids.filter(x=>x!==subj2)});
   });
 
