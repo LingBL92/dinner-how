@@ -2255,6 +2255,27 @@ function buildStirFry(ingIds, R, dishes, AFF, opts){
    everything you own is not a dish; it's a mess. So propose coherent options, the way
    the pot proposes pots.
    ============================================================ */
+/* The sauce that gives a stir-fry its character, for naming: "Sambal chicken",
+   "Dark soy pork belly". Plain garlic/oyster reads as no sauce (just "stir-fry"). */
+const WOK_SAUCE_NAME={
+  sambal:"Sambal", dark_soy_sauce:"Dark soy", fermented_beancurd:"Fu yu", dried_chilli:"Dried chilli",
+  salted_fish:"Salted fish", doubanjiang:"Mapo", fermented_black_bean:"Black bean", kung_pao:"Kung pao",
+  salted_egg:"Salted egg", curry_powder:"Curry", oyster_sauce:"", garlic:"", ginger:""
+};
+function contents0(ids,pick,rest){ return [ids[0]].concat(pick||[]).concat(rest||[]); }
+function wokSauceOf(ids, R){
+  // ginger + scallion together is its own character
+  if(ids.includes("ginger") && ids.includes("scallion")) return "Ginger scallion";
+  for(const id of ids){
+    if(id in WOK_SAUCE_NAME && WOK_SAUCE_NAME[id]) return WOK_SAUCE_NAME[id];
+  }
+  return "";
+}
+function wokSauceKey(ids, R){
+  if(ids.includes("ginger") && ids.includes("scallion")) return "ginger_scallion";
+  for(const id of ids){ if(id in WOK_SAUCE_NAME && WOK_SAUCE_NAME[id]) return id; }
+  return "plain";
+}
 function wokCandidates(ingIds, R, dishes, AFF){
   const real=[...new Set(ingIds.filter(id=>{
     const i=R.byId[id]||{};
@@ -2311,9 +2332,17 @@ function wokCandidates(ingIds, R, dishes, AFF){
     }
 
     const names=pick.map(v=>(R.byId[v]||{}).name.toLowerCase());
+    const sauce=wokSauceOf(ingIds, R);
+    const sKey=wokSauceKey(ingIds, R);
+    const protName=(R.byId[lead]||{}).name;
+    // a sauce name reads better with the plain protein than the cut: "Sambal chicken",
+    // not "Sambal chicken thigh"; but keep the cut when it matters ("Dark soy pork belly").
+    const KEEP_CUT=/belly|ribs|shank|chuck|brisket|wing|mince/;
+    const shortProt = KEEP_CUT.test(lead) ? protName.toLowerCase().replace(/_/g," ")
+                    : (speciesOf(lead)||protName).toLowerCase().replace(/_/g," ");
     out.push({
-      key:"prot_"+sp,
-      label:(R.byId[lead]||{}).name+" stir-fry",
+      key: sKey==="plain" ? "prot_"+sp : sKey+"_"+sp,
+      label: sauce ? sauce+" "+shortProt : protName+" stir-fry",
       lead:[lead],
       contents:[lead].concat(pick).concat(rest),
       basis,

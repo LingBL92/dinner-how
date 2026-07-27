@@ -326,9 +326,34 @@ button.ing-tag:hover{border-color:var(--cool)}
 .bk-lab{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.12em;
   color:var(--cool);margin:14px 0 8px;font-weight:700}
 .bk-dishes{display:flex;flex-direction:column;gap:8px}
-.bk-dish{display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--panel);border-radius:9px}
+.bk-dish{display:block;padding:9px 11px;background:var(--panel);border-radius:9px}
 .bk-flame{color:var(--cool);font-size:13px}
 .bk-dn{flex:1;font-size:14px;color:var(--ink)}
+.bk-dhead{display:flex;align-items:center;gap:9px;cursor:pointer;padding:2px 0}
+.bk-dt{font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-left:auto;margin-right:4px}
+.bk-exp{font-family:var(--font-mono);font-size:15px;color:var(--cool);width:16px;text-align:center;flex:none}
+.bk-dish.open{background:rgba(50,117,100,.05);border-radius:10px;padding:4px 8px;margin:2px -8px}
+.bk-ings{padding:6px 2px 8px}
+.bk-ings-lab{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:4px 0 7px}
+.bk-ings-row{display:flex;flex-wrap:wrap;gap:6px}
+.bk-lanes{display:flex;gap:12px;margin:12px 0 4px}
+.bk-lane{flex:1;min-width:0}
+.bk-lane-h{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.09em;margin-bottom:8px;font-weight:700}
+.bk-lane-h.keep{color:var(--cool)}
+.bk-lane-h.change{color:var(--gold)}
+.bk-lane-none{font-size:11.5px;color:var(--muted);font-style:italic}
+.bk-sw-keep,.bk-sw-change{display:block;width:100%;text-align:left;margin-bottom:6px;padding:8px 11px;border-radius:9px;font-size:13px;cursor:pointer;border:1px solid transparent}
+.bk-sw-keep{background:rgba(50,117,100,.09);color:var(--ink);border-color:rgba(50,117,100,.2)}
+.bk-sw-keep:hover{border-color:var(--cool)}
+.bk-sw-change{background:rgba(168,114,24,.08);color:var(--ink);border-color:rgba(168,114,24,.22)}
+.bk-sw-change:hover{border-color:var(--gold)}
+.bk-sw-change em{display:block;font-style:normal;font-size:10.5px;color:var(--muted);margin-top:2px}
+.bk-blocked{margin:8px 0 4px;padding-top:8px;border-top:1px solid rgba(0,0,0,.06);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.bk-blocked-l{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);width:100%}
+.bk-sw-blocked{padding:6px 10px;border-radius:8px;font-size:12.5px;background:rgba(0,0,0,.04);color:var(--muted);border:1px dashed rgba(0,0,0,.15);cursor:help;text-decoration:line-through}
+.bk-reason{width:100%;font-size:12px;color:var(--gold);font-style:italic;margin-top:5px}
+.bk-ing{font-size:12.5px;padding:5px 11px;border-radius:20px;background:var(--panel);color:var(--ink);border:1px solid rgba(50,117,100,.2);cursor:pointer}
+.bk-ing:hover{border-color:var(--cool);background:rgba(50,117,100,.08)}
 .bk-rm{border:none;background:transparent;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;padding:0 4px}
 .bk-chips{display:flex;flex-wrap:wrap;gap:6px}
 .bk-chip{font-size:12.5px;padding:5px 11px;border-radius:20px;background:var(--panel);color:var(--ink);
@@ -841,7 +866,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.09</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.13</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -3161,6 +3186,27 @@ function buildStirFry(ingIds, R, dishes, AFF, opts){
    everything you own is not a dish; it's a mess. So propose coherent options, the way
    the pot proposes pots.
    ============================================================ */
+/* The sauce that gives a stir-fry its character, for naming: "Sambal chicken",
+   "Dark soy pork belly". Plain garlic/oyster reads as no sauce (just "stir-fry"). */
+const WOK_SAUCE_NAME={
+  sambal:"Sambal", dark_soy_sauce:"Dark soy", fermented_beancurd:"Fu yu", dried_chilli:"Dried chilli",
+  salted_fish:"Salted fish", doubanjiang:"Mapo", fermented_black_bean:"Black bean", kung_pao:"Kung pao",
+  salted_egg:"Salted egg", curry_powder:"Curry", oyster_sauce:"", garlic:"", ginger:""
+};
+function contents0(ids,pick,rest){ return [ids[0]].concat(pick||[]).concat(rest||[]); }
+function wokSauceOf(ids, R){
+  // ginger + scallion together is its own character
+  if(ids.includes("ginger") && ids.includes("scallion")) return "Ginger scallion";
+  for(const id of ids){
+    if(id in WOK_SAUCE_NAME && WOK_SAUCE_NAME[id]) return WOK_SAUCE_NAME[id];
+  }
+  return "";
+}
+function wokSauceKey(ids, R){
+  if(ids.includes("ginger") && ids.includes("scallion")) return "ginger_scallion";
+  for(const id of ids){ if(id in WOK_SAUCE_NAME && WOK_SAUCE_NAME[id]) return id; }
+  return "plain";
+}
 function wokCandidates(ingIds, R, dishes, AFF){
   const real=[...new Set(ingIds.filter(id=>{
     const i=R.byId[id]||{};
@@ -3217,9 +3263,17 @@ function wokCandidates(ingIds, R, dishes, AFF){
     }
 
     const names=pick.map(v=>(R.byId[v]||{}).name.toLowerCase());
+    const sauce=wokSauceOf(ingIds, R);
+    const sKey=wokSauceKey(ingIds, R);
+    const protName=(R.byId[lead]||{}).name;
+    // a sauce name reads better with the plain protein than the cut: "Sambal chicken",
+    // not "Sambal chicken thigh"; but keep the cut when it matters ("Dark soy pork belly").
+    const KEEP_CUT=/belly|ribs|shank|chuck|brisket|wing|mince/;
+    const shortProt = KEEP_CUT.test(lead) ? protName.toLowerCase().replace(/_/g," ")
+                    : (speciesOf(lead)||protName).toLowerCase().replace(/_/g," ");
     out.push({
-      key:"prot_"+sp,
-      label:(R.byId[lead]||{}).name+" stir-fry",
+      key: sKey==="plain" ? "prot_"+sp : sKey+"_"+sp,
+      label: sauce ? sauce+" "+shortProt : protName+" stir-fry",
       lead:[lead],
       contents:[lead].concat(pick).concat(rest),
       basis,
@@ -4547,6 +4601,55 @@ const PANTRY_ON=PANTRY_ITEMS.filter(id=>!PANTRY_OFF.has(id));
 const MEAL_ROLES=[["base","Rice"],["veg","Vegetable"],["meat","Meat"],["fish","Fish"],["soup","Soup"],["dessert","Dessert"]];
 const MEAL_DEFAULT={base:1,veg:1,meat:1,fish:0,soup:0,dessert:0};
 const FLOW={comps:[],active:new Set(),pantry:new Set(PANTRY_ON),appl:new Set(["stovetop","oven"]),taste:new Set(),types:new Set(),compose:null,mode:"compose",time:{total:null,active:null,cook:null},potPath:null,potMode:"soup",wokDir:null,wokPick:null,steamDir:null,steamPick:null,riceDir:null,ricePick:null,noodleDir:null,noodlePick:null,mealShape:{...MEAL_DEFAULT},results:[]};
+
+/* ---- SESSION PERSISTENCE (F2) ----------------------------------------------
+   Save the user's selections and basket so a refresh doesn't wipe the plan. We
+   store only what can't be re-derived: which ingredients are active, pantry
+   overrides, appliances, and the saved basket. Everything else rebuilds from
+   these via recompute(). Saves are debounced; restore runs after data loads so
+   ingredient ids can be validated against the reference.                       */
+const PERSIST_KEY="dh_session_v1";
+let _persistT=null;
+function persistSession(){
+  if(_persistT) return;                       // debounce a burst of changes into one write
+  _persistT=setTimeout(()=>{
+    _persistT=null;
+    try{
+      const snap={
+        active:[...FLOW.active],
+        pantry:[...FLOW.pantry],
+        appl:[...FLOW.appl],
+        compose:FLOW.compose,
+        basket:(FLOW.basket||[]).map(d=>({name:d.name, method:d.method, buy:d.buy, sourced:d.sourced,
+          prep:d.prep, firstStep:d.firstStep, prepMins:d.prepMins, timing:d.timing})),
+        pax:(typeof pax!=="undefined"?pax:4)
+      };
+      localStorage.setItem(PERSIST_KEY, JSON.stringify(snap));
+    }catch(e){/* storage blocked/full — fail silent, same as tracking */}
+  }, 250);
+}
+function restoreSession(R){
+  let snap;
+  try{ snap=JSON.parse(localStorage.getItem(PERSIST_KEY)||"null"); }catch(e){ return false; }
+  if(!snap) return false;
+  const valid=id=>R && R.byId && R.byId[id];        // drop ids the taxonomy no longer has
+  if(Array.isArray(snap.active)) FLOW.active=new Set(snap.active.filter(valid));
+  if(Array.isArray(snap.pantry)) FLOW.pantry=new Set(snap.pantry.filter(valid));
+  if(Array.isArray(snap.appl) && snap.appl.length) FLOW.appl=new Set(snap.appl);
+  if(snap.compose) FLOW.compose=snap.compose;
+  if(Array.isArray(snap.basket)) FLOW.basket=snap.basket;
+  if(typeof snap.pax==="number"){ try{ pax=snap.pax; }catch(e){} }
+  // rebuild the component groups for whatever's active, so the canvas matches
+  if(typeof groupFor==="function"){
+    FLOW.comps=[];
+    [...FLOW.active].forEach(id=>{
+      const ing=R.byId[id]; if(!ing) return;
+      const g=groupFor(ing);
+      if(!FLOW.comps.some(c=>c.key===g.key)) FLOW.comps.push({key:g.key,title:g.title,leaves:g.leaves,dx:0,dy:0});
+    });
+  }
+  return true;
+}
 let REF=null,DISHES=[],APPL={},APPL_DATA={},APPLIANCE_ORDER=[],AFF=null;
 
 /* ===== PILOT TRACKING =====
@@ -4836,8 +4939,10 @@ function addCurrentDishToBasket(name, method, buyList, timing, detail){
   const prep=((detail&&detail.prep)||[]).map(p=>p.name+" \u2014 "+(p.prep||"prep"));
   const steps=((detail&&detail.steps)||[]).map(s=>(s.label||s.t||"")+(s.detail?": "+s.detail:(s.d?": "+s.d:"")));
   FLOW.basket.push({name, method, buy:(buyList||[]).map(b=>({id:b.id,name:b.name})), sourced,
+    contents:(window.__lastContents||[]).slice(),   // the ingredients that make this dish
     prep, firstStep:steps[0]||"", prepMins:(detail&&detail.prepMins)||0,
     timing: timing||{total:null,handsOn:null,handsOff:null}});
+  persistSession();
   TRACK.log("dish_added_to_basket", {dish:name, method:method, buy_count:(buyList||[]).length, basket_dishes:FLOW.basket.length});
   updateBasketPill();
 }
@@ -4863,6 +4968,7 @@ function buyListForContents(contents){
 /* a reusable "+ Add to basket" button for the single-dish composers */
 function addBasketButtonFor(label, contents, method, timing, detail){
   const buy=buyListForContents(contents);
+  window.__lastContents=contents;   // remember the full selection for basket editing
   const btn=document.createElement("button"); btn.className="add-basket-btn";
   const inBasket=FLOW.basket && FLOW.basket.some(d=>d.name===label);
   btn.innerHTML=inBasket ? "\u2713 In your basket" : "+ Add to basket";
@@ -5119,15 +5225,190 @@ function mealGapSuggestions(){
   out.forEach(s=>{ s.forDish = dishThatTakes(s.id); });
   return out.slice(0,5);
 }
+/* Edit an ingredient inside a basket dish — swap it, remove it, or the card also
+   offers an extra to add. Because a dish's contents ARE its buy-list, every edit updates
+   both: the dish becomes squid laksa AND the cart swaps prawn for squid. */
+/* Classify a candidate swap for a basket dish into one of three lanes:
+   KEEP   — same dish, like-for-like (prawn -> squid in a laksa)
+   CHANGE — composes a DIFFERENT dish around the new ingredient
+   BLOCKED— the dish's method can't cook it (steam a braising cut)
+   Compares the dish KEY, not the label, so a noodle-name swap isn't mistaken for a new dish. */
+function shortName(name){
+  return String(name||"dish").replace(/ with .*/,"").replace(/ \(.*\)/,"").trim();
+}
+function classifyBasketSwap(d, oldId, newId){
+  const R=REF, next=(d.contents||[]).map(x=>x===oldId?newId:x);
+  const firstOf=(ids)=>{
+    try{
+      if(d.method==="noodles") return noodleCandidates(ids,R,DISHES,AFF)[0];
+      if(d.method==="steam")   return steamCandidates(ids,R,DISHES,AFF)[0];
+      if(d.method==="stirfry") return wokCandidates(ids,R,DISHES,AFF)[0];
+      if(d.method==="ricebowl")return riceCandidates(ids,R,DISHES,AFF)[0];
+      if(d.method==="onepot")  return potCandidates(ids,R,DISHES,AFF)[0];
+    }catch(e){}
+    return null;
+  };
+  // method-level block: can the swapped-in ingredient be cooked this way at all?
+  const ni=R.byId[newId]||{};
+  if(d.method==="steam" && ni.category==="proteins"){
+    if(typeof steamFormOf==="function" && !steamFormOf(newId,R))
+      return {lane:"BLOCKED", reason:"can\u2019t be steamed \u2014 it needs a braise or a sear"};
+  }
+  if(d.method==="stirfry" && ni.category==="proteins"){
+    if((ni.provides||[]).includes("collagen_rich") || ni.cut_role==="braise")
+      return {lane:"BLOCKED", reason:"a braising cut won\u2019t tenderise in a wok"};
+  }
+  const before=firstOf(d.contents||[]), after=firstOf(next);
+  if(!after) return {lane:"BLOCKED", reason:"no dish composes with this"};
+  const beforeKey=before?(before.key||before.species||before.label):null;
+  const afterKey=after.key||after.species||after.label;
+  // For a stir-fry, the SAUCE is the character: swapping the protein under the same sauce
+  // keeps the dish (Sambal chicken -> Sambal prawn is still "a sambal stir-fry"). Compare the
+  // sauce prefix, not the whole protein-specific key.
+  let sameDish = beforeKey && afterKey && beforeKey===afterKey;
+  if(!sameDish && d.method==="stirfry" && typeof wokSauceKey==="function"){
+    const sBefore=wokSauceKey(d.contents||[], REF);
+    const sAfter=wokSauceKey(next, REF);
+    if(sBefore!=="plain" && sBefore===sAfter) sameDish=true;   // same sauce = same dish family
+  }
+  return {lane: sameDish?"KEEP":"CHANGE", becomes: after.label||after.species||"a new dish"};
+}
+function openBasketIngredientCard(dishIdx, id){
+  const R=REF, d=FLOW.basket[dishIdx]; if(!d) return;
+  const i=R.byId[id]||{};
+  const wrap=document.createElement("div"); wrap.className="radial sheet"; wrap.id="bkcard";
+  wrap.onclick=(e)=>{ if(e.target===wrap) wrap.remove(); };
+  const card=document.createElement("div"); card.className="sug-card";
+
+  // candidate pool by category
+  let pool=[];
+  if(i.category==="vegetables"){
+    pool=(typeof LEAFY_GREENS!=="undefined" && LEAFY_GREENS.has(id))
+      ? [...LEAFY_GREENS] : ["carrot","daikon","mushroom","tomato","eggplant","long_beans","broccoli","cauliflower","okra","napa_cabbage","kailan","chye_sim"];
+  } else if(i.category==="proteins"){
+    pool=["prawn","squid","clams","fish_slices","fish_cake","chicken_thigh","pork_belly","pork_mince","beef_slices","beef_chuck","tofu","tau_kee"];
+  }
+  pool=pool.filter(x=>x!==id && R.byId[x] && !(d.contents||[]).includes(x));
+
+  // sort each candidate into a lane
+  const keep=[], change=[], blocked=[];
+  pool.forEach(x=>{
+    const r=classifyBasketSwap(d, id, x);
+    const entry={id:x, name:(R.byId[x]||{}).name||x, becomes:r.becomes, reason:r.reason};
+    if(r.lane==="KEEP") keep.push(entry);
+    else if(r.lane==="CHANGE") change.push(entry);
+    else blocked.push(entry);
+  });
+  const cap=(a,n)=>a.slice(0,n);
+  const chip=(e,cls)=>"<button class=\""+cls+"\" data-sw=\""+e.id+"\""+
+    (e.reason?" data-reason=\""+e.reason.replace(/"/g,"&quot;")+"\" disabled":"")+">"+e.name+
+    (cls==="bk-sw-change"&&e.becomes?"<em>"+e.becomes+"</em>":"")+"</button>";
+
+  card.innerHTML=
+    "<div class=\"sug-name\">"+(i.name||id)+"</div>"+
+    "<div class=\"sug-line\">In <strong>"+d.name+"</strong>. An edit here updates the dish and your shopping list together.</div>"+
+    "<div class=\"bk-lanes\">"+
+      "<div class=\"bk-lane\"><div class=\"bk-lane-h keep\">Keeps it "+shortName(d.name)+"</div>"+
+        (keep.length?cap(keep,5).map(e=>chip(e,"bk-sw-keep")).join(""):"<span class=\"bk-lane-none\">no like-for-like swap</span>")+
+      "</div>"+
+      "<div class=\"bk-lane\"><div class=\"bk-lane-h change\">Makes a new dish</div>"+
+        (change.length?cap(change,5).map(e=>chip(e,"bk-sw-change")).join(""):"<span class=\"bk-lane-none\">nothing different composes</span>")+
+      "</div>"+
+    "</div>"+
+    (blocked.length?"<div class=\"bk-blocked\"><span class=\"bk-blocked-l\">can\u2019t use here</span>"+
+      cap(blocked,4).map(e=>chip(e,"bk-sw-blocked")).join("")+"</div>":"")+
+    "<div class=\"sug-btns\">"+
+      "<button class=\"sug-drop\">Remove from dish</button>"+
+      "<button class=\"sug-cancel\">Close</button>"+
+    "</div>";
+  wrap.appendChild(card); document.body.appendChild(wrap);
+  requestAnimationFrame(()=>wrap.classList.add("in"));
+
+  const rebuild=()=>{
+    // re-derive the dish from its edited contents so name, prep and buy-list stay honest
+    rebuildBasketDish(dishIdx);
+    wrap.remove(); persistSession(); updateBasketPill(); openBasket();
+  };
+  // a disabled (blocked) chip reveals its reason on tap
+  card.querySelectorAll("[data-reason]").forEach(b=>{
+    b.removeAttribute("disabled");
+    b.onclick=(e)=>{ e.stopPropagation();
+      let note=card.querySelector(".bk-reason");
+      if(!note){ note=document.createElement("div"); note.className="bk-reason"; card.querySelector(".bk-blocked").appendChild(note); }
+      note.textContent=b.getAttribute("data-reason");
+    };
+  });
+  card.querySelector(".sug-cancel").onclick=()=>wrap.remove();
+  card.querySelector(".sug-drop").onclick=()=>{
+    d.contents=(d.contents||[]).filter(x=>x!==id);
+    TRACK.log("basket_ingredient_removed",{dish:d.name, id:id});
+    rebuild();
+  };
+  card.querySelectorAll("[data-sw]").forEach(b=>b.onclick=()=>{
+    const to=b.getAttribute("data-sw");
+    d.contents=(d.contents||[]).map(x=>x===id?to:x);
+    TRACK.log("basket_ingredient_swapped",{dish:d.name, from:id, to:to});
+    rebuild();
+  });
+}
+/* Re-derive a basket dish after its contents change, so name/prep/timing/buy stay correct. */
+function rebuildBasketDish(dishIdx){
+  const d=FLOW.basket[dishIdx]; if(!d) return;
+  const R=REF, ids=d.contents||[];
+  let built=null, label=d.name;
+  try{
+    if(d.method==="noodles"){ const c=noodleCandidates(ids,R,DISHES,AFF)[0];
+      if(c){ label=c.label; built=buildNoodle(c.contents,R,DISHES,AFF,{subject:c.subject,direction:c.direction,mode:c.mode}); } }
+    else if(d.method==="steam"){ const c=steamCandidates(ids,R,DISHES,AFF)[0];
+      if(c){ label=c.label||c.subjectName; built=buildSteam(c.contents,R,DISHES,AFF,c); } }
+    else if(d.method==="stirfry"){ const c=wokCandidates(ids,R,DISHES,AFF)[0];
+      if(c){ label=c.label; built=buildStirFry(c.contents,R,DISHES,AFF,c); } }
+    else if(d.method==="ricebowl"){ const c=riceCandidates(ids,R,DISHES,AFF)[0];
+      if(c){ label=c.label; built=buildRice(c.contents,R,DISHES,AFF,{subject:c.subject,direction:c.direction,mode:c.mode}); } }
+    else if(d.method==="onepot"){ const c=potCandidates(ids,R,DISHES,AFF)[0];
+      if(c){ built=c; } }
+  }catch(e){/* keep the old dish if re-derivation fails */}
+  d.name=label;
+  d.buy=buyListForContents(ids).map(b=>({id:b.id,name:b.name}));
+  if(built){
+    if(built.total!=null) d.timing={total:built.total,handsOn:built.handsOn,handsOff:built.handsOff};
+    if(built.prep) d.prep=built.prep.map(p=>p.name+" \u2014 "+(p.prep||"prep"));
+    if(built.prepMins!=null) d.prepMins=built.prepMins;
+  }
+}
 function openBasket(){
   closeBasket();
   const buy=basketBuyList();
   const wrap=document.createElement("div"); wrap.className="radial sheet"; wrap.id="basket";
   wrap.onclick=(e)=>{ if(e.target===wrap) closeBasket(); };
   const panel=document.createElement("div"); panel.className="basket-panel";
-  const dishRows=FLOW.basket.map((d,idx)=>
-    "<div class=\"bk-dish\"><span class=\"bk-flame\">\u25c9</span><span class=\"bk-dn\">"+d.name+"</span>"+
-    "<button class=\"bk-rm\" data-rm=\""+idx+"\" aria-label=\"remove\">\u00d7</button></div>").join("");
+  const dishRows=FLOW.basket.map((d,idx)=>{
+    const t=d.timing||{};
+    const timeStr = t.total ? t.total+" min"+(t.handsOff?" \u00b7 "+t.handsOff+" hands-off":"") : "";
+    const open = FLOW.basketOpen===idx;
+    // the ingredients that make this dish — tappable to swap/remove
+    const items=(d.contents||[]).filter(id=>{
+      const ing=REF.byId[id]||{};
+      if(id==="water") return false;
+      return measureTypeOf(ing)!=="assumed" || CHARACTER_SEASONINGS.has(id);
+    });
+    const itemChips=items.map(id=>
+      "<button class=\"bk-ing\" data-bkedit=\""+idx+"\" data-ing=\""+id+"\">"+
+        ((REF.byId[id]||{}).name||id)+"</button>").join("");
+    return "<div class=\"bk-dish"+(open?" open":"")+"\">"+
+      "<div class=\"bk-dhead\" data-toggle=\""+idx+"\">"+
+        "<span class=\"bk-flame\">\u25c9</span>"+
+        "<span class=\"bk-dn\">"+d.name+"</span>"+
+        (timeStr?"<span class=\"bk-dt\">"+timeStr+"</span>":"")+
+        "<span class=\"bk-exp\">"+(open?"\u2212":"+")+"</span>"+
+        "<button class=\"bk-rm\" data-rm=\""+idx+"\" aria-label=\"remove\">\u00d7</button>"+
+      "</div>"+
+      (open?"<div class=\"bk-ings\">"+
+        "<div class=\"bk-ings-lab\">Ingredients \u2014 tap to swap or remove</div>"+
+        "<div class=\"bk-ings-row\">"+itemChips+"</div>"+
+      "</div>":"")+
+    "</div>";
+  }).join("");
   const buyChips=buy.length? buy.map(b=>
     "<span class=\"bk-chip"+(b.sourced?" sourced":"")+"\">"+b.name+(b.sourced?" \u2726":"")+"</span>").join("")
     : "<span class=\"bk-empty\">Nothing to buy \u2014 you have it all.</span>";
@@ -5170,10 +5451,25 @@ function openBasket(){
   }
   wrap.appendChild(panel); document.body.appendChild(wrap);
   requestAnimationFrame(()=>wrap.classList.add("in"));
-  panel.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{
-    FLOW.basket.splice(+b.getAttribute("data-rm"),1); updateBasketPill(); openBasket();
+  panel.querySelectorAll("[data-rm]").forEach(b=>b.onclick=(e)=>{
+    e.stopPropagation();
+    FLOW.basket.splice(+b.getAttribute("data-rm"),1);
+    if(FLOW.basketOpen!=null){ if(+b.getAttribute("data-rm")===FLOW.basketOpen) FLOW.basketOpen=null; }
+    persistSession(); updateBasketPill(); openBasket();
   });
-  panel.querySelector(".bk-clear").onclick=()=>{ FLOW.basket=[]; updateBasketPill(); closeBasket(); };
+  // expand / collapse a dish to see its ingredients
+  panel.querySelectorAll("[data-toggle]").forEach(h=>h.onclick=(e)=>{
+    if(e.target.closest(".bk-rm")) return;
+    const i=+h.getAttribute("data-toggle");
+    FLOW.basketOpen = (FLOW.basketOpen===i) ? null : i;
+    openBasket();
+  });
+  // tap an ingredient inside a dish -> swap / remove, editing BOTH the dish and the buy-list
+  panel.querySelectorAll("[data-bkedit]").forEach(b=>b.onclick=(e)=>{
+    e.stopPropagation();
+    openBasketIngredientCard(+b.getAttribute("data-bkedit"), b.getAttribute("data-ing"));
+  });
+  panel.querySelector(".bk-clear").onclick=()=>{ FLOW.basket=[]; persistSession(); updateBasketPill(); closeBasket(); };
   panel.querySelector(".bk-copy").onclick=()=>{
     const text=buy.map(b=>"\u2022 "+b.name).join("\n");
     const done=()=>{ TRACK.log("list_copied", {items:buy.length, dishes:FLOW.basket.length}); const c=panel.querySelector(".bk-copy"); if(c){ c.textContent="Copied \u2713"; setTimeout(()=>{c.textContent="Copy shopping list";},1600);} };
@@ -5330,6 +5626,7 @@ function toggleCompose(id){
 }
 
 function recompute(){
+  persistSession();                          // F2: any change that recomputes is worth saving
   const ids=[...new Set([...FLOW.active, ...FLOW.pantry])];
   if(!FLOW.active.size||!FLOW.appl.size){ FLOW.results=[]; renderRecipes(); requestAnimationFrame(drawWires); return; }
   const pantry={}; ids.forEach(id=>pantry[id]={});
@@ -9007,8 +9304,10 @@ async function boot(){
     AFF=buildAffinity(DISHES,R);
     setAffinity(AFF);   // so substitutions can be checked for precedent
     auditDrift(R, DISHES);   // warn if the taxonomy has outgrown the code's lists
+    restoreSession(R);                       // F2: bring back the last session before first paint
     owned.clear(); FLOW.appl.forEach(x=>owned.add(x));
-    renderPantry(); renderAppl(); renderType(); renderTaste(); renderTime(); renderIngTags(); renderRecipes();
+    updateBasketPill();                      // reflect a restored basket immediately
+    renderPantry(); renderAppl(); renderType(); renderTaste(); renderTime(); renderIngTags(); renderComps(); renderRecipes();
     setupCollapse();
     const s=el("search");
     if(s) s.addEventListener("keydown",e=>{ if(e.key==="Enter"){ const ok=spawn(s.value); if(ok)s.value=""; }});
