@@ -377,6 +377,17 @@ button.ing-tag:hover{border-color:var(--cool)}
 
 .bk-rm{border:none;background:transparent;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;padding:0 4px}
 .bk-chips{display:flex;flex-wrap:wrap;gap:6px}
+.bk-lab-shop{font-size:13px;font-weight:700;margin-top:16px}
+.bk-shop-sec{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.09em;color:var(--cool);margin:10px 0 7px;font-weight:700}
+.bk-shop-have{color:var(--muted)}
+.bk-chip-have{background:rgba(0,0,0,.04);color:var(--muted);border-color:rgba(0,0,0,.08)}
+.bk-ideate{margin-top:16px;padding:12px 14px;border-radius:11px;background:rgba(50,117,100,.07);border:1px solid rgba(50,117,100,.18)}
+.bk-ideate-h{font-size:13.5px;color:var(--ink);margin-bottom:3px}
+.bk-ideate-h strong{color:var(--cool);font-weight:700}
+.bk-ideate-why{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:9px}
+.bk-ideate-add{font-size:12.5px;padding:7px 13px;border-radius:20px;background:var(--cool);color:#fff;border:none;cursor:pointer;font-weight:600}
+.bk-ideate-add:hover{filter:brightness(1.08)}
+
 .bk-chip{font-size:12.5px;padding:5px 11px;border-radius:20px;background:var(--panel);color:var(--ink);
   border:1px solid rgba(50,117,100,.15)}
 .bk-chip.sourced{background:rgba(50,117,100,.12);color:var(--cool);border-color:rgba(50,117,100,.3)}
@@ -898,7 +909,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.25</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.27</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -4800,6 +4811,7 @@ function persistSession(){
         appl:[...FLOW.appl],
         compose:FLOW.compose,
         basket:(FLOW.basket||[]).map(d=>({name:d.name, method:d.method, buy:d.buy, sourced:d.sourced,
+          contents:d.contents, subject:d.subject,
           prep:d.prep, firstStep:d.firstStep, prepMins:d.prepMins, timing:d.timing})),
         pax:(typeof pax!=="undefined"?pax:4)
       };
@@ -5128,6 +5140,62 @@ function addCurrentDishToBasket(name, method, buyList, timing, detail){
 }
 /* build the to-buy list for a composed dish from its contents: the ingredients it needs that
    you don't already have (not in active basket or pantry). Reused by every composer. */
+/* The shopping list for the whole basket, split two ways so it reads like a real list:
+   TO BUY  — real ingredients (proteins, vegetables, noodles) not in your pantry
+   HAVE    — the same kind of things you've ticked as already in your kitchen, plus the
+             pantry staples each dish leans on (so you can glance and confirm you have them).
+   Aromatics and water are never listed; they're assumed. */
+/* The "make it a balanced meal" nudge for the shopping list. Reads the same meal-gap
+   engine the results panel uses, but prioritises STRUCTURAL gaps (missing protein, starch,
+   or green) over mere extras \u2014 and frames each as a cart action: add X to round the meal out.
+   Returns the single most important gap, or null if the meal is already well-formed. */
+function basketBalanceNudge(){
+  if(!FLOW.basket.length) return null;
+  const gaps=(typeof mealGapSuggestions==="function")?mealGapSuggestions():[];
+  if(!gaps.length) return null;
+  // structural gaps first (protein/starch/green), then balance, then variety, then extras
+  const order={gap:0, balance:1, variety:2, extra:3};
+  // within structural gaps, a MISSING PROTEIN is the most important to flag, then a green,
+  // then a starch — nutrition first, as the balance advisor should.
+  const R0=REF;
+  const gapRank=(s)=>{
+    const cat=(R0.byId[s.id]||{}).category;
+    if(s.why && /protein/.test(s.why)) return 0;
+    if(cat==="proteins") return 0;
+    if(s.why && /green|vegetable/.test(s.why)) return 1;
+    if(cat==="starches" || /starch/.test(s.why||"")) return 2;
+    return 3;
+  };
+  const ranked=gaps.slice().sort((a,b)=>
+    ((order[a.tag]??9)-(order[b.tag]??9)) || (gapRank(a)-gapRank(b)));
+  const top=ranked[0];
+  // frame the label by what kind of gap it is
+  const R=REF, ing=R.byId[top.id]||{};
+  const verb = top.tag==="gap" ? "Your meal needs" : top.tag==="balance" ? "To balance it" :
+               top.tag==="variety" ? "For variety" : "To round it out";
+  return { id:top.id, name:ing.name||top.id, why:top.why, tag:top.tag, verb };
+}
+function basketShoppingList(){
+  const toBuy={}, have={};
+  FLOW.basket.forEach(d=>{
+    (d.contents||(d.buy||[]).map(b=>b.id)||[]).forEach(id=>{
+      const ing=REF.byId[id]||{};
+      if(id==="water") return;
+      const cat=ing.category;
+      // aromatics/background seasonings aren't shopping items
+      const isReal = cat==="proteins"||cat==="vegetables"||cat==="starches"||cat==="pastes";
+      const isStaple = measureTypeOf(ing)==="assumed" || cat==="pantry";
+      const owned = FLOW.pantry.has(id) ||
+        [...FLOW.pantry].some(h=>(REF.anc[h]||new Set()).has(id));
+      const bucket = (id, into)=>{ if(!into[id]) into[id]={id, name:ing.name||id, dishes:[]};
+        if(!into[id].dishes.includes(d.name)) into[id].dishes.push(d.name); };
+      if(isReal && !owned) bucket(id, toBuy);
+      else if(isReal && owned) bucket(id, have);
+      else if(isStaple && (cat==="pastes"||cat==="starches")) bucket(id, have);  // sauces/rice you keep
+    });
+  });
+  return {toBuy:Object.values(toBuy), have:Object.values(have)};
+}
 function buyListForContents(contents){
   // What you'd actually buy for this dish: the proteins and vegetables you're cooking with —
   // including the ones you picked, since the basket is a plan, not your fridge inventory.
@@ -5301,7 +5369,9 @@ function renderBasketSchedule(plan){
     const open=FLOW.schedOpen===dIdx && dIdx>=0;
     row.classList.add("sc-row-x");
     if(open) row.classList.add("open");
-    const items=basketVisibleItems(d.contents);
+    // contents is the source of truth; if an older saved dish lacks it, fall back to its buy list
+    const dContents=(d.contents&&d.contents.length)?d.contents:((d.buy||[]).map(b=>b.id));
+    const items=basketVisibleItems(dContents);
     if(dIdx>=0){
       const strip=document.createElement("div"); strip.className="sc-ings";
       // mark the protein so it's obvious which chip changes the main
@@ -5761,6 +5831,14 @@ function fillBasketPanel(panel){
   const buyChips=buy.length? buy.map(b=>
     "<span class=\"bk-chip"+(b.sourced?" sourced":"")+"\">"+b.name+(b.sourced?" \u2726":"")+"</span>").join("")
     : "<span class=\"bk-empty\">Nothing to buy \u2014 you have it all.</span>";
+  // the two-part shopping list: what to buy, and what you should already have
+  const shop=basketShoppingList();
+  const shopBuyChips = shop.toBuy.length
+    ? shop.toBuy.map(b=>"<span class=\"bk-chip\" title=\"for "+b.dishes.join(", ")+"\">"+b.name+"</span>").join("")
+    : "<span class=\"bk-empty\">Nothing to buy \u2014 you have it all.</span>";
+  const shopHaveChips = shop.have.length
+    ? shop.have.map(b=>"<span class=\"bk-chip bk-chip-have\" title=\"for "+b.dishes.join(", ")+"\">"+b.name+"</span>").join("")
+    : "";
   // cook-together schedule — only when 2+ dishes carry timing
   const plan=cookTogetherPlan(FLOW.basket);
   let cookHtml="";
@@ -5786,7 +5864,20 @@ function fillBasketPanel(panel){
       "Your basket</span>"+
       "<span class=\"bk-sub\">"+FLOW.basket.length+(FLOW.basket.length===1?" dish":" dishes")+" \u00b7 "+buy.length+" to buy</span></div>"+
     (plan ? "" : "<div class=\"bk-lab\">Cooking</div><div class=\"bk-dishes\">"+(dishRows||"<span class=\"bk-empty\">No dishes yet.</span>")+"</div>")+
-    "<div class=\"bk-lab\">To buy \u00b7 "+buy.length+"</div><div class=\"bk-chips\">"+buyChips+"</div>"+
+    "<div class=\"bk-lab bk-lab-shop\">Shopping list</div>"+
+    "<div class=\"bk-shop-sec\">To buy \u00b7 "+shop.toBuy.length+"</div>"+
+    "<div class=\"bk-chips\">"+shopBuyChips+"</div>"+
+    (shopHaveChips?"<div class=\"bk-shop-sec bk-shop-have\">Should already have \u00b7 "+shop.have.length+"</div>"+
+      "<div class=\"bk-chips\">"+shopHaveChips+"</div>":"")+
+    (function(){
+      const n=basketBalanceNudge();
+      if(!n) return "";
+      return "<div class=\"bk-ideate\" data-ideate=\""+n.id+"\">"+
+        "<div class=\"bk-ideate-h\">"+n.verb+" <strong>"+n.name.toLowerCase()+"</strong></div>"+
+        "<div class=\"bk-ideate-why\">"+n.why+"</div>"+
+        "<button class=\"bk-ideate-add\" data-ideate-add=\""+n.id+"\">+ Add "+n.name.toLowerCase()+" to the meal</button>"+
+      "</div>";
+    })()+
     (buy.some(b=>b.sourced)?"<div class=\"bk-note\">\u2726 added from a suggestion</div>":"")+
     cookHtml+
     "<div class=\"bk-btns\"><button class=\"bk-copy\">Copy shopping list</button>"+
@@ -5834,6 +5925,11 @@ function wireBasketPanel(panel){
   });
   wireAdd("[data-scadd]","data-scadd");
   wireAdd("[data-bkadd]","data-bkadd");
+  // the balance nudge: add the missing protein/starch/green to the meal, via the dish picker
+  panel.querySelectorAll("[data-ideate-add]").forEach(b=>b.onclick=(e)=>{
+    e.stopPropagation();
+    openMealAddCard(b.getAttribute("data-ideate-add"));
+  });
   panel.querySelector(".bk-clear").onclick=()=>{ FLOW.basket=[]; persistSession(); updateBasketPill(); closeBasket(); };
   panel.querySelector(".bk-copy").onclick=()=>{
     const text=buy.map(b=>"\u2022 "+b.name).join("\n");
