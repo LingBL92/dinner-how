@@ -1800,8 +1800,19 @@ function potCandidates(ingIds, R, dishes, AFF){
     });
     belongs.sort((a,b)=>b.n-a.n);
 
-    // the pot holds EVERYTHING you own — the well-trodden and the uncharted alike
-    const contents=[...new Set(ids.concat(belongs.map(x=>x.id)).concat(uncertain.map(x=>x.id)))];
+    // the pot holds what you own — but a soup carries a couple of substantial vegetables,
+    // not five (real soup recipes here run a median of 2). Cap the vegetables, keep proteins
+    // and aromatics, and report the rest so they can go in another dish.
+    const allContents=[...new Set(ids.concat(belongs.map(x=>x.id)).concat(uncertain.map(x=>x.id)))];
+    const isSubVeg=id=>((R.byId[id]||{}).category)==="vegetables" && measureTypeOf(R.byId[id]||{})!=="assumed";
+    const potVeg=allContents.filter(isSubVeg);
+    const rankedVeg=R.rankPartners?R.rankPartners(potVeg):potVeg;
+    // the cap is a default; a vegetable the cook put in the basket is kept regardless.
+    // Since every ingredient here is hand-picked, that means all of them stay — the cap only
+    // ever trims vegetables the engine itself might have added (it adds none in this path).
+    const keepVeg=new Set(rankedVeg);   // keep every chosen vegetable
+    const potLeftOut=[];
+    const contents=allContents.filter(id=>!isSubVeg(id) || keepVeg.has(id));
     const ch=brothCharacter(contents,R);
     const alts = ids.alternatives || [];
     return {
@@ -1812,6 +1823,7 @@ function potCandidates(ingIds, R, dishes, AFF){
       altNames: alts.map(id=>(R.byId[id]||{}).name||id),
       belongs, uncertain,
       contents,
+      vegLeftOut: potLeftOut,
       character: ch,
       describe: ch?describeBroth(ch):"a light vegetable pot",
       reminds: dishes ? brothLikeDishes(contents,R,dishes.filter(hasBroth),2) : [],
@@ -2255,7 +2267,85 @@ function buildStirFry(ingIds, R, dishes, AFF, opts){
    everything you own is not a dish; it's a mess. So propose coherent options, the way
    the pot proposes pots.
    ============================================================ */
-function wokCandidates(ingIds, R, dishes, AFF){
+/* The sauce that gives a stir-fry its character, for naming: "Sambal chicken",
+   "Dark soy pork belly". Plain garlic/oyster reads as no sauce (just "stir-fry"). */
+const WOK_SAUCE_NAME={
+  sambal:"Sambal", dark_soy_sauce:"Dark soy", fermented_beancurd:"Fu yu", dried_chilli:"Dried chilli",
+  salted_fish:"Salted fish", doubanjiang:"Mapo", fermented_black_bean:"Black bean", kung_pao:"Kung pao",
+  salted_egg:"Salted egg", curry_powder:"Curry", sichuan_peppercorn:"Mala", cereal:"Cereal",
+  oyster_sauce:"Oyster", garlic:"", ginger:""
+};
+function contents0(ids,pick,rest){ return [ids[0]].concat(pick||[]).concat(rest||[]); }
+/* The most-associated sauce for a stir-fry, from real-dish evidence + SG home norms.
+   Used when the cook hasn't picked a sauce, so a plain "chicken stir-fry" gets a natural
+   default character ("Oyster chicken") instead of reading blank. Keyed by species/vegetable;
+   value is a WOK_SAUCE_NAME id (or "ginger_scallion" handled specially). Always swappable. */
+const WOK_DEFAULT_SAUCE={
+  // proteins (by species)
+  chicken:"oyster_sauce", pork:"dark_soy_sauce", beef:"oyster_sauce",
+  prawn:"garlic", squid:"sambal", clams:"sambal", fish:"ginger_scallion",
+  fish_slices:"ginger_scallion", tofu:"oyster_sauce", tau_kee:"oyster_sauce", egg:"garlic",
+  // pork sub-cuts that read better with their own default
+  pork_mince:"dark_soy_sauce",
+  // vegetables as the main
+  kailan:"oyster_sauce", kangkong:"sambal", long_beans:"dried_chilli", bok_choy:"oyster_sauce",
+  chye_sim:"oyster_sauce", spinach:"garlic", eggplant:"sambal", broccoli:"garlic",
+  cauliflower:"dried_chilli", cabbage:"oyster_sauce", napa_cabbage:"oyster_sauce",
+  okra:"sambal", bell_pepper:"garlic", beansprouts:"garlic"
+};
+/* Resolve the default sauce id for a basket that has no explicit sauce. Looks at the lead
+   protein (by species) first, then the lead vegetable. Returns a sauce id or null. */
+function wokDefaultSauceId(ids, R){
+  // lead protein by species
+  const spOf=(id)=>{
+    const anc=R.anc&&R.anc[id]||new Set();
+    for(const k of ["beef","pork","chicken","mutton","fish","prawn","squid","oyster"])
+      if((anc.has&&anc.has(k))||id===k) return k;
+    return id;
+  };
+  const prots=ids.filter(id=>((R.byId[id]||{}).category)==="proteins");
+  if(prots.length){
+    const lead=prots[0];
+    if(WOK_DEFAULT_SAUCE[lead]) return WOK_DEFAULT_SAUCE[lead];
+    const sp=spOf(lead);
+    if(sp && WOK_DEFAULT_SAUCE[sp]) return WOK_DEFAULT_SAUCE[sp];
+  }
+  // otherwise the lead vegetable
+  const veg=ids.filter(id=>((R.byId[id]||{}).category)==="vegetables"
+    && measureTypeOf(R.byId[id]||{})!=="assumed");
+  const ranked=R.rankPartners?R.rankPartners(veg):veg;
+  for(const v of ranked){ if(WOK_DEFAULT_SAUCE[v]) return WOK_DEFAULT_SAUCE[v]; }
+  return null;
+}
+function wokSauceOf(ids, R){
+  // an explicitly chosen sauce always wins
+  if(ids.includes("ginger") && ids.includes("scallion")) return "Ginger scallion";
+  for(const id of ids){
+    if(id in WOK_SAUCE_NAME && WOK_SAUCE_NAME[id]) return WOK_SAUCE_NAME[id];
+  }
+  // otherwise fall back to the dish's most-associated sauce
+  const def=wokDefaultSauceId(ids, R);
+  if(def==="ginger_scallion") return "Ginger scallion";
+  if(def==="garlic") return "";              // plain garlic reads as no special sauce
+  if(def && WOK_SAUCE_NAME[def]) return WOK_SAUCE_NAME[def];
+  return "";
+}
+function wokSauceKey(ids, R){
+  if(ids.includes("ginger") && ids.includes("scallion")) return "ginger_scallion";
+  for(const id of ids){ if(id in WOK_SAUCE_NAME && WOK_SAUCE_NAME[id]) return id; }
+  const def=wokDefaultSauceId(ids, R);
+  if(def) return def;
+  return "plain";
+}
+function wokCandidates(ingIds, R, dishes, AFF, opts){
+  // vegetables the cook explicitly added should never be capped away silently
+  const EXPL=(opts&&opts.explicit)||null;
+  const keepExpl=list=>{
+    if(!EXPL) return list;
+    const chosen=list.filter(id=>EXPL.has&&EXPL.has(id));
+    const rest=list.filter(id=>!(EXPL.has&&EXPL.has(id)));
+    return chosen.concat(rest);   // explicit first, so the slice keeps them
+  };
   const real=[...new Set(ingIds.filter(id=>{
     const i=R.byId[id]||{};
     if(i.id==="water") return false;
@@ -2292,7 +2382,10 @@ function wokCandidates(ingIds, R, dishes, AFF){
     let pick, basis;
     if(anyPrecedent){
       scored.sort((a,b)=>b.n-a.n);
-      pick=scored.filter(x=>x.n>0).slice(0,2).map(x=>x.id);
+      { const ranked=scored.filter(x=>x.n>0).map(x=>x.id);
+        const expl=EXPL?ranked.filter(id=>EXPL.has&&EXPL.has(id)):[];
+        const other=ranked.filter(id=>!expl.includes(id));
+        pick=expl.concat(other.slice(0, Math.max(0, 2-expl.length))); }
       basis="precedent";
     } else {
       /* Physics: a stir-fry wants CONTRAST — something with bite against something soft,
@@ -2306,18 +2399,30 @@ function wokCandidates(ingIds, R, dishes, AFF){
         if(w.cls==="dense") return 0;      // needs blanching; more work, but fine
         return 1;
       };
-      pick=veg.slice().sort((a,b)=>rank(b)-rank(a)).slice(0,2);
+      { const ranked=veg.slice().sort((a,b)=>rank(b)-rank(a));
+        const expl=EXPL?ranked.filter(id=>EXPL.has&&EXPL.has(id)):[];
+        const other=ranked.filter(id=>!expl.includes(id));
+        pick=expl.concat(other.slice(0, Math.max(0, 2-expl.length))); }
       basis="physics";
     }
 
     const names=pick.map(v=>(R.byId[v]||{}).name.toLowerCase());
+    const sauce=wokSauceOf(ingIds, R);
+    const sKey=wokSauceKey(ingIds, R);
+    const protName=(R.byId[lead]||{}).name;
+    // a sauce name reads better with the plain protein than the cut: "Sambal chicken",
+    // not "Sambal chicken thigh"; but keep the cut when it matters ("Dark soy pork belly").
+    const KEEP_CUT=/belly|ribs|shank|chuck|brisket|wing|mince/;
+    const shortProt = KEEP_CUT.test(lead) ? protName.toLowerCase().replace(/_/g," ")
+                    : (speciesOf(lead)||protName).toLowerCase().replace(/_/g," ");
     out.push({
-      key:"prot_"+sp,
-      label:(R.byId[lead]||{}).name+" stir-fry",
+      key: sKey==="plain" ? "prot_"+sp : sKey+"_"+sp,
+      label: sauce ? sauce+" "+shortProt : protName+" stir-fry",
       lead:[lead],
       contents:[lead].concat(pick).concat(rest),
       basis,
       note: !pick.length ? "just the "+((R.byId[lead]||{}).name||"").toLowerCase()
+          : pick.length>3 ? "with "+names.join(", ")+" — that\u2019s a lot for one wok; fry in two batches so it sears instead of steams"
           : basis==="precedent" ? "with "+names.join(" and ")
           : "with "+names.join(" and ")+" — our call, no recipe pairs these yet",
       leftOut: veg.filter(v=>!pick.includes(v)),
@@ -2327,10 +2432,16 @@ function wokCandidates(ingIds, R, dishes, AFF){
 
   // a vegetable-only stir-fry \u2014 the commonest Singaporean side, and often the right answer
   if(veg.length){
-    const pick=veg.slice(0,2);
+    const _ve=EXPL?veg.filter(id=>EXPL.has&&EXPL.has(id)):[];
+    const _vo=veg.filter(id=>!_ve.includes(id));
+    const pick=_ve.concat(_vo.slice(0, Math.max(0, 2-_ve.length)));
+    const vSauce=wokSauceOf(ingIds, R);
+    const vKey=wokSauceKey(ingIds, R);
+    const vName=pick.length>1?"vegetables":((R.byId[pick[0]]||{}).name.toLowerCase());
     out.push({
-      key:"veg",
-      label:(pick.length>1?"Vegetable stir-fry":((R.byId[pick[0]]||{}).name+" stir-fry")),
+      key: vKey==="plain" ? "veg" : vKey+"_veg",
+      label: vSauce ? vSauce+" "+vName
+            : (pick.length>1?"Vegetable stir-fry":((R.byId[pick[0]]||{}).name+" stir-fry")),
       lead:[],
       contents:pick.concat(rest),
       note: pick.length>1 ? pick.map(v=>(R.byId[v]||{}).name.toLowerCase()).join(" and ")
@@ -2456,6 +2567,29 @@ function vegPrep(id, R){
    The topping and the finish. AUTHORED \u2014 this is the construct of a steamed dish across
    the cuisines that steam: Cantonese (hot oil over aromatics), Teochew (salted-veg sour),
    Peranakan (a rempah steamed IN), Thai (a raw sauce poured over), Japanese (restraint). */
+/* The most-associated steaming style for each subject, from the image library + SG norms.
+   A plain steamed fish defaults to ginger & scallion; prawns to minced garlic; ribs to black
+   bean. Value is a STEAM_DIRS key. Always swappable via the style selector. */
+const STEAM_DEFAULT_STYLE={
+  // whole fish + slices -> the classic ginger & scallion
+  fish:"ginger_scallion", fish_slices:"ginger_scallion",
+  // shellfish -> minced garlic
+  prawn:"minced_garlic", clams:"minced_garlic",
+  // other proteins
+  chicken:"ginger_scallion", tofu:"ginger_scallion",
+  pork_ribs:"black_bean", ribs:"black_bean", pork_mince:"plain", egg:"dashi_sake"
+};
+function steamDefaultStyle(subject, R){
+  if(!subject) return null;
+  if(STEAM_DEFAULT_STYLE[subject]) return STEAM_DEFAULT_STYLE[subject];
+  // by species (seabass/pomfret/cod -> fish)
+  const anc=R.anc&&R.anc[subject]||new Set();
+  for(const k of ["fish","prawn","squid","clams","chicken","pork"])
+    if((anc.has&&anc.has(k))||subject===k){ if(STEAM_DEFAULT_STYLE[k]) return STEAM_DEFAULT_STYLE[k]; }
+  // whole fish fallback
+  if((R.byId[subject]||{}).group==="fish" || (anc.has&&anc.has("fish"))) return "ginger_scallion";
+  return null;
+}
 const STEAM_DIRS=[
   {key:"ginger_scallion", label:"Ginger, scallion & hot oil", region:"Cantonese",
    markers:["ginger","scallion"], need:2,
@@ -2655,6 +2789,13 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
   // Something the cook ASKED for outranks anything the engine would have chosen.
   // Affinity ranks; it must never quietly drop a deliberate choice.
   const EXPL=(opts&&opts.explicit)||null;
+  // when the single bed is chosen, the OTHER eligible bed vegetables are set aside — report
+  // them so the UI can say "a fish takes one bed" rather than dropping them silently.
+  const bedLeftOut=(chosen, subj)=>{
+    const eligible=COLLECTORS_C.filter(id=>real.includes(id) && id!==subj);
+    return eligible.filter(id=>!chosen.includes(id)).map(id=>({id,
+      why:"a steamed fish sits on one vegetable bed \u2014 "+((R.byId[chosen[0]]||{}).name||"the first")+" is under it"}));
+  };
   const rankBed=list=>{
     const r=R.rankPartners?R.rankPartners(list):list;
     return EXPL ? r.slice().sort((a,b)=>(EXPL.has&&EXPL.has(b)?1:0)-(EXPL.has&&EXPL.has(a)?1:0)) : r;
@@ -2729,13 +2870,14 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
     if((form==="whole_fish"||form==="shellfish") && splitIds.length>1){
       const CAP=4;
       const cardIds=splitIds.slice(0,CAP);
-      const overflow=splitIds.slice(CAP).concat(form==="whole_fish"?ids.filter(id=>PROCESSED_FISH.includes(id)):[]);
+      const overflowIds=splitIds.slice(CAP).concat(form==="whole_fish"?ids.filter(id=>PROCESSED_FISH.includes(id)):[]);
+      const overflow=overflowIds.map(id=>({id, why:"steam it as its own dish \u2014 one steamer plates one subject"}));
       cardIds.forEach((fid,idx)=>{
         const bed = rankBed(COLLECTORS_C.filter(id=>real.includes(id) && id!==fid)).slice(0,1);
         out.push({key:form+"_"+fid, label:LABELS[form]+nm(fid), subject:fid, form,
           contents:[fid].concat(bed).concat(topping),
           note:NOTE[form],
-          leftOut: idx===cardIds.length-1 ? overflow : [],
+          leftOut: (idx===cardIds.length-1 ? overflow : []).concat(bedLeftOut(bed, fid)),
           alternatives: cardIds.filter(x=>x!==fid)});
       });
       return;
@@ -2745,10 +2887,27 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
     const subj2 = (form==="whole_fish" && splitIds.length) ? splitIds[0] : subj;
     const bedFor2 = (form==="whole_fish"||form==="shellfish")
       ? rankBed(COLLECTORS_C.filter(id=>real.includes(id) && id!==subj2)).slice(0,1) : [];
+    // the bed is one vegetable (physical: a fish sits on one bed) — but any OTHER vegetables
+    // the cook picked steam alongside, around the fish, rather than being dropped.
+    const alongside=real.filter(id=>((R.byId[id]||{}).category)==="vegetables"
+      && id!==subj2 && !bedFor2.includes(id));
+    // proteins that genuinely steam with fish (tofu, tau kee, egg) stay on the plate
+    const steamPairsFn=id=>id==="tofu"||id==="tau_kee"||id==="egg";
+    const pairedProt=real.filter(id=>((R.byId[id]||{}).category)==="proteins"
+      && id!==subj2 && steamPairsFn(id));
+    const inDish=new Set([subj2].concat(bedFor2).concat(alongside).concat(pairedProt).concat(topping));
+    // vegetables all steam together now, so they're never "left out". But a second protein
+    // that doesn't belong on this fish's plate (another whole fish, a processed fish cake) is
+    // still set aside and reported.
+    const otherDrops=ids.filter(x=>!inDish.has(x)
+      && ((R.byId[x]||{}).category)!=="vegetables"
+      && !steamPairsFn(x))
+      .map(id=>({id, why:"set aside \u2014 steam it as its own dish, one plate per subject"}));
     out.push({key:form, label:LABELS[form]+nm(subj2), subject:subj2, form,
-      contents:[subj2].concat(bedFor2).concat(topping),
-      note:NOTE[form],
-      leftOut:ids.filter(x=>x!==subj2),
+      contents:[...new Set([subj2].concat(bedFor2).concat(alongside).concat(pairedProt).concat(topping))],
+      note: alongside.length ? NOTE[form]+" \u2014 the other vegetables steam around it"
+                             : NOTE[form],
+      leftOut: otherDrops,
       alternatives:ids.filter(x=>x!==subj2)});
   });
 
@@ -3005,28 +3164,70 @@ function pickDishVeg(ids, R, opts){
   // exactly how cucumber ends up in laksa and mushroom in char kway teow.
   // Only when the dish's own vegetables are absent do we fall back — and then to a single
   // green, because a bowl with no vegetable at all is worse than a sensible substitute.
+  const EXPL0=opts.explicit || null;
+  const isExpl0=id=>EXPL0 && EXPL0.has && EXPL0.has(id);
   let pool, usedOwnList=false;
   if(prefer.size){
     const wanted=ranked.filter(id=>prefer.has(id));
     usedOwnList = wanted.length>0;
     pool = usedOwnList ? wanted : ranked.filter(id=>LEAFY_GREENS.has(id)).slice(0,1);
+    // a vegetable the cook explicitly added belongs in the dish even if it isn't on the
+    // dish's canonical list — don't filter out a deliberate choice.
+    ranked.forEach(id=>{ if(isExpl0(id) && !pool.includes(id)) pool.push(id); });
   } else {
     pool = ranked;                      // the dish has no opinion — use general culinary fit
   }
+  const EXPL=opts.explicit || null;   // vegetables the cook deliberately picked survive the cap
+  const isExpl=id=>EXPL && EXPL.has && EXPL.has(id);
   const greens=pool.filter(id=>LEAFY_GREENS.has(id));
   const others=pool.filter(id=>!LEAFY_GREENS.has(id));
-  const useG=greens.slice(0,maxGreens), useO=others.slice(0,maxOthers);
+  // explicit picks come first so the slice keeps them; the cap trims only auto-added veg
+  const orderExpl=list=>list.slice().sort((a,b)=>(isExpl(b)?1:0)-(isExpl(a)?1:0));
+  const gOrd=orderExpl(greens), oOrd=orderExpl(others);
+  const nG=Math.max(maxGreens, gOrd.filter(isExpl).length);
+  const nO=Math.max(maxOthers, oOrd.filter(isExpl).length);
+  const useG=gOrd.slice(0,nG), useO=oOrd.slice(0,nO);
   const used=new Set([...useG,...useO]);
   const leftOut=[];
-  greens.slice(maxGreens).forEach(id=>leftOut.push({id,
+  gOrd.slice(nG).forEach(id=>leftOut.push({id,
     why:"one green is enough in a bowl \u2014 "+((R.byId[useG[0]]||{}).name||"the first")+" suits this better"}));
-  others.slice(maxOthers).forEach(id=>leftOut.push({id, why:"the bowl is already carrying enough"}));
+  oOrd.slice(nO).forEach(id=>leftOut.push({id, why:"the bowl is already carrying enough"}));
   // only claim "this dish isn't made with it" when we actually honoured the dish's own
   // list — if we fell back to a general green, the honest reason is simply that one is enough
   if(prefer.size) veg.filter(id=>!pool.includes(id)).forEach(id=>leftOut.push({id,
     why: usedOwnList ? "not something this dish is made with"
                      : "one vegetable is enough for this bowl"}));
   return {used:ids.filter(id=>!veg.includes(id) || used.has(id)), leftOut};
+}
+
+
+/* When several proteins are in the basket, a single bowl has ONE main. Noodle and rice
+   dishes were dumping every protein in; this picks the lead the way steam does — by form
+   priority — and returns the rest so the dish can decide (a soup noodle takes a second
+   sliced meat happily; a claypot rice does not). */
+const PROTEIN_LEAD_PRIORITY=["whole_fish","fish_slices","shellfish","ribs","poultry",
+  "red_meat","mince","beancurd","egg"];
+function proteinRoleOf(id){
+  if(/prawn|clam|squid|crab|scallop|oyster|cockle|mussel|sotong/.test(id)) return "shellfish";
+  if(/pomfret|seabass|snapper|threadfin|grouper|sardine|mackerel|whole_fish/.test(id)) return "whole_fish";
+  if(/fish_slice|cod|salmon|tuna|fish_cake|fish_ball/.test(id)) return "fish_slices";
+  if(/ribs/.test(id)) return "ribs";
+  if(/chicken|duck/.test(id)) return "poultry";
+  if(/beef|pork_belly|pork_loin|pork_shoulder|char_siu|lap_cheong|mutton|lamb|beef_slices|pork_slice/.test(id)) return "red_meat";
+  if(/mince/.test(id)) return "mince";
+  if(/tofu|tau_kee|tau_pok|tempeh/.test(id)) return "beancurd";
+  if(/egg/.test(id)) return "egg";
+  return null;
+}
+function pickLeadProtein(ids, R){
+  const proteins=ids.filter(id=>((R.byId[id]||{}).category)==="proteins");
+  if(proteins.length<=1) return {lead:proteins[0]||null, extras:[]};
+  const ranked=proteins.slice().sort((a,b)=>{
+    const ra=PROTEIN_LEAD_PRIORITY.indexOf(proteinRoleOf(a));
+    const rb=PROTEIN_LEAD_PRIORITY.indexOf(proteinRoleOf(b));
+    return (ra<0?99:ra)-(rb<0?99:rb);
+  });
+  return {lead:ranked[0], extras:ranked.slice(1)};
 }
 
 /* rice keeps its exact previous behaviour */
@@ -3161,7 +3362,7 @@ function buildRice(ingIds, R, dishes, AFF, opts){
    WHICH BOWL? \u2014 surface the fork. When the ingredients suit both, offer both, so the
    choice between "cook it in" and "ladle it over" is the user's to make.
    ============================================================ */
-function riceCandidates(ingIds, R, dishes, AFF){
+function riceCandidates(ingIds, R, dishes, AFF, opts){
   const real=[...new Set(ingIds.filter(id=>{
     const i=R.byId[id]||{};
     if(i.id==="water") return false;
@@ -3172,9 +3373,23 @@ function riceCandidates(ingIds, R, dishes, AFF){
   const proteins=real.filter(id=>RICE_TOPPING_PROTEINS.has(id));
   const out=[];
   const add=(key,label,mode,subject,note)=>{
-    out.push({key,label,mode,subject,note,
-      contents:pickDishVeg(real.filter(x=>!NOODLE_BASE_IDS.has(x)), R, {greens:1, others:2}).used,
-      leftOut:pickDishVeg(real.filter(x=>!NOODLE_BASE_IDS.has(x)), R, {greens:1, others:2}).leftOut});
+    const base=real.filter(x=>!NOODLE_BASE_IDS.has(x));
+    // every vegetable in the basket was hand-picked, so none is capped away; the 1+1 cap
+    // only limits vegetables the engine would auto-add (it doesn't auto-add any here).
+    const _chosen=new Set(base.filter(id=>((R.byId[id]||{}).category)==="vegetables"));
+    const vp=pickDishVeg(base, R, {greens:1, others:1, explicit:_chosen});
+    // The dish's OWN subject is the main (claypot=chicken, curry=chicken, braise=pork).
+    // lap cheong/egg/char siu/dried shrimp are allowed to ride along; every other protein
+    // belongs to a different dish and is dropped.
+    const keep=new Set([subject].filter(Boolean));
+    base.forEach(id=>{ if(/lap_cheong|^egg$|char_siu|dried_shrimp/.test(id)) keep.add(id); });
+    const contents=vp.used.filter(id=>{
+      if(((R.byId[id]||{}).category)!=="proteins") return true;
+      return keep.has(id);
+    });
+    const dropped=base.filter(id=>((R.byId[id]||{}).category)==="proteins" && !keep.has(id))
+      .map(id=>({id, why:"one main is enough \u2014 "+((R.byId[subject]||{}).name||"the first")+" leads this bowl"}));
+    out.push({key,label,mode,subject,note, contents, leftOut:vp.leftOut.concat(dropped)});
   };
 
   // strong claypot / cook-in signals
@@ -3436,14 +3651,26 @@ function noodleCandidates(ingIds, R, dishes, AFF){
       : fit==="works" ? baseName.replace(/ \(.*\)/,"")+" is a common swap for this"
       : "usually made with "+((dir.canonical||[]).map(n=>(R.byId[n]||{}).name||n).join(" or ").replace(/ \(.*?\)/g,""))+" \u2014 this is your own take";
     // a bowl takes one green and a couple of others — chosen for THIS sauce
-    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[]});
-    const mine=vpick.used;
+    const _nch=new Set(mineAll.filter(id=>((R.byId[id]||{}).category)==="vegetables"));
+    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[], explicit:_nch});
+    // one main protein per bowl. A soup can carry a second (sliced meat + a fishball);
+    // a fried noodle should not read as three meats piled on.
+    const pj=pickLeadProtein(mineAll, R);
+    const keepProteins = new Set([pj.lead].filter(Boolean));
+    if(dir.mode==="soup" && pj.extras[0]) keepProteins.add(pj.extras[0]);
+    const mine=vpick.used.filter(id=>{
+      if(((R.byId[id]||{}).category)!=="proteins") return true;
+      return keepProteins.has(id);
+    });
+    const droppedProteins=pj.extras.filter(id=>!keepProteins.has(id));
     out.push({
       key:"noodle_"+dir.key,
       label, mode:dir.mode, dirKey:dir.key, direction:dir,
       subject:base, subjectName:baseName,
       note:dir.note, fit, fitNote, hits,
-      contents:mine, leftOut:vpick.leftOut
+      contents:mine,
+      leftOut:vpick.leftOut.concat(droppedProteins.map(id=>({id,
+        why:"one main is enough in a bowl \u2014 "+((R.byId[pj.lead]||{}).name||"the first")+" leads this one"})))
     });
   });
   // strongest signal first, then the pairing that suits the noodle best
@@ -3451,7 +3678,8 @@ function noodleCandidates(ingIds, R, dishes, AFF){
   // always leave a plain fallback so a lone packet of noodles still cooks
   if(!out.length){
     const fallback=NOODLE_DIRS.find(d=>d.key==="clear_soup");
-    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:(fallback&&fallback.veg)||[]});
+    const _nch2=new Set(mineAll.filter(id=>((R.byId[id]||{}).category)==="vegetables"));
+    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:(fallback&&fallback.veg)||[], explicit:_nch2});
     const mine=vpick.used;
     out.push({key:"noodle_clear_soup", label:"Noodles in broth", mode:"soup",
       dirKey:"clear_soup", direction:fallback, subject:base,

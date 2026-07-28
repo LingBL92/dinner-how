@@ -306,6 +306,7 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .sug-drop:active{transform:scale(.98)}
 button.ing-tag{cursor:pointer;font:inherit}
 button.ing-tag:hover{border-color:var(--cool)}
+.sug-meal-note{margin-top:11px;font-size:12px;color:var(--muted);line-height:1.45;font-style:italic}
 .sug-cancel{padding:10px 16px;border:1px solid rgba(50,117,100,.25);border-radius:10px;
   background:transparent;color:var(--muted);font-size:14px;cursor:pointer}
 /* ---- basket: pill, add-button, drawer ---- */
@@ -325,9 +326,55 @@ button.ing-tag:hover{border-color:var(--cool)}
 .bk-lab{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.12em;
   color:var(--cool);margin:14px 0 8px;font-weight:700}
 .bk-dishes{display:flex;flex-direction:column;gap:8px}
-.bk-dish{display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--panel);border-radius:9px}
+.bk-dish{display:block;padding:9px 11px;background:var(--panel);border-radius:9px}
 .bk-flame{color:var(--cool);font-size:13px}
 .bk-dn{flex:1;font-size:14px;color:var(--ink)}
+.bk-dhead{display:flex;align-items:center;gap:9px;cursor:pointer;padding:2px 0}
+.bk-dt{font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-left:auto;margin-right:4px}
+.bk-exp{font-family:var(--font-mono);font-size:15px;color:var(--cool);width:16px;text-align:center;flex:none}
+.bk-dish.open{background:rgba(50,117,100,.05);border-radius:10px;padding:4px 8px;margin:2px -8px}
+.bk-ings{padding:6px 2px 8px}
+.bk-ings-lab{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:4px 0 7px}
+.bk-ings-row{display:flex;flex-wrap:wrap;gap:6px}
+.bk-lanes{display:flex;gap:12px;margin:12px 0 4px}
+.bk-lane{flex:1;min-width:0}
+.bk-lane-h{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.09em;margin-bottom:8px;font-weight:700}
+.bk-lane-h.keep{color:var(--cool)}
+.bk-lane-h.change{color:var(--gold)}
+.bk-lane-none{font-size:11.5px;color:var(--muted);font-style:italic}
+.bk-sw-keep,.bk-sw-change{display:block;width:100%;text-align:left;margin-bottom:6px;padding:8px 11px;border-radius:9px;font-size:13px;cursor:pointer;border:1px solid transparent}
+.bk-sw-keep{background:rgba(50,117,100,.09);color:var(--ink);border-color:rgba(50,117,100,.2)}
+.bk-sw-keep:hover{border-color:var(--cool)}
+.bk-sw-change{background:rgba(168,114,24,.08);color:var(--ink);border-color:rgba(168,114,24,.22)}
+.bk-sw-change:hover{border-color:var(--gold)}
+.bk-sw-change em{display:block;font-style:normal;font-size:10.5px;color:var(--muted);margin-top:2px}
+.bk-blocked{margin:8px 0 4px;padding-top:8px;border-top:1px solid rgba(0,0,0,.06);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.bk-blocked-l{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);width:100%}
+.bk-sw-blocked{padding:6px 10px;border-radius:8px;font-size:12.5px;background:rgba(0,0,0,.04);color:var(--muted);border:1px dashed rgba(0,0,0,.15);cursor:help;text-decoration:line-through}
+.bk-reason{width:100%;font-size:12px;color:var(--gold);font-style:italic;margin-top:5px}
+.bk-ing{font-size:12.5px;padding:5px 11px;border-radius:20px;background:var(--panel);color:var(--ink);border:1px solid rgba(50,117,100,.2);cursor:pointer}
+.bk-ing:hover{border-color:var(--cool);background:rgba(50,117,100,.08)}
+.sc-ings{padding:2px 0 4px;margin-top:6px}
+.sc-ings-lab{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:6px 0 7px}
+.bk-ing-main{border-color:var(--cool)!important;background:rgba(50,117,100,.1)!important}
+.bk-ing-main em{font-style:normal;font-size:9px;color:var(--cool);margin-left:5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.sc-ings-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.sc-row-x .sc-ings{display:none}
+.sc-row-x.open .sc-ings{display:block}
+.sc-add{font-size:12px;padding:5px 11px;border-radius:20px;background:transparent;color:var(--cool);
+  border:1px dashed rgba(50,117,100,.4);cursor:pointer;font-weight:600}
+.sc-add:hover{background:rgba(50,117,100,.08);border-style:solid}
+.ma-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.ma-dish,.ma-new{width:100%;text-align:left;padding:10px 13px;border-radius:10px;font-size:13.5px;cursor:pointer}
+.ma-dish{background:rgba(50,117,100,.08);color:var(--ink);border:1px solid rgba(50,117,100,.22)}
+.ma-dish:hover{border-color:var(--cool);background:rgba(50,117,100,.13)}
+.ma-new{background:rgba(168,114,24,.08);color:var(--gold);border:1px solid rgba(168,114,24,.3);font-weight:600}
+.ma-new:hover{border-color:var(--gold)}
+.bk-addchip{font-size:12.5px;padding:6px 11px;border-radius:20px;background:var(--panel);color:var(--ink);
+  border:1px solid rgba(50,117,100,.2);cursor:pointer}
+.bk-addchip:hover{border-color:var(--cool);background:rgba(50,117,100,.08)}
+.bk-addrow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+
 .bk-rm{border:none;background:transparent;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;padding:0 4px}
 .bk-chips{display:flex;flex-wrap:wrap;gap:6px}
 .bk-chip{font-size:12.5px;padding:5px 11px;border-radius:20px;background:var(--panel);color:var(--ink);
@@ -548,6 +595,9 @@ button.ps-add:active{transform:scale(.96)}
 button.ps-add em{color:var(--cool)}
 button.ps-add.in-basket{opacity:.6;cursor:default}
 button.ps-add.in-basket em{color:var(--muted)}
+.ps-list{display:flex;flex-direction:column;gap:7px;margin:8px 0}
+.ps-item{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ps-where{font-size:12px;color:var(--muted);font-style:italic}
 .ps-note{font-family:var(--font-mono);font-size:9.5px;color:var(--muted);margin-top:7px;opacity:.85}
 .pot-unc{margin-top:8px;padding:9px 12px;background:rgba(168,114,24,.07);border-left:3px solid var(--gold);
   border-radius:7px;font-size:12px;line-height:1.5;color:var(--muted)}
@@ -706,8 +756,19 @@ button.ps-add.in-basket em{color:var(--muted)}
 .sc-w em{font-style:normal;font-size:12px;font-weight:400;color:var(--muted);margin-left:3px}
 .sc-ho{font-family:var(--font-mono);font-size:11px;color:var(--gold);
   background:rgba(168,114,24,.1);padding:3px 9px;border-radius:999px;margin-left:auto}
+.sc-axis{display:flex;align-items:flex-end;gap:9px;margin-bottom:9px;height:16px}
+.sc-axis-pad{width:150px;flex:none}
+.sc-axis-track{flex:1;position:relative;height:16px}
+.sc-tick{position:absolute;bottom:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center}
+.sc-tick::after{content:"";display:block;width:1px;height:5px;background:rgba(27,16,11,.18);margin-top:2px}
+.sc-tick-l{font-family:var(--font-mono);font-size:9px;color:var(--muted);white-space:nowrap}
+.sc-tick-end .sc-tick-l{color:var(--cool);font-weight:700}
+.sc-tick-end{transform:translateX(-100%)}
 .sc-rows{display:flex;flex-direction:column;gap:7px}
 .sc-row{display:flex;align-items:center;gap:9px}
+/* an expandable timeline row stacks: the bar row stays intact, ingredients drop BELOW it */
+.sc-row-x{display:block}
+.sc-row-x .sc-head-row{display:flex;align-items:center;gap:9px}
 .sc-name{width:150px;flex:none;font-size:12.5px;font-weight:600;line-height:1.2}
 .sc-name em{display:block;font-style:normal;font-family:var(--font-mono);font-size:8.5px;
   color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:1px}
@@ -837,7 +898,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.07</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.25</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2705,8 +2766,19 @@ function potCandidates(ingIds, R, dishes, AFF){
     });
     belongs.sort((a,b)=>b.n-a.n);
 
-    // the pot holds EVERYTHING you own — the well-trodden and the uncharted alike
-    const contents=[...new Set(ids.concat(belongs.map(x=>x.id)).concat(uncertain.map(x=>x.id)))];
+    // the pot holds what you own — but a soup carries a couple of substantial vegetables,
+    // not five (real soup recipes here run a median of 2). Cap the vegetables, keep proteins
+    // and aromatics, and report the rest so they can go in another dish.
+    const allContents=[...new Set(ids.concat(belongs.map(x=>x.id)).concat(uncertain.map(x=>x.id)))];
+    const isSubVeg=id=>((R.byId[id]||{}).category)==="vegetables" && measureTypeOf(R.byId[id]||{})!=="assumed";
+    const potVeg=allContents.filter(isSubVeg);
+    const rankedVeg=R.rankPartners?R.rankPartners(potVeg):potVeg;
+    // the cap is a default; a vegetable the cook put in the basket is kept regardless.
+    // Since every ingredient here is hand-picked, that means all of them stay — the cap only
+    // ever trims vegetables the engine itself might have added (it adds none in this path).
+    const keepVeg=new Set(rankedVeg);   // keep every chosen vegetable
+    const potLeftOut=[];
+    const contents=allContents.filter(id=>!isSubVeg(id) || keepVeg.has(id));
     const ch=brothCharacter(contents,R);
     const alts = ids.alternatives || [];
     return {
@@ -2717,6 +2789,7 @@ function potCandidates(ingIds, R, dishes, AFF){
       altNames: alts.map(id=>(R.byId[id]||{}).name||id),
       belongs, uncertain,
       contents,
+      vegLeftOut: potLeftOut,
       character: ch,
       describe: ch?describeBroth(ch):"a light vegetable pot",
       reminds: dishes ? brothLikeDishes(contents,R,dishes.filter(hasBroth),2) : [],
@@ -3157,7 +3230,85 @@ function buildStirFry(ingIds, R, dishes, AFF, opts){
    everything you own is not a dish; it's a mess. So propose coherent options, the way
    the pot proposes pots.
    ============================================================ */
-function wokCandidates(ingIds, R, dishes, AFF){
+/* The sauce that gives a stir-fry its character, for naming: "Sambal chicken",
+   "Dark soy pork belly". Plain garlic/oyster reads as no sauce (just "stir-fry"). */
+const WOK_SAUCE_NAME={
+  sambal:"Sambal", dark_soy_sauce:"Dark soy", fermented_beancurd:"Fu yu", dried_chilli:"Dried chilli",
+  salted_fish:"Salted fish", doubanjiang:"Mapo", fermented_black_bean:"Black bean", kung_pao:"Kung pao",
+  salted_egg:"Salted egg", curry_powder:"Curry", sichuan_peppercorn:"Mala", cereal:"Cereal",
+  oyster_sauce:"Oyster", garlic:"", ginger:""
+};
+function contents0(ids,pick,rest){ return [ids[0]].concat(pick||[]).concat(rest||[]); }
+/* The most-associated sauce for a stir-fry, from real-dish evidence + SG home norms.
+   Used when the cook hasn't picked a sauce, so a plain "chicken stir-fry" gets a natural
+   default character ("Oyster chicken") instead of reading blank. Keyed by species/vegetable;
+   value is a WOK_SAUCE_NAME id (or "ginger_scallion" handled specially). Always swappable. */
+const WOK_DEFAULT_SAUCE={
+  // proteins (by species)
+  chicken:"oyster_sauce", pork:"dark_soy_sauce", beef:"oyster_sauce",
+  prawn:"garlic", squid:"sambal", clams:"sambal", fish:"ginger_scallion",
+  fish_slices:"ginger_scallion", tofu:"oyster_sauce", tau_kee:"oyster_sauce", egg:"garlic",
+  // pork sub-cuts that read better with their own default
+  pork_mince:"dark_soy_sauce",
+  // vegetables as the main
+  kailan:"oyster_sauce", kangkong:"sambal", long_beans:"dried_chilli", bok_choy:"oyster_sauce",
+  chye_sim:"oyster_sauce", spinach:"garlic", eggplant:"sambal", broccoli:"garlic",
+  cauliflower:"dried_chilli", cabbage:"oyster_sauce", napa_cabbage:"oyster_sauce",
+  okra:"sambal", bell_pepper:"garlic", beansprouts:"garlic"
+};
+/* Resolve the default sauce id for a basket that has no explicit sauce. Looks at the lead
+   protein (by species) first, then the lead vegetable. Returns a sauce id or null. */
+function wokDefaultSauceId(ids, R){
+  // lead protein by species
+  const spOf=(id)=>{
+    const anc=R.anc&&R.anc[id]||new Set();
+    for(const k of ["beef","pork","chicken","mutton","fish","prawn","squid","oyster"])
+      if((anc.has&&anc.has(k))||id===k) return k;
+    return id;
+  };
+  const prots=ids.filter(id=>((R.byId[id]||{}).category)==="proteins");
+  if(prots.length){
+    const lead=prots[0];
+    if(WOK_DEFAULT_SAUCE[lead]) return WOK_DEFAULT_SAUCE[lead];
+    const sp=spOf(lead);
+    if(sp && WOK_DEFAULT_SAUCE[sp]) return WOK_DEFAULT_SAUCE[sp];
+  }
+  // otherwise the lead vegetable
+  const veg=ids.filter(id=>((R.byId[id]||{}).category)==="vegetables"
+    && measureTypeOf(R.byId[id]||{})!=="assumed");
+  const ranked=R.rankPartners?R.rankPartners(veg):veg;
+  for(const v of ranked){ if(WOK_DEFAULT_SAUCE[v]) return WOK_DEFAULT_SAUCE[v]; }
+  return null;
+}
+function wokSauceOf(ids, R){
+  // an explicitly chosen sauce always wins
+  if(ids.includes("ginger") && ids.includes("scallion")) return "Ginger scallion";
+  for(const id of ids){
+    if(id in WOK_SAUCE_NAME && WOK_SAUCE_NAME[id]) return WOK_SAUCE_NAME[id];
+  }
+  // otherwise fall back to the dish's most-associated sauce
+  const def=wokDefaultSauceId(ids, R);
+  if(def==="ginger_scallion") return "Ginger scallion";
+  if(def==="garlic") return "";              // plain garlic reads as no special sauce
+  if(def && WOK_SAUCE_NAME[def]) return WOK_SAUCE_NAME[def];
+  return "";
+}
+function wokSauceKey(ids, R){
+  if(ids.includes("ginger") && ids.includes("scallion")) return "ginger_scallion";
+  for(const id of ids){ if(id in WOK_SAUCE_NAME && WOK_SAUCE_NAME[id]) return id; }
+  const def=wokDefaultSauceId(ids, R);
+  if(def) return def;
+  return "plain";
+}
+function wokCandidates(ingIds, R, dishes, AFF, opts){
+  // vegetables the cook explicitly added should never be capped away silently
+  const EXPL=(opts&&opts.explicit)||null;
+  const keepExpl=list=>{
+    if(!EXPL) return list;
+    const chosen=list.filter(id=>EXPL.has&&EXPL.has(id));
+    const rest=list.filter(id=>!(EXPL.has&&EXPL.has(id)));
+    return chosen.concat(rest);   // explicit first, so the slice keeps them
+  };
   const real=[...new Set(ingIds.filter(id=>{
     const i=R.byId[id]||{};
     if(i.id==="water") return false;
@@ -3194,7 +3345,10 @@ function wokCandidates(ingIds, R, dishes, AFF){
     let pick, basis;
     if(anyPrecedent){
       scored.sort((a,b)=>b.n-a.n);
-      pick=scored.filter(x=>x.n>0).slice(0,2).map(x=>x.id);
+      { const ranked=scored.filter(x=>x.n>0).map(x=>x.id);
+        const expl=EXPL?ranked.filter(id=>EXPL.has&&EXPL.has(id)):[];
+        const other=ranked.filter(id=>!expl.includes(id));
+        pick=expl.concat(other.slice(0, Math.max(0, 2-expl.length))); }
       basis="precedent";
     } else {
       /* Physics: a stir-fry wants CONTRAST — something with bite against something soft,
@@ -3208,18 +3362,30 @@ function wokCandidates(ingIds, R, dishes, AFF){
         if(w.cls==="dense") return 0;      // needs blanching; more work, but fine
         return 1;
       };
-      pick=veg.slice().sort((a,b)=>rank(b)-rank(a)).slice(0,2);
+      { const ranked=veg.slice().sort((a,b)=>rank(b)-rank(a));
+        const expl=EXPL?ranked.filter(id=>EXPL.has&&EXPL.has(id)):[];
+        const other=ranked.filter(id=>!expl.includes(id));
+        pick=expl.concat(other.slice(0, Math.max(0, 2-expl.length))); }
       basis="physics";
     }
 
     const names=pick.map(v=>(R.byId[v]||{}).name.toLowerCase());
+    const sauce=wokSauceOf(ingIds, R);
+    const sKey=wokSauceKey(ingIds, R);
+    const protName=(R.byId[lead]||{}).name;
+    // a sauce name reads better with the plain protein than the cut: "Sambal chicken",
+    // not "Sambal chicken thigh"; but keep the cut when it matters ("Dark soy pork belly").
+    const KEEP_CUT=/belly|ribs|shank|chuck|brisket|wing|mince/;
+    const shortProt = KEEP_CUT.test(lead) ? protName.toLowerCase().replace(/_/g," ")
+                    : (speciesOf(lead)||protName).toLowerCase().replace(/_/g," ");
     out.push({
-      key:"prot_"+sp,
-      label:(R.byId[lead]||{}).name+" stir-fry",
+      key: sKey==="plain" ? "prot_"+sp : sKey+"_"+sp,
+      label: sauce ? sauce+" "+shortProt : protName+" stir-fry",
       lead:[lead],
       contents:[lead].concat(pick).concat(rest),
       basis,
       note: !pick.length ? "just the "+((R.byId[lead]||{}).name||"").toLowerCase()
+          : pick.length>3 ? "with "+names.join(", ")+" — that\u2019s a lot for one wok; fry in two batches so it sears instead of steams"
           : basis==="precedent" ? "with "+names.join(" and ")
           : "with "+names.join(" and ")+" — our call, no recipe pairs these yet",
       leftOut: veg.filter(v=>!pick.includes(v)),
@@ -3229,10 +3395,16 @@ function wokCandidates(ingIds, R, dishes, AFF){
 
   // a vegetable-only stir-fry \u2014 the commonest Singaporean side, and often the right answer
   if(veg.length){
-    const pick=veg.slice(0,2);
+    const _ve=EXPL?veg.filter(id=>EXPL.has&&EXPL.has(id)):[];
+    const _vo=veg.filter(id=>!_ve.includes(id));
+    const pick=_ve.concat(_vo.slice(0, Math.max(0, 2-_ve.length)));
+    const vSauce=wokSauceOf(ingIds, R);
+    const vKey=wokSauceKey(ingIds, R);
+    const vName=pick.length>1?"vegetables":((R.byId[pick[0]]||{}).name.toLowerCase());
     out.push({
-      key:"veg",
-      label:(pick.length>1?"Vegetable stir-fry":((R.byId[pick[0]]||{}).name+" stir-fry")),
+      key: vKey==="plain" ? "veg" : vKey+"_veg",
+      label: vSauce ? vSauce+" "+vName
+            : (pick.length>1?"Vegetable stir-fry":((R.byId[pick[0]]||{}).name+" stir-fry")),
       lead:[],
       contents:pick.concat(rest),
       note: pick.length>1 ? pick.map(v=>(R.byId[v]||{}).name.toLowerCase()).join(" and ")
@@ -3358,6 +3530,29 @@ function vegPrep(id, R){
    The topping and the finish. AUTHORED \u2014 this is the construct of a steamed dish across
    the cuisines that steam: Cantonese (hot oil over aromatics), Teochew (salted-veg sour),
    Peranakan (a rempah steamed IN), Thai (a raw sauce poured over), Japanese (restraint). */
+/* The most-associated steaming style for each subject, from the image library + SG norms.
+   A plain steamed fish defaults to ginger & scallion; prawns to minced garlic; ribs to black
+   bean. Value is a STEAM_DIRS key. Always swappable via the style selector. */
+const STEAM_DEFAULT_STYLE={
+  // whole fish + slices -> the classic ginger & scallion
+  fish:"ginger_scallion", fish_slices:"ginger_scallion",
+  // shellfish -> minced garlic
+  prawn:"minced_garlic", clams:"minced_garlic",
+  // other proteins
+  chicken:"ginger_scallion", tofu:"ginger_scallion",
+  pork_ribs:"black_bean", ribs:"black_bean", pork_mince:"plain", egg:"dashi_sake"
+};
+function steamDefaultStyle(subject, R){
+  if(!subject) return null;
+  if(STEAM_DEFAULT_STYLE[subject]) return STEAM_DEFAULT_STYLE[subject];
+  // by species (seabass/pomfret/cod -> fish)
+  const anc=R.anc&&R.anc[subject]||new Set();
+  for(const k of ["fish","prawn","squid","clams","chicken","pork"])
+    if((anc.has&&anc.has(k))||subject===k){ if(STEAM_DEFAULT_STYLE[k]) return STEAM_DEFAULT_STYLE[k]; }
+  // whole fish fallback
+  if((R.byId[subject]||{}).group==="fish" || (anc.has&&anc.has("fish"))) return "ginger_scallion";
+  return null;
+}
 const STEAM_DIRS=[
   {key:"ginger_scallion", label:"Ginger, scallion & hot oil", region:"Cantonese",
    markers:["ginger","scallion"], need:2,
@@ -3557,6 +3752,13 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
   // Something the cook ASKED for outranks anything the engine would have chosen.
   // Affinity ranks; it must never quietly drop a deliberate choice.
   const EXPL=(opts&&opts.explicit)||null;
+  // when the single bed is chosen, the OTHER eligible bed vegetables are set aside — report
+  // them so the UI can say "a fish takes one bed" rather than dropping them silently.
+  const bedLeftOut=(chosen, subj)=>{
+    const eligible=COLLECTORS_C.filter(id=>real.includes(id) && id!==subj);
+    return eligible.filter(id=>!chosen.includes(id)).map(id=>({id,
+      why:"a steamed fish sits on one vegetable bed \u2014 "+((R.byId[chosen[0]]||{}).name||"the first")+" is under it"}));
+  };
   const rankBed=list=>{
     const r=R.rankPartners?R.rankPartners(list):list;
     return EXPL ? r.slice().sort((a,b)=>(EXPL.has&&EXPL.has(b)?1:0)-(EXPL.has&&EXPL.has(a)?1:0)) : r;
@@ -3631,13 +3833,14 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
     if((form==="whole_fish"||form==="shellfish") && splitIds.length>1){
       const CAP=4;
       const cardIds=splitIds.slice(0,CAP);
-      const overflow=splitIds.slice(CAP).concat(form==="whole_fish"?ids.filter(id=>PROCESSED_FISH.includes(id)):[]);
+      const overflowIds=splitIds.slice(CAP).concat(form==="whole_fish"?ids.filter(id=>PROCESSED_FISH.includes(id)):[]);
+      const overflow=overflowIds.map(id=>({id, why:"steam it as its own dish \u2014 one steamer plates one subject"}));
       cardIds.forEach((fid,idx)=>{
         const bed = rankBed(COLLECTORS_C.filter(id=>real.includes(id) && id!==fid)).slice(0,1);
         out.push({key:form+"_"+fid, label:LABELS[form]+nm(fid), subject:fid, form,
           contents:[fid].concat(bed).concat(topping),
           note:NOTE[form],
-          leftOut: idx===cardIds.length-1 ? overflow : [],
+          leftOut: (idx===cardIds.length-1 ? overflow : []).concat(bedLeftOut(bed, fid)),
           alternatives: cardIds.filter(x=>x!==fid)});
       });
       return;
@@ -3647,10 +3850,27 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
     const subj2 = (form==="whole_fish" && splitIds.length) ? splitIds[0] : subj;
     const bedFor2 = (form==="whole_fish"||form==="shellfish")
       ? rankBed(COLLECTORS_C.filter(id=>real.includes(id) && id!==subj2)).slice(0,1) : [];
+    // the bed is one vegetable (physical: a fish sits on one bed) — but any OTHER vegetables
+    // the cook picked steam alongside, around the fish, rather than being dropped.
+    const alongside=real.filter(id=>((R.byId[id]||{}).category)==="vegetables"
+      && id!==subj2 && !bedFor2.includes(id));
+    // proteins that genuinely steam with fish (tofu, tau kee, egg) stay on the plate
+    const steamPairsFn=id=>id==="tofu"||id==="tau_kee"||id==="egg";
+    const pairedProt=real.filter(id=>((R.byId[id]||{}).category)==="proteins"
+      && id!==subj2 && steamPairsFn(id));
+    const inDish=new Set([subj2].concat(bedFor2).concat(alongside).concat(pairedProt).concat(topping));
+    // vegetables all steam together now, so they're never "left out". But a second protein
+    // that doesn't belong on this fish's plate (another whole fish, a processed fish cake) is
+    // still set aside and reported.
+    const otherDrops=ids.filter(x=>!inDish.has(x)
+      && ((R.byId[x]||{}).category)!=="vegetables"
+      && !steamPairsFn(x))
+      .map(id=>({id, why:"set aside \u2014 steam it as its own dish, one plate per subject"}));
     out.push({key:form, label:LABELS[form]+nm(subj2), subject:subj2, form,
-      contents:[subj2].concat(bedFor2).concat(topping),
-      note:NOTE[form],
-      leftOut:ids.filter(x=>x!==subj2),
+      contents:[...new Set([subj2].concat(bedFor2).concat(alongside).concat(pairedProt).concat(topping))],
+      note: alongside.length ? NOTE[form]+" \u2014 the other vegetables steam around it"
+                             : NOTE[form],
+      leftOut: otherDrops,
       alternatives:ids.filter(x=>x!==subj2)});
   });
 
@@ -3907,28 +4127,70 @@ function pickDishVeg(ids, R, opts){
   // exactly how cucumber ends up in laksa and mushroom in char kway teow.
   // Only when the dish's own vegetables are absent do we fall back — and then to a single
   // green, because a bowl with no vegetable at all is worse than a sensible substitute.
+  const EXPL0=opts.explicit || null;
+  const isExpl0=id=>EXPL0 && EXPL0.has && EXPL0.has(id);
   let pool, usedOwnList=false;
   if(prefer.size){
     const wanted=ranked.filter(id=>prefer.has(id));
     usedOwnList = wanted.length>0;
     pool = usedOwnList ? wanted : ranked.filter(id=>LEAFY_GREENS.has(id)).slice(0,1);
+    // a vegetable the cook explicitly added belongs in the dish even if it isn't on the
+    // dish's canonical list — don't filter out a deliberate choice.
+    ranked.forEach(id=>{ if(isExpl0(id) && !pool.includes(id)) pool.push(id); });
   } else {
     pool = ranked;                      // the dish has no opinion — use general culinary fit
   }
+  const EXPL=opts.explicit || null;   // vegetables the cook deliberately picked survive the cap
+  const isExpl=id=>EXPL && EXPL.has && EXPL.has(id);
   const greens=pool.filter(id=>LEAFY_GREENS.has(id));
   const others=pool.filter(id=>!LEAFY_GREENS.has(id));
-  const useG=greens.slice(0,maxGreens), useO=others.slice(0,maxOthers);
+  // explicit picks come first so the slice keeps them; the cap trims only auto-added veg
+  const orderExpl=list=>list.slice().sort((a,b)=>(isExpl(b)?1:0)-(isExpl(a)?1:0));
+  const gOrd=orderExpl(greens), oOrd=orderExpl(others);
+  const nG=Math.max(maxGreens, gOrd.filter(isExpl).length);
+  const nO=Math.max(maxOthers, oOrd.filter(isExpl).length);
+  const useG=gOrd.slice(0,nG), useO=oOrd.slice(0,nO);
   const used=new Set([...useG,...useO]);
   const leftOut=[];
-  greens.slice(maxGreens).forEach(id=>leftOut.push({id,
+  gOrd.slice(nG).forEach(id=>leftOut.push({id,
     why:"one green is enough in a bowl \u2014 "+((R.byId[useG[0]]||{}).name||"the first")+" suits this better"}));
-  others.slice(maxOthers).forEach(id=>leftOut.push({id, why:"the bowl is already carrying enough"}));
+  oOrd.slice(nO).forEach(id=>leftOut.push({id, why:"the bowl is already carrying enough"}));
   // only claim "this dish isn't made with it" when we actually honoured the dish's own
   // list — if we fell back to a general green, the honest reason is simply that one is enough
   if(prefer.size) veg.filter(id=>!pool.includes(id)).forEach(id=>leftOut.push({id,
     why: usedOwnList ? "not something this dish is made with"
                      : "one vegetable is enough for this bowl"}));
   return {used:ids.filter(id=>!veg.includes(id) || used.has(id)), leftOut};
+}
+
+
+/* When several proteins are in the basket, a single bowl has ONE main. Noodle and rice
+   dishes were dumping every protein in; this picks the lead the way steam does — by form
+   priority — and returns the rest so the dish can decide (a soup noodle takes a second
+   sliced meat happily; a claypot rice does not). */
+const PROTEIN_LEAD_PRIORITY=["whole_fish","fish_slices","shellfish","ribs","poultry",
+  "red_meat","mince","beancurd","egg"];
+function proteinRoleOf(id){
+  if(/prawn|clam|squid|crab|scallop|oyster|cockle|mussel|sotong/.test(id)) return "shellfish";
+  if(/pomfret|seabass|snapper|threadfin|grouper|sardine|mackerel|whole_fish/.test(id)) return "whole_fish";
+  if(/fish_slice|cod|salmon|tuna|fish_cake|fish_ball/.test(id)) return "fish_slices";
+  if(/ribs/.test(id)) return "ribs";
+  if(/chicken|duck/.test(id)) return "poultry";
+  if(/beef|pork_belly|pork_loin|pork_shoulder|char_siu|lap_cheong|mutton|lamb|beef_slices|pork_slice/.test(id)) return "red_meat";
+  if(/mince/.test(id)) return "mince";
+  if(/tofu|tau_kee|tau_pok|tempeh/.test(id)) return "beancurd";
+  if(/egg/.test(id)) return "egg";
+  return null;
+}
+function pickLeadProtein(ids, R){
+  const proteins=ids.filter(id=>((R.byId[id]||{}).category)==="proteins");
+  if(proteins.length<=1) return {lead:proteins[0]||null, extras:[]};
+  const ranked=proteins.slice().sort((a,b)=>{
+    const ra=PROTEIN_LEAD_PRIORITY.indexOf(proteinRoleOf(a));
+    const rb=PROTEIN_LEAD_PRIORITY.indexOf(proteinRoleOf(b));
+    return (ra<0?99:ra)-(rb<0?99:rb);
+  });
+  return {lead:ranked[0], extras:ranked.slice(1)};
 }
 
 /* rice keeps its exact previous behaviour */
@@ -4060,7 +4322,7 @@ function buildRice(ingIds, R, dishes, AFF, opts){
    WHICH BOWL? \u2014 surface the fork. When the ingredients suit both, offer both, so the
    choice between "cook it in" and "ladle it over" is the user's to make.
    ============================================================ */
-function riceCandidates(ingIds, R, dishes, AFF){
+function riceCandidates(ingIds, R, dishes, AFF, opts){
   const real=[...new Set(ingIds.filter(id=>{
     const i=R.byId[id]||{};
     if(i.id==="water") return false;
@@ -4071,9 +4333,23 @@ function riceCandidates(ingIds, R, dishes, AFF){
   const proteins=real.filter(id=>RICE_TOPPING_PROTEINS.has(id));
   const out=[];
   const add=(key,label,mode,subject,note)=>{
-    out.push({key,label,mode,subject,note,
-      contents:pickDishVeg(real.filter(x=>!NOODLE_BASE_IDS.has(x)), R, {greens:1, others:2}).used,
-      leftOut:pickDishVeg(real.filter(x=>!NOODLE_BASE_IDS.has(x)), R, {greens:1, others:2}).leftOut});
+    const base=real.filter(x=>!NOODLE_BASE_IDS.has(x));
+    // every vegetable in the basket was hand-picked, so none is capped away; the 1+1 cap
+    // only limits vegetables the engine would auto-add (it doesn't auto-add any here).
+    const _chosen=new Set(base.filter(id=>((R.byId[id]||{}).category)==="vegetables"));
+    const vp=pickDishVeg(base, R, {greens:1, others:1, explicit:_chosen});
+    // The dish's OWN subject is the main (claypot=chicken, curry=chicken, braise=pork).
+    // lap cheong/egg/char siu/dried shrimp are allowed to ride along; every other protein
+    // belongs to a different dish and is dropped.
+    const keep=new Set([subject].filter(Boolean));
+    base.forEach(id=>{ if(/lap_cheong|^egg$|char_siu|dried_shrimp/.test(id)) keep.add(id); });
+    const contents=vp.used.filter(id=>{
+      if(((R.byId[id]||{}).category)!=="proteins") return true;
+      return keep.has(id);
+    });
+    const dropped=base.filter(id=>((R.byId[id]||{}).category)==="proteins" && !keep.has(id))
+      .map(id=>({id, why:"one main is enough \u2014 "+((R.byId[subject]||{}).name||"the first")+" leads this bowl"}));
+    out.push({key,label,mode,subject,note, contents, leftOut:vp.leftOut.concat(dropped)});
   };
 
   // strong claypot / cook-in signals
@@ -4335,14 +4611,26 @@ function noodleCandidates(ingIds, R, dishes, AFF){
       : fit==="works" ? baseName.replace(/ \(.*\)/,"")+" is a common swap for this"
       : "usually made with "+((dir.canonical||[]).map(n=>(R.byId[n]||{}).name||n).join(" or ").replace(/ \(.*?\)/g,""))+" \u2014 this is your own take";
     // a bowl takes one green and a couple of others — chosen for THIS sauce
-    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[]});
-    const mine=vpick.used;
+    const _nch=new Set(mineAll.filter(id=>((R.byId[id]||{}).category)==="vegetables"));
+    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[], explicit:_nch});
+    // one main protein per bowl. A soup can carry a second (sliced meat + a fishball);
+    // a fried noodle should not read as three meats piled on.
+    const pj=pickLeadProtein(mineAll, R);
+    const keepProteins = new Set([pj.lead].filter(Boolean));
+    if(dir.mode==="soup" && pj.extras[0]) keepProteins.add(pj.extras[0]);
+    const mine=vpick.used.filter(id=>{
+      if(((R.byId[id]||{}).category)!=="proteins") return true;
+      return keepProteins.has(id);
+    });
+    const droppedProteins=pj.extras.filter(id=>!keepProteins.has(id));
     out.push({
       key:"noodle_"+dir.key,
       label, mode:dir.mode, dirKey:dir.key, direction:dir,
       subject:base, subjectName:baseName,
       note:dir.note, fit, fitNote, hits,
-      contents:mine, leftOut:vpick.leftOut
+      contents:mine,
+      leftOut:vpick.leftOut.concat(droppedProteins.map(id=>({id,
+        why:"one main is enough in a bowl \u2014 "+((R.byId[pj.lead]||{}).name||"the first")+" leads this one"})))
     });
   });
   // strongest signal first, then the pairing that suits the noodle best
@@ -4350,7 +4638,8 @@ function noodleCandidates(ingIds, R, dishes, AFF){
   // always leave a plain fallback so a lone packet of noodles still cooks
   if(!out.length){
     const fallback=NOODLE_DIRS.find(d=>d.key==="clear_soup");
-    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:(fallback&&fallback.veg)||[]});
+    const _nch2=new Set(mineAll.filter(id=>((R.byId[id]||{}).category)==="vegetables"));
+    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:(fallback&&fallback.veg)||[], explicit:_nch2});
     const mine=vpick.used;
     out.push({key:"noodle_clear_soup", label:"Noodles in broth", mode:"soup",
       dirKey:"clear_soup", direction:fallback, subject:base,
@@ -4490,7 +4779,56 @@ const PANTRY_ON=PANTRY_ITEMS.filter(id=>!PANTRY_OFF.has(id));
    the meat. */
 const MEAL_ROLES=[["base","Rice"],["veg","Vegetable"],["meat","Meat"],["fish","Fish"],["soup","Soup"],["dessert","Dessert"]];
 const MEAL_DEFAULT={base:1,veg:1,meat:1,fish:0,soup:0,dessert:0};
-const FLOW={comps:[],active:new Set(),pantry:new Set(PANTRY_ON),appl:new Set(["stovetop","oven"]),taste:new Set(),types:new Set(),compose:null,mode:"compose",time:{total:null,active:null,cook:null},potPath:null,potMode:"soup",wokDir:null,wokPick:null,steamDir:null,steamPick:null,riceDir:null,ricePick:null,noodleDir:null,noodlePick:null,mealShape:{...MEAL_DEFAULT},results:[]};
+const FLOW={schedOpen:null, comps:[],active:new Set(),pantry:new Set(PANTRY_ON),appl:new Set(["stovetop","oven"]),taste:new Set(),types:new Set(),compose:null,mode:"compose",time:{total:null,active:null,cook:null},potPath:null,potMode:"soup",wokDir:null,wokPick:null,steamDir:null,steamPick:null,riceDir:null,ricePick:null,noodleDir:null,noodlePick:null,mealShape:{...MEAL_DEFAULT},results:[]};
+
+/* ---- SESSION PERSISTENCE (F2) ----------------------------------------------
+   Save the user's selections and basket so a refresh doesn't wipe the plan. We
+   store only what can't be re-derived: which ingredients are active, pantry
+   overrides, appliances, and the saved basket. Everything else rebuilds from
+   these via recompute(). Saves are debounced; restore runs after data loads so
+   ingredient ids can be validated against the reference.                       */
+const PERSIST_KEY="dh_session_v1";
+let _persistT=null;
+function persistSession(){
+  if(_persistT) return;                       // debounce a burst of changes into one write
+  _persistT=setTimeout(()=>{
+    _persistT=null;
+    try{
+      const snap={
+        active:[...FLOW.active],
+        pantry:[...FLOW.pantry],
+        appl:[...FLOW.appl],
+        compose:FLOW.compose,
+        basket:(FLOW.basket||[]).map(d=>({name:d.name, method:d.method, buy:d.buy, sourced:d.sourced,
+          prep:d.prep, firstStep:d.firstStep, prepMins:d.prepMins, timing:d.timing})),
+        pax:(typeof pax!=="undefined"?pax:4)
+      };
+      localStorage.setItem(PERSIST_KEY, JSON.stringify(snap));
+    }catch(e){/* storage blocked/full — fail silent, same as tracking */}
+  }, 250);
+}
+function restoreSession(R){
+  let snap;
+  try{ snap=JSON.parse(localStorage.getItem(PERSIST_KEY)||"null"); }catch(e){ return false; }
+  if(!snap) return false;
+  const valid=id=>R && R.byId && R.byId[id];        // drop ids the taxonomy no longer has
+  if(Array.isArray(snap.active)) FLOW.active=new Set(snap.active.filter(valid));
+  if(Array.isArray(snap.pantry)) FLOW.pantry=new Set(snap.pantry.filter(valid));
+  if(Array.isArray(snap.appl) && snap.appl.length) FLOW.appl=new Set(snap.appl);
+  if(snap.compose) FLOW.compose=snap.compose;
+  if(Array.isArray(snap.basket)) FLOW.basket=snap.basket;
+  if(typeof snap.pax==="number"){ try{ pax=snap.pax; }catch(e){} }
+  // rebuild the component groups for whatever's active, so the canvas matches
+  if(typeof groupFor==="function"){
+    FLOW.comps=[];
+    [...FLOW.active].forEach(id=>{
+      const ing=R.byId[id]; if(!ing) return;
+      const g=groupFor(ing);
+      if(!FLOW.comps.some(c=>c.key===g.key)) FLOW.comps.push({key:g.key,title:g.title,leaves:g.leaves,dx:0,dy:0});
+    });
+  }
+  return true;
+}
 let REF=null,DISHES=[],APPL={},APPL_DATA={},APPLIANCE_ORDER=[],AFF=null;
 
 /* ===== PILOT TRACKING =====
@@ -4708,7 +5046,8 @@ function suggestChip(id, R){
 /* wire suggestion-chip clicks once, event-delegated. Tapping opens a card that explains WHY
    the ingredient fits, and lets the person choose to add it — rather than adding silently. */
 let SUGGEST_WIRED=false;
-function wireSuggestions(){
+function wireSuggestions(mealCtx){
+  window.__suggMeal = !!mealCtx;
   if(SUGGEST_WIRED) return; SUGGEST_WIRED=true;
   document.addEventListener("click", function(e){
     const b=e.target.closest("[data-add]"); if(!b) return;
@@ -4736,9 +5075,10 @@ function openSuggestCard(id){
     "<div class=\"sug-btns\">"+
       (already
         ? "<button class=\"sug-in\" disabled>Already in this dish</button>"
-        : "<button class=\"sug-go\" data-confirm=\""+id+"\">Add to this dish</button>")+
+        : "<button class=\"sug-go\" data-confirm=\""+id+"\">"+(window.__suggMeal?"Add to my ingredients":"Add to this dish")+"</button>")+
       "<button class=\"sug-cancel\">Close</button>"+
-    "</div>";
+    "</div>"+
+    (window.__suggMeal?"<div class=\"sug-meal-note\">This goes into your ingredients \u2014 open a composer and it\u2019ll shape a new dish for the meal.</div>":"");
   wrap.appendChild(card); document.body.appendChild(wrap);
   requestAnimationFrame(()=>wrap.classList.add("in"));   // .radial starts at opacity:0; .in fades it in
   card.querySelector(".sug-cancel").onclick=closeSuggestCard;
@@ -4778,23 +5118,29 @@ function addCurrentDishToBasket(name, method, buyList, timing, detail){
   const prep=((detail&&detail.prep)||[]).map(p=>p.name+" \u2014 "+(p.prep||"prep"));
   const steps=((detail&&detail.steps)||[]).map(s=>(s.label||s.t||"")+(s.detail?": "+s.detail:(s.d?": "+s.d:"")));
   FLOW.basket.push({name, method, buy:(buyList||[]).map(b=>({id:b.id,name:b.name})), sourced,
+    contents:(window.__lastContents||[]).slice(),   // the ingredients that make this dish
+    subject:(window.__lastSubject||null),           // the main, so edits don't flip the dish
     prep, firstStep:steps[0]||"", prepMins:(detail&&detail.prepMins)||0,
     timing: timing||{total:null,handsOn:null,handsOff:null}});
+  persistSession();
   TRACK.log("dish_added_to_basket", {dish:name, method:method, buy_count:(buyList||[]).length, basket_dishes:FLOW.basket.length});
   updateBasketPill();
 }
 /* build the to-buy list for a composed dish from its contents: the ingredients it needs that
    you don't already have (not in active basket or pantry). Reused by every composer. */
 function buyListForContents(contents){
-  const haveSet=new Set([...FLOW.active, ...FLOW.pantry]);
+  // What you'd actually buy for this dish: the proteins and vegetables you're cooking with —
+  // including the ones you picked, since the basket is a plan, not your fridge inventory.
+  // Pantry staples (rice, oil, sauces) and aromatics stay off the list; things you've ticked
+  // as ALREADY in your pantry are dropped too.
   const buy=[];
   (contents||[]).forEach(id=>{
     const ing=REF.byId[id]||{};
     if(id==="water") return;
-    if(measureTypeOf(ing)==="assumed") return;         // pantry staples/aromatics: not a shop item
-    if(haveSet.has(id)) return;                          // you already have it
+    if(measureTypeOf(ing)==="assumed") return;          // aromatics/seasonings: not a shop item
+    if(FLOW.pantry.has(id)) return;                      // you keep this in the cupboard already
     // a descendant you own satisfies it (you own pomfret, dish needs fish)
-    if([...haveSet].some(h=>(REF.anc[h]||new Set()).has(id))) return;
+    if([...FLOW.pantry].some(h=>(REF.anc[h]||new Set()).has(id))) return;
     buy.push({id, name:ing.name||id});
   });
   return buy;
@@ -4802,6 +5148,8 @@ function buyListForContents(contents){
 /* a reusable "+ Add to basket" button for the single-dish composers */
 function addBasketButtonFor(label, contents, method, timing, detail){
   const buy=buyListForContents(contents);
+  window.__lastContents=contents;   // remember the full selection for basket editing
+  window.__lastSubject=(detail&&detail.subject)||null;   // and the main, to keep edits honest
   const btn=document.createElement("button"); btn.className="add-basket-btn";
   const inBasket=FLOW.basket && FLOW.basket.some(d=>d.name===label);
   btn.innerHTML=inBasket ? "\u2713 In your basket" : "+ Add to basket";
@@ -4901,6 +5249,22 @@ function renderBasketSchedule(plan){
 
   const W=Math.max(plan.ready,1);
   const pct=v=>(100*v/W).toFixed(2)+"%";
+
+  // a shared horizontal time axis across the top, so every bar reads against one clock
+  const axis=document.createElement("div"); axis.className="sc-axis";
+  // pick a tick step that gives ~4-6 marks
+  const step = W<=20?5 : W<=40?10 : W<=75?15 : 30;
+  let ticksHtml="";
+  for(let t=0; t<=W; t+=step){
+    ticksHtml+="<span class=\"sc-tick\" style=\"left:"+pct(t)+"\">"+
+      "<span class=\"sc-tick-l\">"+(t===0?"start":"+"+t)+"</span></span>";
+  }
+  // always mark the finish
+  ticksHtml+="<span class=\"sc-tick sc-tick-end\" style=\"left:100%\">"+
+    "<span class=\"sc-tick-l\">"+W+" min</span></span>";
+  axis.innerHTML="<span class=\"sc-axis-pad\"></span><div class=\"sc-axis-track\">"+ticksHtml+"</div>";
+  wrap.appendChild(axis);
+
   const rows=document.createElement("div"); rows.className="sc-rows";
   plan.rows.forEach(r=>{
     const d=FLOW.basket.find(x=>x.name===r.name)||{};
@@ -4915,6 +5279,7 @@ function renderBasketSchedule(plan){
     row.title=r.name+" \u2014 "+(APN[r.appliance]||r.appliance).toLowerCase()+"\n"+
       (r.start===0?"Start straight away":"Start "+r.start+" min in")+"\n"+jobs.join("\n");
     row.innerHTML=
+      "<div class=\"sc-head-row\">"+
       "<div class=\"sc-name\">"+r.name+"<em>"+icon(r.appliance)+(APN[r.appliance]||r.appliance)+"</em></div>"+
       "<div class=\"sc-track\">"+
         "<div class=\"sc-bar\" style=\"left:"+pct(r.start)+";width:"+pct(Math.max(1,r.total))+"\">"+
@@ -4930,7 +5295,34 @@ function renderBasketSchedule(plan){
             (APN[r.appliance]||r.appliance).toLowerCase()+(off?" \u00b7 "+off+" min free":"")+"</span>"+
         "</div>"+
       "</div>"+
-      "<div class=\"sc-when\">"+(r.start===0?"start now":"+"+r.start+"m")+"</div>";
+      "</div>";
+    // reflect the dish's ingredients right on the timeline, expandable like the basket rows
+    const dIdx=FLOW.basket.indexOf(d);
+    const open=FLOW.schedOpen===dIdx && dIdx>=0;
+    row.classList.add("sc-row-x");
+    if(open) row.classList.add("open");
+    const items=basketVisibleItems(d.contents);
+    if(dIdx>=0){
+      const strip=document.createElement("div"); strip.className="sc-ings";
+      // mark the protein so it's obvious which chip changes the main
+      const isProt=id=>((REF.byId[id]||{}).category)==="proteins";
+      strip.innerHTML=
+        "<div class=\"sc-ings-lab\">Tap an ingredient to swap it or change the dish \u00b7 or add one</div>"+
+        "<div class=\"sc-ings-row\">"+
+          items.map(id=>"<button class=\"bk-ing"+(isProt(id)?" bk-ing-main":"")+"\" data-scedit=\""+dIdx+"\" data-ing=\""+id+"\">"+
+            ((REF.byId[id]||{}).name||id)+(isProt(id)?"<em>main</em>":"")+"</button>").join("")+
+          "<button class=\"sc-add\" data-scadd=\""+dIdx+"\">+ add</button>"+
+        "</div>";
+      row.appendChild(strip);
+      // tapping the bar toggles this dish open on the timeline
+      const bar=row.querySelector(".sc-track");
+      if(bar) bar.style.cursor="pointer";
+      row.querySelector(".sc-name").style.cursor="pointer";
+      const toggle=(e)=>{ if(e.target.closest("[data-scedit]")||e.target.closest("[data-scadd]")) return;
+        FLOW.schedOpen = open?null:dIdx; openBasket(); };
+      row.querySelector(".sc-name").addEventListener("click",toggle);
+      if(bar) bar.addEventListener("click",toggle);
+    }
     rows.appendChild(row);
   });
   wrap.appendChild(rows);
@@ -4943,13 +5335,24 @@ function renderBasketSchedule(plan){
   const sug=mealGapSuggestions();
   if(sug.length){
     const o=document.createElement("div"); o.className="pot-sug";
-    const HEAD={gap:"Worth adding", balance:"To balance the table",
-                variety:"To vary the table", extra:"To make it generous"};
-    o.innerHTML="<div class=\"ps-lab\">"+(HEAD[sug[0].tag]||"Would round the meal out")+" &mdash; tap to add</div>"+
-      "<div class=\"ps-row\">"+sug.map(s=>suggestChip(s.id, REF)).join("")+"</div>"+
+    o.innerHTML="<div class=\"ps-lab\">Worth adding to the meal &mdash; tap to add</div>"+
+      "<div class=\"ps-list\">"+sug.map(s=>{
+        const cat=(REF.byId[s.id]||{}).category;
+        const where = s.forDish ? "goes with your "+s.forDish
+                    : cat==="starches" ? "a starch on the side"
+                    : "as its own dish";
+        return "<div class=\"ps-item\">"+
+          "<button class=\"ps-chip ps-add\" data-mealadd=\""+s.id+"\">"+
+            ((REF.byId[s.id]||{}).name||s.id)+"<em>add</em></button>"+
+          "<span class=\"ps-where\">"+where+"</span></div>";
+      }).join("")+"</div>"+
       "<div class=\"ps-note\">"+sug[0].why+"</div>";
     wrap.appendChild(o);
-    wireSuggestions();
+    // meal suggestions in the basket -> ask WHICH dish to add to (or make a new dish)
+    o.querySelectorAll("[data-mealadd]").forEach(b=>b.onclick=(e)=>{
+      e.stopPropagation();
+      openMealAddCard(b.getAttribute("data-mealadd"));
+    });
   }
   return wrap;
 }
@@ -4957,6 +5360,28 @@ function renderBasketSchedule(plan){
 /* Look at everything in the basket together and name what the MEAL is missing —
    a green if it is all meat, something fresh if it is all rich, a starch if there is
    nothing to eat it with. Ranked by cuisine fit, and never something already in. */
+/* Which dish already in the basket could take a suggested ingredient? A green joins any
+   stir-fry or one-pot; a protein wants its own dish, so it reads as "a new dish". */
+function dishThatTakes(id){
+  const R=REF, ing=R.byId[id]||{};
+  const cat=ing.category;
+  // a starch is never "added to" another dish — it IS a dish (rice, a bowl of noodles)
+  if(cat==="starches") return null;
+  // a second protein wants its own dish
+  if(cat==="proteins") return null;
+  if(cat==="vegetables"){
+    const LEAF=(typeof LEAFY_GREENS!=="undefined" && LEAFY_GREENS.has(id));
+    const soupVeg=/daikon|winter_melon|lotus_root|watercress|napa_cabbage/.test(id);
+    // soup vegetables want a pot; leafy greens go in a stir-fry or a pot; firm veg, a stir-fry
+    const wants = soupVeg ? ["onepot"]
+                : LEAF   ? ["stirfry","onepot","noodles"]
+                         : ["stirfry","onepot"];
+    const host=FLOW.basket.find(d=>wants.includes(d.method));
+    if(host) return host.name;
+    return null;   // no dish of the right kind yet -> "as its own dish"
+  }
+  return null;
+}
 function mealGapSuggestions(){
   const R=REF; if(!R) return [];
   const inMeal=new Set();
@@ -5020,22 +5445,319 @@ function mealGapSuggestions(){
   }
 
   /* ---- 4. a gentle nudge even for a well-formed meal ---- */
-  // a complete, varied meal still enjoys one more vegetable for the table
-  if(!out.length && dishCount>=1)
-    add(["broccoli","cauliflower","long_beans","kailan","eggplant","okra"],
-      "This is a solid meal \u2014 an extra vegetable dish would make it generous.", "extra");
+  // top up toward five with extra vegetables that would sit well on the table
+  add(["broccoli","cauliflower","long_beans","kailan","eggplant","okra","french_beans","cabbage","spinach","chye_sim"],
+    "An extra vegetable dish would make the meal more generous.", "extra");
+  add(["mushroom","tomato","carrot","beansprouts","lotus_root"],
+    "Another vegetable would add colour and texture to the table.", "extra");
 
-  return out.slice(0,3);
+  // for each suggestion, work out which dish in the basket could actually take it
+  out.forEach(s=>{ s.forDish = dishThatTakes(s.id); });
+  return out.slice(0,5);
+}
+/* Edit an ingredient inside a basket dish — swap it, remove it, or the card also
+   offers an extra to add. Because a dish's contents ARE its buy-list, every edit updates
+   both: the dish becomes squid laksa AND the cart swaps prawn for squid. */
+/* Classify a candidate swap for a basket dish into one of three lanes:
+   KEEP   — same dish, like-for-like (prawn -> squid in a laksa)
+   CHANGE — composes a DIFFERENT dish around the new ingredient
+   BLOCKED— the dish's method can't cook it (steam a braising cut)
+   Compares the dish KEY, not the label, so a noodle-name swap isn't mistaken for a new dish. */
+function shortName(name){
+  return String(name||"dish").replace(/ with .*/,"").replace(/ \(.*\)/,"").trim();
+}
+function classifyBasketSwap(d, oldId, newId){
+  const R=REF, next=(d.contents||[]).map(x=>x===oldId?newId:x);
+  const firstOf=(ids)=>{
+    try{
+      if(d.method==="noodles") return noodleCandidates(ids,R,DISHES,AFF)[0];
+      if(d.method==="steam")   return steamCandidates(ids,R,DISHES,AFF)[0];
+      if(d.method==="stirfry") return wokCandidates(ids,R,DISHES,AFF)[0];
+      if(d.method==="ricebowl")return riceCandidates(ids,R,DISHES,AFF)[0];
+      if(d.method==="onepot")  return potCandidates(ids,R,DISHES,AFF)[0];
+    }catch(e){}
+    return null;
+  };
+  // method-level block: can the swapped-in ingredient be cooked this way at all?
+  const ni=R.byId[newId]||{};
+  if(d.method==="steam" && ni.category==="proteins"){
+    if(typeof steamFormOf==="function" && !steamFormOf(newId,R))
+      return {lane:"BLOCKED", reason:"can\u2019t be steamed \u2014 it needs a braise or a sear"};
+  }
+  if(d.method==="stirfry" && ni.category==="proteins"){
+    if((ni.provides||[]).includes("collagen_rich") || ni.cut_role==="braise")
+      return {lane:"BLOCKED", reason:"a braising cut won\u2019t tenderise in a wok"};
+  }
+  const before=firstOf(d.contents||[]), after=firstOf(next);
+  if(!after) return {lane:"BLOCKED", reason:"no dish composes with this"};
+  const beforeKey=before?(before.key||before.species||before.label):null;
+  const afterKey=after.key||after.species||after.label;
+  // For a stir-fry, the SAUCE is the character: swapping the protein under the same sauce
+  // keeps the dish (Sambal chicken -> Sambal prawn is still "a sambal stir-fry"). Compare the
+  // sauce prefix, not the whole protein-specific key.
+  let sameDish = beforeKey && afterKey && beforeKey===afterKey;
+  if(!sameDish && d.method==="stirfry" && typeof wokSauceKey==="function"){
+    const sBefore=wokSauceKey(d.contents||[], REF);
+    const sAfter=wokSauceKey(next, REF);
+    if(sBefore!=="plain" && sBefore===sAfter) sameDish=true;   // same sauce = same dish family
+  }
+  return {lane: sameDish?"KEEP":"CHANGE", becomes: after.label||after.species||"a new dish"};
+}
+/* Add an ingredient to a specific basket dish. Offers vegetables and proteins that suit the
+   dish, then re-derives it so name/prep/timing/buy update together. */
+/* A meal-level suggestion in the basket: choose WHICH dish it joins, or start a new dish.
+   This is the "add to dish 1 / dish 2 / new dish" picker. */
+function openMealAddCard(id){
+  const R=REF, ing=R.byId[id]||{};
+  // which existing dishes could take this ingredient? (a green joins a stir-fry/pot; a
+  // protein really wants its own dish)
+  const canTake=(d)=>{
+    if(ing.category==="vegetables") return ["stirfry","onepot","steam","noodles","ricebowl"].includes(d.method);
+    if(ing.category==="proteins") return false;   // second protein = its own dish
+    if(ing.category==="starches") return false;   // a starch is its own thing
+    return true;
+  };
+  const targets=FLOW.basket.map((d,idx)=>({d,idx})).filter(x=>canTake(x.d) && !(x.d.contents||[]).includes(id));
+
+  const wrap=document.createElement("div"); wrap.className="radial sheet"; wrap.id="mealaddcard";
+  wrap.onclick=(e)=>{ if(e.target===wrap) wrap.remove(); };
+  const card=document.createElement("div"); card.className="sug-card";
+  card.innerHTML=
+    "<div class=\"sug-name\">Add "+(ing.name||id)+"</div>"+
+    "<div class=\"sug-line\">Where should it go?</div>"+
+    (targets.length?"<div class=\"sug-swaplab\">add to a dish</div><div class=\"ma-list\">"+
+      targets.map(t=>"<button class=\"ma-dish\" data-mto=\""+t.idx+"\">"+t.d.name+"</button>").join("")+
+      "</div>":"")+
+    "<div class=\"sug-swaplab\">or</div>"+
+    "<div class=\"ma-list\"><button class=\"ma-new\" data-mnew=\"1\">Make it a new dish</button></div>"+
+    "<div class=\"sug-btns\"><button class=\"sug-cancel\">Close</button></div>";
+  wrap.appendChild(card); document.body.appendChild(wrap);
+  requestAnimationFrame(()=>wrap.classList.add("in"));
+  card.querySelector(".sug-cancel").onclick=()=>wrap.remove();
+
+  // add to an existing dish -> re-derive it
+  card.querySelectorAll("[data-mto]").forEach(b=>b.onclick=()=>{
+    const idx=+b.getAttribute("data-mto"), d=FLOW.basket[idx];
+    d.contents=(d.contents||[]).concat([id]);
+    if(typeof rebuildBasketDish==="function") rebuildBasketDish(idx);
+    TRACK.log("basket_ingredient_added",{dish:d.name, id:id, source:"meal_suggestion"});
+    wrap.remove(); persistSession(); updateBasketPill(); openBasket();
+  });
+  // make a new dish: drop it into the ingredient canvas and open the composer for it
+  card.querySelector("[data-mnew]").onclick=()=>{
+    FLOW.active.add(id);
+    if(!FLOW.suggestedIds) FLOW.suggestedIds=new Set();
+    FLOW.suggestedIds.add(id);
+    if(typeof groupFor==="function"){
+      const g=groupFor(ing);
+      if(!FLOW.comps.some(c=>c.key===g.key)) FLOW.comps.push({key:g.key,title:g.title,leaves:g.leaves,dx:0,dy:0});
+    }
+    TRACK.log("ingredient_added",{id:id, source:"meal_suggestion_newdish"});
+    wrap.remove(); closeBasket(); persistSession();
+    if(typeof renderComps==="function") renderComps();
+    if(typeof recompute==="function") recompute();
+  };
+}
+function openBasketAddCard(dishIdx){
+  const R=REF, d=FLOW.basket[dishIdx]; if(!d) return;
+  const have=new Set(d.contents||[]);
+  // candidate additions: vegetables that go, and a protein or two, not already in
+  const vegPool=["bok_choy","kailan","chye_sim","kangkong","spinach","long_beans","broccoli",
+    "cauliflower","carrot","mushroom","eggplant","tomato","okra","bell_pepper","cabbage"];
+  const protPool=["prawn","squid","clams","fish_slices","fish_cake","egg","tofu","tau_kee","lap_cheong"];
+  const rank=(list)=>(R.rankPartners?R.rankPartners(list):list).filter(x=>R.byId[x] && !have.has(x));
+  const veg=rank(vegPool).slice(0,6);
+  const prot=rank(protPool).slice(0,4);
+
+  const wrap=document.createElement("div"); wrap.className="radial sheet"; wrap.id="bkaddcard";
+  wrap.onclick=(e)=>{ if(e.target===wrap) wrap.remove(); };
+  const card=document.createElement("div"); card.className="sug-card";
+  const chips=(list)=>list.map(x=>"<button class=\"bk-addchip\" data-add2=\""+x+"\">"+
+    ((R.byId[x]||{}).name||x)+"</button>").join("");
+  card.innerHTML=
+    "<div class=\"sug-name\">Add to "+d.name+"</div>"+
+    "<div class=\"sug-line\">Pick something to add \u2014 the dish and your shopping list update together.</div>"+
+    (veg.length?"<div class=\"sug-swaplab\">vegetables</div><div class=\"bk-addrow\">"+chips(veg)+"</div>":"")+
+    (prot.length?"<div class=\"sug-swaplab\">proteins &amp; extras</div><div class=\"bk-addrow\">"+chips(prot)+"</div>":"")+
+    "<div class=\"sug-btns\"><button class=\"sug-cancel\">Close</button></div>";
+  wrap.appendChild(card); document.body.appendChild(wrap);
+  requestAnimationFrame(()=>wrap.classList.add("in"));
+  card.querySelector(".sug-cancel").onclick=()=>wrap.remove();
+  card.querySelectorAll("[data-add2]").forEach(b=>b.onclick=()=>{
+    const add=b.getAttribute("data-add2");
+    d.contents=(d.contents||[]).concat([add]);
+    if(typeof rebuildBasketDish==="function") rebuildBasketDish(dishIdx);
+    TRACK.log("basket_ingredient_added",{dish:d.name, id:add});
+    wrap.remove(); persistSession(); updateBasketPill(); openBasket();
+  });
+}
+function openBasketIngredientCard(dishIdx, id){
+  const R=REF, d=FLOW.basket[dishIdx]; if(!d) return;
+  const i=R.byId[id]||{};
+  const wrap=document.createElement("div"); wrap.className="radial sheet"; wrap.id="bkcard";
+  wrap.onclick=(e)=>{ if(e.target===wrap) wrap.remove(); };
+  const card=document.createElement("div"); card.className="sug-card";
+
+  // candidate pool by category
+  let pool=[];
+  if(i.category==="vegetables"){
+    pool=(typeof LEAFY_GREENS!=="undefined" && LEAFY_GREENS.has(id))
+      ? [...LEAFY_GREENS] : ["carrot","daikon","mushroom","tomato","eggplant","long_beans","broccoli","cauliflower","okra","napa_cabbage","kailan","chye_sim"];
+  } else if(i.category==="proteins"){
+    pool=["prawn","squid","clams","fish_slices","fish_cake","chicken_thigh","pork_belly","pork_mince","beef_slices","beef_chuck","tofu","tau_kee"];
+  }
+  pool=pool.filter(x=>x!==id && R.byId[x] && !(d.contents||[]).includes(x));
+
+  // sort each candidate into a lane
+  const keep=[], change=[], blocked=[];
+  pool.forEach(x=>{
+    const r=classifyBasketSwap(d, id, x);
+    const entry={id:x, name:(R.byId[x]||{}).name||x, becomes:r.becomes, reason:r.reason};
+    if(r.lane==="KEEP") keep.push(entry);
+    else if(r.lane==="CHANGE") change.push(entry);
+    else blocked.push(entry);
+  });
+  const cap=(a,n)=>a.slice(0,n);
+  const chip=(e,cls)=>"<button class=\""+cls+"\" data-sw=\""+e.id+"\""+
+    (e.reason?" data-reason=\""+e.reason.replace(/"/g,"&quot;")+"\" disabled":"")+">"+e.name+
+    (cls==="bk-sw-change"&&e.becomes?"<em>"+e.becomes+"</em>":"")+"</button>";
+
+  card.innerHTML=
+    "<div class=\"sug-name\">"+(i.name||id)+"</div>"+
+    "<div class=\"sug-line\">In <strong>"+d.name+"</strong>. An edit here updates the dish and your shopping list together.</div>"+
+    "<div class=\"bk-lanes\">"+
+      "<div class=\"bk-lane\"><div class=\"bk-lane-h keep\">Keeps it "+shortName(d.name)+"</div>"+
+        (keep.length?cap(keep,5).map(e=>chip(e,"bk-sw-keep")).join(""):"<span class=\"bk-lane-none\">no like-for-like swap</span>")+
+      "</div>"+
+      "<div class=\"bk-lane\"><div class=\"bk-lane-h change\">Makes a new dish</div>"+
+        (change.length?cap(change,5).map(e=>chip(e,"bk-sw-change")).join(""):"<span class=\"bk-lane-none\">nothing different composes</span>")+
+      "</div>"+
+    "</div>"+
+    (blocked.length?"<div class=\"bk-blocked\"><span class=\"bk-blocked-l\">can\u2019t use here</span>"+
+      cap(blocked,4).map(e=>chip(e,"bk-sw-blocked")).join("")+"</div>":"")+
+    "<div class=\"sug-btns\">"+
+      "<button class=\"sug-drop\">Remove from dish</button>"+
+      "<button class=\"sug-cancel\">Close</button>"+
+    "</div>";
+  wrap.appendChild(card); document.body.appendChild(wrap);
+  requestAnimationFrame(()=>wrap.classList.add("in"));
+
+  const rebuild=()=>{
+    // re-derive the dish from its edited contents so name, prep and buy-list stay honest
+    rebuildBasketDish(dishIdx);
+    wrap.remove(); persistSession(); updateBasketPill(); openBasket();
+  };
+  // a disabled (blocked) chip reveals its reason on tap
+  card.querySelectorAll("[data-reason]").forEach(b=>{
+    b.removeAttribute("disabled");
+    b.onclick=(e)=>{ e.stopPropagation();
+      let note=card.querySelector(".bk-reason");
+      if(!note){ note=document.createElement("div"); note.className="bk-reason"; card.querySelector(".bk-blocked").appendChild(note); }
+      note.textContent=b.getAttribute("data-reason");
+    };
+  });
+  card.querySelector(".sug-cancel").onclick=()=>wrap.remove();
+  card.querySelector(".sug-drop").onclick=()=>{
+    d.contents=(d.contents||[]).filter(x=>x!==id);
+    TRACK.log("basket_ingredient_removed",{dish:d.name, id:id});
+    rebuild();
+  };
+  card.querySelectorAll("[data-sw]").forEach(b=>b.onclick=()=>{
+    const to=b.getAttribute("data-sw");
+    d.contents=(d.contents||[]).map(x=>x===id?to:x);
+    TRACK.log("basket_ingredient_swapped",{dish:d.name, from:id, to:to});
+    rebuild();
+  });
+}
+/* Re-derive a basket dish after its contents change, so name/prep/timing/buy stay correct. */
+function rebuildBasketDish(dishIdx){
+  const d=FLOW.basket[dishIdx]; if(!d) return;
+  const R=REF, ids=d.contents||[];
+  let built=null, label=d.name;
+  // keep the SAME main this dish had — adding a vegetable to steamed chicken must not turn it
+  // into steamed bok choy just because the veg candidate sorts first.
+  const pickCand=(cands)=>{
+    if(!cands||!cands.length) return null;
+    if(d.subject){ const keep=cands.find(c=>c.subject===d.subject); if(keep) return keep; }
+    return cands[0];
+  };
+  try{
+    if(d.method==="noodles"){ const c=pickCand(noodleCandidates(ids,R,DISHES,AFF));
+      if(c){ label=c.label; d.subject=c.subject; built=buildNoodle(c.contents,R,DISHES,AFF,{subject:c.subject,direction:c.direction,mode:c.mode}); } }
+    else if(d.method==="steam"){ const c=pickCand(steamCandidates(ids,R,DISHES,AFF));
+      if(c){ label=c.label||c.subjectName; d.subject=c.subject; built=buildSteam(c.contents,R,DISHES,AFF,c); } }
+    else if(d.method==="stirfry"){ const c=pickCand(wokCandidates(ids,R,DISHES,AFF));
+      if(c){ label=c.label; d.subject=c.subject!=null?c.subject:d.subject; built=buildStirFry(c.contents,R,DISHES,AFF,c); } }
+    else if(d.method==="ricebowl"){ const c=pickCand(riceCandidates(ids,R,DISHES,AFF));
+      if(c){ label=c.label; d.subject=c.subject; built=buildRice(c.contents,R,DISHES,AFF,{subject:c.subject,direction:c.direction,mode:c.mode}); } }
+    else if(d.method==="onepot"){ const c=potCandidates(ids,R,DISHES,AFF)[0];
+      if(c){ built=c; } }
+  }catch(e){/* keep the old dish if re-derivation fails */}
+  d.name=label;
+  d.buy=buyListForContents(ids).map(b=>({id:b.id,name:b.name}));
+  if(built){
+    if(built.total!=null) d.timing={total:built.total,handsOn:built.handsOn,handsOff:built.handsOff};
+    if(built.prep) d.prep=built.prep.map(p=>p.name+" \u2014 "+(p.prep||"prep"));
+    if(built.prepMins!=null) d.prepMins=built.prepMins;
+  }
 }
 function openBasket(){
-  closeBasket();
-  const buy=basketBuyList();
+  // if the drawer is already open, just refresh its contents in place — no teardown, no flash
+  const existing=el("basket");
+  if(existing){ const p=existing.querySelector(".basket-panel"); if(p){ fillBasketPanel(p); return; } }
   const wrap=document.createElement("div"); wrap.className="radial sheet"; wrap.id="basket";
   wrap.onclick=(e)=>{ if(e.target===wrap) closeBasket(); };
   const panel=document.createElement("div"); panel.className="basket-panel";
-  const dishRows=FLOW.basket.map((d,idx)=>
-    "<div class=\"bk-dish\"><span class=\"bk-flame\">\u25c9</span><span class=\"bk-dn\">"+d.name+"</span>"+
-    "<button class=\"bk-rm\" data-rm=\""+idx+"\" aria-label=\"remove\">\u00d7</button></div>").join("");
+  fillBasketPanel(panel);
+  wrap.appendChild(panel); document.body.appendChild(wrap);
+  requestAnimationFrame(()=>wrap.classList.add("in"));
+}
+/* Which ingredients to show as editable chips in the basket: the things you actually
+   cook with — proteins, vegetables, and the aromatics/sauces that shape the dish. We hide
+   only water and cupboard staples (oil, salt, sugar, soy) that no one swaps. */
+function basketVisibleItems(contents){
+  const HIDE=new Set(["water","oil","cooking_oil","sesame_oil","salt","sugar","white_sugar",
+    "corn_starch","cornflour","plain_flour","msg"]);
+  return (contents||[]).filter(id=>{
+    if(HIDE.has(id)) return false;
+    const ing=REF.byId[id]||{};
+    const cat=ing.category;
+    // always show the real components of a dish
+    if(cat==="proteins"||cat==="vegetables"||cat==="starches") return true;
+    // show aromatics/sauces that define character (ginger, scallion, sambal, dark soy...)
+    if(cat==="pastes"||cat==="aromatics"||cat==="herbs"||cat==="seasonings") return true;
+    if(CHARACTER_SEASONINGS.has(id)) return true;
+    // otherwise it's a background staple — hide it
+    return measureTypeOf(ing)!=="assumed";
+  });
+}
+function fillBasketPanel(panel){
+  const buy=basketBuyList();
+  const dishRows=FLOW.basket.map((d,idx)=>{
+    const t=d.timing||{};
+    const timeStr = t.total ? t.total+" min"+(t.handsOff?" \u00b7 "+t.handsOff+" hands-off":"") : "";
+    const open = FLOW.basketOpen===idx;
+    // the ingredients that make this dish — tappable to swap/remove
+    const items=basketVisibleItems(d.contents);
+    const itemChips=items.map(id=>
+      "<button class=\"bk-ing\" data-bkedit=\""+idx+"\" data-ing=\""+id+"\">"+
+        ((REF.byId[id]||{}).name||id)+"</button>").join("");
+    return "<div class=\"bk-dish"+(open?" open":"")+"\">"+
+      "<div class=\"bk-dhead\" data-toggle=\""+idx+"\">"+
+        "<span class=\"bk-flame\">\u25c9</span>"+
+        "<span class=\"bk-dn\">"+d.name+"</span>"+
+        (timeStr?"<span class=\"bk-dt\">"+timeStr+"</span>":"")+
+        "<span class=\"bk-exp\">"+(open?"\u2212":"+")+"</span>"+
+        "<button class=\"bk-rm\" data-rm=\""+idx+"\" aria-label=\"remove\">\u00d7</button>"+
+      "</div>"+
+      (open?"<div class=\"bk-ings\">"+
+        "<div class=\"bk-ings-lab\">Ingredients \u2014 tap to swap or remove</div>"+
+        "<div class=\"bk-ings-row\">"+itemChips+
+          "<button class=\"sc-add\" data-bkadd=\""+idx+"\">+ add</button>"+
+        "</div>"+
+      "</div>":"")+
+    "</div>";
+  }).join("");
   const buyChips=buy.length? buy.map(b=>
     "<span class=\"bk-chip"+(b.sourced?" sourced":"")+"\">"+b.name+(b.sourced?" \u2726":"")+"</span>").join("")
     : "<span class=\"bk-empty\">Nothing to buy \u2014 you have it all.</span>";
@@ -5063,25 +5785,56 @@ function openBasket(){
       "<path d=\"M8.5 9 11 3.6M15.5 9 13 3.6\"/><path d=\"M9.5 13v3M14.5 13v3\"/></svg>"+
       "Your basket</span>"+
       "<span class=\"bk-sub\">"+FLOW.basket.length+(FLOW.basket.length===1?" dish":" dishes")+" \u00b7 "+buy.length+" to buy</span></div>"+
-    "<div class=\"bk-lab\">Cooking</div><div class=\"bk-dishes\">"+(dishRows||"<span class=\"bk-empty\">No dishes yet.</span>")+"</div>"+
+    (plan ? "" : "<div class=\"bk-lab\">Cooking</div><div class=\"bk-dishes\">"+(dishRows||"<span class=\"bk-empty\">No dishes yet.</span>")+"</div>")+
     "<div class=\"bk-lab\">To buy \u00b7 "+buy.length+"</div><div class=\"bk-chips\">"+buyChips+"</div>"+
     (buy.some(b=>b.sourced)?"<div class=\"bk-note\">\u2726 added from a suggestion</div>":"")+
     cookHtml+
     "<div class=\"bk-btns\"><button class=\"bk-copy\">Copy shopping list</button>"+
       "<button class=\"bk-clear\">Clear</button></div>";
-  // the cook-together plan, in the same language as the family-meal planner
+  // the cook-together plan IS the dish list now — each row is a dish, expandable to edit.
+  // Placed near the top, right after the header, so dishes and their timing are one thing.
   if(plan){
-    const lab=document.createElement("div"); lab.className="bk-lab"; lab.textContent="Cook it together";
-    const btns=panel.querySelector(".bk-btns");
-    if(btns){ panel.insertBefore(lab, btns); panel.insertBefore(renderBasketSchedule(plan), btns); }
-    else { panel.appendChild(lab); panel.appendChild(renderBasketSchedule(plan)); }
+    const lab=document.createElement("div"); lab.className="bk-lab"; lab.textContent="Your dishes, on one clock";
+    const sched=renderBasketSchedule(plan);
+    const toBuyLab=panel.querySelector(".bk-lab");   // the first "To buy" label
+    if(toBuyLab){ panel.insertBefore(lab, toBuyLab); panel.insertBefore(sched, toBuyLab); }
+    else { panel.appendChild(lab); panel.appendChild(sched); }
   }
-  wrap.appendChild(panel); document.body.appendChild(wrap);
-  requestAnimationFrame(()=>wrap.classList.add("in"));
-  panel.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{
-    FLOW.basket.splice(+b.getAttribute("data-rm"),1); updateBasketPill(); openBasket();
+  wireBasketPanel(panel);
+}
+function wireBasketPanel(panel){
+  const buy=basketBuyList();
+  panel.querySelectorAll("[data-rm]").forEach(b=>b.onclick=(e)=>{
+    e.stopPropagation();
+    FLOW.basket.splice(+b.getAttribute("data-rm"),1);
+    if(FLOW.basketOpen!=null){ if(+b.getAttribute("data-rm")===FLOW.basketOpen) FLOW.basketOpen=null; }
+    persistSession(); updateBasketPill(); openBasket();
   });
-  panel.querySelector(".bk-clear").onclick=()=>{ FLOW.basket=[]; updateBasketPill(); closeBasket(); };
+  // expand / collapse a dish to see its ingredients
+  panel.querySelectorAll("[data-toggle]").forEach(h=>h.onclick=(e)=>{
+    if(e.target.closest(".bk-rm")) return;
+    const i=+h.getAttribute("data-toggle");
+    FLOW.basketOpen = (FLOW.basketOpen===i) ? null : i;
+    openBasket();
+  });
+  // tap an ingredient inside a dish -> swap / remove, editing BOTH the dish and the buy-list
+  panel.querySelectorAll("[data-bkedit]").forEach(b=>b.onclick=(e)=>{
+    e.stopPropagation();
+    openBasketIngredientCard(+b.getAttribute("data-bkedit"), b.getAttribute("data-ing"));
+  });
+  // the SAME edit, but from a dish row on the timeline
+  panel.querySelectorAll("[data-scedit]").forEach(b=>b.onclick=(e)=>{
+    e.stopPropagation();
+    openBasketIngredientCard(+b.getAttribute("data-scedit"), b.getAttribute("data-ing"));
+  });
+  // add an ingredient to a dish, from either the basket list or the timeline
+  const wireAdd=(sel,attr)=>panel.querySelectorAll(sel).forEach(b=>b.onclick=(e)=>{
+    e.stopPropagation();
+    openBasketAddCard(+b.getAttribute(attr));
+  });
+  wireAdd("[data-scadd]","data-scadd");
+  wireAdd("[data-bkadd]","data-bkadd");
+  panel.querySelector(".bk-clear").onclick=()=>{ FLOW.basket=[]; persistSession(); updateBasketPill(); closeBasket(); };
   panel.querySelector(".bk-copy").onclick=()=>{
     const text=buy.map(b=>"\u2022 "+b.name).join("\n");
     const done=()=>{ TRACK.log("list_copied", {items:buy.length, dishes:FLOW.basket.length}); const c=panel.querySelector(".bk-copy"); if(c){ c.textContent="Copied \u2713"; setTimeout(()=>{c.textContent="Copy shopping list";},1600);} };
@@ -5238,6 +5991,7 @@ function toggleCompose(id){
 }
 
 function recompute(){
+  persistSession();                          // F2: any change that recomputes is worth saving
   const ids=[...new Set([...FLOW.active, ...FLOW.pantry])];
   if(!FLOW.active.size||!FLOW.appl.size){ FLOW.results=[]; renderRecipes(); requestAnimationFrame(drawWires); return; }
   const pantry={}; ids.forEach(id=>pantry[id]={});
@@ -6472,7 +7226,7 @@ function renderStirFry(){
 
   /* A WOK IS NOT A KITCHEN SINK. Propose coherent dishes — one protein and a vegetable
      or two, or just vegetables — rather than frying everything you own at once. */
-  const cands=wokCandidates(ids, REF, DISHES, AFF);
+  const cands=wokCandidates(ids, REF, DISHES, AFF, {explicit:FLOW.active});
   if(!FLOW.wokPick || !cands.some(c=>c.key===FLOW.wokPick)) FLOW.wokPick=cands[0]?cands[0].key:null;
   const chosen=cands.find(c=>c.key===FLOW.wokPick)||cands[0];
   if(!chosen){
@@ -6483,7 +7237,16 @@ function renderStirFry(){
     return;
   }
 
-  const dir = FLOW.wokDir ? STIRFRY_DIRS.find(d=>d.key===FLOW.wokDir) : null;
+  // if the cook hasn't picked a sauce, use the dish's default so the photo matches the name
+  let dirKey = FLOW.wokDir;
+  if(!dirKey){
+    const defId = (typeof wokDefaultSauceId==="function") ? wokDefaultSauceId(chosen.contents, REF) : null;
+    const DEF2DIR={oyster_sauce:"garlic_oyster", dark_soy_sauce:"dark_soy", fermented_beancurd:"fu_yu",
+      sambal:"sambal", dried_chilli:"dried_chilli", salted_fish:"salted_fish",
+      fermented_black_bean:"black_bean", sichuan_peppercorn:"mala", cereal:"cereal", garlic:"plain_garlic"};
+    if(defId && DEF2DIR[defId]) dirKey = DEF2DIR[defId];
+  }
+  const dir = dirKey ? STIRFRY_DIRS.find(d=>d.key===dirKey) : null;
   const sf  = buildStirFry(chosen.contents, REF, DISHES, AFF, {direction:dir});
 
   // ---- headline + the Sauce button (radial, as in the pot) ----
@@ -7512,7 +8275,14 @@ function renderSteam(){
   const chosen=cands.find(c=>c.key===FLOW.steamPick)||cands[0];
   if(!chosen){ box.innerHTML="<div class=\"hint\">Nothing here suits a steamer.</div>"; return; }
 
-  const dir = FLOW.steamDir ? STEAM_DIRS.find(d=>d.key===FLOW.steamDir) : null;
+  // if the cook hasn't picked a seasoning, use the subject's most-associated style so the
+  // photo and seasoning match the dish (ginger-scallion fish, garlic prawns, black-bean ribs)
+  let steamDirKey = FLOW.steamDir;
+  if(!steamDirKey && typeof steamDefaultStyle==="function"){
+    const def = steamDefaultStyle(chosen.subject, REF);
+    if(def) steamDirKey = def;
+  }
+  const dir = steamDirKey ? STEAM_DIRS.find(d=>d.key===steamDirKey) : null;
   const st  = buildSteam(chosen.contents, REF, DISHES, AFF, {form:chosen.form, subject:chosen.subject, direction:dir});
 
   // ---- the dish, drawn from the same data the recipe is built from ----
@@ -7621,13 +8391,17 @@ function renderSteam(){
   // ---- what's not on this plate ----
   if(chosen.leftOut && chosen.leftOut.length){
     const o=document.createElement("div"); o.className="pot-out";
-    const lab=document.createElement("span"); lab.className="po-l"; lab.textContent="not on this plate";
+    const lab=document.createElement("span"); lab.className="po-l"; lab.textContent="set aside";
     o.appendChild(lab);
-    chosen.leftOut.forEach(id=>{
+    // leftOut items may be plain ids or {id, why} — handle both, and show the specific reason
+    let reason="";
+    chosen.leftOut.forEach(it=>{
+      const id=(it && it.id)?it.id:it;
+      if(it && it.why && !reason) reason=it.why;
       const c=document.createElement("span"); c.className="po-c"; c.textContent=nm(id); o.appendChild(c);
     });
     const w=document.createElement("span"); w.className="po-w";
-    w.textContent="a steamer plates one subject \u2014 steam a second dish alongside, not piled on";
+    w.textContent=reason || "a steamer plates one subject \u2014 steam a second dish alongside, not piled on";
     o.appendChild(w);
     box.appendChild(o);
   }
@@ -8484,6 +9258,19 @@ function renderOnePot(){
   box.appendChild(title);
   // the ingredient list under the title — every other composer shows this
   { const tg=ingredientTags(chosen?chosen.contents:potIds); if(tg) box.appendChild(tg); }
+  // vegetables trimmed from an overcrowded pot — shown, not silently dropped
+  if(chosen && chosen.vegLeftOut && chosen.vegLeftOut.length){
+    const o=document.createElement("div"); o.className="pot-out";
+    const lab=document.createElement("span"); lab.className="po-l"; lab.textContent="set aside";
+    o.appendChild(lab);
+    chosen.vegLeftOut.forEach(it=>{
+      const c=document.createElement("span"); c.className="po-c"; c.textContent=nm(it.id||it); o.appendChild(c);
+    });
+    const w=document.createElement("span"); w.className="po-w";
+    w.textContent=(chosen.vegLeftOut[0].why)||"a soup carries a couple of vegetables";
+    o.appendChild(w);
+    box.appendChild(o);
+  }
 
   /* ============ 2. THE SCHEDULE — the hero. This is the answer. ============ */
   const hero=document.createElement("div"); hero.className="op-hero";
@@ -8915,8 +9702,10 @@ async function boot(){
     AFF=buildAffinity(DISHES,R);
     setAffinity(AFF);   // so substitutions can be checked for precedent
     auditDrift(R, DISHES);   // warn if the taxonomy has outgrown the code's lists
+    restoreSession(R);                       // F2: bring back the last session before first paint
     owned.clear(); FLOW.appl.forEach(x=>owned.add(x));
-    renderPantry(); renderAppl(); renderType(); renderTaste(); renderTime(); renderIngTags(); renderRecipes();
+    updateBasketPill();                      // reflect a restored basket immediately
+    renderPantry(); renderAppl(); renderType(); renderTaste(); renderTime(); renderIngTags(); renderComps(); renderRecipes();
     setupCollapse();
     const s=el("search");
     if(s) s.addEventListener("keydown",e=>{ if(e.key==="Enter"){ const ok=spawn(s.value); if(ok)s.value=""; }});
