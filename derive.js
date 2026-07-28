@@ -2273,6 +2273,7 @@ const WOK_SAUCE_NAME={
   sambal:"Sambal", dark_soy_sauce:"Dark soy", fermented_beancurd:"Fu yu", dried_chilli:"Dried chilli",
   salted_fish:"Salted fish", doubanjiang:"Mapo", fermented_black_bean:"Black bean", kung_pao:"Kung pao",
   salted_egg:"Salted egg", curry_powder:"Curry", sichuan_peppercorn:"Mala", cereal:"Cereal",
+<<<<<<< HEAD
   oyster_sauce:"Oyster", garlic:"", ginger:""
 };
 function contents0(ids,pick,rest){ return [ids[0]].concat(pick||[]).concat(rest||[]); }
@@ -2319,22 +2320,35 @@ function wokDefaultSauceId(ids, R){
 }
 function wokSauceOf(ids, R){
   // an explicitly chosen sauce always wins
+=======
+  oyster_sauce:"", garlic:"", ginger:""
+};
+function contents0(ids,pick,rest){ return [ids[0]].concat(pick||[]).concat(rest||[]); }
+function wokSauceOf(ids, R){
+  // ginger + scallion together is its own character
+>>>>>>> 54c3ee3a6df7faf273200a4163dccdc7a2780439
   if(ids.includes("ginger") && ids.includes("scallion")) return "Ginger scallion";
   for(const id of ids){
     if(id in WOK_SAUCE_NAME && WOK_SAUCE_NAME[id]) return WOK_SAUCE_NAME[id];
   }
+<<<<<<< HEAD
   // otherwise fall back to the dish's most-associated sauce
   const def=wokDefaultSauceId(ids, R);
   if(def==="ginger_scallion") return "Ginger scallion";
   if(def==="garlic") return "";              // plain garlic reads as no special sauce
   if(def && WOK_SAUCE_NAME[def]) return WOK_SAUCE_NAME[def];
+=======
+>>>>>>> 54c3ee3a6df7faf273200a4163dccdc7a2780439
   return "";
 }
 function wokSauceKey(ids, R){
   if(ids.includes("ginger") && ids.includes("scallion")) return "ginger_scallion";
   for(const id of ids){ if(id in WOK_SAUCE_NAME && WOK_SAUCE_NAME[id]) return id; }
+<<<<<<< HEAD
   const def=wokDefaultSauceId(ids, R);
   if(def) return def;
+=======
+>>>>>>> 54c3ee3a6df7faf273200a4163dccdc7a2780439
   return "plain";
 }
 function wokCandidates(ingIds, R, dishes, AFF, opts){
@@ -2887,6 +2901,7 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
     const subj2 = (form==="whole_fish" && splitIds.length) ? splitIds[0] : subj;
     const bedFor2 = (form==="whole_fish"||form==="shellfish")
       ? rankBed(COLLECTORS_C.filter(id=>real.includes(id) && id!==subj2)).slice(0,1) : [];
+<<<<<<< HEAD
     // the bed is one vegetable (physical: a fish sits on one bed) — but any OTHER vegetables
     // the cook picked steam alongside, around the fish, rather than being dropped.
     const alongside=real.filter(id=>((R.byId[id]||{}).category)==="vegetables"
@@ -2908,6 +2923,19 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
       note: alongside.length ? NOTE[form]+" \u2014 the other vegetables steam around it"
                              : NOTE[form],
       leftOut: otherDrops,
+=======
+    // things not in the dish: the bed vegetables that lost the single bed slot get a clear
+    // reason; anything else set aside is reported plainly.
+    const inDish=new Set([subj2].concat(bedFor2).concat(topping));
+    const bedDrops=bedLeftOut(bedFor2, subj2);
+    const bedDropIds=new Set(bedDrops.map(x=>x.id));
+    const otherDrops=ids.filter(x=>!inDish.has(x) && !bedDropIds.has(x))
+      .map(id=>({id, why:"set aside \u2014 not part of this steamed dish"}));
+    out.push({key:form, label:LABELS[form]+nm(subj2), subject:subj2, form,
+      contents:[subj2].concat(bedFor2).concat(topping),
+      note:NOTE[form],
+      leftOut: bedDrops.concat(otherDrops),
+>>>>>>> 54c3ee3a6df7faf273200a4163dccdc7a2780439
       alternatives:ids.filter(x=>x!==subj2)});
   });
 
@@ -3374,10 +3402,14 @@ function riceCandidates(ingIds, R, dishes, AFF, opts){
   const out=[];
   const add=(key,label,mode,subject,note)=>{
     const base=real.filter(x=>!NOODLE_BASE_IDS.has(x));
+<<<<<<< HEAD
     // every vegetable in the basket was hand-picked, so none is capped away; the 1+1 cap
     // only limits vegetables the engine would auto-add (it doesn't auto-add any here).
     const _chosen=new Set(base.filter(id=>((R.byId[id]||{}).category)==="vegetables"));
     const vp=pickDishVeg(base, R, {greens:1, others:1, explicit:_chosen});
+=======
+    const vp=pickDishVeg(base, R, {greens:1, others:2});
+>>>>>>> 54c3ee3a6df7faf273200a4163dccdc7a2780439
     // The dish's OWN subject is the main (claypot=chicken, curry=chicken, braise=pork).
     // lap cheong/egg/char siu/dried shrimp are allowed to ride along; every other protein
     // belongs to a different dish and is dropped.
@@ -3651,8 +3683,12 @@ function noodleCandidates(ingIds, R, dishes, AFF){
       : fit==="works" ? baseName.replace(/ \(.*\)/,"")+" is a common swap for this"
       : "usually made with "+((dir.canonical||[]).map(n=>(R.byId[n]||{}).name||n).join(" or ").replace(/ \(.*?\)/g,""))+" \u2014 this is your own take";
     // a bowl takes one green and a couple of others — chosen for THIS sauce
+<<<<<<< HEAD
     const _nch=new Set(mineAll.filter(id=>((R.byId[id]||{}).category)==="vegetables"));
     const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[], explicit:_nch});
+=======
+    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[]});
+>>>>>>> 54c3ee3a6df7faf273200a4163dccdc7a2780439
     // one main protein per bowl. A soup can carry a second (sliced meat + a fishball);
     // a fried noodle should not read as three meats piled on.
     const pj=pickLeadProtein(mineAll, R);
