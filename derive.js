@@ -923,7 +923,7 @@ const RICE_TOPPING_PROTEINS=new Set(["chicken","chicken_thigh","chicken_breast",
   "chicken_wing","chicken_whole","chicken_mince","turkey","pork","pork_belly","pork_loin","pork_shoulder",
   "pork_ribs","pork_mince","beef","beef_slices","beef_mince","beef_brisket","beef_chuck","beef_short_rib",
   "beef_steak","mutton","lap_cheong","char_siu","fish","salmon","threadfin","pomfret","seabass","snapper",
-  "grouper","cod","mackerel","tuna","sardine","prawn","squid","clams","oyster","scallops","mussels","dried_shrimp","fish_cake","century_egg","egg"]);
+  "grouper","cod","mackerel","tuna","sardine","fish_slices","prawn","squid","clams","oyster","scallops","mussels","dried_shrimp","fish_cake","century_egg","egg"]);
 function isRiceBowl(d){
   const ids=(d.grocery_items||[]).map(g=>g.id);
   if(!ids.some(id=>RICE_BASE_IDS.has(id))) return false;
@@ -1502,8 +1502,8 @@ const SEASONING_DIRS=[
    exclude:["dang_gui","dark_soy_sauce","star_anise","cinnamon","cloves_spice","white_sugar","soy_sauce"],
    note:"peppery and garlicky, kept clear \u2014 no herbs, no dark soy"},
   {key:"bkt_hokkien", label:"Bak kut teh \u2014 Hokkien", region:"Hokkien/Klang",
-   markers:["dang_gui","star_anise","cinnamon","cloves_spice","wolfberry","dark_soy_sauce"],
-   need:2, needsLiquid:true, bakeNote:"the herbs infuse into a simmering broth", note:"dark and herbal \u2014 medicinal warmth"},
+   markers:["dang_gui","star_anise","cinnamon","cloves_spice","wolfberry","red_dates","dark_soy_sauce"],
+   need:1, needsLiquid:true, bakeNote:"the herbs infuse into a simmering broth", note:"dark and herbal \u2014 medicinal warmth"},
   {key:"bkt_pack", label:"Bak kut teh \u2014 from a packet", region:"Singaporean",
    markers:["bkt_pack"], need:1, needsLiquid:true, bakeNote:"the broth IS the dish \u2014 there is nothing to bake",
    note:"the sachet carries the herbs and pepper \u2014 how most kitchens actually make it"},
@@ -1519,7 +1519,7 @@ const SEASONING_DIRS=[
    note:"boiled hard until the fat emulsifies \u2014 opaque and rich"},
   // --- Malay / Peranakan ---
   {key:"rempah",      label:"Rempah (Malay/Peranakan)", region:"Malay/Peranakan",
-   markers:["belacan","candlenut","laksa_paste","sambal","laksa_leaf","lemongrass","galangal","kaffir_lime"], need:1, needsLiquid:false, bakeNote:"fry the paste, then rub it on and roast — as in sambal grilled fish",
+   markers:["rendang_paste","belacan","candlenut","laksa_paste","sambal","laksa_leaf","lemongrass","galangal","kaffir_lime"], need:1, needsLiquid:false, bakeNote:"fry the paste, then rub it on and roast — as in sambal grilled fish",
    also:["turmeric","chilli","shallot","coconut_milk"],
    note:"pounded spice paste \u2014 belacan, lemongrass, galangal"},
   {key:"assam",       label:"Sour-hot (assam / tom yum)", region:"SEA",
@@ -1718,7 +1718,79 @@ function potSuggestions(baseIds, ctx, R, AFF, {have=[], limit=5}={}){
   };
 }
 
-function potCandidates(ingIds, R, dishes, AFF){
+/* Name a one-pot dish. Uses the existing SEASONING_DIRS auto-detector (or the cook's explicit
+   FLOW.potPath pick, passed as opts.potPath) to see if the pot has a recognised broth base; if
+   so it's named for that (Bak kut teh, Curry, Hong shao). Otherwise it's a CLEAR pot, named for
+   its vegetable (lotus root -> "Lotus root soup"), ABC combo, or protein. Returns {name, dirKey}. */
+const CLEAR_SOUP_VEG={
+  lotus_root:"Lotus root soup", watercress:"Watercress soup", winter_melon:"Winter melon soup",
+  daikon:"Radish soup", radish:"Radish soup", corn:"Corn soup", old_cucumber:"Old cucumber soup",
+  seaweed:"Seaweed soup"
+};
+function potIsABC(ids){ return ids.includes("potato") && ids.includes("carrot") && ids.includes("tomato"); }
+function potSpeciesWord(id, R){
+  const anc=R.anc&&R.anc[id]||new Set();
+  for(const k of ["beef","pork","chicken","mutton","fish","prawn","squid"])
+    if((anc.has&&anc.has(k))||id===k) return k;
+  return ((R.byId[id]||{}).name||"pot").toLowerCase();
+}
+/* A dish-language one-liner for the pot \u2014 not a wine note. Named broths get their character;
+   clear soups say what they are. */
+const POT_DESCRIBE={
+  "Bak kut teh":"peppery, garlicky pork-rib tea \u2014 clear and warming",
+  "Lotus root soup":"a clear, sweet soup \u2014 lotus root simmered soft",
+  "Watercress soup":"a clean green soup \u2014 watercress wilted into clear broth",
+  "Radish soup":"a light clear soup \u2014 radish soaked full of the broth",
+  "Corn soup":"a naturally sweet clear soup \u2014 corn and broth",
+  "ABC soup":"the everyday clear soup \u2014 potato, carrot, tomato",
+  "Cabbage soup":"a soft, sweet clear soup \u2014 cabbage cooked down",
+  "Winter melon soup":"a cooling clear soup \u2014 winter melon gone translucent"
+};
+function potDescribe(named, ch){
+  if(POT_DESCRIBE[named.name]) return POT_DESCRIBE[named.name];
+  if(/^Hong shao/.test(named.name)) return "red-braised \u2014 dark soy and sugar, glossy and deep";
+  if(/^Curry/.test(named.name))     return "a rich, spiced curry pot \u2014 warming and full";
+  if(/^Rendang/.test(named.name))   return "a dry, spiced rendang \u2014 coconut cooked to a cling";
+  if(/^Assam/.test(named.name))     return "sour-hot \u2014 tamarind against chilli";
+  if(/soup$/.test(named.name))      return "a clear, clean soup";
+  return ch?describeBroth(ch):"a clear, clean pot";
+}
+function potNameFor(ingIds, R, leadId, opts){
+  // explicit pick wins; else auto-detect from markers
+  let dir=null;
+  if(opts && opts.potPath){
+    dir=SEASONING_DIRS.find(d=>d.key===opts.potPath) || null;
+  } else {
+    const got=(typeof seasoningOf==="function")?seasoningOf(ingIds):[];
+    dir = (got && got.length && got[0].key!=="clear") ? got[0] : null;
+  }
+  const prot=leadId?potSpeciesWord(leadId,R):"";
+  if(dir){
+    // recognised broth base -> name for it
+    const K=dir.key;
+    // BKT is specifically a pork-rib dish; the same dark-herbal broth on another protein is
+    // a "herbal soup" (your library's beef_chuck_herbal), not bak kut teh.
+    if(K==="bkt_teochew"||K==="bkt_hokkien"||K==="bkt_pack"){
+      const isPork=/pork/.test((R.anc[leadId]&&[...R.anc[leadId]].join(","))||leadId||"");
+      if(K==="bkt_hokkien" && !isPork) return {name:"Herbal "+(prot||"soup"), dirKey:"herbal"};
+      return {name:"Bak kut teh", dirKey:K};
+    }
+    if(K==="hong_shao")  return {name:"Hong shao "+(prot||"pork"), dirKey:"hong_shao"};
+    if(K==="clear_chinese") return {name:(prot?prot.replace(/^./,c=>c.toUpperCase()):"Clear")+" soup", dirKey:"clear_chinese"};
+    if(K==="rempah"||K==="rendang") return {name:"Rendang "+(prot||"beef"), dirKey:"rendang"};
+    if(K==="masala"||K==="jp_curry"||K==="curry") return {name:"Curry "+(prot||"pot"), dirKey:"curry"};
+    if(K==="assam") return {name:"Assam "+(prot||"pot"), dirKey:"assam"};
+    // generic: use the dir's short label
+    const short=(dir.label||K).replace(/ \u2014 .*/,"").replace(/ \(.*\)/,"");
+    return {name:short+" "+(prot||"pot"), dirKey:K};
+  }
+  // CLEAR pot: name for the vegetable
+  if(potIsABC(ingIds)) return {name:"ABC soup", dirKey:"abc_soup"};
+  const veg=ingIds.filter(id=>((R.byId[id]||{}).category)==="vegetables");
+  for(const v of veg){ if(CLEAR_SOUP_VEG[v]) return {name:CLEAR_SOUP_VEG[v], dirKey:(v==="daikon"||v==="radish")?"radish_soup":v+"_soup"}; }
+  return {name:(prot?prot.replace(/^./,c=>c.toUpperCase()):"Clear")+" soup", dirKey:"soup"};
+}
+function potCandidates(ingIds, R, dishes, AFF, opts){
   const real=ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed");
   // a lean dry-heat cut (steak, loin, breast) can go IN a pot but can never LEAD one
   const canLead=(id)=> !!BROTH_BASE[id] && !BROTH_BASE[id].noBroth;
@@ -1815,6 +1887,8 @@ function potCandidates(ingIds, R, dishes, AFF){
     const contents=allContents.filter(id=>!isSubVeg(id) || keepVeg.has(id));
     const ch=brothCharacter(contents,R);
     const alts = ids.alternatives || [];
+    // NAME the pot: recognised broth base (BKT, curry, hong shao) or clear-soup-by-vegetable
+    const named = potNameFor(ingIds, R, ids[0], opts);
     return {
       species: sp,
       base: ids,
@@ -1825,7 +1899,10 @@ function potCandidates(ingIds, R, dishes, AFF){
       contents,
       vegLeftOut: potLeftOut,
       character: ch,
-      describe: ch?describeBroth(ch):"a light vegetable pot",
+      // the dish now has a NAME and a broth identity, not just a wine-note
+      label: named.name,
+      dirKey: named.dirKey,
+      describe: potDescribe(named, ch),
       reminds: dishes ? brothLikeDishes(contents,R,dishes.filter(hasBroth),2) : [],
       suggest: AFF ? potSuggestions(ids, "soup", R, AFF, {have:real}) : {yours:[],buy:[]},
       dryHeat: dryHeat.map(id=>({id, name:(R.byId[id]||{}).name||id,
@@ -3376,8 +3453,9 @@ function riceCandidates(ingIds, R, dishes, AFF, opts){
     const base=real.filter(x=>!NOODLE_BASE_IDS.has(x));
     // every vegetable in the basket was hand-picked, so none is capped away; the 1+1 cap
     // only limits vegetables the engine would auto-add (it doesn't auto-add any here).
-    const _chosen=new Set(base.filter(id=>((R.byId[id]||{}).category)==="vegetables"));
-    const vp=pickDishVeg(base, R, {greens:1, others:1, explicit:_chosen});
+    // cap to 1 green + 1 other by default so the bowl stays tight; an explicit set passed
+    // in (from a deliberate basket add) can still override the cap.
+    const vp=pickDishVeg(base, R, {greens:1, others:1, explicit:(opts&&opts.explicit)||null});
     // The dish's OWN subject is the main (claypot=chicken, curry=chicken, braise=pork).
     // lap cheong/egg/char siu/dried shrimp are allowed to ride along; every other protein
     // belongs to a different dish and is dropped.
@@ -3398,6 +3476,9 @@ function riceCandidates(ingIds, R, dishes, AFF, opts){
   if(has("yam")||has("sweet_potato")||has("dried_shrimp"))
     add("yam","Yam rice","in_rice", has("yam")?"yam":(has("sweet_potato")?"sweet_potato":"dried_shrimp"),"cooked in the rice \u2014 yam and dried shrimp fried through the grain (Teochew)");
 
+  // sliced fish leads congee (fish slice porridge) — matches library rice_fish_slices_congee
+  if(proteins.includes("fish_slices"))
+    add("congee","Fish slice congee","congee","fish_slices","rice simmered soft into porridge, sliced fish poached in at the end");
   // over-rice styles
   if(has("japanese_curry_roux")||has("curry_powder"))
     add("curry","Curry rice","over_rice", proteins[0]||"potato","rice separate \u2014 a thick curry ladled over");
@@ -3453,6 +3534,14 @@ function riceCandidates(ingIds, R, dishes, AFF, opts){
     }
   }
 
+  // seafood leads a claypot bowl too — prawn/squid/scallops laid on the rice as it finishes.
+  // (These were excluded from the "plain meat" path above because they cook differently, but
+  // they are absolutely a rice subject: prawn claypot rice, etc.)
+  if(!out.some(o=>o.mode==="in_rice")){
+    const seafood=proteins.find(p=>["prawn","squid","clams","scallops","oyster","mussels"].includes(p));
+    if(seafood) add("seafood_"+seafood, nm(seafood)+" claypot rice","in_rice", seafood,
+      "cooked in the rice \u2014 the seafood laid on top and steamed through as the grain cooks");
+  }
   if(!out.length){
     add("herb","Herb rice","in_rice",null,"rice cooked with aromatics and herbs, in stock instead of water \u2014 a fragrant pilaf");
   }
@@ -3486,7 +3575,7 @@ const NOODLE_MODES={
 const NOODLE_DIRS=[
   /* ---- FRIED ---- */
   {key:"mee_goreng", label:"Mee goreng", region:"Malay/Indian-Muslim", mode:"fried",
-   canonical:["yellow_noodle"], works:["noodles","bee_hoon","hor_fun"], markers:["ketchup","tau_pok"], need:1,
+   canonical:["yellow_noodle"], works:["noodles","bee_hoon","hor_fun"], markers:["ketchup","tau_pok","tomato","sambal"], need:1, defining:["ketchup"],
    veg:["cabbage","tomato","potato","beansprouts"],
    note:"sweet, spicy and tomato-red \u2014 yellow noodles fried hard with egg and tofu puff",
    steps:[
@@ -3504,7 +3593,7 @@ const NOODLE_DIRS=[
      {t:"Noodle, then egg", d:"Sear the kway teow in dark and light soy without stirring too much, then crack the egg against the wok and fold it through."},
      {t:"Beansprouts last", d:"In at the very end for ten seconds \u2014 they should still snap."}]},
   {key:"hokkien_mee", label:"Hokkien prawn mee", region:"Hokkien", mode:"fried",
-   canonical:["yellow_noodle","bee_hoon"], works:["hor_fun","mee_pok"], markers:["prawn","squid","sambal","lime","pork_belly"], need:1,
+   canonical:["yellow_noodle","bee_hoon"], works:["hor_fun","mee_pok"], markers:["prawn","squid","lime","pork_belly"], need:1,
    veg:["beansprouts","chye_sim","kangkong"],
    note:"yellow noodle and bee hoon braised in prawn stock until it is drunk up \u2014 lime and sambal at the table",
    steps:[
@@ -3531,7 +3620,7 @@ const NOODLE_DIRS=[
 
   /* ---- SOUP ---- */
   {key:"laksa", label:"Laksa", region:"Peranakan", mode:"soup",
-   canonical:["bee_hoon"], works:["hor_fun","yellow_noodle","mee_pok"], markers:["laksa_paste","coconut_milk","laksa_leaf"], need:1,
+   canonical:["bee_hoon"], works:["hor_fun","yellow_noodle","mee_pok"], markers:["laksa_paste","coconut_milk","laksa_leaf"], need:1, defining:["laksa_paste"],
    veg:["beansprouts","long_beans"],
    note:"coconut and rempah broth over thick bee hoon, with tau pok soaking it up",
    steps:[
@@ -3616,7 +3705,7 @@ const NOODLE_FIT_RANK={canonical:0, works:1, unusual:2};
 /* the dishes this basket can make. Each candidate is one noodle style.
    TWO independent layers: the STYLE (broth or sauce) and the NOODLE. Any noodle can
    carry any style — the engine ranks the pairing rather than blocking it. */
-function noodleCandidates(ingIds, R, dishes, AFF){
+function noodleCandidates(ingIds, R, dishes, AFF, opts){
   const real=[...new Set(ingIds.filter(id=>{
     const i=R.byId[id]||{};
     if(i.id==="water") return false;
@@ -3641,6 +3730,7 @@ function noodleCandidates(ingIds, R, dishes, AFF){
     // enough of its markers must be present
     const hits=(dir.markers||[]).filter(m=>set.has(m)).length;
     if(hits < (dir.need||0)) return;
+    const isDefining=(dir.defining||[]).some(m=>set.has(m));   // a defining marker forces this dish
     const fit=noodleFitOf(dir, base);
     // name it honestly: the proper name when it's the usual noodle, otherwise say which
     // when a style is named after its noodle ("fried bee hoon"), swapping the noodle makes
@@ -3651,8 +3741,7 @@ function noodleCandidates(ingIds, R, dishes, AFF){
       : fit==="works" ? baseName.replace(/ \(.*\)/,"")+" is a common swap for this"
       : "usually made with "+((dir.canonical||[]).map(n=>(R.byId[n]||{}).name||n).join(" or ").replace(/ \(.*?\)/g,""))+" \u2014 this is your own take";
     // a bowl takes one green and a couple of others — chosen for THIS sauce
-    const _nch=new Set(mineAll.filter(id=>((R.byId[id]||{}).category)==="vegetables"));
-    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[], explicit:_nch});
+    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[], explicit:(opts&&opts.explicit)||null});
     // one main protein per bowl. A soup can carry a second (sliced meat + a fishball);
     // a fried noodle should not read as three meats piled on.
     const pj=pickLeadProtein(mineAll, R);
@@ -3665,7 +3754,7 @@ function noodleCandidates(ingIds, R, dishes, AFF){
     const droppedProteins=pj.extras.filter(id=>!keepProteins.has(id));
     out.push({
       key:"noodle_"+dir.key,
-      label, mode:dir.mode, dirKey:dir.key, direction:dir,
+      label, mode:dir.mode, dirKey:dir.key, direction:dir, isDefining,
       subject:base, subjectName:baseName,
       note:dir.note, fit, fitNote, hits,
       contents:mine,
@@ -3674,12 +3763,11 @@ function noodleCandidates(ingIds, R, dishes, AFF){
     });
   });
   // strongest signal first, then the pairing that suits the noodle best
-  out.sort((a,b)=> b.hits - a.hits || NOODLE_FIT_RANK[a.fit] - NOODLE_FIT_RANK[b.fit]);
+  out.sort((a,b)=> (b.isDefining?1:0)-(a.isDefining?1:0) || b.hits - a.hits || NOODLE_FIT_RANK[a.fit] - NOODLE_FIT_RANK[b.fit]);
   // always leave a plain fallback so a lone packet of noodles still cooks
   if(!out.length){
     const fallback=NOODLE_DIRS.find(d=>d.key==="clear_soup");
-    const _nch2=new Set(mineAll.filter(id=>((R.byId[id]||{}).category)==="vegetables"));
-    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:(fallback&&fallback.veg)||[], explicit:_nch2});
+    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:(fallback&&fallback.veg)||[], explicit:(opts&&opts.explicit)||null});
     const mine=vpick.used;
     out.push({key:"noodle_clear_soup", label:"Noodles in broth", mode:"soup",
       dirKey:"clear_soup", direction:fallback, subject:base,
