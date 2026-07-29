@@ -738,6 +738,51 @@ button.ps-add.in-basket em{color:var(--muted)}
 .meal-row{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);align-items:flex-start}
 .meal-slotlab{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--cool);min-width:64px;padding-top:5px;font-weight:700}
 .meal-opts{display:flex;flex-wrap:wrap;gap:6px;flex:1}
+/* ---- FAMILY MEAL v2: hero plate + image-card choices ---- */
+.fm-split{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start}
+.fm-meal{background:var(--panel);border-radius:12px;padding:16px;margin-bottom:16px}
+.fm-meal-side{position:sticky;top:12px;margin-bottom:0}
+.fm-meal-lab{font-family:var(--font-mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.fm-meal-grid{display:flex;flex-direction:column;gap:10px}
+.fm-slot{display:flex;align-items:center;gap:12px;cursor:pointer}
+.fm-slot.filled{cursor:pointer}
+.fm-slot-img{width:64px;height:64px;border-radius:12px;overflow:hidden;flex-shrink:0;border:1px solid var(--line);background:var(--paper)}
+.fm-slot-img .dish-photo{width:100%;height:100%;object-fit:cover}
+.fm-slot-img svg{width:100%;height:100%}
+.fm-slot-ph{width:64px;height:64px;border-radius:12px;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--muted);flex-shrink:0}
+.fm-slot-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.fm-slot-role{font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.fm-slot-name{font-size:14px;color:var(--ink);line-height:1.25}
+.fm-slot-empty{font-size:13px;color:var(--muted)}
+/* mobile: meal band shows slots in a row */
+@media(max-width:759px){
+  .fm-meal-grid{flex-direction:row;gap:8px}
+  .fm-slot{flex-direction:column;text-align:center;flex:1;gap:5px}
+  .fm-slot-img,.fm-slot-ph{width:100%;height:auto;aspect-ratio:1}
+  .fm-slot-name,.fm-slot-empty{font-size:11px}
+}
+.fm-choices{display:flex;flex-direction:column;gap:18px}
+.fm-cat-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.fm-cat-lab{font-size:14px;font-weight:600;color:var(--ink)}
+.fm-cyc{font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:5px 11px;border:1px solid var(--line);border-radius:20px;background:var(--panel);cursor:pointer;color:var(--cool)}
+.fm-cyc:hover{background:var(--cool);color:#fff}
+.fm-cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:759px){ .fm-cat-grid{grid-template-columns:1fr;gap:6px} }
+.fm-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;transition:.12s}
+.fm-card:hover{border-color:var(--cool)}
+.fm-card.picked{border:2px solid var(--cool)}
+.fm-card-img{aspect-ratio:4/3;background:var(--paper);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.fm-card-img .dish-photo{width:100%;height:100%;object-fit:cover}
+.fm-card-img svg{width:60%;height:60%}
+@media(max-width:759px){ .fm-card{display:flex;align-items:center;gap:10px} .fm-card-img{width:56px;height:56px;aspect-ratio:1;flex-shrink:0} .fm-card-meta{flex:1} }
+.fm-card-meta{padding:8px 10px}
+.fm-card-name{font-size:13px;color:var(--ink);line-height:1.25}
+.fm-card-buy{font-size:11px;color:var(--muted);margin-top:2px}
+.fm-card-have{font-size:11px;color:var(--muted);margin-top:2px}
+.fm-card-in{font-size:11px;color:var(--cool);margin-top:2px;font-weight:600}
+.fm-card-sub{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.3}
+.fm-card-sub.unch{color:#b5651d}
+.fm-empty{font-size:12px;color:var(--muted);padding:10px}
 .meal-chip{font-size:12.5px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);cursor:pointer;transition:.12s}
 .meal-chip:hover{border-color:var(--cool)}
 .meal-chip.picked{background:var(--cool);color:#fff;border-color:var(--cool);font-weight:600}
@@ -909,7 +954,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.27</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.31</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2695,7 +2740,73 @@ function potSuggestions(baseIds, ctx, R, AFF, {have=[], limit=5}={}){
   };
 }
 
-function potCandidates(ingIds, R, dishes, AFF){
+/* Name a one-pot dish. Uses the existing SEASONING_DIRS auto-detector (or the cook's explicit
+   FLOW.potPath pick, passed as opts.potPath) to see if the pot has a recognised broth base; if
+   so it's named for that (Bak kut teh, Curry, Hong shao). Otherwise it's a CLEAR pot, named for
+   its vegetable (lotus root -> "Lotus root soup"), ABC combo, or protein. Returns {name, dirKey}. */
+const CLEAR_SOUP_VEG={
+  lotus_root:"Lotus root soup", watercress:"Watercress soup", winter_melon:"Winter melon soup",
+  daikon:"Radish soup", radish:"Radish soup", corn:"Corn soup", old_cucumber:"Old cucumber soup",
+  seaweed:"Seaweed soup", napa_cabbage:"Cabbage soup"
+};
+function potIsABC(ids){ return ids.includes("potato") && ids.includes("carrot") && ids.includes("tomato"); }
+function potSpeciesWord(id, R){
+  const anc=R.anc&&R.anc[id]||new Set();
+  for(const k of ["beef","pork","chicken","mutton","fish","prawn","squid"])
+    if((anc.has&&anc.has(k))||id===k) return k;
+  return ((R.byId[id]||{}).name||"pot").toLowerCase();
+}
+/* A dish-language one-liner for the pot \u2014 not a wine note. Named broths get their character;
+   clear soups say what they are. */
+const POT_DESCRIBE={
+  "Bak kut teh":"peppery, garlicky pork-rib tea \u2014 clear and warming",
+  "Lotus root soup":"a clear, sweet soup \u2014 lotus root simmered soft",
+  "Watercress soup":"a clean green soup \u2014 watercress wilted into clear broth",
+  "Radish soup":"a light clear soup \u2014 radish soaked full of the broth",
+  "Corn soup":"a naturally sweet clear soup \u2014 corn and broth",
+  "ABC soup":"the everyday clear soup \u2014 potato, carrot, tomato",
+  "Cabbage soup":"a soft, sweet clear soup \u2014 cabbage cooked down",
+  "Winter melon soup":"a cooling clear soup \u2014 winter melon gone translucent"
+};
+function potDescribe(named, ch){
+  if(POT_DESCRIBE[named.name]) return POT_DESCRIBE[named.name];
+  if(/^Hong shao/.test(named.name)) return "red-braised \u2014 dark soy and sugar, glossy and deep";
+  if(/^Curry/.test(named.name))     return "a rich, spiced curry pot \u2014 warming and full";
+  if(/^Rendang/.test(named.name))   return "a dry, spiced rendang \u2014 coconut cooked to a cling";
+  if(/^Assam/.test(named.name))     return "sour-hot \u2014 tamarind against chilli";
+  if(/soup$/.test(named.name))      return "a clear, clean soup";
+  return ch?describeBroth(ch):"a clear, clean pot";
+}
+function potNameFor(ingIds, R, leadId, opts){
+  // explicit pick wins; else auto-detect from markers
+  let dir=null;
+  if(opts && opts.potPath){
+    dir=SEASONING_DIRS.find(d=>d.key===opts.potPath) || null;
+  } else {
+    const got=(typeof seasoningOf==="function")?seasoningOf(ingIds):[];
+    dir = (got && got.length && got[0].key!=="clear") ? got[0] : null;
+  }
+  const prot=leadId?potSpeciesWord(leadId,R):"";
+  if(dir){
+    // recognised broth base -> name for it
+    const K=dir.key;
+    if(K==="bkt_teochew"||K==="bkt_hokkien"||K==="bkt_pack") return {name:"Bak kut teh", dirKey:K};
+    if(K==="hong_shao")  return {name:"Hong shao "+(prot||"pork"), dirKey:"hong_shao"};
+    if(K==="clear_chinese") return {name:(prot?prot.replace(/^./,c=>c.toUpperCase()):"Clear")+" soup", dirKey:"clear_chinese"};
+    if(K==="rempah"||K==="rendang") return {name:"Rendang "+(prot||"beef"), dirKey:"rendang"};
+    if(K==="masala"||K==="jp_curry"||K==="curry") return {name:"Curry "+(prot||"pot"), dirKey:"curry"};
+    if(K==="assam") return {name:"Assam "+(prot||"pot"), dirKey:"assam"};
+    // generic: use the dir's short label
+    const short=(dir.label||K).replace(/ \u2014 .*/,"").replace(/ \(.*\)/,"");
+    return {name:short+" "+(prot||"pot"), dirKey:K};
+  }
+  // CLEAR pot: name for the vegetable
+  if(potIsABC(ingIds)) return {name:"ABC soup", dirKey:"abc_soup"};
+  const veg=ingIds.filter(id=>((R.byId[id]||{}).category)==="vegetables");
+  for(const v of veg){ if(CLEAR_SOUP_VEG[v]) return {name:CLEAR_SOUP_VEG[v], dirKey:(v==="daikon"||v==="radish")?"radish_soup":v+"_soup"}; }
+  return {name:(prot?prot.replace(/^./,c=>c.toUpperCase()):"Clear")+" soup", dirKey:"soup"};
+}
+function potCandidates(ingIds, R, dishes, AFF, opts){
   const real=ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed");
   // a lean dry-heat cut (steak, loin, breast) can go IN a pot but can never LEAD one
   const canLead=(id)=> !!BROTH_BASE[id] && !BROTH_BASE[id].noBroth;
@@ -2792,6 +2903,8 @@ function potCandidates(ingIds, R, dishes, AFF){
     const contents=allContents.filter(id=>!isSubVeg(id) || keepVeg.has(id));
     const ch=brothCharacter(contents,R);
     const alts = ids.alternatives || [];
+    // NAME the pot: recognised broth base (BKT, curry, hong shao) or clear-soup-by-vegetable
+    const named = potNameFor(ingIds, R, ids[0], opts);
     return {
       species: sp,
       base: ids,
@@ -2802,7 +2915,10 @@ function potCandidates(ingIds, R, dishes, AFF){
       contents,
       vegLeftOut: potLeftOut,
       character: ch,
-      describe: ch?describeBroth(ch):"a light vegetable pot",
+      // the dish now has a NAME and a broth identity, not just a wine-note
+      label: named.name,
+      dirKey: named.dirKey,
+      describe: potDescribe(named, ch),
       reminds: dishes ? brothLikeDishes(contents,R,dishes.filter(hasBroth),2) : [],
       suggest: AFF ? potSuggestions(ids, "soup", R, AFF, {have:real}) : {yours:[],buy:[]},
       dryHeat: dryHeat.map(id=>({id, name:(R.byId[id]||{}).name||id,
@@ -4347,8 +4463,9 @@ function riceCandidates(ingIds, R, dishes, AFF, opts){
     const base=real.filter(x=>!NOODLE_BASE_IDS.has(x));
     // every vegetable in the basket was hand-picked, so none is capped away; the 1+1 cap
     // only limits vegetables the engine would auto-add (it doesn't auto-add any here).
-    const _chosen=new Set(base.filter(id=>((R.byId[id]||{}).category)==="vegetables"));
-    const vp=pickDishVeg(base, R, {greens:1, others:1, explicit:_chosen});
+    // cap to 1 green + 1 other by default so the bowl stays tight; an explicit set passed
+    // in (from a deliberate basket add) can still override the cap.
+    const vp=pickDishVeg(base, R, {greens:1, others:1, explicit:(opts&&opts.explicit)||null});
     // The dish's OWN subject is the main (claypot=chicken, curry=chicken, braise=pork).
     // lap cheong/egg/char siu/dried shrimp are allowed to ride along; every other protein
     // belongs to a different dish and is dropped.
@@ -4587,7 +4704,7 @@ const NOODLE_FIT_RANK={canonical:0, works:1, unusual:2};
 /* the dishes this basket can make. Each candidate is one noodle style.
    TWO independent layers: the STYLE (broth or sauce) and the NOODLE. Any noodle can
    carry any style — the engine ranks the pairing rather than blocking it. */
-function noodleCandidates(ingIds, R, dishes, AFF){
+function noodleCandidates(ingIds, R, dishes, AFF, opts){
   const real=[...new Set(ingIds.filter(id=>{
     const i=R.byId[id]||{};
     if(i.id==="water") return false;
@@ -4622,8 +4739,7 @@ function noodleCandidates(ingIds, R, dishes, AFF){
       : fit==="works" ? baseName.replace(/ \(.*\)/,"")+" is a common swap for this"
       : "usually made with "+((dir.canonical||[]).map(n=>(R.byId[n]||{}).name||n).join(" or ").replace(/ \(.*?\)/g,""))+" \u2014 this is your own take";
     // a bowl takes one green and a couple of others — chosen for THIS sauce
-    const _nch=new Set(mineAll.filter(id=>((R.byId[id]||{}).category)==="vegetables"));
-    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[], explicit:_nch});
+    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[], explicit:(opts&&opts.explicit)||null});
     // one main protein per bowl. A soup can carry a second (sliced meat + a fishball);
     // a fried noodle should not read as three meats piled on.
     const pj=pickLeadProtein(mineAll, R);
@@ -4649,8 +4765,7 @@ function noodleCandidates(ingIds, R, dishes, AFF){
   // always leave a plain fallback so a lone packet of noodles still cooks
   if(!out.length){
     const fallback=NOODLE_DIRS.find(d=>d.key==="clear_soup");
-    const _nch2=new Set(mineAll.filter(id=>((R.byId[id]||{}).category)==="vegetables"));
-    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:(fallback&&fallback.veg)||[], explicit:_nch2});
+    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:(fallback&&fallback.veg)||[], explicit:(opts&&opts.explicit)||null});
     const mine=vpick.used;
     out.push({key:"noodle_clear_soup", label:"Noodles in broth", mode:"soup",
       dirKey:"clear_soup", direction:fallback, subject:base,
@@ -4790,7 +4905,7 @@ const PANTRY_ON=PANTRY_ITEMS.filter(id=>!PANTRY_OFF.has(id));
    the meat. */
 const MEAL_ROLES=[["base","Rice"],["veg","Vegetable"],["meat","Meat"],["fish","Fish"],["soup","Soup"],["dessert","Dessert"]];
 const MEAL_DEFAULT={base:1,veg:1,meat:1,fish:0,soup:0,dessert:0};
-const FLOW={schedOpen:null, comps:[],active:new Set(),pantry:new Set(PANTRY_ON),appl:new Set(["stovetop","oven"]),taste:new Set(),types:new Set(),compose:null,mode:"compose",time:{total:null,active:null,cook:null},potPath:null,potMode:"soup",wokDir:null,wokPick:null,steamDir:null,steamPick:null,riceDir:null,ricePick:null,noodleDir:null,noodlePick:null,mealShape:{...MEAL_DEFAULT},results:[]};
+const FLOW={schedOpen:null, comps:[],active:new Set(),pantry:new Set(PANTRY_ON),appl:new Set(["stovetop","oven"]),taste:new Set(),types:new Set(),compose:null,mode:"compose",time:{total:null,active:null,cook:null},potPath:null,potMode:"soup",wokDir:null,wokPick:null,steamDir:null,steamPick:null,riceDir:null,ricePick:null,noodleDir:null,noodlePick:null,mealShape:{...MEAL_DEFAULT},mealPick:{},mealCursor:{},results:[]};
 
 /* ---- SESSION PERSISTENCE (F2) ----------------------------------------------
    Save the user's selections and basket so a refresh doesn't wipe the plan. We
@@ -5401,29 +5516,8 @@ function renderBasketSchedule(plan){
     "<span><i class=\"k-off\"></i>walk away</span>";
   wrap.appendChild(key);
 
-  // what would round the WHOLE meal out — judged across every dish, not one of them
-  const sug=mealGapSuggestions();
-  if(sug.length){
-    const o=document.createElement("div"); o.className="pot-sug";
-    o.innerHTML="<div class=\"ps-lab\">Worth adding to the meal &mdash; tap to add</div>"+
-      "<div class=\"ps-list\">"+sug.map(s=>{
-        const cat=(REF.byId[s.id]||{}).category;
-        const where = s.forDish ? "goes with your "+s.forDish
-                    : cat==="starches" ? "a starch on the side"
-                    : "as its own dish";
-        return "<div class=\"ps-item\">"+
-          "<button class=\"ps-chip ps-add\" data-mealadd=\""+s.id+"\">"+
-            ((REF.byId[s.id]||{}).name||s.id)+"<em>add</em></button>"+
-          "<span class=\"ps-where\">"+where+"</span></div>";
-      }).join("")+"</div>"+
-      "<div class=\"ps-note\">"+sug[0].why+"</div>";
-    wrap.appendChild(o);
-    // meal suggestions in the basket -> ask WHICH dish to add to (or make a new dish)
-    o.querySelectorAll("[data-mealadd]").forEach(b=>b.onclick=(e)=>{
-      e.stopPropagation();
-      openMealAddCard(b.getAttribute("data-mealadd"));
-    });
-  }
+  // (The meal-level "worth adding" suggestions now live in the shopping list as the balance
+  // nudge — see basketBalanceNudge — so they're not duplicated on the timeline here.)
   return wrap;
 }
 
@@ -5753,18 +5847,18 @@ function rebuildBasketDish(dishIdx){
   };
   try{
     if(d.method==="noodles"){ const c=pickCand(noodleCandidates(ids,R,DISHES,AFF));
-      if(c){ label=c.label; d.subject=c.subject; built=buildNoodle(c.contents,R,DISHES,AFF,{subject:c.subject,direction:c.direction,mode:c.mode}); } }
+      if(c){ label=c.label; d.subject=c.subject; d.contents=c.contents.slice(); built=buildNoodle(c.contents,R,DISHES,AFF,{subject:c.subject,direction:c.direction,mode:c.mode}); } }
     else if(d.method==="steam"){ const c=pickCand(steamCandidates(ids,R,DISHES,AFF));
       if(c){ label=c.label||c.subjectName; d.subject=c.subject; built=buildSteam(c.contents,R,DISHES,AFF,c); } }
     else if(d.method==="stirfry"){ const c=pickCand(wokCandidates(ids,R,DISHES,AFF));
       if(c){ label=c.label; d.subject=c.subject!=null?c.subject:d.subject; built=buildStirFry(c.contents,R,DISHES,AFF,c); } }
     else if(d.method==="ricebowl"){ const c=pickCand(riceCandidates(ids,R,DISHES,AFF));
-      if(c){ label=c.label; d.subject=c.subject; built=buildRice(c.contents,R,DISHES,AFF,{subject:c.subject,direction:c.direction,mode:c.mode}); } }
+      if(c){ label=c.label; d.subject=c.subject; d.contents=c.contents.slice(); built=buildRice(c.contents,R,DISHES,AFF,{subject:c.subject,direction:c.direction,mode:c.mode}); } }
     else if(d.method==="onepot"){ const c=potCandidates(ids,R,DISHES,AFF)[0];
       if(c){ built=c; } }
   }catch(e){/* keep the old dish if re-derivation fails */}
   d.name=label;
-  d.buy=buyListForContents(ids).map(b=>({id:b.id,name:b.name}));
+  d.buy=buyListForContents(d.contents||ids).map(b=>({id:b.id,name:b.name}));
   if(built){
     if(built.total!=null) d.timing={total:built.total,handsOn:built.handsOn,handsOff:built.handsOff};
     if(built.prep) d.prep=built.prep.map(p=>p.name+" \u2014 "+(p.prep||"prep"));
@@ -6458,6 +6552,39 @@ function renderRecipes(){
   }
 }
 
+/* Map a DISHES-database dish to the SAME image pipeline the single-dish composers use, so a
+   dish looks identical whether it's composed alone or shown as a family-meal option. We infer
+   the method from role/appliance and the subject from the hero ingredient, build a coarse key,
+   and hand it to dishArtSlot — which runs the fine->coarse->manifest->SVG cascade. Worst case a
+   dish falls back to its generative SVG, which is exactly what every other view does. */
+function dbDishMethod(d){
+  const role=d.role, cui=(d.cuisine||"").toLowerCase(), nm=(d.name||"").toLowerCase();
+  if(role==="soup") return "onepot";
+  if(role==="base"){ if(/rice|congee|donburi|gyudon/.test(nm)) return "rice";
+                     if(/mee|noodle|hor fun|bee hoon|kway teow|udon|laksa/.test(nm)) return "noodles";
+                     return "rice"; }
+  if(/steam/.test(nm)) return "steam";
+  if(/soup|stew|braise|curry/.test(nm) && role!=="veg") return "onepot";
+  return "stirfry";                      // most meat/veg/fish dishes are stir-fries by default
+}
+function dbHeroIngredient(d, R){
+  const gi=d.grocery_items||[];
+  const prot=gi.find(g=>(R.byId[g.id]||{}).category==="proteins" && g.id!=="egg");
+  const base=gi.find(g=>(R.byId[g.id]||{}).category==="starches");
+  const veg =gi.find(g=>(R.byId[g.id]||{}).category==="vegetables" && measureTypeOf(R.byId[g.id])!=="assumed");
+  const pick = (d.role==="base"?base:prot) || prot || base || veg;
+  return pick ? pick.id : null;
+}
+function dbDishArtSlot(d, R){
+  const method=dbDishMethod(d);
+  const subject=dbHeroIngredient(d, R) || "dish";
+  const contents=(d.grocery_items||[]).map(g=>g.id);
+  const svgFn = method==="onepot" ? potDishArt(method, contents, R)
+              : method==="rice"   ? riceDishArt("plain", null, contents, R)
+              : method==="stirfry"? wokDishArt(contents, null, R)
+              : "";                         // steam/noodle: let dishArtSlot show its own default
+  return dishArtSlot(svgFn||"", method, subject, null, contents, R);
+}
 function renderMealBuilder(){
   const box=el("recipes"); if(!box)return;
   box.innerHTML="";                     // rebuild in place — never stack copies
@@ -6486,69 +6613,122 @@ function renderMealBuilder(){
     return pick?pick.id:null;
   }
 
-  const intro=document.createElement("div"); intro.className="meal-intro";
-  intro.innerHTML="Build a family meal &mdash; pick one from each row.";
-  box.appendChild(intro);
+  FLOW.mealPick=FLOW.mealPick||{}; FLOW.mealCursor=FLOW.mealCursor||{};
+  const mine=[...FLOW.active].filter(id=>measureTypeOf(REF.byId[id])!=="assumed");
+  const usesMine=(r)=>{
+    const d=DISHES.find(x=>x.name===r.dish)||{};
+    const ids=new Set((d.grocery_items||[]).map(g=>g.id));
+    return mine.filter(id=>ids.has(id) || (r.subs||[]).some(su=>{
+      const useId=(REF.list.find(z=>z.name===su.use)||{}).id; return useId===id;
+    })).length;
+  };
+  const score=(x)=> usesMine(x.r)*2 + x.r.ratio - x.r.buy.length*0.6 - (x.r.unchartedSwaps||0)*3;
+  // rank each role's candidates once, up front
+  Object.keys(byRole).forEach(role=>{
+    byRole[role].sort((a,b)=> score(b)-score(a) || (a.r.buy.length-b.r.buy.length));
+  });
 
+  const desktop = (window.innerWidth||1200) >= 760;
 
+  // ===== THE MEAL: a running plate of what's been picked (image per slot) =====
+  const meal=document.createElement("div"); meal.className="fm-meal"+(desktop?" fm-meal-side":"");
+  const mlab=document.createElement("div"); mlab.className="fm-meal-lab"; mlab.textContent="Your meal";
+  meal.appendChild(mlab);
+  const mgrid=document.createElement("div"); mgrid.className="fm-meal-grid";
   const missing=[];
   slots.forEach(([role,label,slotIdx])=>{
-    const key=role+"#"+slotIdx;                     // two veg slots are two different picks
-    const cands=(byRole[role]||[]).slice();
-    const row=document.createElement("div"); row.className="meal-row";
-    const lab=document.createElement("div"); lab.className="meal-slotlab"; lab.textContent=label;
-    row.appendChild(lab);
-    const opts=document.createElement("div"); opts.className="meal-opts";
-    if(!cands.length){
-      missing.push(label.toLowerCase());
-      opts.innerHTML="<div class=\"meal-empty\">you\u2019d need a "+label.toLowerCase()+"</div>";
+    const key=role+"#"+slotIdx;
+    const pickedName=FLOW.mealPick[key];
+    const cell=document.createElement("div"); cell.className="fm-slot"+(pickedName?" filled":"");
+    if(pickedName){
+      const d=DISHES.find(x=>x.name===pickedName)||{};
+      const art=dbDishArtSlot(d, REF); art.classList.add("fm-slot-img");
+      cell.appendChild(art);
+      const t=document.createElement("div"); t.className="fm-slot-txt";
+      t.innerHTML="<span class=\"fm-slot-role\">"+label+"</span><span class=\"fm-slot-name\">"+pickedName+"</span>";
+      cell.appendChild(t);
+      cell.onclick=()=>{ FLOW.mealPick[key]=null; renderMealBuilder(); };
     } else {
-      const hasPick = !!(FLOW.mealPick && FLOW.mealPick[key]);
-      /* Rank by VALUE, not just cheapness. "Fewest to buy" alone buries the dish that
-         actually makes the most of your ingredients: with chicken wired, a Chicken Curry
-         needing one potato lost to four dishes needing nothing. A one-item shop is not a
-         real obstacle. So: how many of YOUR ingredients it uses, minus the shopping cost. */
-      const mine=[...FLOW.active].filter(id=>measureTypeOf(REF.byId[id])!=="assumed");
-      const usesMine=(r)=>{
-        const d=DISHES.find(x=>x.name===r.dish)||{};
-        const ids=new Set((d.grocery_items||[]).map(g=>g.id));
-        return mine.filter(id=>ids.has(id) || (r.subs||[]).some(su=>{
-          const useId=(REF.list.find(z=>z.name===su.use)||{}).id; return useId===id;
-        })).length;
+      const ph=document.createElement("div"); ph.className="fm-slot-ph"; ph.innerHTML="+";
+      cell.appendChild(ph);
+      const t=document.createElement("div"); t.className="fm-slot-txt";
+      t.innerHTML="<span class=\"fm-slot-role\">"+label+"</span><span class=\"fm-slot-empty\">pick one \u2192</span>";
+      cell.appendChild(t);
+    }
+    mgrid.appendChild(cell);
+  });
+  meal.appendChild(mgrid);
+
+  // ===== THE CHOICES: three image cards per category, with a "New 3" cycle =====
+  const choices=document.createElement("div"); choices.className="fm-choices";
+  // roles present in the shape, deduped in MEAL_ROLES order
+  const roleOrder=[]; const seenRole={};
+  slots.forEach(([role,label,i])=>{ if(!seenRole[role]){ seenRole[role]=true; roleOrder.push([role,label]); } });
+  roleOrder.forEach(([role,label])=>{
+    const cands=(byRole[role]||[]);
+    // one slot key per role for the pick (first slot of that role)
+    const slotIdx=slots.find(s=>s[0]===role)[2];
+    const key=role+"#"+slotIdx;
+    const rowWrap=document.createElement("div"); rowWrap.className="fm-cat";
+    const head=document.createElement("div"); head.className="fm-cat-head";
+    // rice slot also offers noodles — relabel the base row
+    const shownLabel = role==="base" ? "Rice or noodles" : label;
+    head.innerHTML="<span class=\"fm-cat-lab\">"+shownLabel+"</span>";
+    if(cands.length>3){
+      const cyc=document.createElement("button"); cyc.className="fm-cyc";
+      cyc.innerHTML="\u21bb New 3";
+      cyc.onclick=(e)=>{ e.stopPropagation();
+        const per=3, pages=Math.ceil(cands.length/per);
+        FLOW.mealCursor[role]=(((FLOW.mealCursor[role]||0)+1)%pages);
+        renderMealBuilder();
       };
-      /* An UNCHARTED swap (physically fine, no culinary precedent) is worse than buying
-         one ingredient. A chicken-wing beef curry should never outrank a real chicken dish. */
-      const score=(x)=> usesMine(x.r)*2 + x.r.ratio - x.r.buy.length*0.6
-                        - (x.r.unchartedSwaps||0)*3;
-      cands.sort((a,b)=> score(b)-score(a) || (a.r.buy.length-b.r.buy.length));
-      cands.slice(0,5).forEach(it=>{
-        const chip=document.createElement("div");
-        const chosen=FLOW.mealPick&&FLOW.mealPick[key]===it.r.dish;
-        chip.className="meal-chip"+(chosen?" picked":(hasPick?" dimmed":""));
+      head.appendChild(cyc);
+    }
+    rowWrap.appendChild(head);
+    const grid=document.createElement("div"); grid.className="fm-cat-grid";
+    if(!cands.length){
+      missing.push(shownLabel.toLowerCase());
+      const e=document.createElement("div"); e.className="fm-empty"; e.textContent="you\u2019d need a "+label.toLowerCase();
+      grid.appendChild(e);
+    } else {
+      const per=3, cur=FLOW.mealCursor[role]||0;
+      const page=cands.slice(cur*per, cur*per+per);
+      // if a page comes up short (last page), pad from the start so it's always 3
+      while(page.length<per && page.length<cands.length) page.push(cands[page.length]);
+      page.forEach(it=>{
+        const d=DISHES.find(x=>x.name===it.r.dish)||{};
+        const chosen=FLOW.mealPick[key]===it.r.dish;
+        const card=document.createElement("div"); card.className="fm-card"+(chosen?" picked":"");
+        const art=dbDishArtSlot(d, REF); art.classList.add("fm-card-img");
+        card.appendChild(art);
         const nb=it.r.buy.length;
-        const subs=(it.r.subs||[]);
-        const unch=subs.filter(x=>x.uncharted);
-        const subLine = subs.length
-          ? "<em class=\"mc-sub"+(unch.length?" uncharted":"")+"\">using "+subs.map(x=>x.use).join(", ")+" for "+subs.map(x=>x.need.toLowerCase()).join(", ")+
-            (unch.length?" \u2014 no precedent for this":"")+"</em>"
-          : "";
-        chip.innerHTML="<span>"+it.r.dish+"</span>"+subLine+
-          (nb? "<em class=\"mc-buy\">buy "+nb+"</em>" : "<em class=\"mc-have\">have all</em>")+
-          "<button class=\"mc-open\" title=\"see the recipe\">recipe</button>";
-        chip.onclick=(e)=>{
-          if(e.target && e.target.classList && e.target.classList.contains("mc-open")){
-            e.stopPropagation(); openR(it.idx); return;
-          }
-          FLOW.mealPick=FLOW.mealPick||{};
+        const subs=(it.r.subs||[]); const unch=subs.filter(x=>x.uncharted);
+        const meta=document.createElement("div"); meta.className="fm-card-meta";
+        meta.innerHTML="<div class=\"fm-card-name\">"+it.r.dish+"</div>"+
+          (chosen ? "<div class=\"fm-card-in\">\u2713 in the meal</div>"
+                  : (nb? "<div class=\"fm-card-buy\">buy "+nb+"</div>" : "<div class=\"fm-card-have\">have all</div>"))+
+          (subs.length? "<div class=\"fm-card-sub"+(unch.length?" unch":"")+"\">using "+subs.map(x=>x.use).join(", ")+
+            (unch.length?" \u2014 untested":"")+"</div>" : "");
+        card.appendChild(meta);
+        card.onclick=(e)=>{
           FLOW.mealPick[key]=(FLOW.mealPick[key]===it.r.dish?null:it.r.dish);
           renderMealBuilder();
         };
-        opts.appendChild(chip);
+        grid.appendChild(card);
       });
     }
-    row.appendChild(opts);
-    box.appendChild(row);
+    rowWrap.appendChild(grid);
+    choices.appendChild(rowWrap);
   });
+
+  // desktop: meal sidebar + choices side by side; mobile: meal band on top, choices below
+  if(desktop){
+    const split=document.createElement("div"); split.className="fm-split";
+    split.appendChild(meal); split.appendChild(choices);
+    box.appendChild(split);
+  } else {
+    box.appendChild(meal); box.appendChild(choices);
+  }
 
   // summary line: what the meal is, and what's missing (never dead-ends)
   const picks=FLOW.mealPick||{};
@@ -7804,8 +7984,13 @@ function significantExtras(subject, contents, R){
 }
 /* the FINE key: coarse dish key + significant extras, e.g. steam_pomfret_ginger_scallion_tomato */
 function dishKeyFine(method, subject, dirKey, contents, R){
-  const extras=significantExtras(subject, contents, R);
+  let extras=significantExtras(subject, contents, R);
   const base=dishKey(method, subject, dirKey);
+  // a clear soup names itself for its vegetable (watercress_soup); don't re-append that same
+  // vegetable as an "extra" — it's already in the base key.
+  if(method==="onepot" && dirKey){
+    extras=extras.filter(id=>!base.includes(id));
+  }
   return extras.length ? (base+"_"+extras.join("_")) : base;
 }
 
@@ -9332,12 +9517,13 @@ function renderOnePot(){
     : buildOnePot(potIds, REF, DISHES, {appliance:vessel, applData:APPL_DATA[vessel]});
 
   /* ============ 1. THE HEADLINE — what this pot is, in one line ============ */
-  box.appendChild(dishArtSlot(potDishArt(mode.key, potIngredients, REF), "onepot", potIngredients[0], mode.key, potIngredients, REF));
+  const potDirKey = (chosen && chosen.dirKey) ? chosen.dirKey : mode.key;
+  box.appendChild(dishArtSlot(potDishArt(mode.key, potIngredients, REF), "onepot", (chosen&&chosen.species?chosen.base[0]:potIngredients[0]), potDirKey, potIngredients, REF));
   const title=document.createElement("div"); title.className="op-title";
   const seasonLabel = pathDir ? pathDir.label.replace(/ \u2014 .*/,"").replace(/ \(.*\)/,"") : "Season";
   title.innerHTML=
     "<div class=\"op-head\">"+
-      "<span class=\"op-name\">Your pot</span>"+
+      "<span class=\"op-name\">"+((chosen&&chosen.label)?chosen.label:"Your pot")+"</span>"+
       "<button class=\"op-season"+(pathDir?" on":"")+"\" id=\"season-btn\">"+
         "<span class=\"os-dot\"></span>"+seasonLabel+
       "</button>"+

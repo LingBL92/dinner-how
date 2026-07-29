@@ -1718,7 +1718,73 @@ function potSuggestions(baseIds, ctx, R, AFF, {have=[], limit=5}={}){
   };
 }
 
-function potCandidates(ingIds, R, dishes, AFF){
+/* Name a one-pot dish. Uses the existing SEASONING_DIRS auto-detector (or the cook's explicit
+   FLOW.potPath pick, passed as opts.potPath) to see if the pot has a recognised broth base; if
+   so it's named for that (Bak kut teh, Curry, Hong shao). Otherwise it's a CLEAR pot, named for
+   its vegetable (lotus root -> "Lotus root soup"), ABC combo, or protein. Returns {name, dirKey}. */
+const CLEAR_SOUP_VEG={
+  lotus_root:"Lotus root soup", watercress:"Watercress soup", winter_melon:"Winter melon soup",
+  daikon:"Radish soup", radish:"Radish soup", corn:"Corn soup", old_cucumber:"Old cucumber soup",
+  seaweed:"Seaweed soup", napa_cabbage:"Cabbage soup"
+};
+function potIsABC(ids){ return ids.includes("potato") && ids.includes("carrot") && ids.includes("tomato"); }
+function potSpeciesWord(id, R){
+  const anc=R.anc&&R.anc[id]||new Set();
+  for(const k of ["beef","pork","chicken","mutton","fish","prawn","squid"])
+    if((anc.has&&anc.has(k))||id===k) return k;
+  return ((R.byId[id]||{}).name||"pot").toLowerCase();
+}
+/* A dish-language one-liner for the pot \u2014 not a wine note. Named broths get their character;
+   clear soups say what they are. */
+const POT_DESCRIBE={
+  "Bak kut teh":"peppery, garlicky pork-rib tea \u2014 clear and warming",
+  "Lotus root soup":"a clear, sweet soup \u2014 lotus root simmered soft",
+  "Watercress soup":"a clean green soup \u2014 watercress wilted into clear broth",
+  "Radish soup":"a light clear soup \u2014 radish soaked full of the broth",
+  "Corn soup":"a naturally sweet clear soup \u2014 corn and broth",
+  "ABC soup":"the everyday clear soup \u2014 potato, carrot, tomato",
+  "Cabbage soup":"a soft, sweet clear soup \u2014 cabbage cooked down",
+  "Winter melon soup":"a cooling clear soup \u2014 winter melon gone translucent"
+};
+function potDescribe(named, ch){
+  if(POT_DESCRIBE[named.name]) return POT_DESCRIBE[named.name];
+  if(/^Hong shao/.test(named.name)) return "red-braised \u2014 dark soy and sugar, glossy and deep";
+  if(/^Curry/.test(named.name))     return "a rich, spiced curry pot \u2014 warming and full";
+  if(/^Rendang/.test(named.name))   return "a dry, spiced rendang \u2014 coconut cooked to a cling";
+  if(/^Assam/.test(named.name))     return "sour-hot \u2014 tamarind against chilli";
+  if(/soup$/.test(named.name))      return "a clear, clean soup";
+  return ch?describeBroth(ch):"a clear, clean pot";
+}
+function potNameFor(ingIds, R, leadId, opts){
+  // explicit pick wins; else auto-detect from markers
+  let dir=null;
+  if(opts && opts.potPath){
+    dir=SEASONING_DIRS.find(d=>d.key===opts.potPath) || null;
+  } else {
+    const got=(typeof seasoningOf==="function")?seasoningOf(ingIds):[];
+    dir = (got && got.length && got[0].key!=="clear") ? got[0] : null;
+  }
+  const prot=leadId?potSpeciesWord(leadId,R):"";
+  if(dir){
+    // recognised broth base -> name for it
+    const K=dir.key;
+    if(K==="bkt_teochew"||K==="bkt_hokkien"||K==="bkt_pack") return {name:"Bak kut teh", dirKey:K};
+    if(K==="hong_shao")  return {name:"Hong shao "+(prot||"pork"), dirKey:"hong_shao"};
+    if(K==="clear_chinese") return {name:(prot?prot.replace(/^./,c=>c.toUpperCase()):"Clear")+" soup", dirKey:"clear_chinese"};
+    if(K==="rempah"||K==="rendang") return {name:"Rendang "+(prot||"beef"), dirKey:"rendang"};
+    if(K==="masala"||K==="jp_curry"||K==="curry") return {name:"Curry "+(prot||"pot"), dirKey:"curry"};
+    if(K==="assam") return {name:"Assam "+(prot||"pot"), dirKey:"assam"};
+    // generic: use the dir's short label
+    const short=(dir.label||K).replace(/ \u2014 .*/,"").replace(/ \(.*\)/,"");
+    return {name:short+" "+(prot||"pot"), dirKey:K};
+  }
+  // CLEAR pot: name for the vegetable
+  if(potIsABC(ingIds)) return {name:"ABC soup", dirKey:"abc_soup"};
+  const veg=ingIds.filter(id=>((R.byId[id]||{}).category)==="vegetables");
+  for(const v of veg){ if(CLEAR_SOUP_VEG[v]) return {name:CLEAR_SOUP_VEG[v], dirKey:(v==="daikon"||v==="radish")?"radish_soup":v+"_soup"}; }
+  return {name:(prot?prot.replace(/^./,c=>c.toUpperCase()):"Clear")+" soup", dirKey:"soup"};
+}
+function potCandidates(ingIds, R, dishes, AFF, opts){
   const real=ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed");
   // a lean dry-heat cut (steak, loin, breast) can go IN a pot but can never LEAD one
   const canLead=(id)=> !!BROTH_BASE[id] && !BROTH_BASE[id].noBroth;
@@ -1815,6 +1881,8 @@ function potCandidates(ingIds, R, dishes, AFF){
     const contents=allContents.filter(id=>!isSubVeg(id) || keepVeg.has(id));
     const ch=brothCharacter(contents,R);
     const alts = ids.alternatives || [];
+    // NAME the pot: recognised broth base (BKT, curry, hong shao) or clear-soup-by-vegetable
+    const named = potNameFor(ingIds, R, ids[0], opts);
     return {
       species: sp,
       base: ids,
@@ -1825,7 +1893,10 @@ function potCandidates(ingIds, R, dishes, AFF){
       contents,
       vegLeftOut: potLeftOut,
       character: ch,
-      describe: ch?describeBroth(ch):"a light vegetable pot",
+      // the dish now has a NAME and a broth identity, not just a wine-note
+      label: named.name,
+      dirKey: named.dirKey,
+      describe: potDescribe(named, ch),
       reminds: dishes ? brothLikeDishes(contents,R,dishes.filter(hasBroth),2) : [],
       suggest: AFF ? potSuggestions(ids, "soup", R, AFF, {have:real}) : {yours:[],buy:[]},
       dryHeat: dryHeat.map(id=>({id, name:(R.byId[id]||{}).name||id,
@@ -3376,8 +3447,9 @@ function riceCandidates(ingIds, R, dishes, AFF, opts){
     const base=real.filter(x=>!NOODLE_BASE_IDS.has(x));
     // every vegetable in the basket was hand-picked, so none is capped away; the 1+1 cap
     // only limits vegetables the engine would auto-add (it doesn't auto-add any here).
-    const _chosen=new Set(base.filter(id=>((R.byId[id]||{}).category)==="vegetables"));
-    const vp=pickDishVeg(base, R, {greens:1, others:1, explicit:_chosen});
+    // cap to 1 green + 1 other by default so the bowl stays tight; an explicit set passed
+    // in (from a deliberate basket add) can still override the cap.
+    const vp=pickDishVeg(base, R, {greens:1, others:1, explicit:(opts&&opts.explicit)||null});
     // The dish's OWN subject is the main (claypot=chicken, curry=chicken, braise=pork).
     // lap cheong/egg/char siu/dried shrimp are allowed to ride along; every other protein
     // belongs to a different dish and is dropped.
@@ -3616,7 +3688,7 @@ const NOODLE_FIT_RANK={canonical:0, works:1, unusual:2};
 /* the dishes this basket can make. Each candidate is one noodle style.
    TWO independent layers: the STYLE (broth or sauce) and the NOODLE. Any noodle can
    carry any style — the engine ranks the pairing rather than blocking it. */
-function noodleCandidates(ingIds, R, dishes, AFF){
+function noodleCandidates(ingIds, R, dishes, AFF, opts){
   const real=[...new Set(ingIds.filter(id=>{
     const i=R.byId[id]||{};
     if(i.id==="water") return false;
@@ -3651,8 +3723,7 @@ function noodleCandidates(ingIds, R, dishes, AFF){
       : fit==="works" ? baseName.replace(/ \(.*\)/,"")+" is a common swap for this"
       : "usually made with "+((dir.canonical||[]).map(n=>(R.byId[n]||{}).name||n).join(" or ").replace(/ \(.*?\)/g,""))+" \u2014 this is your own take";
     // a bowl takes one green and a couple of others — chosen for THIS sauce
-    const _nch=new Set(mineAll.filter(id=>((R.byId[id]||{}).category)==="vegetables"));
-    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[], explicit:_nch});
+    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[], explicit:(opts&&opts.explicit)||null});
     // one main protein per bowl. A soup can carry a second (sliced meat + a fishball);
     // a fried noodle should not read as three meats piled on.
     const pj=pickLeadProtein(mineAll, R);
@@ -3678,8 +3749,7 @@ function noodleCandidates(ingIds, R, dishes, AFF){
   // always leave a plain fallback so a lone packet of noodles still cooks
   if(!out.length){
     const fallback=NOODLE_DIRS.find(d=>d.key==="clear_soup");
-    const _nch2=new Set(mineAll.filter(id=>((R.byId[id]||{}).category)==="vegetables"));
-    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:(fallback&&fallback.veg)||[], explicit:_nch2});
+    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:(fallback&&fallback.veg)||[], explicit:(opts&&opts.explicit)||null});
     const mine=vpick.used;
     out.push({key:"noodle_clear_soup", label:"Noodles in broth", mode:"soup",
       dirKey:"clear_soup", direction:fallback, subject:base,
