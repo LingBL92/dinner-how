@@ -1755,6 +1755,35 @@ function potDescribe(named, ch){
   if(/soup$/.test(named.name))      return "a clear, clean soup";
   return ch?describeBroth(ch):"a clear, clean pot";
 }
+/* Name a BAKED one-dish meal — buildBake handles timing, but the dish still needs a name, and
+   potNameFor only knows broths (it would call baked salmon "Salmon soup"). Baked dishes are named
+   by their lead protein and whether vegetables share the tray:
+     fish            -> "Baked salmon" / "Baked fish"
+     whole chicken   -> "Roast chicken";  chicken pieces -> "Baked chicken"
+     pork            -> "Roast pork"
+     protein + 2+ veg-> "<Protein> tray bake"
+     vegetables only -> "Roasted vegetables"                                                     */
+function bakeNameFor(ingIds, R){
+  const real=[...new Set(ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed"))];
+  const proteins=real.filter(id=>((R.byId[id]||{}).category)==="proteins");
+  const veg=real.filter(id=>{ const c=(R.byId[id]||{}).category; return c==="vegetables"||c==="starches"; });
+  if(!proteins.length){
+    return {name: veg.length ? "Roasted vegetables" : "One-dish bake", dirKey:"baked"};
+  }
+  const lead=proteins[0];
+  const sp=potSpeciesWord(lead, R);
+  const cap=s=>s?s.replace(/^./,c=>c.toUpperCase()):s;
+  const isWhole=/_whole$/.test(lead);
+  let base;
+  if(sp==="fish"||sp==="salmon") base="Baked "+(sp==="salmon"?"salmon":"fish");
+  else if(sp==="chicken") base=isWhole ? "Roast chicken" : "Baked chicken";
+  else if(sp==="pork") base="Roast pork";
+  else if(sp==="beef") base="Roast beef";
+  else base="Baked "+sp;
+  // a protein sharing the tray with a couple of vegetables is a tray bake
+  if(veg.length>=2) return {name: cap(sp)+" tray bake", dirKey:"baked"};
+  return {name: base, dirKey:"baked"};
+}
 function potNameFor(ingIds, R, leadId, opts){
   // explicit pick wins; else auto-detect from markers
   let dir=null;
@@ -1956,11 +1985,26 @@ const POT_MODES=[
 ];
 
 /* which cuts suit which heat? This is the two-axis meat model doing its job. */
+/* Vegetables that genuinely ROAST — hold their shape and caramelise under dry heat. Leafy
+   greens, sprouts, cucumbers, gourds full of water, and (obviously) noodles do not go in the
+   oven, even though they're technically "vegetables". This is the real-world set a home cook
+   reaches for a tray bake: roots, squashes, brassicas, peppers, corn. */
+const ROAST_VEG=new Set([
+  "potato","sweet_potato","yam","carrot","daikon","lotus_root","water_chestnut","chestnut",
+  "corn","pumpkin","broccoli","cauliflower","bell_pepper","eggplant","zucchini","tomato",
+  "onion","mushroom","okra","long_beans","green_bean","peas","brussels_sprouts","parsnip",
+  "beetroot","asparagus","garlic"
+]);
 function suitsHeat(id, heat, R){
   const i=R.byId[id]||{};
   const p=new Set(i.provides||[]);
   const b=BROTH_BASE[id]||{};
-  if(i.category!=="proteins") return true;                 // vegetables are fine either way
+  if(i.category!=="proteins"){
+    // dry heat: only genuine roasting vegetables belong in a bake — not leafy greens,
+    // sprouts, watery gourds, or noodles. Wet heat: any vegetable is fine in a pot.
+    if(heat==="dry") return ROAST_VEG.has(id);
+    return true;
+  }
   if(heat==="wet"){
     if(b.noBroth) return false;                            // steak, loin, breast: not in a pot
     return true;
@@ -2025,14 +2069,33 @@ function bakeCandidates(ingIds, R, dishes, AFF){
       });
       (seen>0?belongs:uncertain).push({id:o, n:seen});
     });
-    const contents=[...new Set(ids.concat(belongs.map(x=>x.id)).concat(uncertain.map(x=>x.id)))];
+    // a sheet pan holds more than a soup pot, but it is not limitless — seven vegetables round
+    // one chicken won't roast evenly. Cap the vegetables (proteins always stay); an explicit
+    // pick survives, the rest are reported as left out. Slightly higher than the soup's 2.
+    const isBakeVeg=id=>{ const c=(R.byId[id]||{}).category; return (c==="vegetables"||c==="starches") && measureTypeOf(R.byId[id]||{})!=="assumed"; };
+    const allBakeVeg=[...new Set(belongs.map(x=>x.id).concat(uncertain.map(x=>x.id)))].filter(isBakeVeg);
+    const rankedBakeVeg=R.rankPartners?R.rankPartners(allBakeVeg):allBakeVeg;
+    const EXPL_B=(AFF&&AFF.explicit)||null;   // (no explicit set in this path today; future-proof)
+    const explBakeVeg=rankedBakeVeg.filter(id=>EXPL_B&&EXPL_B.has&&EXPL_B.has(id));
+    // a roasting starch (potatoes, sweet potato) is the classic tray-bake companion — keep one
+    // even though affinity ranks it low, so a roast doesn't drop its potatoes.
+    const bakeStarch=rankedBakeVeg.filter(id=>((R.byId[id]||{}).category)==="starches").slice(0,1);
+    const priorityBake=[...new Set(explBakeVeg.concat(bakeStarch))];
+    const bakeCapN=Math.max(priorityBake.length, 3);
+    const keepBakeVeg=new Set(priorityBake.concat(rankedBakeVeg.filter(id=>!priorityBake.includes(id))).slice(0, bakeCapN));
+    const bakeLeftOut=rankedBakeVeg.filter(id=>!keepBakeVeg.has(id)).map(id=>({id, why:"set aside \u2014 a tray roasts a few vegetables evenly, not a pile"}));
+    const contents=[...new Set(ids.concat(belongs.map(x=>x.id)).concat(uncertain.map(x=>x.id)))]
+      .filter(id=>!isBakeVeg(id) || keepBakeVeg.has(id));
+    const named=bakeNameFor(contents, R);       // "Baked salmon", "Roast chicken", tray bakes
     return {
       species: sp,
       base: ids,
+      label: named.name, dirKey: named.dirKey,
       baseNames: ids.map(id=>(R.byId[id]||{}).name||id),
       alternatives: ids.alternatives||[],
       altNames: (ids.alternatives||[]).map(id=>(R.byId[id]||{}).name||id),
       belongs, uncertain, contents,
+      leftOut: bakeLeftOut,
       describe: "roasted \u2014 everything in one dish",
       dryHeat: heatMismatch(real,"dry",R),
       suggest: {yours:[],buy:[]},

@@ -954,7 +954,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.37</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.41</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2777,6 +2777,35 @@ function potDescribe(named, ch){
   if(/soup$/.test(named.name))      return "a clear, clean soup";
   return ch?describeBroth(ch):"a clear, clean pot";
 }
+/* Name a BAKED one-dish meal — buildBake handles timing, but the dish still needs a name, and
+   potNameFor only knows broths (it would call baked salmon "Salmon soup"). Baked dishes are named
+   by their lead protein and whether vegetables share the tray:
+     fish            -> "Baked salmon" / "Baked fish"
+     whole chicken   -> "Roast chicken";  chicken pieces -> "Baked chicken"
+     pork            -> "Roast pork"
+     protein + 2+ veg-> "<Protein> tray bake"
+     vegetables only -> "Roasted vegetables"                                                     */
+function bakeNameFor(ingIds, R){
+  const real=[...new Set(ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed"))];
+  const proteins=real.filter(id=>((R.byId[id]||{}).category)==="proteins");
+  const veg=real.filter(id=>{ const c=(R.byId[id]||{}).category; return c==="vegetables"||c==="starches"; });
+  if(!proteins.length){
+    return {name: veg.length ? "Roasted vegetables" : "One-dish bake", dirKey:"baked"};
+  }
+  const lead=proteins[0];
+  const sp=potSpeciesWord(lead, R);
+  const cap=s=>s?s.replace(/^./,c=>c.toUpperCase()):s;
+  const isWhole=/_whole$/.test(lead);
+  let base;
+  if(sp==="fish"||sp==="salmon") base="Baked "+(sp==="salmon"?"salmon":"fish");
+  else if(sp==="chicken") base=isWhole ? "Roast chicken" : "Baked chicken";
+  else if(sp==="pork") base="Roast pork";
+  else if(sp==="beef") base="Roast beef";
+  else base="Baked "+sp;
+  // a protein sharing the tray with a couple of vegetables is a tray bake
+  if(veg.length>=2) return {name: cap(sp)+" tray bake", dirKey:"baked"};
+  return {name: base, dirKey:"baked"};
+}
 function potNameFor(ingIds, R, leadId, opts){
   // explicit pick wins; else auto-detect from markers
   let dir=null;
@@ -2978,11 +3007,26 @@ const POT_MODES=[
 ];
 
 /* which cuts suit which heat? This is the two-axis meat model doing its job. */
+/* Vegetables that genuinely ROAST — hold their shape and caramelise under dry heat. Leafy
+   greens, sprouts, cucumbers, gourds full of water, and (obviously) noodles do not go in the
+   oven, even though they're technically "vegetables". This is the real-world set a home cook
+   reaches for a tray bake: roots, squashes, brassicas, peppers, corn. */
+const ROAST_VEG=new Set([
+  "potato","sweet_potato","yam","carrot","daikon","lotus_root","water_chestnut","chestnut",
+  "corn","pumpkin","broccoli","cauliflower","bell_pepper","eggplant","zucchini","tomato",
+  "onion","mushroom","okra","long_beans","green_bean","peas","brussels_sprouts","parsnip",
+  "beetroot","asparagus","garlic"
+]);
 function suitsHeat(id, heat, R){
   const i=R.byId[id]||{};
   const p=new Set(i.provides||[]);
   const b=BROTH_BASE[id]||{};
-  if(i.category!=="proteins") return true;                 // vegetables are fine either way
+  if(i.category!=="proteins"){
+    // dry heat: only genuine roasting vegetables belong in a bake — not leafy greens,
+    // sprouts, watery gourds, or noodles. Wet heat: any vegetable is fine in a pot.
+    if(heat==="dry") return ROAST_VEG.has(id);
+    return true;
+  }
   if(heat==="wet"){
     if(b.noBroth) return false;                            // steak, loin, breast: not in a pot
     return true;
@@ -3047,14 +3091,33 @@ function bakeCandidates(ingIds, R, dishes, AFF){
       });
       (seen>0?belongs:uncertain).push({id:o, n:seen});
     });
-    const contents=[...new Set(ids.concat(belongs.map(x=>x.id)).concat(uncertain.map(x=>x.id)))];
+    // a sheet pan holds more than a soup pot, but it is not limitless — seven vegetables round
+    // one chicken won't roast evenly. Cap the vegetables (proteins always stay); an explicit
+    // pick survives, the rest are reported as left out. Slightly higher than the soup's 2.
+    const isBakeVeg=id=>{ const c=(R.byId[id]||{}).category; return (c==="vegetables"||c==="starches") && measureTypeOf(R.byId[id]||{})!=="assumed"; };
+    const allBakeVeg=[...new Set(belongs.map(x=>x.id).concat(uncertain.map(x=>x.id)))].filter(isBakeVeg);
+    const rankedBakeVeg=R.rankPartners?R.rankPartners(allBakeVeg):allBakeVeg;
+    const EXPL_B=(AFF&&AFF.explicit)||null;   // (no explicit set in this path today; future-proof)
+    const explBakeVeg=rankedBakeVeg.filter(id=>EXPL_B&&EXPL_B.has&&EXPL_B.has(id));
+    // a roasting starch (potatoes, sweet potato) is the classic tray-bake companion — keep one
+    // even though affinity ranks it low, so a roast doesn't drop its potatoes.
+    const bakeStarch=rankedBakeVeg.filter(id=>((R.byId[id]||{}).category)==="starches").slice(0,1);
+    const priorityBake=[...new Set(explBakeVeg.concat(bakeStarch))];
+    const bakeCapN=Math.max(priorityBake.length, 3);
+    const keepBakeVeg=new Set(priorityBake.concat(rankedBakeVeg.filter(id=>!priorityBake.includes(id))).slice(0, bakeCapN));
+    const bakeLeftOut=rankedBakeVeg.filter(id=>!keepBakeVeg.has(id)).map(id=>({id, why:"set aside \u2014 a tray roasts a few vegetables evenly, not a pile"}));
+    const contents=[...new Set(ids.concat(belongs.map(x=>x.id)).concat(uncertain.map(x=>x.id)))]
+      .filter(id=>!isBakeVeg(id) || keepBakeVeg.has(id));
+    const named=bakeNameFor(contents, R);       // "Baked salmon", "Roast chicken", tray bakes
     return {
       species: sp,
       base: ids,
+      label: named.name, dirKey: named.dirKey,
       baseNames: ids.map(id=>(R.byId[id]||{}).name||id),
       alternatives: ids.alternatives||[],
       altNames: (ids.alternatives||[]).map(id=>(R.byId[id]||{}).name||id),
       belongs, uncertain, contents,
+      leftOut: bakeLeftOut,
       describe: "roasted \u2014 everything in one dish",
       dryHeat: heatMismatch(real,"dry",R),
       suggest: {yours:[],buy:[]},
@@ -5068,7 +5131,7 @@ const TASTE_LABEL={sweet:"sweet",sour:"sour",salty:"salty",umami:"umami",fat:"ri
 const TYPE_OPTS=[["soup","Soup"],["base","Rice & noodles"],["veg","Vegetable"],["meat","Meat"],["fish","Fish"],["dessert","Dessert"]];
 const COMPOSE_OPTS=[["family_meal","Family meal"],["onepot","One-pot"],["stirfry","Stir-fry"],["steam","Steam"],["ricebowl","One-dish rice"],["noodles","Noodles"]];
 // three-section type selector: cooking methods and the full-meal builder, kept separate
-const METHOD_OPTS=[["onepot","One-pot"],["stirfry","Stir-fry"],["steam","Steam"],["ricebowl","One-dish rice"],["noodles","Noodles"]];
+const METHOD_OPTS=[["onepot","One-pot"],["stirfry","Stir-fry"],["steam","Steam"],["ricebowl","One-dish rice"],["noodles","Noodles"],["bake","One-dish bake"]];
 const MEAL_OPTS=[["family_meal","Family meal"]];
 
 function isOnePot(d){ return d.role==="soup" || (["braise","simmer"].includes(d.build) && (d.appliance_options||[]).length<=2); }
@@ -6160,7 +6223,8 @@ function renderType(){
       : id==="steam" ? "gentle heat, almost all hands-off"
       : id==="ricebowl" ? "rice + one topping \u2014 cooked in, or ladled over"
       : id==="noodles" ? "the noodle is the base \u2014 fried or in soup"
-      : "one vessel, everything together";
+      : id==="bake" ? "dry heat in the oven \u2014 in and out together"
+      : "simmered in one pot \u2014 soup or braise";
     t.innerHTML="<span>"+label+"<em>"+hint+"</em></span><span class=\"dot\"></span>";
     t.onclick=()=>toggleCompose(id);
     b1.appendChild(t);
@@ -6395,7 +6459,8 @@ function renderRecipes(){
 
   // ===== COMPOSE MODE: build a meal from slots (e.g. family meal = rice + meat + veg) =====
   if(FLOW.compose==="family_meal"){ renderMealBuilder(); return; }
-  if(FLOW.compose==="onepot"){ clearGrocery(); renderOnePot(); return; }
+  if(FLOW.compose==="onepot"){ clearGrocery(); FLOW.potMode="soup"; renderOnePot(); return; }
+  if(FLOW.compose==="bake"){ clearGrocery(); FLOW.potMode="baked"; renderOnePot(); return; }
   if(FLOW.compose==="stirfry"){ clearGrocery(); renderStirFry(); return; }
   if(FLOW.compose==="steam"){ clearGrocery(); renderSteam(); return; }
   if(FLOW.compose==="ricebowl"){ clearGrocery(); renderRice(); return; }
@@ -9525,21 +9590,10 @@ function renderOnePot(){
   }
   const nm=id=>{ const n=(REF.byId[id]||{}).name; return n||id.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()); };
 
-  /* WHICH KIND OF ONE-POT? A soup and a baked rice are both "one vessel", but they cook
-     by different heat — and that changes which cuts work. */
+  /* The heat (wet simmer vs dry bake) is now chosen up front as the cooking METHOD
+     ("One-pot" vs "One-dish bake"), so we no longer show a mode selector inside the view —
+     FLOW.potMode was already set by the method routing. */
   const mode = POT_MODES.find(m=>m.key===FLOW.potMode) || POT_MODES[0];
-  const md=document.createElement("div"); md.className="pot-mode";
-  const mdl=document.createElement("div"); mdl.className="pm-lab"; mdl.textContent="What kind of one-pot?";
-  md.appendChild(mdl);
-  POT_MODES.forEach(m=>{
-    const on=mode.key===m.key;
-    const r=document.createElement("div"); r.className="pm-row"+(on?" on":"");
-    r.innerHTML="<span class=\"pm-t\"><span class=\"pm-n\">"+m.label+"</span>"+
-      "<span class=\"pm-d\">"+m.note+"</span></span><span class=\"dot\"></span>";
-    r.onclick=()=>{ FLOW.potMode=m.key; FLOW.potBase=null; FLOW.potCut=null; renderOnePot(); };
-    md.appendChild(r);
-  });
-  box.appendChild(md);
 
   // things that don't suit this heat are kept OUT, and we say why
   const wrongHeat = heatMismatch(ids, mode.heat, REF);
@@ -9637,12 +9691,17 @@ function renderOnePot(){
   box.appendChild(dishArtSlot(potDishArt(mode.key, potIngredients, REF), "onepot", (chosen&&chosen.species?chosen.base[0]:potIngredients[0]), potDirKey, potIngredients, REF));
   const title=document.createElement("div"); title.className="op-title";
   const seasonLabel = pathDir ? pathDir.label.replace(/ \u2014 .*/,"").replace(/ \(.*\)/,"") : "Season";
+  // a baked dish is named as a bake ("Baked salmon", "Roast chicken"), not a broth — potNameFor
+  // would call it a soup.
+  const bakedName = mode.key==="baked" ? bakeNameFor(potIngredients, REF).name : null;
+  const dishName = bakedName || ((chosen&&chosen.label)?chosen.label:"Your pot");
   title.innerHTML=
     "<div class=\"op-head\">"+
-      "<span class=\"op-name\">"+((chosen&&chosen.label)?chosen.label:"Your pot")+"</span>"+
+      "<span class=\"op-name\">"+dishName+"</span>"+
+      (mode.key==="baked" ? "" :
       "<button class=\"op-season"+(pathDir?" on":"")+"\" id=\"season-btn\">"+
         "<span class=\"os-dot\"></span>"+seasonLabel+
-      "</button>"+
+      "</button>")+
     "</div>"+
     "<div class=\"op-sub\">"+p.describe.replace(/^./,c=>c.toUpperCase())+
       (p.character?" \u00b7 built on "+p.character.baseName.toLowerCase():"")+"</div>"+
