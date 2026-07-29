@@ -1791,7 +1791,8 @@ function potNameFor(ingIds, R, leadId, opts){
   return {name:(prot?prot.replace(/^./,c=>c.toUpperCase()):"Clear")+" soup", dirKey:"soup"};
 }
 function potCandidates(ingIds, R, dishes, AFF, opts){
-  const real=ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed");
+  // noodles and rice are a base, not a soup ingredient — keep them out of the pot
+  const real=ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed" && (R.byId[id]||{}).category!=="starches");
   // a lean dry-heat cut (steak, loin, breast) can go IN a pot but can never LEAD one
   const canLead=(id)=> !!BROTH_BASE[id] && !BROTH_BASE[id].noBroth;
   const proteins=real.filter(id=>(R.byId[id]||{}).category==="proteins" && canLead(id));
@@ -1879,11 +1880,22 @@ function potCandidates(ingIds, R, dishes, AFF, opts){
     const isSubVeg=id=>((R.byId[id]||{}).category)==="vegetables" && measureTypeOf(R.byId[id]||{})!=="assumed";
     const potVeg=allContents.filter(isSubVeg);
     const rankedVeg=R.rankPartners?R.rankPartners(potVeg):potVeg;
-    // the cap is a default; a vegetable the cook put in the basket is kept regardless.
-    // Since every ingredient here is hand-picked, that means all of them stay — the cap only
-    // ever trims vegetables the engine itself might have added (it adds none in this path).
-    const keepVeg=new Set(rankedVeg);   // keep every chosen vegetable
-    const potLeftOut=[];
+    // A soup carries a couple of substantial vegetables, not six. Cap to the top-ranked few;
+    // an explicit pick (a deliberate addition past the cap) is kept regardless. The rest are
+    // reported as left out so they can go in another dish.
+    const EXPL_P=(opts&&opts.explicit)||null;
+    // whichever vegetable gives the pot its name must survive the cap, or the name goes
+    // incoherent ("Lotus root soup" with no lotus root). Prioritise it, then explicit picks.
+    const NAMING_VEG=["lotus_root","watercress","winter_melon","daikon","radish","corn","old_cucumber","seaweed"];
+    // keep the ONE vegetable that will actually NAME the pot. potNameFor scans the raw ingIds
+    // in order, so match that (first naming-veg in the basket), not partner-rank — otherwise the
+    // title ("Watercress soup") and the kept vegetable can disagree.
+    const nameVeg=ingIds.filter(id=>NAMING_VEG.includes(id)).slice(0,1);
+    const explVeg=rankedVeg.filter(id=>EXPL_P&&EXPL_P.has&&EXPL_P.has(id) && !nameVeg.includes(id));
+    const priority=[...new Set(nameVeg.concat(explVeg))];
+    const capN=Math.max(priority.length, 2);          // median real-soup vegetable count is 2
+    const keepVeg=new Set(priority.concat(rankedVeg.filter(id=>!priority.includes(id))).slice(0, capN));
+    const potLeftOut=potVeg.filter(id=>!keepVeg.has(id)).map(id=>({id, why:"set aside \u2014 a soup keeps a couple of vegetables, not a pile"}));
     const contents=allContents.filter(id=>!isSubVeg(id) || keepVeg.has(id));
     const ch=brothCharacter(contents,R);
     const alts = ids.alternatives || [];
@@ -2426,6 +2438,9 @@ function wokCandidates(ingIds, R, dishes, AFF, opts){
   const real=[...new Set(ingIds.filter(id=>{
     const i=R.byId[id]||{};
     if(i.id==="water") return false;
+    // noodles and rice are a BASE, not a stir-fry ingredient — they belong to the noodle/rice
+    // composer, and shouldn't be tossed into the wok as loose contents.
+    if(i.category==="starches") return false;
     return measureTypeOf(i)!=="assumed" || CHARACTER_SEASONINGS.has(id);
   }))];
   const proteins=real.filter(id=>(R.byId[id]||{}).category==="proteins" &&
@@ -2964,10 +2979,15 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
     const subj2 = (form==="whole_fish" && splitIds.length) ? splitIds[0] : subj;
     const bedFor2 = (form==="whole_fish"||form==="shellfish")
       ? rankBed(COLLECTORS_C.filter(id=>real.includes(id) && id!==subj2)).slice(0,1) : [];
-    // the bed is one vegetable (physical: a fish sits on one bed) — but any OTHER vegetables
-    // the cook picked steam alongside, around the fish, rather than being dropped.
-    const alongside=real.filter(id=>((R.byId[id]||{}).category)==="vegetables"
+    // the bed is one vegetable (physical: a fish sits on one bed) — a couple of OTHER vegetables
+    // can steam alongside, but a steamer is not a kitchen sink: cap the extras so we don't pile
+    // five vegetables around one fish. Explicit picks (deliberate additions) survive the cap.
+    const EXPL_S=(opts&&opts.explicit)||null;
+    const alongsideAll=real.filter(id=>((R.byId[id]||{}).category)==="vegetables"
       && id!==subj2 && !bedFor2.includes(id));
+    const explFirst=alongsideAll.filter(id=>EXPL_S&&EXPL_S.has&&EXPL_S.has(id));
+    const explRest =alongsideAll.filter(id=>!(EXPL_S&&EXPL_S.has&&EXPL_S.has(id)));
+    const alongside=explFirst.concat(explRest).slice(0, Math.max(explFirst.length, 1));
     // proteins that genuinely steam with fish (tofu, tau kee, egg) stay on the plate
     const steamPairsFn=id=>id==="tofu"||id==="tau_kee"||id==="egg";
     const pairedProt=real.filter(id=>((R.byId[id]||{}).category)==="proteins"

@@ -954,7 +954,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.34</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.36</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2813,7 +2813,8 @@ function potNameFor(ingIds, R, leadId, opts){
   return {name:(prot?prot.replace(/^./,c=>c.toUpperCase()):"Clear")+" soup", dirKey:"soup"};
 }
 function potCandidates(ingIds, R, dishes, AFF, opts){
-  const real=ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed");
+  // noodles and rice are a base, not a soup ingredient — keep them out of the pot
+  const real=ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed" && (R.byId[id]||{}).category!=="starches");
   // a lean dry-heat cut (steak, loin, breast) can go IN a pot but can never LEAD one
   const canLead=(id)=> !!BROTH_BASE[id] && !BROTH_BASE[id].noBroth;
   const proteins=real.filter(id=>(R.byId[id]||{}).category==="proteins" && canLead(id));
@@ -2901,11 +2902,22 @@ function potCandidates(ingIds, R, dishes, AFF, opts){
     const isSubVeg=id=>((R.byId[id]||{}).category)==="vegetables" && measureTypeOf(R.byId[id]||{})!=="assumed";
     const potVeg=allContents.filter(isSubVeg);
     const rankedVeg=R.rankPartners?R.rankPartners(potVeg):potVeg;
-    // the cap is a default; a vegetable the cook put in the basket is kept regardless.
-    // Since every ingredient here is hand-picked, that means all of them stay — the cap only
-    // ever trims vegetables the engine itself might have added (it adds none in this path).
-    const keepVeg=new Set(rankedVeg);   // keep every chosen vegetable
-    const potLeftOut=[];
+    // A soup carries a couple of substantial vegetables, not six. Cap to the top-ranked few;
+    // an explicit pick (a deliberate addition past the cap) is kept regardless. The rest are
+    // reported as left out so they can go in another dish.
+    const EXPL_P=(opts&&opts.explicit)||null;
+    // whichever vegetable gives the pot its name must survive the cap, or the name goes
+    // incoherent ("Lotus root soup" with no lotus root). Prioritise it, then explicit picks.
+    const NAMING_VEG=["lotus_root","watercress","winter_melon","daikon","radish","corn","old_cucumber","seaweed"];
+    // keep the ONE vegetable that will actually NAME the pot. potNameFor scans the raw ingIds
+    // in order, so match that (first naming-veg in the basket), not partner-rank — otherwise the
+    // title ("Watercress soup") and the kept vegetable can disagree.
+    const nameVeg=ingIds.filter(id=>NAMING_VEG.includes(id)).slice(0,1);
+    const explVeg=rankedVeg.filter(id=>EXPL_P&&EXPL_P.has&&EXPL_P.has(id) && !nameVeg.includes(id));
+    const priority=[...new Set(nameVeg.concat(explVeg))];
+    const capN=Math.max(priority.length, 2);          // median real-soup vegetable count is 2
+    const keepVeg=new Set(priority.concat(rankedVeg.filter(id=>!priority.includes(id))).slice(0, capN));
+    const potLeftOut=potVeg.filter(id=>!keepVeg.has(id)).map(id=>({id, why:"set aside \u2014 a soup keeps a couple of vegetables, not a pile"}));
     const contents=allContents.filter(id=>!isSubVeg(id) || keepVeg.has(id));
     const ch=brothCharacter(contents,R);
     const alts = ids.alternatives || [];
@@ -3445,6 +3457,9 @@ function wokCandidates(ingIds, R, dishes, AFF, opts){
   const real=[...new Set(ingIds.filter(id=>{
     const i=R.byId[id]||{};
     if(i.id==="water") return false;
+    // noodles and rice are a BASE, not a stir-fry ingredient — they belong to the noodle/rice
+    // composer, and shouldn't be tossed into the wok as loose contents.
+    if(i.category==="starches") return false;
     return measureTypeOf(i)!=="assumed" || CHARACTER_SEASONINGS.has(id);
   }))];
   const proteins=real.filter(id=>(R.byId[id]||{}).category==="proteins" &&
@@ -3983,10 +3998,15 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
     const subj2 = (form==="whole_fish" && splitIds.length) ? splitIds[0] : subj;
     const bedFor2 = (form==="whole_fish"||form==="shellfish")
       ? rankBed(COLLECTORS_C.filter(id=>real.includes(id) && id!==subj2)).slice(0,1) : [];
-    // the bed is one vegetable (physical: a fish sits on one bed) — but any OTHER vegetables
-    // the cook picked steam alongside, around the fish, rather than being dropped.
-    const alongside=real.filter(id=>((R.byId[id]||{}).category)==="vegetables"
+    // the bed is one vegetable (physical: a fish sits on one bed) — a couple of OTHER vegetables
+    // can steam alongside, but a steamer is not a kitchen sink: cap the extras so we don't pile
+    // five vegetables around one fish. Explicit picks (deliberate additions) survive the cap.
+    const EXPL_S=(opts&&opts.explicit)||null;
+    const alongsideAll=real.filter(id=>((R.byId[id]||{}).category)==="vegetables"
       && id!==subj2 && !bedFor2.includes(id));
+    const explFirst=alongsideAll.filter(id=>EXPL_S&&EXPL_S.has&&EXPL_S.has(id));
+    const explRest =alongsideAll.filter(id=>!(EXPL_S&&EXPL_S.has&&EXPL_S.has(id)));
+    const alongside=explFirst.concat(explRest).slice(0, Math.max(explFirst.length, 1));
     // proteins that genuinely steam with fish (tofu, tau kee, egg) stay on the plate
     const steamPairsFn=id=>id==="tofu"||id==="tau_kee"||id==="egg";
     const pairedProt=real.filter(id=>((R.byId[id]||{}).category)==="proteins"
@@ -7542,8 +7562,10 @@ function renderStirFry(){
   const nm=id=>((REF.byId[id]||{}).name)||id;
 
   /* A WOK IS NOT A KITCHEN SINK. Propose coherent dishes — one protein and a vegetable
-     or two, or just vegetables — rather than frying everything you own at once. */
-  const cands=wokCandidates(ids, REF, DISHES, AFF, {explicit:FLOW.active});
+     or two, or just vegetables — rather than frying everything you own at once. The cap is
+     the default; we do NOT mark the whole basket explicit (that would defeat the cap and
+     dump every vegetable into one dish). */
+  const cands=wokCandidates(ids, REF, DISHES, AFF);
   if(!FLOW.wokPick || !cands.some(c=>c.key===FLOW.wokPick)) FLOW.wokPick=cands[0]?cands[0].key:null;
   const chosen=cands.find(c=>c.key===FLOW.wokPick)||cands[0];
   if(!chosen){
@@ -7566,11 +7588,27 @@ function renderStirFry(){
   const dir = dirKey ? STIRFRY_DIRS.find(d=>d.key===dirKey) : null;
   const sf  = buildStirFry(chosen.contents, REF, DISHES, AFF, {direction:dir});
 
+  // Keep the dish TITLE and the sauce chip in agreement. The composer's label is built from a
+  // default sauce; if a different sauce dir is active (an explicit pick), relabel the title to
+  // that sauce so we never show "Ginger scallion chicken · Dark soy".
+  let dishTitle = chosen.label;
+  if(FLOW.wokDir && dir){
+    const DIR2SAUCE={garlic_oyster:"oyster_sauce", dark_soy:"dark_soy_sauce", fu_yu:"fermented_beancurd",
+      sambal:"sambal", dried_chilli:"dried_chilli", salted_fish:"salted_fish", black_bean:"fermented_black_bean",
+      mala:"sichuan_peppercorn", cereal:"cereal", plain_garlic:"garlic", ginger_scallion:"ginger_scallion"};
+    const sid=DIR2SAUCE[dir.key];
+    const sName = sid==="ginger_scallion" ? "Ginger scallion" : (WOK_SAUCE_NAME[sid]||"");
+    // find the protein/lead word from the existing label's tail
+    const tail=(chosen.label||"").replace(/^\S+\s+/,"");
+    if(sName) dishTitle = sName+" "+ (tail||chosen.label);
+    else dishTitle = chosen.label;
+  }
+
   // ---- headline + the Sauce button (radial, as in the pot) ----
   box.appendChild(dishArtSlot(wokDishArt(chosen.contents, dir, REF), "stirfry", chosen.contents[0], dir&&dir.key, chosen.contents, REF));
   const t=document.createElement("div"); t.className="op-title";
   const sauceLabel = dir ? dir.label.replace(/ \(.*\)/,"") : "Sauce";
-  t.innerHTML="<div class=\"op-head\"><span class=\"op-name\">"+chosen.label+"</span>"+
+  t.innerHTML="<div class=\"op-head\"><span class=\"op-name\">"+dishTitle+"</span>"+
     "<button class=\"op-season"+(dir?" on":"")+"\" id=\"wok-sauce-btn\">"+
       "<span class=\"os-dot\"></span>"+sauceLabel+"</button></div>"+
     "<div class=\"op-sub\">"+(dir?dir.note:chosen.note)+"</div>";
@@ -8885,7 +8923,14 @@ function renderRice(){
   // ---- headline + the Style button (radial) ----
   const t=document.createElement("div"); t.className="op-title";
   const styleLabel = dir ? dir.label.replace(/ \(.*\)/,"") : "Style";
-  t.innerHTML="<div class=\"op-head\"><span class=\"op-name\">"+chosen.label+"</span>"+
+  // if the cook explicitly picked a rice style, keep the TITLE in step with it (the style is
+  // baked into the rice name — "claypot rice", "congee" — so a mismatched chip would contradict).
+  let riceTitle = chosen.label;
+  if(FLOW.riceDir && dir){
+    const subjName=(REF.byId[chosen.subject]||{}).name || (chosen.subject||"");
+    riceTitle = subjName ? (subjName+" "+styleLabel.toLowerCase()) : chosen.label;
+  }
+  t.innerHTML="<div class=\"op-head\"><span class=\"op-name\">"+riceTitle+"</span>"+
     "<button class=\"op-season"+(dir?" on":"")+"\" id=\"rice-style-btn\">"+
       "<span class=\"os-dot\"></span>"+styleLabel+"</button></div>"+
     "<div class=\"op-sub\">"+(dir?dir.note:chosen.note)+"</div>";
