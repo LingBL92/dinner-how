@@ -954,7 +954,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.33</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.34</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -6117,13 +6117,14 @@ function toggleTaste(t){ FLOW.taste.has(t)?FLOW.taste.delete(t):FLOW.taste.add(t
 function toggleType(t){ FLOW.types.has(t)?FLOW.types.delete(t):FLOW.types.add(t); renderType(); recompute(); }
 function renderType(){
   const box=el("type-ports"); if(!box)return; box.innerHTML="";
-  // COMPOSE IS THE FRONT DOOR. The engine's job is to work out what to cook — the recipe
-  // list is reference material, not the product.
-  if(FLOW.mode==="compose" && !FLOW.compose) FLOW.compose="family_meal";
+  // "How do you want to cook?" is the front door. Default to it (compose mode, no specific
+  // pick) rather than forcing the family meal open.
+  if(!FLOW.mode) FLOW.mode="compose";
   const composing=(FLOW.mode==="compose");
 
   // whether a cooking METHOD (not the family meal) is the current selection
-  const methodOpen = composing && FLOW.compose && FLOW.compose!=="family_meal";
+  // section 1 (methods) is open by default: whenever we're composing and not on the family meal
+  const methodOpen = composing && FLOW.compose!=="family_meal";
   const mealOpen   = composing && FLOW.compose==="family_meal";
 
   // ===== SECTION 1: HOW DO YOU WANT TO COOK? (the cooking methods) =====
