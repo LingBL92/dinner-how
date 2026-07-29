@@ -1725,7 +1725,11 @@ function potSuggestions(baseIds, ctx, R, AFF, {have=[], limit=5}={}){
 const CLEAR_SOUP_VEG={
   lotus_root:"Lotus root soup", watercress:"Watercress soup", winter_melon:"Winter melon soup",
   daikon:"Radish soup", radish:"Radish soup", corn:"Corn soup", old_cucumber:"Old cucumber soup",
+<<<<<<< HEAD
   seaweed:"Seaweed soup"
+=======
+  seaweed:"Seaweed soup", napa_cabbage:"Cabbage soup"
+>>>>>>> ec502b2beceeba8acba782290d5fc99ae58e7812
 };
 function potIsABC(ids){ return ids.includes("potato") && ids.includes("carrot") && ids.includes("tomato"); }
 function potSpeciesWord(id, R){
@@ -1768,6 +1772,7 @@ function potNameFor(ingIds, R, leadId, opts){
   if(dir){
     // recognised broth base -> name for it
     const K=dir.key;
+<<<<<<< HEAD
     // BKT is specifically a pork-rib dish; the same dark-herbal broth on another protein is
     // a "herbal soup" (your library's beef_chuck_herbal), not bak kut teh.
     if(K==="bkt_teochew"||K==="bkt_hokkien"||K==="bkt_pack"){
@@ -1775,6 +1780,9 @@ function potNameFor(ingIds, R, leadId, opts){
       if(K==="bkt_hokkien" && !isPork) return {name:"Herbal "+(prot||"soup"), dirKey:"herbal"};
       return {name:"Bak kut teh", dirKey:K};
     }
+=======
+    if(K==="bkt_teochew"||K==="bkt_hokkien"||K==="bkt_pack") return {name:"Bak kut teh", dirKey:K};
+>>>>>>> ec502b2beceeba8acba782290d5fc99ae58e7812
     if(K==="hong_shao")  return {name:"Hong shao "+(prot||"pork"), dirKey:"hong_shao"};
     if(K==="clear_chinese") return {name:(prot?prot.replace(/^./,c=>c.toUpperCase()):"Clear")+" soup", dirKey:"clear_chinese"};
     if(K==="rempah"||K==="rendang") return {name:"Rendang "+(prot||"beef"), dirKey:"rendang"};
