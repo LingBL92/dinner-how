@@ -1832,7 +1832,11 @@ function potCandidates(ingIds, R, dishes, AFF, opts){
     const b=BROTH_BASE[id];
     return b && b.noBroth;
   });
-  const others  = real.filter(id=>!proteins.includes(id) && !dryHeat.includes(id));
+  // ANY other protein (fish slices, prawns) is its own dish, not an "addition" to this pot —
+    // it would otherwise leak into, say, a chicken watercress soup. Each pot leads with one
+    // protein; the others become their own candidates or are set aside.
+    const allProteins = real.filter(id=>((R.byId[id]||{}).category)==="proteins");
+    const others  = real.filter(id=>!allProteins.includes(id) && !dryHeat.includes(id));
 
   // group the proteins by species \u2014 a pork pot, a fish pot, a beef pot
   const speciesOf=(id)=>{
@@ -1948,6 +1952,10 @@ function potCandidates(ingIds, R, dishes, AFF, opts){
       suggest: AFF ? potSuggestions(ids, "soup", R, AFF, {have:real}) : {yours:[],buy:[]},
       dryHeat: dryHeat.map(id=>({id, name:(R.byId[id]||{}).name||id,
         why:(BROTH_BASE[id]||{}).note||"a dry-heat cut"})),
+      // other proteins that lead their OWN pot (or would, if they could) — reported so a fish
+      // the cook added doesn't just vanish from a chicken soup.
+      otherProteins: allProteins.filter(p=>p!==ids[0] && !ids.includes(p)).map(id=>({id,
+        name:(R.byId[id]||{}).name||id, why:"its own dish \u2014 a pot leads with one protein"})),
       // a pot is stronger when the things in it have precedent together
       strength: belongs.reduce((n,b)=>n+b.n,0)
     };
