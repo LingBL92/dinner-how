@@ -954,7 +954,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.49</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.50</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -3066,7 +3066,7 @@ function heatMismatch(ingIds, heat, R){
    So it needs its own candidate logic: which protein leads, what roasts alongside,
    and (crucially) which cuts would be ruined by dry heat.
    ============================================================ */
-function bakeCandidates(ingIds, R, dishes, AFF){
+function bakeCandidates(ingIds, R, dishes, AFF, opts){
   const real=ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed");
   const ok=real.filter(id=>suitsHeat(id,"dry",R));
   const proteins=ok.filter(id=>(R.byId[id]||{}).category==="proteins");
@@ -3106,7 +3106,10 @@ function bakeCandidates(ingIds, R, dishes, AFF){
     // pick survives, the rest are reported as left out. Slightly higher than the soup's 2.
     const isBakeVeg=id=>{ const c=(R.byId[id]||{}).category; return (c==="vegetables"||c==="starches") && measureTypeOf(R.byId[id]||{})!=="assumed"; };
     const allBakeVeg=[...new Set(belongs.map(x=>x.id).concat(uncertain.map(x=>x.id)))].filter(isBakeVeg);
-    const rankedBakeVeg=R.rankPartners?R.rankPartners(allBakeVeg):allBakeVeg;
+    const BENCH_B=(opts&&opts.benched)||null;
+    const rankedAll=R.rankPartners?R.rankPartners(allBakeVeg):allBakeVeg;
+    const benchedNow=rankedAll.filter(id=>BENCH_B&&BENCH_B.has&&BENCH_B.has(id));
+    const rankedBakeVeg=rankedAll.filter(id=>!benchedNow.includes(id));
     const EXPL_B=(AFF&&AFF.explicit)||null;   // (no explicit set in this path today; future-proof)
     const explBakeVeg=rankedBakeVeg.filter(id=>EXPL_B&&EXPL_B.has&&EXPL_B.has(id));
     // a roasting starch (potatoes, sweet potato) is the classic tray-bake companion — keep one
@@ -3115,7 +3118,7 @@ function bakeCandidates(ingIds, R, dishes, AFF){
     const priorityBake=[...new Set(explBakeVeg.concat(bakeStarch))];
     const bakeCapN=Math.max(priorityBake.length, 3);
     const keepBakeVeg=new Set(priorityBake.concat(rankedBakeVeg.filter(id=>!priorityBake.includes(id))).slice(0, bakeCapN));
-    const bakeLeftOut=rankedBakeVeg.filter(id=>!keepBakeVeg.has(id)).map(id=>({id, why:"set aside \u2014 a tray roasts a few vegetables evenly, not a pile"}));
+    const bakeLeftOut=benchedNow.concat(rankedBakeVeg.filter(id=>!keepBakeVeg.has(id))).map(id=>({id, why:"set aside \u2014 a tray roasts a few vegetables evenly, not a pile"}));
     const contents=[...new Set(ids.concat(belongs.map(x=>x.id)).concat(uncertain.map(x=>x.id)))]
       .filter(id=>!isBakeVeg(id) || keepBakeVeg.has(id));
     const named=bakeNameFor(contents, R);       // "Baked salmon", "Roast chicken", tray bakes
@@ -5049,7 +5052,7 @@ const PANTRY_ON=PANTRY_ITEMS.filter(id=>!PANTRY_OFF.has(id));
    the meat. */
 const MEAL_ROLES=[["base","Rice"],["veg","Vegetable"],["meat","Meat"],["fish","Fish"],["soup","Soup"],["dessert","Dessert"]];
 const MEAL_DEFAULT={base:1,veg:1,meat:1,fish:0,soup:0,dessert:0};
-const FLOW={schedOpen:null, comps:[],active:new Set(),pantry:new Set(PANTRY_ON),appl:new Set(["stovetop","oven"]),taste:new Set(),types:new Set(),compose:null,mode:"compose",time:{total:null,active:null,cook:null},potPath:null,potMode:"soup",wokDir:null,wokPick:null,steamDir:null,steamPick:null,riceDir:null,ricePick:null,noodleDir:null,noodlePick:null,mealShape:{...MEAL_DEFAULT},mealPick:{},mealCursor:{},results:[]};
+const FLOW={schedOpen:null, comps:[],active:new Set(),pantry:new Set(PANTRY_ON),appl:new Set(["stovetop","oven"]),taste:new Set(),types:new Set(),compose:null,mode:"compose",time:{total:null,active:null,cook:null},potPath:null,potMode:"soup",wokDir:null,wokPick:null,steamDir:null,steamPick:null,riceDir:null,ricePick:null,noodleDir:null,noodlePick:null,mealShape:{...MEAL_DEFAULT},mealPick:{},mealCursor:{},benched:new Set(),results:[]};
 
 /* ---- SESSION PERSISTENCE (F2) ----------------------------------------------
    Save the user's selections and basket so a refresh doesn't wipe the plan. We
@@ -5274,6 +5277,7 @@ function spawn(q){
   let comp=FLOW.comps.find(c=>c.key===groupFor(ing).key);
   if(!comp){ const g=groupFor(ing); comp={key:g.key,title:g.title,leaves:g.leaves,dx:0,dy:0}; FLOW.comps.push(comp); }
   FLOW.active.add(ing.id);
+  if(FLOW.benched) FLOW.benched.clear();   // a fresh pick re-opens the bench — recompute cleanly
   renderComps(); recompute();
   return ing.id;
 }
@@ -5365,6 +5369,7 @@ function openSuggestCard(id){
       if(!comp){ const g=groupFor(ing); comp={key:g.key,title:g.title,leaves:g.leaves,dx:0,dy:0}; FLOW.comps.push(comp); }
     }
     FLOW.active.add(id);
+    if(FLOW.benched) FLOW.benched.clear();
     if(!FLOW.suggestedIds) FLOW.suggestedIds=new Set();
     FLOW.suggestedIds.add(id);
     TRACK.log("ingredient_added", {id:id, basket_size:FLOW.active.size, source:"suggestion"});
@@ -5857,6 +5862,7 @@ function openMealAddCard(id){
   // make a new dish: drop it into the ingredient canvas and open the composer for it
   card.querySelector("[data-mnew]").onclick=()=>{
     FLOW.active.add(id);
+    if(FLOW.benched) FLOW.benched.clear();
     if(!FLOW.suggestedIds) FLOW.suggestedIds=new Set();
     FLOW.suggestedIds.add(id);
     if(typeof groupFor==="function"){
@@ -6341,6 +6347,7 @@ function renderType(){
 function clearGrocery(){ const g=el("grocery"); if(g) g.innerHTML=""; }
 function toggleCompose(id){
   FLOW.mode="compose";
+  if(FLOW.benched) FLOW.benched.clear();   // switching methods re-opens the bench for the new dish
   if(FLOW.compose===id){ FLOW.compose=null; FLOW.mealPick=null; }   // deselect the template, stay in compose
   else { FLOW.compose=id; FLOW.mealPick=null; FLOW.potPath=null; FLOW.types.clear();
     TRACK.log("dish_composed", {method:id, basket_size:FLOW.active.size}); }
@@ -8057,6 +8064,19 @@ function openIngredientCard(id){
 function removeIngredientFromDish(id, quiet){
   FLOW.active.delete(id);
   if(FLOW.suggestedIds) FLOW.suggestedIds.delete(id);
+  if(FLOW.benched) FLOW.benched.delete(id);
+  // Removing a shown vegetable should shrink the dish, not let the cap promote a set-aside one to
+  // refill the slot (which looks like removing keeps swapping in new vegetables). When a shown
+  // vegetable is removed, push the vegetable that WOULD be promoted onto a persistent bench the
+  // composer respects — so it stays set aside and the dish simply shows one fewer.
+  const removedIng=REF.byId[id];
+  const isVeg=removedIng && (removedIng.category==="vegetables"||removedIng.category==="starches");
+  const wasShown=Array.isArray(window.__lastContents) && window.__lastContents.indexOf(id)>=0;
+  if(isVeg && wasShown && Array.isArray(window.__lastBenched)){
+    // freeze the whole current bench: removing a shown vegetable should make the dish smaller,
+    // not promote a set-aside one into the freed slot. Everything already set aside stays put.
+    window.__lastBenched.forEach(b=>{ if(FLOW.active.has(b)) FLOW.benched.add(b); });
+  }
   // drop the component group too if nothing in it is still active
   const ing=REF.byId[id];
   if(ing){
@@ -9650,9 +9670,15 @@ function renderOnePot(){
   /* You own pork AND fish. That doesn't mean you want a pork-and-fish pot — it means
      the app should be choosing WHICH pot to make. One pot per protein base. */
   const cands = mode.key==="baked"
-    ? bakeCandidates(okIds, REF, DISHES, AFF)
+    ? bakeCandidates(okIds, REF, DISHES, AFF, {benched:FLOW.benched})
     : potCandidates(okIds, REF, DISHES, AFF, {potPath:FLOW.potPath});
   const chosen = cands.find(c=>c.species===FLOW.potBase) || cands[0];
+  // remember what's shown and what's benched, so removing a shown vegetable keeps the bench
+  // stable instead of promoting from it.
+  if(chosen){
+    window.__lastContents=(chosen.contents||[]).slice();
+    window.__lastBenched=((chosen.vegLeftOut||chosen.leftOut)||[]).map(x=>x.id||x);
+  }
   if(cands.length>1 && (!FLOW.potBase || !cands.some(c=>c.species===FLOW.potBase))) FLOW.potBase=cands[0].species;
 
   // SWAP THE CUT: whole chicken → thigh, pork ribs → belly, and so on.

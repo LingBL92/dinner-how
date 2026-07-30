@@ -2044,7 +2044,7 @@ function heatMismatch(ingIds, heat, R){
    So it needs its own candidate logic: which protein leads, what roasts alongside,
    and (crucially) which cuts would be ruined by dry heat.
    ============================================================ */
-function bakeCandidates(ingIds, R, dishes, AFF){
+function bakeCandidates(ingIds, R, dishes, AFF, opts){
   const real=ingIds.filter(id=>measureTypeOf(R.byId[id])!=="assumed");
   const ok=real.filter(id=>suitsHeat(id,"dry",R));
   const proteins=ok.filter(id=>(R.byId[id]||{}).category==="proteins");
@@ -2084,7 +2084,10 @@ function bakeCandidates(ingIds, R, dishes, AFF){
     // pick survives, the rest are reported as left out. Slightly higher than the soup's 2.
     const isBakeVeg=id=>{ const c=(R.byId[id]||{}).category; return (c==="vegetables"||c==="starches") && measureTypeOf(R.byId[id]||{})!=="assumed"; };
     const allBakeVeg=[...new Set(belongs.map(x=>x.id).concat(uncertain.map(x=>x.id)))].filter(isBakeVeg);
-    const rankedBakeVeg=R.rankPartners?R.rankPartners(allBakeVeg):allBakeVeg;
+    const BENCH_B=(opts&&opts.benched)||null;
+    const rankedAll=R.rankPartners?R.rankPartners(allBakeVeg):allBakeVeg;
+    const benchedNow=rankedAll.filter(id=>BENCH_B&&BENCH_B.has&&BENCH_B.has(id));
+    const rankedBakeVeg=rankedAll.filter(id=>!benchedNow.includes(id));
     const EXPL_B=(AFF&&AFF.explicit)||null;   // (no explicit set in this path today; future-proof)
     const explBakeVeg=rankedBakeVeg.filter(id=>EXPL_B&&EXPL_B.has&&EXPL_B.has(id));
     // a roasting starch (potatoes, sweet potato) is the classic tray-bake companion — keep one
@@ -2093,7 +2096,7 @@ function bakeCandidates(ingIds, R, dishes, AFF){
     const priorityBake=[...new Set(explBakeVeg.concat(bakeStarch))];
     const bakeCapN=Math.max(priorityBake.length, 3);
     const keepBakeVeg=new Set(priorityBake.concat(rankedBakeVeg.filter(id=>!priorityBake.includes(id))).slice(0, bakeCapN));
-    const bakeLeftOut=rankedBakeVeg.filter(id=>!keepBakeVeg.has(id)).map(id=>({id, why:"set aside \u2014 a tray roasts a few vegetables evenly, not a pile"}));
+    const bakeLeftOut=benchedNow.concat(rankedBakeVeg.filter(id=>!keepBakeVeg.has(id))).map(id=>({id, why:"set aside \u2014 a tray roasts a few vegetables evenly, not a pile"}));
     const contents=[...new Set(ids.concat(belongs.map(x=>x.id)).concat(uncertain.map(x=>x.id)))]
       .filter(id=>!isBakeVeg(id) || keepBakeVeg.has(id));
     const named=bakeNameFor(contents, R);       // "Baked salmon", "Roast chicken", tray bakes
