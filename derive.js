@@ -1911,7 +1911,10 @@ function potCandidates(ingIds, R, dishes, AFF, opts){
     // and aromatics, and report the rest so they can go in another dish.
     const allContents=[...new Set(ids.concat(belongs.map(x=>x.id)).concat(uncertain.map(x=>x.id)))];
     const isSubVeg=id=>((R.byId[id]||{}).category)==="vegetables" && measureTypeOf(R.byId[id]||{})!=="assumed";
-    const potVeg=allContents.filter(isSubVeg);
+    const BENCH_P=(opts&&opts.benched)||null;
+    const potVegAll=allContents.filter(isSubVeg);
+    const benchedP=potVegAll.filter(id=>BENCH_P&&BENCH_P.has&&BENCH_P.has(id));
+    const potVeg=potVegAll.filter(id=>!benchedP.includes(id));
     const rankedVeg=R.rankPartners?R.rankPartners(potVeg):potVeg;
     // A soup carries a couple of substantial vegetables, not six. Cap to the top-ranked few;
     // an explicit pick (a deliberate addition past the cap) is kept regardless. The rest are
@@ -1928,7 +1931,7 @@ function potCandidates(ingIds, R, dishes, AFF, opts){
     const priority=[...new Set(nameVeg.concat(explVeg))];
     const capN=Math.max(priority.length, 2);          // median real-soup vegetable count is 2
     const keepVeg=new Set(priority.concat(rankedVeg.filter(id=>!priority.includes(id))).slice(0, capN));
-    const potLeftOut=potVeg.filter(id=>!keepVeg.has(id)).map(id=>({id, why:"set aside \u2014 a soup keeps a couple of vegetables, not a pile"}));
+    const potLeftOut=benchedP.map(id=>({id, why:"set aside \u2014 you moved it out of this pot"})).concat(potVeg.filter(id=>!keepVeg.has(id)).map(id=>({id, why:"set aside \u2014 a soup keeps a couple of vegetables, not a pile"})));
     const contents=allContents.filter(id=>!isSubVeg(id) || keepVeg.has(id));
     const ch=brothCharacter(contents,R);
     const alts = ids.alternatives || [];
@@ -2555,8 +2558,11 @@ function wokCandidates(ingIds, R, dishes, AFF, opts){
   const proteins=real.filter(id=>(R.byId[id]||{}).category==="proteins" &&
     !["dried_shrimp","salted_fish"].includes(id) && !isWholeFish(id,R));
   const wholeFish=real.filter(id=>isWholeFish(id,R));
-  const veg=real.filter(id=>(R.byId[id]||{}).category==="vegetables");
-  const rest=real.filter(id=>!proteins.includes(id) && !veg.includes(id) && !isWholeFish(id,R));
+  const BENCH=(opts&&opts.benched)||null;
+  const allVeg=real.filter(id=>(R.byId[id]||{}).category==="vegetables");
+  const benchedVeg=allVeg.filter(id=>BENCH&&BENCH.has&&BENCH.has(id));
+  const veg=allVeg.filter(id=>!benchedVeg.includes(id));
+  const rest=real.filter(id=>!proteins.includes(id) && !veg.includes(id) && !benchedVeg.includes(id) && !isWholeFish(id,R));
 
   const speciesOf=(id)=>{
     const anc=R.anc[id]||new Set();
@@ -2626,7 +2632,7 @@ function wokCandidates(ingIds, R, dishes, AFF, opts){
           : pick.length>3 ? "with "+names.join(", ")+" — that\u2019s a lot for one wok; fry in two batches so it sears instead of steams"
           : basis==="precedent" ? "with "+names.join(" and ")
           : "with "+names.join(" and ")+" — our call, no recipe pairs these yet",
-      leftOut: veg.filter(v=>!pick.includes(v)),
+      leftOut: benchedVeg.concat(veg.filter(v=>!pick.includes(v))),
       alternatives: ids.slice(1)
     });
   });
@@ -2647,7 +2653,7 @@ function wokCandidates(ingIds, R, dishes, AFF, opts){
       contents:pick.concat(rest),
       note: pick.length>1 ? pick.map(v=>(R.byId[v]||{}).name.toLowerCase()).join(" and ")
                           : "just the greens",
-      leftOut: veg.filter(v=>!pick.includes(v)),
+      leftOut: benchedVeg.concat(veg.filter(v=>!pick.includes(v))),
       alternatives: []
     });
   }
@@ -3087,13 +3093,15 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
     // as the card's subject, regardless of selection order
     const subj2 = (form==="whole_fish" && splitIds.length) ? splitIds[0] : subj;
     const bedFor2 = (form==="whole_fish"||form==="shellfish")
-      ? rankBed(COLLECTORS_C.filter(id=>real.includes(id) && id!==subj2)).slice(0,1) : [];
+      ? rankBed(COLLECTORS_C.filter(id=>real.includes(id) && id!==subj2 && !((opts&&opts.benched&&opts.benched.has&&opts.benched.has(id))))).slice(0,1) : [];
     // the bed is one vegetable (physical: a fish sits on one bed) — a couple of OTHER vegetables
     // can steam alongside, but a steamer is not a kitchen sink: cap the extras so we don't pile
     // five vegetables around one fish. Explicit picks (deliberate additions) survive the cap.
     const EXPL_S=(opts&&opts.explicit)||null;
+    const BENCH_S=(opts&&opts.benched)||null;
+    const benchedS=real.filter(id=>((R.byId[id]||{}).category)==="vegetables" && BENCH_S&&BENCH_S.has&&BENCH_S.has(id));
     const alongsideAll=real.filter(id=>((R.byId[id]||{}).category)==="vegetables"
-      && id!==subj2 && !bedFor2.includes(id));
+      && id!==subj2 && !bedFor2.includes(id) && !benchedS.includes(id));
     const explFirst=alongsideAll.filter(id=>EXPL_S&&EXPL_S.has&&EXPL_S.has(id));
     const explRest =alongsideAll.filter(id=>!(EXPL_S&&EXPL_S.has&&EXPL_S.has(id)));
     const alongside=explFirst.concat(explRest).slice(0, Math.max(explFirst.length, 1));
@@ -3102,13 +3110,15 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
     const pairedProt=real.filter(id=>((R.byId[id]||{}).category)==="proteins"
       && id!==subj2 && steamPairsFn(id));
     const inDish=new Set([subj2].concat(bedFor2).concat(alongside).concat(pairedProt).concat(topping));
-    // vegetables all steam together now, so they're never "left out". But a second protein
-    // that doesn't belong on this fish's plate (another whole fish, a processed fish cake) is
-    // still set aside and reported.
+    // a second protein that doesn't belong on this fish's plate (another whole fish, a fish cake)
+    // is set aside; so are vegetables the cook benched or that the plate can't hold.
+    const vegAside=real.filter(id=>((R.byId[id]||{}).category)==="vegetables" && !inDish.has(id))
+      .map(id=>({id, why:"set aside \u2014 a steamer plate holds a bed and a vegetable or two, not a pile"}));
     const otherDrops=ids.filter(x=>!inDish.has(x)
       && ((R.byId[x]||{}).category)!=="vegetables"
       && !steamPairsFn(x))
-      .map(id=>({id, why:"set aside \u2014 steam it as its own dish, one plate per subject"}));
+      .map(id=>({id, why:"set aside \u2014 steam it as its own dish, one plate per subject"}))
+      .concat(vegAside);
     out.push({key:form, label:LABELS[form]+nm(subj2), subject:subj2, form,
       contents:[...new Set([subj2].concat(bedFor2).concat(alongside).concat(pairedProt).concat(topping))],
       note: alongside.length ? NOTE[form]+" \u2014 the other vegetables steam around it"
@@ -3362,8 +3372,11 @@ function pickDishVeg(ids, R, opts){
   const maxGreens=opts.greens==null?1:opts.greens;
   const maxOthers=opts.others==null?2:opts.others;
   const prefer=new Set(opts.prefer||[]);      // the vegetables THIS sauce actually wants
-  const veg=ids.filter(id=>((R.byId[id]||{}).category)==="vegetables" &&
+  const BENCH=opts.benched||null;
+  const allVegP=ids.filter(id=>((R.byId[id]||{}).category)==="vegetables" &&
                             measureTypeOf(R.byId[id]||{})!=="assumed");
+  const benchedP=allVegP.filter(id=>BENCH&&BENCH.has&&BENCH.has(id));
+  const veg=allVegP.filter(id=>!benchedP.includes(id));
   const ranked=R.rankPartners?R.rankPartners(veg):veg;
   // If the dish states which vegetables belong in it, that list is a BOUNDARY, not a
   // starting point. Topping a bowl up to a quota with whatever else is in the fridge is
@@ -3403,7 +3416,8 @@ function pickDishVeg(ids, R, opts){
   if(prefer.size) veg.filter(id=>!pool.includes(id)).forEach(id=>leftOut.push({id,
     why: usedOwnList ? "not something this dish is made with"
                      : "one vegetable is enough for this bowl"}));
-  return {used:ids.filter(id=>!veg.includes(id) || used.has(id)), leftOut};
+  benchedP.forEach(id=>leftOut.push({id, why:"set aside \u2014 you moved it out of this bowl"}));
+  return {used:ids.filter(id=>(!veg.includes(id) && !benchedP.includes(id)) || used.has(id)), leftOut};
 }
 
 
@@ -3584,7 +3598,7 @@ function riceCandidates(ingIds, R, dishes, AFF, opts){
     // only limits vegetables the engine would auto-add (it doesn't auto-add any here).
     // cap to 1 green + 1 other by default so the bowl stays tight; an explicit set passed
     // in (from a deliberate basket add) can still override the cap.
-    const vp=pickDishVeg(base, R, {greens:1, others:1, explicit:(opts&&opts.explicit)||null});
+    const vp=pickDishVeg(base, R, {greens:1, others:1, explicit:(opts&&opts.explicit)||null, benched:(opts&&opts.benched)||null});
     // The dish's OWN subject is the main (claypot=chicken, curry=chicken, braise=pork).
     // lap cheong/egg/char siu/dried shrimp are allowed to ride along; every other protein
     // belongs to a different dish and is dropped.
@@ -3870,7 +3884,7 @@ function noodleCandidates(ingIds, R, dishes, AFF, opts){
       : fit==="works" ? baseName.replace(/ \(.*\)/,"")+" is a common swap for this"
       : "usually made with "+((dir.canonical||[]).map(n=>(R.byId[n]||{}).name||n).join(" or ").replace(/ \(.*?\)/g,""))+" \u2014 this is your own take";
     // a bowl takes one green and a couple of others — chosen for THIS sauce
-    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[], explicit:(opts&&opts.explicit)||null});
+    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[], explicit:(opts&&opts.explicit)||null, benched:(opts&&opts.benched)||null});
     // one main protein per bowl. A soup can carry a second (sliced meat + a fishball);
     // a fried noodle should not read as three meats piled on.
     const pj=pickLeadProtein(mineAll, R);
@@ -3896,7 +3910,7 @@ function noodleCandidates(ingIds, R, dishes, AFF, opts){
   // always leave a plain fallback so a lone packet of noodles still cooks
   if(!out.length){
     const fallback=NOODLE_DIRS.find(d=>d.key==="clear_soup");
-    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:(fallback&&fallback.veg)||[], explicit:(opts&&opts.explicit)||null});
+    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:(fallback&&fallback.veg)||[], explicit:(opts&&opts.explicit)||null, benched:(opts&&opts.benched)||null});
     const mine=vpick.used;
     out.push({key:"noodle_clear_soup", label:"Noodles in broth", mode:"soup",
       dirKey:"clear_soup", direction:fallback, subject:base,

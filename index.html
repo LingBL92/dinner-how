@@ -446,6 +446,8 @@ button.ing-tag:hover{border-color:var(--cool)}
 .ing-tag{font-family:var(--font-mono);font-size:10.5px;padding:3px 9px;border-radius:999px;
   background:rgba(50,117,100,.10);color:var(--cool);border:1px solid rgba(50,117,100,.30)}
 .po-c.po-click{cursor:pointer;border:0;font-family:inherit}
+.po-c.po-back{background:rgba(168,114,24,.13);color:var(--gold);border:1px solid rgba(168,114,24,.40);font-weight:500}
+.po-c.po-back:hover{background:rgba(168,114,24,.20)}
 .po-c.on{background:rgba(50,117,100,.14);color:var(--cool)}
 .po-exp{flex-basis:100%;font-size:11.5px;color:var(--ink);line-height:1.45;margin-top:3px;display:none}
 /* numbered section headers + the mobile step timeline */
@@ -954,7 +956,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.50</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.51</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2933,7 +2935,10 @@ function potCandidates(ingIds, R, dishes, AFF, opts){
     // and aromatics, and report the rest so they can go in another dish.
     const allContents=[...new Set(ids.concat(belongs.map(x=>x.id)).concat(uncertain.map(x=>x.id)))];
     const isSubVeg=id=>((R.byId[id]||{}).category)==="vegetables" && measureTypeOf(R.byId[id]||{})!=="assumed";
-    const potVeg=allContents.filter(isSubVeg);
+    const BENCH_P=(opts&&opts.benched)||null;
+    const potVegAll=allContents.filter(isSubVeg);
+    const benchedP=potVegAll.filter(id=>BENCH_P&&BENCH_P.has&&BENCH_P.has(id));   // set aside by the cook
+    const potVeg=potVegAll.filter(id=>!benchedP.includes(id));                    // eligible to show
     const rankedVeg=R.rankPartners?R.rankPartners(potVeg):potVeg;
     // A soup carries a couple of substantial vegetables, not six. Cap to the top-ranked few;
     // an explicit pick (a deliberate addition past the cap) is kept regardless. The rest are
@@ -2950,7 +2955,8 @@ function potCandidates(ingIds, R, dishes, AFF, opts){
     const priority=[...new Set(nameVeg.concat(explVeg))];
     const capN=Math.max(priority.length, 2);          // median real-soup vegetable count is 2
     const keepVeg=new Set(priority.concat(rankedVeg.filter(id=>!priority.includes(id))).slice(0, capN));
-    const potLeftOut=potVeg.filter(id=>!keepVeg.has(id)).map(id=>({id, why:"set aside \u2014 a soup keeps a couple of vegetables, not a pile"}));
+    const potLeftOut=benchedP.map(id=>({id, why:"set aside \u2014 you moved it out of this pot"}))
+      .concat(potVeg.filter(id=>!keepVeg.has(id)).map(id=>({id, why:"set aside \u2014 a soup keeps a couple of vegetables, not a pile"})));
     const contents=allContents.filter(id=>!isSubVeg(id) || keepVeg.has(id));
     const ch=brothCharacter(contents,R);
     const alts = ids.alternatives || [];
@@ -3574,8 +3580,11 @@ function wokCandidates(ingIds, R, dishes, AFF, opts){
   const proteins=real.filter(id=>(R.byId[id]||{}).category==="proteins" &&
     !["dried_shrimp","salted_fish"].includes(id) && !isWholeFish(id,R));
   const wholeFish=real.filter(id=>isWholeFish(id,R));
-  const veg=real.filter(id=>(R.byId[id]||{}).category==="vegetables");
-  const rest=real.filter(id=>!proteins.includes(id) && !veg.includes(id) && !isWholeFish(id,R));
+  const BENCH=(opts&&opts.benched)||null;
+  const allVeg=real.filter(id=>(R.byId[id]||{}).category==="vegetables");
+  const benchedVeg=allVeg.filter(id=>BENCH&&BENCH.has&&BENCH.has(id));   // set aside by the cook
+  const veg=allVeg.filter(id=>!benchedVeg.includes(id));                 // eligible to be shown
+  const rest=real.filter(id=>!proteins.includes(id) && !veg.includes(id) && !benchedVeg.includes(id) && !isWholeFish(id,R));
 
   const speciesOf=(id)=>{
     const anc=R.anc[id]||new Set();
@@ -3645,7 +3654,7 @@ function wokCandidates(ingIds, R, dishes, AFF, opts){
           : pick.length>3 ? "with "+names.join(", ")+" — that\u2019s a lot for one wok; fry in two batches so it sears instead of steams"
           : basis==="precedent" ? "with "+names.join(" and ")
           : "with "+names.join(" and ")+" — our call, no recipe pairs these yet",
-      leftOut: veg.filter(v=>!pick.includes(v)),
+      leftOut: benchedVeg.concat(veg.filter(v=>!pick.includes(v))),
       alternatives: ids.slice(1)
     });
   });
@@ -3666,7 +3675,7 @@ function wokCandidates(ingIds, R, dishes, AFF, opts){
       contents:pick.concat(rest),
       note: pick.length>1 ? pick.map(v=>(R.byId[v]||{}).name.toLowerCase()).join(" and ")
                           : "just the greens",
-      leftOut: veg.filter(v=>!pick.includes(v)),
+      leftOut: benchedVeg.concat(veg.filter(v=>!pick.includes(v))),
       alternatives: []
     });
   }
@@ -4106,13 +4115,15 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
     // as the card's subject, regardless of selection order
     const subj2 = (form==="whole_fish" && splitIds.length) ? splitIds[0] : subj;
     const bedFor2 = (form==="whole_fish"||form==="shellfish")
-      ? rankBed(COLLECTORS_C.filter(id=>real.includes(id) && id!==subj2)).slice(0,1) : [];
+      ? rankBed(COLLECTORS_C.filter(id=>real.includes(id) && id!==subj2 && !((opts&&opts.benched&&opts.benched.has&&opts.benched.has(id))))).slice(0,1) : [];
     // the bed is one vegetable (physical: a fish sits on one bed) — a couple of OTHER vegetables
     // can steam alongside, but a steamer is not a kitchen sink: cap the extras so we don't pile
     // five vegetables around one fish. Explicit picks (deliberate additions) survive the cap.
     const EXPL_S=(opts&&opts.explicit)||null;
+    const BENCH_S=(opts&&opts.benched)||null;
+    const benchedS=real.filter(id=>((R.byId[id]||{}).category)==="vegetables" && BENCH_S&&BENCH_S.has&&BENCH_S.has(id));
     const alongsideAll=real.filter(id=>((R.byId[id]||{}).category)==="vegetables"
-      && id!==subj2 && !bedFor2.includes(id));
+      && id!==subj2 && !bedFor2.includes(id) && !benchedS.includes(id));
     const explFirst=alongsideAll.filter(id=>EXPL_S&&EXPL_S.has&&EXPL_S.has(id));
     const explRest =alongsideAll.filter(id=>!(EXPL_S&&EXPL_S.has&&EXPL_S.has(id)));
     const alongside=explFirst.concat(explRest).slice(0, Math.max(explFirst.length, 1));
@@ -4121,13 +4132,15 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
     const pairedProt=real.filter(id=>((R.byId[id]||{}).category)==="proteins"
       && id!==subj2 && steamPairsFn(id));
     const inDish=new Set([subj2].concat(bedFor2).concat(alongside).concat(pairedProt).concat(topping));
-    // vegetables all steam together now, so they're never "left out". But a second protein
-    // that doesn't belong on this fish's plate (another whole fish, a processed fish cake) is
-    // still set aside and reported.
+    // a second protein that doesn't belong on this fish's plate (another whole fish, a fish cake)
+    // is set aside; so are vegetables the cook benched or that the plate can't hold.
+    const vegAside=real.filter(id=>((R.byId[id]||{}).category)==="vegetables" && !inDish.has(id))
+      .map(id=>({id, why:"set aside \u2014 a steamer plate holds a bed and a vegetable or two, not a pile"}));
     const otherDrops=ids.filter(x=>!inDish.has(x)
       && ((R.byId[x]||{}).category)!=="vegetables"
       && !steamPairsFn(x))
-      .map(id=>({id, why:"set aside \u2014 steam it as its own dish, one plate per subject"}));
+      .map(id=>({id, why:"set aside \u2014 steam it as its own dish, one plate per subject"}))
+      .concat(vegAside);
     out.push({key:form, label:LABELS[form]+nm(subj2), subject:subj2, form,
       contents:[...new Set([subj2].concat(bedFor2).concat(alongside).concat(pairedProt).concat(topping))],
       note: alongside.length ? NOTE[form]+" \u2014 the other vegetables steam around it"
@@ -4381,8 +4394,11 @@ function pickDishVeg(ids, R, opts){
   const maxGreens=opts.greens==null?1:opts.greens;
   const maxOthers=opts.others==null?2:opts.others;
   const prefer=new Set(opts.prefer||[]);      // the vegetables THIS sauce actually wants
-  const veg=ids.filter(id=>((R.byId[id]||{}).category)==="vegetables" &&
+  const BENCH=opts.benched||null;
+  const allVegP=ids.filter(id=>((R.byId[id]||{}).category)==="vegetables" &&
                             measureTypeOf(R.byId[id]||{})!=="assumed");
+  const benchedP=allVegP.filter(id=>BENCH&&BENCH.has&&BENCH.has(id));   // set aside by the cook
+  const veg=allVegP.filter(id=>!benchedP.includes(id));                 // eligible to be shown
   const ranked=R.rankPartners?R.rankPartners(veg):veg;
   // If the dish states which vegetables belong in it, that list is a BOUNDARY, not a
   // starting point. Topping a bowl up to a quota with whatever else is in the fridge is
@@ -4422,7 +4438,8 @@ function pickDishVeg(ids, R, opts){
   if(prefer.size) veg.filter(id=>!pool.includes(id)).forEach(id=>leftOut.push({id,
     why: usedOwnList ? "not something this dish is made with"
                      : "one vegetable is enough for this bowl"}));
-  return {used:ids.filter(id=>!veg.includes(id) || used.has(id)), leftOut};
+  benchedP.forEach(id=>leftOut.push({id, why:"set aside \u2014 you moved it out of this bowl"}));
+  return {used:ids.filter(id=>(!veg.includes(id) && !benchedP.includes(id)) || used.has(id)), leftOut};
 }
 
 
@@ -4600,7 +4617,7 @@ function riceCandidates(ingIds, R, dishes, AFF, opts){
     // only limits vegetables the engine would auto-add (it doesn't auto-add any here).
     // cap to 1 green + 1 other by default so the bowl stays tight; an explicit set passed
     // in (from a deliberate basket add) can still override the cap.
-    const vp=pickDishVeg(base, R, {greens:1, others:1, explicit:(opts&&opts.explicit)||null});
+    const vp=pickDishVeg(base, R, {greens:1, others:1, explicit:(opts&&opts.explicit)||null, benched:(opts&&opts.benched)||null});
     // The dish's OWN subject is the main (claypot=chicken, curry=chicken, braise=pork).
     // lap cheong/egg/char siu/dried shrimp are allowed to ride along; every other protein
     // belongs to a different dish and is dropped.
@@ -4886,7 +4903,7 @@ function noodleCandidates(ingIds, R, dishes, AFF, opts){
       : fit==="works" ? baseName.replace(/ \(.*\)/,"")+" is a common swap for this"
       : "usually made with "+((dir.canonical||[]).map(n=>(R.byId[n]||{}).name||n).join(" or ").replace(/ \(.*?\)/g,""))+" \u2014 this is your own take";
     // a bowl takes one green and a couple of others — chosen for THIS sauce
-    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[], explicit:(opts&&opts.explicit)||null});
+    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[], explicit:(opts&&opts.explicit)||null, benched:(opts&&opts.benched)||null});
     // one main protein per bowl. A soup can carry a second (sliced meat + a fishball);
     // a fried noodle should not read as three meats piled on.
     const pj=pickLeadProtein(mineAll, R);
@@ -4912,7 +4929,7 @@ function noodleCandidates(ingIds, R, dishes, AFF, opts){
   // always leave a plain fallback so a lone packet of noodles still cooks
   if(!out.length){
     const fallback=NOODLE_DIRS.find(d=>d.key==="clear_soup");
-    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:(fallback&&fallback.veg)||[], explicit:(opts&&opts.explicit)||null});
+    const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:(fallback&&fallback.veg)||[], explicit:(opts&&opts.explicit)||null, benched:(opts&&opts.benched)||null});
     const mine=vpick.used;
     out.push({key:"noodle_clear_soup", label:"Noodles in broth", mode:"soup",
       dirKey:"clear_soup", direction:fallback, subject:base,
@@ -7680,9 +7697,10 @@ function renderStirFry(){
      or two, or just vegetables — rather than frying everything you own at once. The cap is
      the default; we do NOT mark the whole basket explicit (that would defeat the cap and
      dump every vegetable into one dish). */
-  const cands=wokCandidates(ids, REF, DISHES, AFF);
+  const cands=wokCandidates(ids, REF, DISHES, AFF, {explicit:FLOW.suggestedIds, benched:FLOW.benched});
   if(!FLOW.wokPick || !cands.some(c=>c.key===FLOW.wokPick)) FLOW.wokPick=cands[0]?cands[0].key:null;
   const chosen=cands.find(c=>c.key===FLOW.wokPick)||cands[0];
+  stashDishState(chosen);
   if(!chosen){
     const wf=ids.filter(id=>((REF.byId[id]||{}).provides||[]).includes("fish_family"));
     box.innerHTML = wf.length
@@ -7846,16 +7864,19 @@ function renderStirFry(){
     o.appendChild(lab);
     const exp=document.createElement("div"); exp.className="po-exp";
     chosen.leftOut.forEach(id=>{
-      const c=document.createElement("button"); c.className="po-c po-click"; c.textContent=nm(id);
+      const back=isBenchedVeg(id);
+      const c=document.createElement("button"); c.className="po-c po-click"+(back?" po-back":""); c.textContent=nm(id)+(back?"  \u21a9":"");
       c.onclick=()=>{
+        if(back){ bringBackVeg(id); return; }
         o.querySelectorAll(".po-c").forEach(x=>x.classList.remove("on"));
         c.classList.add("on");
         exp.textContent=wokReason(id); exp.style.display="block";
       };
       o.appendChild(c);
     });
+    const anyBack=chosen.leftOut.some(id=>isBenchedVeg(id));
     const w=document.createElement("span"); w.className="po-w";
-    w.textContent="a wok holds a protein and a vegetable or two \u2014 more and it steams. Tap a chip for why";
+    w.textContent=anyBack?"tap a set-aside vegetable to bring it back into the wok":"a wok holds a protein and a vegetable or two \u2014 more and it steams. Tap a chip for why";
     o.appendChild(w);
     o.appendChild(exp);
     box.appendChild(o);
@@ -8061,22 +8082,40 @@ function openIngredientCard(id){
     closeSuggestCard(); renderComps(); recompute();
   });
 }
-function removeIngredientFromDish(id, quiet){
-  FLOW.active.delete(id);
-  if(FLOW.suggestedIds) FLOW.suggestedIds.delete(id);
+function bringBackVeg(id){
+  // return a set-aside vegetable to the dish: clear its bench flag and recompute.
   if(FLOW.benched) FLOW.benched.delete(id);
-  // Removing a shown vegetable should shrink the dish, not let the cap promote a set-aside one to
-  // refill the slot (which looks like removing keeps swapping in new vegetables). When a shown
-  // vegetable is removed, push the vegetable that WOULD be promoted onto a persistent bench the
-  // composer respects — so it stays set aside and the dish simply shows one fewer.
+  TRACK.log("ingredient_unbenched", {id:id, basket_size:FLOW.active.size, source:"set_aside"});
+  renderComps(); recompute();
+}
+function isBenchedVeg(id){ return FLOW.benched && FLOW.benched.has && FLOW.benched.has(id); }
+function stashDishState(chosen){
+  // remember what's shown and what's set aside, so removing a shown vegetable can bench it and
+  // keep the rest of the set-aside stable. leftOut is sometimes ids, sometimes {id,why} objects.
+  if(!chosen){ window.__lastContents=[]; window.__lastBenched=[]; return; }
+  window.__lastContents=(chosen.contents||[]).slice();
+  const bl=(chosen.vegLeftOut||chosen.leftOut)||[];
+  window.__lastBenched=bl.map(x=>(x&&x.id)?x.id:x);
+}
+function removeIngredientFromDish(id, quiet){
   const removedIng=REF.byId[id];
   const isVeg=removedIng && (removedIng.category==="vegetables"||removedIng.category==="starches");
   const wasShown=Array.isArray(window.__lastContents) && window.__lastContents.indexOf(id)>=0;
-  if(isVeg && wasShown && Array.isArray(window.__lastBenched)){
-    // freeze the whole current bench: removing a shown vegetable should make the dish smaller,
-    // not promote a set-aside one into the freed slot. Everything already set aside stays put.
-    window.__lastBenched.forEach(b=>{ if(FLOW.active.has(b)) FLOW.benched.add(b); });
+  // Removing a SHOWN vegetable moves it to "set aside" rather than out of the basket: it joins the
+  // bench, and the vegetables already set aside stay put (so nothing gets promoted into the freed
+  // slot). The dish simply shows one fewer. Removing anything else — a protein, a seasoning, or a
+  // vegetable that's already only set aside — takes it out of the basket as before.
+  if(isVeg && wasShown && FLOW.benched && !FLOW.benched.has(id)){
+    FLOW.benched.add(id);                                   // the one you removed -> set aside
+    if(Array.isArray(window.__lastBenched))                 // and freeze whatever was already aside
+      window.__lastBenched.forEach(b=>{ if(FLOW.active.has(b)) FLOW.benched.add(b); });
+    if(!quiet) TRACK.log("ingredient_benched", {id:id, basket_size:FLOW.active.size, source:"dish_card"});
+    renderComps(); recompute();
+    return;
   }
+  FLOW.active.delete(id);
+  if(FLOW.suggestedIds) FLOW.suggestedIds.delete(id);
+  if(FLOW.benched) FLOW.benched.delete(id);
   // drop the component group too if nothing in it is still active
   const ing=REF.byId[id];
   if(ing){
@@ -8769,9 +8808,10 @@ function renderSteam(){
   }
   const nm=id=>((REF.byId[id]||{}).name)||id;
 
-  const cands=steamCandidates(ids, REF, DISHES, AFF, {explicit:FLOW.suggestedIds});
+  const cands=steamCandidates(ids, REF, DISHES, AFF, {explicit:FLOW.suggestedIds, benched:FLOW.benched});
   if(!FLOW.steamPick || !cands.some(c=>c.key===FLOW.steamPick)) FLOW.steamPick=cands[0]?cands[0].key:null;
   const chosen=cands.find(c=>c.key===FLOW.steamPick)||cands[0];
+  stashDishState(chosen);
   if(!chosen){ box.innerHTML="<div class=\"hint\">Nothing here suits a steamer.</div>"; return; }
 
   // if the cook hasn't picked a seasoning, use the subject's most-associated style so the
@@ -8893,14 +8933,21 @@ function renderSteam(){
     const lab=document.createElement("span"); lab.className="po-l"; lab.textContent="set aside";
     o.appendChild(lab);
     // leftOut items may be plain ids or {id, why} — handle both, and show the specific reason
-    let reason="";
+    let reason=""; let anyBack=false;
     chosen.leftOut.forEach(it=>{
       const id=(it && it.id)?it.id:it;
       if(it && it.why && !reason) reason=it.why;
-      const c=document.createElement("span"); c.className="po-c"; c.textContent=nm(id); o.appendChild(c);
+      const back=isBenchedVeg(id); if(back) anyBack=true;
+      if(back){
+        const c=document.createElement("button"); c.className="po-c po-click po-back"; c.textContent=nm(id)+"  \u21a9";
+        c.onclick=()=>bringBackVeg(id); o.appendChild(c);
+      } else {
+        const c=document.createElement("span"); c.className="po-c"; c.textContent=nm(id); o.appendChild(c);
+      }
     });
     const w=document.createElement("span"); w.className="po-w";
-    w.textContent=reason || "a steamer plates one subject \u2014 steam a second dish alongside, not piled on";
+    w.textContent=anyBack ? "tap a set-aside vegetable to bring it back onto the plate"
+                          : (reason || "a steamer plates one subject \u2014 steam a second dish alongside, not piled on");
     o.appendChild(w);
     box.appendChild(o);
   }
@@ -9025,9 +9072,10 @@ function renderRice(){
   }
   const nm=id=>((REF.byId[id]||{}).name)||id;
 
-  const cands=riceCandidates(ids, REF, DISHES, AFF);
+  const cands=riceCandidates(ids, REF, DISHES, AFF, {explicit:FLOW.suggestedIds, benched:FLOW.benched});
   if(!FLOW.ricePick || !cands.some(c=>c.key===FLOW.ricePick)) FLOW.ricePick=cands[0]?cands[0].key:null;
   const chosen=cands.find(c=>c.key===FLOW.ricePick)||cands[0];
+  stashDishState(chosen);
   if(!chosen){ box.innerHTML="<div class=\"hint\">Add a topping for the rice.</div>"; return; }
 
   // when no rice style is picked, map the composed dish to the library image dir so the photo
@@ -9309,13 +9357,14 @@ function renderNoodle(){
   }
   const nm=id=>((REF.byId[id]||{}).name)||id;
 
-  const cands=noodleCandidates(ids, REF, DISHES, AFF);
+  const cands=noodleCandidates(ids, REF, DISHES, AFF, {explicit:FLOW.suggestedIds, benched:FLOW.benched});
   if(!cands.length){
     box.innerHTML="<div class=\"hint\">No noodle yet — add one to the basket, or tick bee hoon, kway teow, yellow mee or mee pok in your Pantry.</div>";
     return;
   }
   if(!FLOW.noodlePick || !cands.some(c=>c.key===FLOW.noodlePick)) FLOW.noodlePick=cands[0].key;
   const chosen=cands.find(c=>c.key===FLOW.noodlePick)||cands[0];
+  stashDishState(chosen);
 
   const dir = FLOW.noodleDir ? NOODLE_DIRS.find(d=>d.key===FLOW.noodleDir) : chosen.direction;
   const nd  = buildNoodle(chosen.contents, REF, DISHES, AFF,
@@ -9414,12 +9463,20 @@ function renderNoodle(){
     const o=document.createElement("div"); o.className="pot-out";
     const lab=document.createElement("span"); lab.className="po-l"; lab.textContent="left out";
     o.appendChild(lab);
+    let anyBack=false;
     chosen.leftOut.forEach(l=>{
-      const c=document.createElement("span"); c.className="po-c";
-      c.textContent=(REF.byId[l.id]||{}).name||l.id; o.appendChild(c);
+      const back=isBenchedVeg(l.id); if(back) anyBack=true;
+      if(back){
+        const c=document.createElement("button"); c.className="po-c po-click po-back";
+        c.textContent=((REF.byId[l.id]||{}).name||l.id)+"  \u21a9";
+        c.onclick=()=>bringBackVeg(l.id); o.appendChild(c);
+      } else {
+        const c=document.createElement("span"); c.className="po-c";
+        c.textContent=(REF.byId[l.id]||{}).name||l.id; o.appendChild(c);
+      }
     });
     const w=document.createElement("span"); w.className="po-w";
-    w.textContent=chosen.leftOut[0].why;
+    w.textContent=anyBack ? "tap a set-aside vegetable to bring it back into the bowl" : chosen.leftOut[0].why;
     o.appendChild(w);
     box.appendChild(o);
   }
@@ -9671,14 +9728,9 @@ function renderOnePot(){
      the app should be choosing WHICH pot to make. One pot per protein base. */
   const cands = mode.key==="baked"
     ? bakeCandidates(okIds, REF, DISHES, AFF, {benched:FLOW.benched})
-    : potCandidates(okIds, REF, DISHES, AFF, {potPath:FLOW.potPath});
+    : potCandidates(okIds, REF, DISHES, AFF, {potPath:FLOW.potPath, benched:FLOW.benched});
   const chosen = cands.find(c=>c.species===FLOW.potBase) || cands[0];
-  // remember what's shown and what's benched, so removing a shown vegetable keeps the bench
-  // stable instead of promoting from it.
-  if(chosen){
-    window.__lastContents=(chosen.contents||[]).slice();
-    window.__lastBenched=((chosen.vegLeftOut||chosen.leftOut)||[]).map(x=>x.id||x);
-  }
+  stashDishState(chosen);
   if(cands.length>1 && (!FLOW.potBase || !cands.some(c=>c.species===FLOW.potBase))) FLOW.potBase=cands[0].species;
 
   // SWAP THE CUT: whole chicken → thigh, pork ribs → belly, and so on.
@@ -9814,11 +9866,19 @@ function renderOnePot(){
     const o=document.createElement("div"); o.className="pot-out";
     const lab=document.createElement("span"); lab.className="po-l"; lab.textContent="set aside";
     o.appendChild(lab);
+    let anyBack=false;
     potAside.forEach(it=>{
-      const c=document.createElement("span"); c.className="po-c"; c.textContent=nm(it.id||it); o.appendChild(c);
+      const id=it.id||it; const back=isBenchedVeg(id); if(back) anyBack=true;
+      if(back){
+        const c=document.createElement("button"); c.className="po-c po-click po-back"; c.textContent=nm(id)+"  \u21a9";
+        c.onclick=()=>bringBackVeg(id); o.appendChild(c);
+      } else {
+        const c=document.createElement("span"); c.className="po-c"; c.textContent=nm(id); o.appendChild(c);
+      }
     });
     const w=document.createElement("span"); w.className="po-w";
-    w.textContent=(potAside[0].why)||"a soup carries a couple of vegetables";
+    w.textContent=anyBack ? "tap a set-aside vegetable to bring it back into the pot"
+                          : ((potAside[0].why)||"a soup carries a couple of vegetables");
     o.appendChild(w);
     box.appendChild(o);
   }
