@@ -2001,7 +2001,9 @@ const ROAST_VEG=new Set([
   "potato","sweet_potato","yam","carrot","daikon","lotus_root","water_chestnut","chestnut",
   "corn","pumpkin","broccoli","cauliflower","bell_pepper","eggplant","zucchini","tomato",
   "onion","mushroom","okra","long_beans","green_bean","peas","brussels_sprouts","parsnip",
-  "beetroot","asparagus","garlic"
+  "beetroot","asparagus","garlic",
+  // cabbages roast into charred, caramelised wedges — a real dish, not a leafy green that wilts
+  "cabbage","napa_cabbage"
 ]);
 function suitsHeat(id, heat, R){
   const i=R.byId[id]||{};
