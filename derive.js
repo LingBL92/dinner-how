@@ -2067,7 +2067,7 @@ function bakeCandidates(ingIds, R, dishes, AFF){
     bySpecies[sp].alternatives=cuts.filter(id=>id!==lead);
   });
 
-  return Object.entries(bySpecies).map(([sp,ids])=>{
+  const pots = Object.entries(bySpecies).map(([sp,ids])=>{
     const belongs=[], uncertain=[];
     others.forEach(o=>{
       let seen=0;
@@ -2113,6 +2113,39 @@ function bakeCandidates(ingIds, R, dishes, AFF){
       }).slice(0,2).map(d=>({dish:d.name, closeness:"a baked dish with the same protein"})) : []
     };
   });
+
+  // VEGETABLE-ONLY BAKE — roasted vegetables are a real dish (a roasted veg tray, roast
+  // potatoes, roasted cauliflower). When there's no protein to lead, offer the vegetables as
+  // their own bake rather than composing nothing. Same cap and starch-priority as a tray bake.
+  if(!pots.length){
+    const isVeg=id=>{ const c=(R.byId[id]||{}).category; return (c==="vegetables"||c==="starches") && measureTypeOf(R.byId[id]||{})!=="assumed"; };
+    const veg=ok.filter(isVeg);
+    if(veg.length){
+      const ranked=R.rankPartners?R.rankPartners(veg):veg;
+      const starch=ranked.filter(id=>((R.byId[id]||{}).category)==="starches").slice(0,1);
+      const priority=[...new Set(starch)];
+      const capN=Math.max(priority.length, 3);
+      const keep=new Set(priority.concat(ranked.filter(id=>!priority.includes(id))).slice(0, capN));
+      const leftOut=ranked.filter(id=>!keep.has(id)).map(id=>({id, why:"set aside \u2014 a tray roasts a few vegetables evenly, not a pile"}));
+      const contents=veg.filter(id=>keep.has(id));
+      const lead=contents[0], single=contents.length===1;
+      pots.push({
+        species: "veg",
+        base: contents.slice(0,1),
+        label: single ? "Roasted "+((R.byId[lead]||{}).name||lead).toLowerCase() : "Roasted vegetables",
+        dirKey: "baked",
+        baseNames: contents.map(id=>(R.byId[id]||{}).name||id),
+        alternatives: [], altNames: [],
+        belongs: [], uncertain: [], contents,
+        leftOut,
+        describe: "roasted in one tray \u2014 caramelised at the edges",
+        dryHeat: heatMismatch(real,"dry",R),
+        suggest: {yours:[],buy:[]},
+        reminds: []
+      });
+    }
+  }
+  return pots;
 }
 
 /* a bake is not staged minute-by-minute — dense things get a head start, that's all */
