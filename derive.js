@@ -3041,16 +3041,27 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
   };
   const PRIORITY=["whole_fish","shellfish","fish_slices","ribs","poultry","mince","custard","tofu","dense_veg"];
 
-  // custard is special: egg + a steaming liquid (dashi / stock) = a savoury custard
+  // custard is special: an egg makes a savoury steamed custard (chawanmushi / 蒸水蛋). It's
+  // offered whenever an egg is in the basket — on its own, or as the base a light protein
+  // (prawn, minced pork, fish slices, clams) is set into. Heavier or whole subjects (a whole
+  // fish, ribs, a bird) are their own dish and don't fold into a custard.
   const hasLiquid = ingIds.some(id=>["dashi","broth","kombu"].includes(id));
+  const CUSTARD_SOLIDS=new Set(["shellfish","mince","fish_slices"]);
   PRIORITY.forEach(form=>{
     if(form==="custard"){
-      if((byForm.custard||[]).length && (hasLiquid || Object.keys(byForm).every(f=>f==="custard"))){
-        const solids=real.filter(id=>{const f=steamFormOf(id,R); return f && f!=="custard" && f!=="dense_veg";});
-        out.push({key:"custard", label:"Savoury egg custard", subject:"egg", form:"custard",
+      if((byForm.custard||[]).length){
+        const solids=real.filter(id=>{const f=steamFormOf(id,R); return f && CUSTARD_SOLIDS.has(f);});
+        const setAside=real.filter(id=>{const f=steamFormOf(id,R); return f && f!=="custard" && f!=="dense_veg" && !CUSTARD_SOLIDS.has(f);})
+          .map(id=>({id, why:"set aside \u2014 too substantial to set into a custard; steam it as its own dish"}));
+        const solidName = solids.length ? nm(solids[0]).toLowerCase() : "";
+        out.push({key:"custard",
+          label: solids.length ? "Steamed egg with "+solidName : "Savoury egg custard",
+          subject:"egg", form:"custard",
           contents:["egg"].concat(solids.slice(0,2)).concat(topping),
-          note:"chawanmushi-style \u2014 gentle steam, or it goes spongy",
-          leftOut:[], alternatives:[]});
+          note: solids.length ? "a silky steamed custard with "+solidName+" set into it \u2014 gentle steam, or it goes spongy"
+                              : (hasLiquid ? "chawanmushi-style \u2014 gentle steam, or it goes spongy"
+                                           : "\u84b8\u6c34\u86cb \u2014 beat, strain, and steam gently so it stays silky"),
+          leftOut:setAside, alternatives:[]});
       }
       return;
     }

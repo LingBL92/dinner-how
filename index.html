@@ -956,7 +956,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.52</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.54</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -4077,16 +4077,29 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
   };
   const PRIORITY=["whole_fish","shellfish","fish_slices","ribs","poultry","mince","custard","tofu","dense_veg"];
 
-  // custard is special: egg + a steaming liquid (dashi / stock) = a savoury custard
+  // custard is special: an egg makes a savoury steamed custard (chawanmushi / 蒸水蛋). It's
+  // offered whenever an egg is in the basket — on its own, or as the base a light protein
+  // (prawn, minced pork, fish slices, clams) is set into. Heavier or whole subjects (a whole
+  // fish, ribs, a bird) are their own dish and don't fold into a custard.
   const hasLiquid = ingIds.some(id=>["dashi","broth","kombu"].includes(id));
+  const CUSTARD_SOLIDS=new Set(["shellfish","mince","fish_slices"]);
   PRIORITY.forEach(form=>{
     if(form==="custard"){
-      if((byForm.custard||[]).length && (hasLiquid || Object.keys(byForm).every(f=>f==="custard"))){
-        const solids=real.filter(id=>{const f=steamFormOf(id,R); return f && f!=="custard" && f!=="dense_veg";});
-        out.push({key:"custard", label:"Savoury egg custard", subject:"egg", form:"custard",
+      if((byForm.custard||[]).length){
+        // proteins light enough to set into the custard become its toppings; the rest stay their
+        // own dish and are reported as set aside so the card is honest about what it holds.
+        const solids=real.filter(id=>{const f=steamFormOf(id,R); return f && CUSTARD_SOLIDS.has(f);});
+        const setAside=real.filter(id=>{const f=steamFormOf(id,R); return f && f!=="custard" && f!=="dense_veg" && !CUSTARD_SOLIDS.has(f);})
+          .map(id=>({id, why:"set aside \u2014 too substantial to set into a custard; steam it as its own dish"}));
+        const solidName = solids.length ? nm(solids[0]).toLowerCase() : "";
+        out.push({key:"custard",
+          label: solids.length ? "Steamed egg with "+solidName : "Savoury egg custard",
+          subject:"egg", form:"custard",
           contents:["egg"].concat(solids.slice(0,2)).concat(topping),
-          note:"chawanmushi-style \u2014 gentle steam, or it goes spongy",
-          leftOut:[], alternatives:[]});
+          note: solids.length ? "a silky steamed custard with "+solidName+" set into it \u2014 gentle steam, or it goes spongy"
+                              : (hasLiquid ? "chawanmushi-style \u2014 gentle steam, or it goes spongy"
+                                           : "\u84b8\u6c34\u86cb \u2014 beat, strain, and steam gently so it stays silky"),
+          leftOut:setAside, alternatives:[]});
       }
       return;
     }
@@ -5208,7 +5221,7 @@ const TASTE_LABEL={sweet:"sweet",sour:"sour",salty:"salty",umami:"umami",fat:"ri
 const TYPE_OPTS=[["soup","Soup"],["base","Rice & noodles"],["veg","Vegetable"],["meat","Meat"],["fish","Fish"],["dessert","Dessert"]];
 const COMPOSE_OPTS=[["family_meal","Family meal"],["onepot","One-pot"],["stirfry","Stir-fry"],["steam","Steam"],["ricebowl","One-dish rice"],["noodles","Noodles"]];
 // three-section type selector: cooking methods and the full-meal builder, kept separate
-const METHOD_OPTS=[["onepot","One-pot"],["stirfry","Stir-fry"],["steam","Steam"],["ricebowl","One-dish rice"],["noodles","Noodles"],["bake","One-dish bake"]];
+const METHOD_OPTS=[["onepot","One-pot"],["bake","One-dish bake"],["stirfry","Stir-fry"],["steam","Steam"],["ricebowl","One-dish rice"],["noodles","Noodles"]];
 const MEAL_OPTS=[["family_meal","Family meal"]];
 
 function isOnePot(d){ return d.role==="soup" || (["braise","simmer"].includes(d.build) && (d.appliance_options||[]).length<=2); }
