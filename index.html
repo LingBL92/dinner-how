@@ -961,7 +961,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.56</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.57</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -10111,11 +10111,18 @@ function renderOnePot(){
       wireSuggestions();
     }
     // which of YOUR additions are well-trodden, and which are your own invention?
-    if(chosen.uncertain && chosen.uncertain.length){
+    // Only speak about ingredients that ACTUALLY made it into the dish — an item the cap set
+    // aside isn't "in the pot", so it must not be reported as an untested pairing. Also skip the
+    // vegetable that NAMES the dish (a "Watercress soup" obviously pairs watercress with itself).
+    const inDishSet=new Set((chosen.contents||[]));
+    const realUncertain=(chosen.uncertain||[]).filter(x=>inDishSet.has(x.id)
+      && !((chosen.label||"").toLowerCase().includes(((REF.byId[x.id]||{}).name||"").toLowerCase())));
+    if(realUncertain.length){
+      const vessel = mode.key==="baked" ? "on the tray" : "in the pot";
       const u=document.createElement("div"); u.className="pot-unc";
-      u.innerHTML="<strong>"+chosen.uncertain.map(x=>nm(x.id)).join(", ")+"</strong> "+
-        (chosen.uncertain.length>1?"are":"is")+" in the pot, but nothing in our recipes pairs "+
-        (chosen.uncertain.length>1?"them":"it")+" with "+chosen.baseNames.join(" or ").toLowerCase()+
+      u.innerHTML="<strong>"+realUncertain.map(x=>nm(x.id)).join(", ")+"</strong> "+
+        (realUncertain.length>1?"are":"is")+" "+vessel+", but nothing in our recipes pairs "+
+        (realUncertain.length>1?"them":"it")+" with "+chosen.baseNames.join(" or ").toLowerCase()+
         ". Physically fine \u2014 it\u2019s your own combination.";
       box.appendChild(u);
     }
