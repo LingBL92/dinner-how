@@ -956,7 +956,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.54</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.55</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -6399,6 +6399,16 @@ function toggleCompose(id){
   renderType(); recompute();
 }
 
+function composeInputIds(){
+  // the composers work from what's actively in the basket, PLUS pantry staples that are real
+  // dish subjects in their own right. Egg is the case that matters: it lives in the pantry (you
+  // always have eggs) but is also a legitimate protein — so a pantry egg should still be able to
+  // make "Egg stir-fry", steamed egg, tomato-egg, and so on. Pure seasonings/starches in the
+  // pantry (garlic, soy, rice) stay in the background; only pantry PROTEINS are promoted.
+  const out=new Set(FLOW.active);
+  FLOW.pantry.forEach(id=>{ if(((REF.byId[id]||{}).category)==="proteins") out.add(id); });
+  return [...out];
+}
 function recompute(){
   persistSession();                          // F2: any change that recomputes is worth saving
   const ids=[...new Set([...FLOW.active, ...FLOW.pantry])];
@@ -7710,7 +7720,7 @@ function renderStepSlider(box, cards, segments){
 
 function renderStirFry(){
   const box=el("recipes"); if(!box)return; box.innerHTML="";
-  const ids=[...FLOW.active].filter(id=>{
+  const ids=composeInputIds().filter(id=>{
     const ing=REF.byId[id]||{};
     return measureTypeOf(ing)!=="assumed" || CHARACTER_SEASONINGS.has(id);
   });
@@ -8833,7 +8843,7 @@ function potDishArt(modeKey, contents, R){
 
 function renderSteam(){
   const box=el("recipes"); if(!box)return; box.innerHTML="";
-  const ids=[...FLOW.active].filter(id=>{
+  const ids=composeInputIds().filter(id=>{
     const ing=REF.byId[id]||{};
     return measureTypeOf(ing)!=="assumed" || CHARACTER_SEASONINGS.has(id);
   });
@@ -9097,7 +9107,7 @@ function openSteamRadial(){
    when the ingredients suit either. Mirrors the steam render. ===== */
 function renderRice(){
   const box=el("recipes"); if(!box)return; box.innerHTML="";
-  const ids=[...FLOW.active].filter(id=>{
+  const ids=composeInputIds().filter(id=>{
     const ing=REF.byId[id]||{};
     return measureTypeOf(ing)!=="assumed" || CHARACTER_SEASONINGS.has(id);
   });
@@ -9381,7 +9391,7 @@ function renderNoodle(){
   // noodles usually live in the PANTRY (they keep for months), so look there too —
   // otherwise a cupboard full of bee hoon reads as "no noodle in the basket".
   const pantryNoodles=[...FLOW.pantry].filter(id=>NOODLE_BASE_IDS.has(id));
-  const ids=[...new Set([...FLOW.active, ...pantryNoodles])].filter(id=>{
+  const ids=[...new Set([...composeInputIds(), ...pantryNoodles])].filter(id=>{
     const ing=REF.byId[id]||{};
     if(NOODLE_BASE_IDS.has(id)) return true;                 // the base always counts
     return measureTypeOf(ing)!=="assumed" || CHARACTER_SEASONINGS.has(id);
@@ -9744,7 +9754,7 @@ function openRiceRadial(){
 }
 function renderOnePot(){
   const box=el("recipes"); if(!box)return; box.innerHTML="";
-  const ids=[...FLOW.active].filter(id=>measureTypeOf(REF.byId[id])!=="assumed");
+  const ids=composeInputIds().filter(id=>measureTypeOf(REF.byId[id])!=="assumed");
   if(!ids.length){
     box.innerHTML="<div class=\"hint\">Add a protein and some vegetables \u2014 the pot builds itself around them.</div>";
     return;
