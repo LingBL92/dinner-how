@@ -3897,11 +3897,17 @@ function noodleCandidates(ingIds, R, dishes, AFF, opts){
     // a bowl takes one green and a couple of others — chosen for THIS sauce
     const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[], explicit:(opts&&opts.explicit)||null, benched:(opts&&opts.benched)||null});
     // one main protein per bowl. A soup can carry a second (sliced meat + a fishball);
-    // a fried noodle should not read as three meats piled on.
-    const pj=pickLeadProtein(mineAll, R);
+    // a fried noodle should not read as three meats piled on. A WHOLE fish never goes into a
+    // noodle bowl — you don't toss a whole pomfret into mee goreng; it's a dish of its own, so
+    // set it aside (fish for noodles means slices or a fishcake, which aren't whole fish).
+    const noodleProteinIds=mineAll.filter(id=>!isWholeFish(id,R));
+    const wholeFishAside=mineAll.filter(id=>isWholeFish(id,R))
+      .map(id=>({id, why:"set aside \u2014 a whole fish is its own dish; noodles take fish slices or a fishcake, not a whole fish"}));
+    const pj=pickLeadProtein(noodleProteinIds, R);
     const keepProteins = new Set([pj.lead].filter(Boolean));
     if(dir.mode==="soup" && pj.extras[0]) keepProteins.add(pj.extras[0]);
     const mine=vpick.used.filter(id=>{
+      if(isWholeFish(id,R)) return false;
       if(((R.byId[id]||{}).category)!=="proteins") return true;
       return keepProteins.has(id);
     });
@@ -3912,7 +3918,7 @@ function noodleCandidates(ingIds, R, dishes, AFF, opts){
       subject:base, subjectName:baseName,
       note:dir.note, fit, fitNote, hits,
       contents:mine,
-      leftOut:vpick.leftOut.concat(droppedProteins.map(id=>({id,
+      leftOut:vpick.leftOut.concat(wholeFishAside).concat(droppedProteins.map(id=>({id,
         why:"one main is enough in a bowl \u2014 "+((R.byId[pj.lead]||{}).name||"the first")+" leads this one"})))
     });
   });

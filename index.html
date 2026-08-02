@@ -89,6 +89,11 @@ header a{margin-left:auto;font-size:12.5px;color:var(--cool);text-decoration:non
 .portgroup{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;
   color:var(--muted);padding:8px 12px 3px;opacity:.8;border-top:1px solid var(--line);margin-top:2px}
 .portgroup:first-of-type{border-top:none;margin-top:0}
+.pantry-reset{padding:12px 12px 4px;border-top:1px solid var(--line);margin-top:6px}
+.pantry-reset-btn{font-family:var(--font-body);font-size:11px;color:var(--muted);
+  background:transparent;border:1px solid var(--line);border-radius:999px;padding:5px 12px;
+  cursor:pointer;transition:color .15s,border-color .15s}
+.pantry-reset-btn:hover{color:var(--ember);border-color:var(--ember)}
 #ingcomps .comp .comphead{position:sticky;top:0;background:var(--panel);z-index:1}
 .port:hover{background:rgba(50,117,100,.05)}
 .port .dot{width:11px;height:11px;border-radius:50%;border:2px solid var(--muted);flex:none;margin-left:auto}
@@ -956,7 +961,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.55</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.56</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -4932,11 +4937,17 @@ function noodleCandidates(ingIds, R, dishes, AFF, opts){
     // a bowl takes one green and a couple of others — chosen for THIS sauce
     const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[], explicit:(opts&&opts.explicit)||null, benched:(opts&&opts.benched)||null});
     // one main protein per bowl. A soup can carry a second (sliced meat + a fishball);
-    // a fried noodle should not read as three meats piled on.
-    const pj=pickLeadProtein(mineAll, R);
+    // a fried noodle should not read as three meats piled on. A WHOLE fish never goes into a
+    // noodle bowl — you don't toss a whole pomfret into mee goreng; it's a dish of its own, so
+    // set it aside (fish for noodles means slices or a fishcake, which aren't whole fish).
+    const noodleProteinIds=mineAll.filter(id=>!isWholeFish(id,R));
+    const wholeFishAside=mineAll.filter(id=>isWholeFish(id,R))
+      .map(id=>({id, why:"set aside \u2014 a whole fish is its own dish; noodles take fish slices or a fishcake, not a whole fish"}));
+    const pj=pickLeadProtein(noodleProteinIds, R);
     const keepProteins = new Set([pj.lead].filter(Boolean));
     if(dir.mode==="soup" && pj.extras[0]) keepProteins.add(pj.extras[0]);
     const mine=vpick.used.filter(id=>{
+      if(isWholeFish(id,R)) return false;                       // never plate a whole fish in noodles
       if(((R.byId[id]||{}).category)!=="proteins") return true;
       return keepProteins.has(id);
     });
@@ -4947,7 +4958,7 @@ function noodleCandidates(ingIds, R, dishes, AFF, opts){
       subject:base, subjectName:baseName,
       note:dir.note, fit, fitNote, hits,
       contents:mine,
-      leftOut:vpick.leftOut.concat(droppedProteins.map(id=>({id,
+      leftOut:vpick.leftOut.concat(wholeFishAside).concat(droppedProteins.map(id=>({id,
         why:"one main is enough in a bowl \u2014 "+((R.byId[pj.lead]||{}).name||"the first")+" leads this one"})))
     });
   });
@@ -5206,6 +5217,18 @@ if(typeof window!=="undefined"){
     console.table(s); return s;
   };
   window.dhReset=function(){ localStorage.removeItem("dh_events"); console.log("pilot log cleared"); };
+  // dhHardReset() -> wipe ALL saved state (basket, pantry, preferences, pilot log, session id)
+  // and reload with a clean slate. This is the one to run if a stale saved session is causing
+  // odd behaviour (e.g. an ingredient sticking around from a previous visit).
+  window.dhHardReset=function(){
+    try{
+      localStorage.removeItem(PERSIST_KEY);   // basket + pantry + method/preferences
+      localStorage.removeItem("dh_events");   // pilot event log
+      localStorage.removeItem("dh_sid");      // session id
+    }catch(e){}
+    console.log("Dinner How: full reset \u2014 reloading with a clean slate\u2026");
+    if(typeof location!=="undefined") location.reload();
+  };
 }
 
 let pax=4;
@@ -6285,6 +6308,18 @@ function renderPantry(){
       box.appendChild(p);
     });
   }
+  // a quiet way out: clear the whole saved session (basket, pantry, preferences) and start
+  // fresh. Useful when a stale saved state is causing odd suggestions.
+  const resetWrap=document.createElement("div"); resetWrap.className="pantry-reset";
+  const resetBtn=document.createElement("button"); resetBtn.className="pantry-reset-btn";
+  resetBtn.textContent="Reset everything";
+  resetBtn.title="Clear your basket, pantry and preferences and start fresh";
+  resetBtn.onclick=()=>{
+    const ok = (typeof confirm==="function") ? confirm("Reset everything? This clears your basket, pantry choices and saved preferences, and reloads with a clean slate.") : true;
+    if(ok && window.dhHardReset) window.dhHardReset();
+  };
+  resetWrap.appendChild(resetBtn);
+  box.appendChild(resetWrap);
 }
 function toggleAppl(a){ FLOW.appl.has(a)?FLOW.appl.delete(a):FLOW.appl.add(a);
   owned.clear(); FLOW.appl.forEach(x=>owned.add(x));
