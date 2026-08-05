@@ -961,7 +961,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.58</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.62</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -2128,6 +2128,7 @@ const BROTH_BASE={
   chicken_breast: {body:1, sweetness:1, depth:1, clean:3, marine:0, noBroth:true, note:"lean \u2014 fine as an addition, but it can\u2019t carry a broth"},
   chicken:        {body:2, sweetness:1, depth:1, clean:2, marine:0, note:"clean and comforting"},
   fish:           {body:1, sweetness:1, depth:1, clean:3, marine:2, note:"delicate; goes in late"},
+  fish_slices:    {body:1, sweetness:1, depth:1, clean:3, marine:2, note:"poaches in minutes \u2014 sliced fish soup, in at the end"},
   salmon:         {body:1, sweetness:1, depth:2, clean:2, marine:2, note:"oily, distinctly marine"},
   prawn:          {body:1, sweetness:2, depth:1, clean:2, marine:3, note:"sweet and strongly of the sea"},
   squid:          {body:1, sweetness:1, depth:1, clean:2, marine:2, note:"clean, faintly sweet"},
@@ -4171,7 +4172,14 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
     const otherDrops=ids.filter(x=>!inDish.has(x)
       && ((R.byId[x]||{}).category)!=="vegetables"
       && !steamPairsFn(x))
-      .map(id=>({id, why:"set aside \u2014 steam it as its own dish, one plate per subject"}))
+      .map(id=>{
+        // a protein with no steaming form (beef, mutton, a steak) can't be steamed at all — say so,
+        // rather than implying it's a fine dish on its own plate.
+        const noForm = ((R.byId[id]||{}).category)==="proteins" && steamFormOf(id,R)===null;
+        return {id, why: noForm
+          ? "set aside \u2014 not suited to steaming; sear or braise it instead"
+          : "set aside \u2014 steam it as its own dish, one plate per subject"};
+      })
       .concat(vegAside);
     out.push({key:form, label:LABELS[form]+nm(subj2), subject:subj2, form,
       contents:[...new Set([subj2].concat(bedFor2).concat(alongside).concat(pairedProt).concat(topping))],
@@ -4186,6 +4194,20 @@ function steamCandidates(ingIds, R, dishes, AFF, opts){
     out.push({key:"plain", label:"Steamed \u2014 add a subject", subject:real[0]||null, form:"dense_veg",
       contents:real, note:"add a fish, some prawns, minced pork, tofu or an egg \u2014 the steam builds around it",
       leftOut:[], alternatives:[]});
+  }
+  // A protein with no steaming form at all (beef, mutton, a steak) would otherwise vanish from the
+  // steam view with no word of why. Surface it as set aside on the leading card, with the real
+  // reason, so the cook sees the engine considered it and ruled it out.
+  if(out.length){
+    const shown=new Set(out.flatMap(c=>c.contents||[]));
+    const unsteamable=real.filter(id=>((R.byId[id]||{}).category)==="proteins"
+      && steamFormOf(id,R)===null && !shown.has(id));
+    if(unsteamable.length){
+      const already=new Set((out[0].leftOut||[]).map(x=>x.id||x));
+      const add=unsteamable.filter(id=>!already.has(id))
+        .map(id=>({id, why:"set aside \u2014 not suited to steaming; sear or braise it instead"}));
+      out[0].leftOut=(out[0].leftOut||[]).concat(add);
+    }
   }
   return out;
 }
@@ -4691,19 +4713,23 @@ function riceCandidates(ingIds, R, dishes, AFF, opts){
   const FISH_IDS=["fish","salmon","cod","snapper","seabass","threadfin","pomfret","mackerel","tuna","sardine","grouper"];
   const fishes=proteins.filter(p=>FISH_IDS.includes(p));
   let styledSubjects=new Set(out.map(o=>o.subject));
-  fishes.filter(f=>!styledSubjects.has(f)).slice(0,1).forEach(f=>{
+  fishes.filter(f=>!styledSubjects.has(f)).forEach(f=>{
     add("fish_"+f, nm(f)+" rice","in_rice", f,"cooked in the rice \u2014 the fillet laid on top and steamed through as the grain cooks");
   });
 
-  // a plain solid meat with no strong style: SURFACE THE FORK — but only offer "in the rice"
-  // if it can actually cook there. A steak or a tough cut can't; it gets the over-rice path.
+  // a plain solid protein with no strong style: SURFACE THE FORK — offer a bowl led by EACH one
+  // the cook owns (chicken AND prawn, not just the first), so a second protein isn't only ever set
+  // aside. "in the rice" only if it can actually cook there (a steak/tough cut can't; it gets the
+  // over-rice path). Egg and flavour-bits (lap cheong, dried shrimp) ride along, not lead.
   styledSubjects=new Set(out.map(o=>o.subject));
-  const meats=proteins.filter(p=>!styledSubjects.has(p) && !fishes.includes(p) &&
-    !["dried_shrimp","lap_cheong","egg","prawn","squid","clams","oyster"].includes(p));
-  meats.slice(0,1).forEach(p=>{
+  const RIDE_ALONG=["dried_shrimp","lap_cheong","egg","century_egg"];
+  const meats=proteins.filter(p=>!styledSubjects.has(p) && !fishes.includes(p) && !RIDE_ALONG.includes(p));
+  meats.forEach(p=>{
+    const sp=(typeof potSpeciesWord==="function") ? potSpeciesWord(p, R) : (nm(p)||p);
+    const spCap=sp.replace(/^./,ch=>ch.toUpperCase());
     if(riceAlong(p,R).stage!=="no_along")
-      add("in_"+p, nm(p)+" claypot rice","in_rice", p,"cooked in the rice \u2014 marinate it, cook it on the grain, form a crust");
-    add("over_"+p, nm(p)+" over rice","over_rice", p,"rice separate \u2014 cook it in a sauce, or sear it, and serve over");
+      add("in_"+p, spCap+" claypot rice","in_rice", p,"cooked in the rice \u2014 marinate it, cook it on the grain, form a crust");
+    add("over_"+p, spCap+" over rice","over_rice", p,"rice separate \u2014 cook it in a sauce, or sear it, and serve over");
   });
 
   // COOK-ALONG: rice + whatever shares its pot, heat and time (corn, egg, mushroom, veg).
@@ -4964,17 +4990,73 @@ function noodleCandidates(ingIds, R, dishes, AFF, opts){
   });
   // strongest signal first, then the pairing that suits the noodle best
   out.sort((a,b)=> (b.isDefining?1:0)-(a.isDefining?1:0) || b.hits - a.hits || NOODLE_FIT_RANK[a.fit] - NOODLE_FIT_RANK[b.fit]);
+
+  // MULTIPLE PROTEINS: a bowl leads with one, but the cook may want a chicken bowl rather than a
+  // prawn bowl. The per-direction cards above all lead with the top-ranked protein, so a
+  // second protein never gets to star. Add a variant of the best style led by each OTHER protein,
+  // so "Chicken noodles" is offered alongside "Prawn mee" instead of chicken only ever being set
+  // aside. (Whole fish is excluded — it's its own dish.)
+  const allProteins=mineAll.filter(id=>((R.byId[id]||{}).category)==="proteins" && !isWholeFish(id,R)
+    && id!=="egg");   // egg rides along in a noodle bowl; it isn't its own "egg noodle" dish
+  if(allProteins.length>1 && out.length){
+    const leadPj=pickLeadProtein(allProteins, R);
+    const topStyle=out[0];                       // the best style for this basket
+    const others=allProteins.filter(id=>id!==leadPj.lead);
+    others.forEach(protId=>{
+      const pName=(R.byId[protId]||{}).name||protId;
+      const dir=topStyle.direction;
+      // rebuild veg for this style, then keep THIS protein as the single main
+      const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:(dir&&dir.veg)||[], explicit:(opts&&opts.explicit)||null, benched:(opts&&opts.benched)||null});
+      const contents=vpick.used.filter(id=>{
+        if(isWholeFish(id,R)) return false;
+        if(((R.byId[id]||{}).category)!=="proteins") return true;
+        return id===protId;                       // this variant leads with protId only
+      });
+      const otherProt=allProteins.filter(id=>id!==protId);
+      out.push({
+        key:"noodle_"+(dir?dir.key:"clear_soup")+"_"+protId,
+        label:(topStyle.fit==="canonical"?topStyle.label:pName+" "+(dir&&dir.neutralLabel?dir.neutralLabel.toLowerCase():"noodles")),
+        // when the top style is a named dish (Hokkien mee), a chicken version needs a plainer name
+        mode:topStyle.mode, dirKey:dir?dir.key:"clear_soup", direction:dir, isDefining:false,
+        subject:base, subjectName:baseName, note:topStyle.note, fit:topStyle.fit, hits:topStyle.hits,
+        leadProtein:protId,
+        contents,
+        leftOut:vpick.leftOut.concat(otherProt.map(id=>({id,
+          why:"one main is enough in a bowl \u2014 this is the "+pName.toLowerCase()+" version"})))
+      });
+    });
+  }
+
+  // give each protein-led variant a clean, natural name: "<Protein> noodles" / "<Protein> mee",
+  // using the species word (chicken, not "chicken thigh yellow noodle").
+  const noodleWord = /mee|yellow_noodle/.test(base) ? "mee"
+                   : /bee_hoon/.test(base) ? "bee hoon"
+                   : /hor_fun/.test(base) ? "hor fun"
+                   : "noodles";
+  out.forEach(c=>{
+    if(c.leadProtein){
+      const sp=(typeof potSpeciesWord==="function") ? potSpeciesWord(c.leadProtein, R) : ((R.byId[c.leadProtein]||{}).name||c.leadProtein);
+      const spCap=sp.replace(/^./,ch=>ch.toUpperCase());
+      c.label = c.mode==="soup" ? spCap+" "+noodleWord+" soup" : spCap+" "+noodleWord;
+    }
+  });
+  // keep protein-led variants from being cut by the 4-card limit: order them right after the
+  // top style so each protein the cook owns gets a seat.
+  const variants=out.filter(c=>c.leadProtein);
+  const mains=out.filter(c=>!c.leadProtein);
+  const ordered=mains.length ? [mains[0]].concat(variants, mains.slice(1)) : variants;
+
   // always leave a plain fallback so a lone packet of noodles still cooks
-  if(!out.length){
+  if(!ordered.length){
     const fallback=NOODLE_DIRS.find(d=>d.key==="clear_soup");
     const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:(fallback&&fallback.veg)||[], explicit:(opts&&opts.explicit)||null, benched:(opts&&opts.benched)||null});
     const mine=vpick.used;
-    out.push({key:"noodle_clear_soup", label:"Noodles in broth", mode:"soup",
+    ordered.push({key:"noodle_clear_soup", label:"Noodles in broth", mode:"soup",
       dirKey:"clear_soup", direction:fallback, subject:base,
       subjectName:(R.byId[base]||{}).name||base,
       note:fallback.note, contents:mine, leftOut:vpick.leftOut});
   }
-  return out.slice(0,4);
+  return ordered.slice(0,5);
 }
 
 /* THE SECOND LAYER — given a style, which noodles can carry it, best first?
@@ -9945,7 +10027,8 @@ function renderOnePot(){
   // seeing a benched one appear looks like a surprise swap.
   const potAside=[].concat(chosen&&chosen.vegLeftOut?chosen.vegLeftOut:[])
                    .concat(chosen&&chosen.leftOut?chosen.leftOut:[])
-                   .concat(chosen&&chosen.otherProteins?chosen.otherProteins:[]);
+                   .concat(chosen&&chosen.otherProteins?chosen.otherProteins:[])
+                   .concat(chosen&&chosen.dryHeat?chosen.dryHeat:[]);
   if(potAside.length){
     const o=document.createElement("div"); o.className="pot-out";
     const lab=document.createElement("span"); lab.className="po-l"; lab.textContent="set aside";
