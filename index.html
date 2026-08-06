@@ -961,7 +961,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.62</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.63</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -4692,9 +4692,14 @@ function riceCandidates(ingIds, R, dishes, AFF, opts){
   if(has("yam")||has("sweet_potato")||has("dried_shrimp"))
     add("yam","Yam rice","in_rice", has("yam")?"yam":(has("sweet_potato")?"sweet_potato":"dried_shrimp"),"cooked in the rice \u2014 yam and dried shrimp fried through the grain (Teochew)");
 
-  // sliced fish leads congee (fish slice porridge) — matches library rice_fish_slices_congee
+  // sliced fish leads congee (fish slice porridge) — matches library rice_fish_slices_congee.
+  // A WHOLE fish (pomfret, seabass, threadfin) is NOT a rice ingredient — you steam or fry it, you
+  // don't lay a whole pomfret on rice or drop it in congee (congee is made with slices). So whole
+  // fish are set aside for rice, not turned into "Pomfret rice" / "Pomfret congee".
+  const wholeFishes=proteins.filter(p=>{try{return isWholeFish(p,R);}catch(e){return false;}});
   if(proteins.includes("fish_slices"))
     add("congee","Fish slice congee","congee","fish_slices","rice simmered soft into porridge, sliced fish poached in at the end");
+  // whole fish are noted for set-aside below (see wholeFishAside), never made into a rice dish.
   // over-rice styles
   if(has("japanese_curry_roux")||has("curry_powder"))
     add("curry","Curry rice","over_rice", proteins[0]||"potato","rice separate \u2014 a thick curry ladled over");
@@ -4713,7 +4718,7 @@ function riceCandidates(ingIds, R, dishes, AFF, opts){
   const FISH_IDS=["fish","salmon","cod","snapper","seabass","threadfin","pomfret","mackerel","tuna","sardine","grouper"];
   const fishes=proteins.filter(p=>FISH_IDS.includes(p));
   let styledSubjects=new Set(out.map(o=>o.subject));
-  fishes.filter(f=>!styledSubjects.has(f)).forEach(f=>{
+  fishes.filter(f=>!styledSubjects.has(f) && !(function(){try{return isWholeFish(f,R);}catch(e){return false;}})()).forEach(f=>{
     add("fish_"+f, nm(f)+" rice","in_rice", f,"cooked in the rice \u2014 the fillet laid on top and steamed through as the grain cooks");
   });
 
@@ -4764,6 +4769,24 @@ function riceCandidates(ingIds, R, dishes, AFF, opts){
   }
   if(!out.length){
     add("herb","Herb rice","in_rice",null,"rice cooked with aromatics and herbs, in stock instead of water \u2014 a fragrant pilaf");
+  }
+  // a whole fish never leads or joins a rice dish — surface it as set aside (with the reason) on
+  // the leading card, so the cook sees the engine considered and ruled it out.
+  if(out.length && wholeFishes.length){
+    const shown=new Set(out.flatMap(c=>c.contents||[]));
+    out.forEach(card=>{
+      card.leftOut=(card.leftOut||[]).map(it=>{
+        const id=it.id||it;
+        if(wholeFishes.includes(id) && !shown.has(id))
+          return {id, why:"set aside \u2014 a whole fish is steamed or fried, not cooked into rice; slice it for congee"};
+        return it;
+      });
+      // add any whole fish not already listed
+      const listed=new Set(card.leftOut.map(x=>x.id||x));
+      wholeFishes.filter(f=>!shown.has(f)&&!listed.has(f)).forEach(f=>{
+        card.leftOut.push({id:f, why:"set aside \u2014 a whole fish is steamed or fried, not cooked into rice; slice it for congee"});
+      });
+    });
   }
   return out;
 }
@@ -9369,6 +9392,25 @@ function renderRice(){
     const w=document.createElement("span"); w.className="po-w";
     w.textContent="these can't share the rice's gentle heat and time \u2014 give them their own pan, then serve alongside";
     o.appendChild(w);
+    box.appendChild(o);
+  }
+
+  // ---- ingredients the engine set aside for this bowl (a whole fish, a second protein) ----
+  if(chosen.leftOut && chosen.leftOut.length){
+    const o=document.createElement("div"); o.className="pot-out";
+    const lab=document.createElement("span"); lab.className="po-l"; lab.textContent="set aside";
+    o.appendChild(lab);
+    chosen.leftOut.forEach(it=>{
+      const id=it.id||it;
+      const c=document.createElement("span"); c.className="po-c";
+      c.textContent=(REF.byId[id]||{}).name||id; o.appendChild(c);
+    });
+    const firstWhy=(chosen.leftOut[0]&&chosen.leftOut[0].why)||"";
+    if(firstWhy){
+      const w=document.createElement("span"); w.className="po-w";
+      w.textContent=firstWhy.replace(/^set aside \u2014 /,"");
+      o.appendChild(w);
+    }
     box.appendChild(o);
   }
 

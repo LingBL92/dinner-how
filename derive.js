@@ -3649,9 +3649,12 @@ function riceCandidates(ingIds, R, dishes, AFF, opts){
   if(has("yam")||has("sweet_potato")||has("dried_shrimp"))
     add("yam","Yam rice","in_rice", has("yam")?"yam":(has("sweet_potato")?"sweet_potato":"dried_shrimp"),"cooked in the rice \u2014 yam and dried shrimp fried through the grain (Teochew)");
 
-  // sliced fish leads congee (fish slice porridge) — matches library rice_fish_slices_congee
+  // sliced fish leads congee; a WHOLE fish belongs in congee too (fish porridge), not a "fillet
+  // on rice" bowl — you don't lay a whole pomfret on steamed rice.
+  const wholeFishes=proteins.filter(p=>{try{return isWholeFish(p,R);}catch(e){return false;}});
   if(proteins.includes("fish_slices"))
     add("congee","Fish slice congee","congee","fish_slices","rice simmered soft into porridge, sliced fish poached in at the end");
+  // a WHOLE fish is not a rice ingredient (steam or fry it); set aside below, never a rice dish.
   // over-rice styles
   if(has("japanese_curry_roux")||has("curry_powder"))
     add("curry","Curry rice","over_rice", proteins[0]||"potato","rice separate \u2014 a thick curry ladled over");
@@ -3670,7 +3673,7 @@ function riceCandidates(ingIds, R, dishes, AFF, opts){
   const FISH_IDS=["fish","salmon","cod","snapper","seabass","threadfin","pomfret","mackerel","tuna","sardine","grouper"];
   const fishes=proteins.filter(p=>FISH_IDS.includes(p));
   let styledSubjects=new Set(out.map(o=>o.subject));
-  fishes.filter(f=>!styledSubjects.has(f)).forEach(f=>{
+  fishes.filter(f=>!styledSubjects.has(f) && !(function(){try{return isWholeFish(f,R);}catch(e){return false;}})()).forEach(f=>{
     add("fish_"+f, nm(f)+" rice","in_rice", f,"cooked in the rice \u2014 the fillet laid on top and steamed through as the grain cooks");
   });
 
@@ -3720,6 +3723,21 @@ function riceCandidates(ingIds, R, dishes, AFF, opts){
   }
   if(!out.length){
     add("herb","Herb rice","in_rice",null,"rice cooked with aromatics and herbs, in stock instead of water \u2014 a fragrant pilaf");
+  }
+  if(out.length && wholeFishes.length){
+    const shown=new Set(out.flatMap(c=>c.contents||[]));
+    out.forEach(card=>{
+      card.leftOut=(card.leftOut||[]).map(it=>{
+        const id=it.id||it;
+        if(wholeFishes.includes(id) && !shown.has(id))
+          return {id, why:"set aside \u2014 a whole fish is steamed or fried, not cooked into rice; slice it for congee"};
+        return it;
+      });
+      const listed=new Set(card.leftOut.map(x=>x.id||x));
+      wholeFishes.filter(f=>!shown.has(f)&&!listed.has(f)).forEach(f=>{
+        card.leftOut.push({id:f, why:"set aside \u2014 a whole fish is steamed or fried, not cooked into rice; slice it for congee"});
+      });
+    });
   }
   return out;
 }
