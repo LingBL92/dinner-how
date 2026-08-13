@@ -319,6 +319,24 @@ button.ing-tag:hover{border-color:var(--cool)}
   background:var(--cool);color:#fff;border-radius:24px;padding:11px 17px;font-size:14px;font-weight:600;
   box-shadow:0 3px 14px rgba(27,16,11,.22);display:flex;align-items:center;gap:8px}
 .basket-pill .bp-ic{font-size:13px}
+/* the "now adding ___" banner: appears when a new dish is started from a suggested ingredient.
+   position:fixed so it never shifts layout; the container ignores pointer events so it can't
+   block the canvas or the method toggles behind it — only the banner and its buttons are live. */
+#now-adding{position:fixed;top:64px;left:0;right:0;z-index:170;display:flex;justify-content:center;
+  pointer-events:none;padding:0 14px}
+#now-adding .na-card{pointer-events:auto;max-width:440px;width:100%;background:var(--panel);
+  border:1px solid var(--gold);border-left:3px solid var(--gold);border-radius:12px;
+  box-shadow:0 6px 22px rgba(27,16,11,.16);padding:11px 13px;display:flex;align-items:flex-start;gap:11px;
+  transform:translateY(-14px);opacity:0;transition:transform .22s ease,opacity .22s ease}
+#now-adding.in .na-card{transform:translateY(0);opacity:1}
+#now-adding .na-body{flex:1;min-width:0}
+#now-adding .na-t{font-size:14px;font-weight:600;line-height:1.25;color:var(--ink)}
+#now-adding .na-t b{color:var(--gold)}
+#now-adding .na-sub{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.3}
+#now-adding .na-x{flex:none;border:none;background:none;cursor:pointer;color:var(--muted);
+  font-size:16px;line-height:1;padding:2px 4px;border-radius:6px}
+#now-adding .na-x:hover{background:rgba(27,16,11,.06);color:var(--ink)}
+@media (max-width:640px){ #now-adding{top:auto;bottom:74px} }
 .add-basket-btn{margin-top:14px;width:100%;padding:12px;border:none;border-radius:11px;
   background:var(--cool);color:#fff;font-size:14.5px;font-weight:600;cursor:pointer}
 .add-basket-btn.in{background:var(--panel);color:var(--muted);border:1px solid rgba(50,117,100,.25)}
@@ -401,6 +419,11 @@ button.ing-tag:hover{border-color:var(--cool)}
 .bk-btns{display:flex;gap:8px;margin-top:20px}
 .bk-copy{flex:1;padding:12px;border:none;border-radius:11px;background:var(--cool);color:#fff;font-size:14px;font-weight:600;cursor:pointer}
 .bk-clear{padding:12px 16px;border:1px solid rgba(50,117,100,.25);border-radius:11px;background:transparent;color:var(--muted);font-size:14px;cursor:pointer}
+.bk-btns{display:flex;gap:8px;flex-wrap:wrap}
+.bk-share{flex:1;min-width:130px;padding:12px;border:none;border-radius:11px;background:var(--cool);color:#fff;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}
+.bk-wa{flex:1;min-width:130px;padding:12px;border:none;border-radius:11px;background:#25D366;color:#fff;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;text-decoration:none}
+.bk-2nd{padding:11px 14px;border:1px solid rgba(50,117,100,.28);border-radius:11px;background:transparent;color:var(--cool);font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.bk-2nd-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 /* cook-together schedule inside the basket */
 .ck-ready{font-family:var(--font-title);font-size:16px;font-weight:600;color:var(--cool);margin-bottom:10px}
 .ck-rows{display:flex;flex-direction:column;gap:6px}
@@ -961,7 +984,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.65</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.69</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5317,11 +5340,12 @@ if(typeof window!=="undefined"){
     // ---- group every event by session, so we can measure the funnel per person ----
     const sids=[...new Set(arr.map(r=>r.sid))];
     const sess={};
-    sids.forEach(s=>sess[s]={events:new Set(), composed:0, added:0, copied:0, dishes:new Set()});
+    sids.forEach(s=>sess[s]={events:new Set(), composed:0, started:0, added:0, copied:0, dishes:new Set()});
     arr.forEach(r=>{
       const s=sess[r.sid]; if(!s) return;
       s.events.add(r.event);
       if(r.event==="dish_composed") s.composed++;
+      if(r.event==="new_dish_started") s.started++;
       if(r.event==="dish_added_to_basket"){ s.added++; if(r.dish) s.dishes.add(r.dish); }
       if(r.event==="list_copied") s.copied++;
     });
@@ -5330,16 +5354,18 @@ if(typeof window!=="undefined"){
     // ---- the conversion funnel: how far does a session get? ----
     const nSessions   = S.length;
     const nComposed   = S.filter(s=>s.composed>0).length;                 // reached a dish
+    const nStarted    = S.filter(s=>s.started>0).length;                  // started a new dish from a suggestion (no dish yet)
     const nAdded      = S.filter(s=>s.added>0).length;                    // added to basket  ← the conversion
     const nCopied     = S.filter(s=>s.copied>0).length;                   // took the shopping list
     const pct=(a,b)=>b?((100*a/b).toFixed(0)+"%"):"\u2014";
 
     console.log("%cDinner How \u2014 conversion funnel","font-weight:bold;font-size:13px");
     console.table({
-      "1. sessions":              {count:nSessions, "of sessions":"100%"},
-      "2. composed a dish":       {count:nComposed, "of sessions":pct(nComposed,nSessions)},
-      "3. added to basket":       {count:nAdded,    "of sessions":pct(nAdded,nSessions)},
-      "4. copied shopping list":  {count:nCopied,   "of sessions":pct(nCopied,nSessions)}
+      "1. sessions":               {count:nSessions, "of sessions":"100%"},
+      "2. composed a dish":        {count:nComposed, "of sessions":pct(nComposed,nSessions)},
+      "3. started dish (suggested)":{count:nStarted, "of sessions":pct(nStarted,nSessions)},
+      "4. added to basket":        {count:nAdded,    "of sessions":pct(nAdded,nSessions)},
+      "5. copied shopping list":   {count:nCopied,   "of sessions":pct(nCopied,nSessions)}
     });
     // headline rates people actually quote
     const headline={
@@ -5373,6 +5399,14 @@ if(typeof window!=="undefined"){
       };
       console.log("%cIncremental basket (for the retailer story)","font-weight:bold;color:#31745f");
       console.table(basket);
+    }
+
+    // ---- how did people take the list? (share / whatsapp / download / copy) ----
+    if(copies.length){
+      const via={};
+      copies.forEach(r=>{ const v=r.via||"copy"; via[v]=(via[v]||0)+1; });
+      console.log("%cHow lists were taken","font-weight:bold");
+      console.table(via);
     }
 
     const summary={sessions:nSessions, composed:nComposed, added_to_basket:nAdded,
@@ -6098,7 +6132,8 @@ function openMealAddCard(id){
     TRACK.log("basket_ingredient_added",{dish:d.name, id:id, source:"meal_suggestion"});
     wrap.remove(); persistSession(); updateBasketPill(); openBasket();
   });
-  // make a new dish: drop it into the ingredient canvas and open the composer for it
+  // make a new dish: drop it into the ingredient canvas and open the composer for it — jumping to
+  // the method (stir-fry or steam) that actually makes THIS ingredient the main of the dish.
   card.querySelector("[data-mnew]").onclick=()=>{
     FLOW.active.add(id);
     if(FLOW.benched) FLOW.benched.clear();
@@ -6108,11 +6143,111 @@ function openMealAddCard(id){
       const g=groupFor(ing);
       if(!FLOW.comps.some(c=>c.key===g.key)) FLOW.comps.push({key:g.key,title:g.title,leaves:g.leaves,dx:0,dy:0});
     }
-    TRACK.log("ingredient_added",{id:id, source:"meal_suggestion_newdish"});
+    // choose the method whose top dish features this ingredient as its subject
+    const method=bestMethodForSubject(id);
+    FLOW.mode="compose"; FLOW.compose=method; FLOW.mealPick=null; FLOW.potPath=null; FLOW.types.clear();
+    // TRUTHFUL SIGNAL: this is NOT a dish added to the basket — no dish exists yet. It's the cook
+    // choosing to START a new dish around a suggested ingredient. Logged as its own event so the
+    // funnel doesn't count it as basket growth (that only happens if they later "Add to basket").
+    TRACK.log("new_dish_started",{id:id, method:method, source:"suggestion", basket_size:FLOW.active.size});
     wrap.remove(); closeBasket(); persistSession();
+    if(typeof renderType==="function") renderType();
     if(typeof renderComps==="function") renderComps();
     if(typeof recompute==="function") recompute();
+    showNowAdding(id, method);
   };
+}
+
+/* When the cook starts a NEW dish from a single ingredient, jump to the method that makes THAT
+   ingredient the star — preferring stir-fry or steam (the two "one main + a sauce" methods), and
+   confirming with the composer that the ingredient actually leads the top dish rather than being
+   set aside. Falls back sensibly for bases (noodles/rice) and pure soup proteins. */
+function bestMethodForSubject(id){
+  const R=REF, i=R.byId[id]||{};
+  const featured=(cands)=>{
+    const c=(cands||[])[0]; if(!c) return false;
+    const lead=c.leadProtein||c.subject||c.species||(c.contents&&c.contents.find(x=>((R.byId[x]||{}).category)==="proteins"));
+    if(lead===id) return true;
+    if(lead){ try{ if(typeof potSpeciesWord==="function" && potSpeciesWord(lead,R)===potSpeciesWord(id,R)) return true; }catch(e){} }
+    // veg-led dishes leave subject/species empty and just carry the ingredient in contents —
+    // treat the ingredient as featured if it's the main solid in the dish (no protein outranks it).
+    const cont=c.contents||[];
+    if(cont.includes(id)){
+      const hasOtherProtein=cont.some(x=>x!==id && ((R.byId[x]||{}).category)==="proteins");
+      if(!hasOtherProtein) return true;
+    }
+    return false;
+  };
+  const ids=[id];   // judge what THIS ingredient becomes on its own — pantry staples (egg) would
+                    // otherwise steal the lead and mis-route (broccoli+pantry-egg reads as egg stir-fry)
+  const tryM=(fn)=>{ try{ return featured(fn(ids,R,DISHES,AFF,{})); }catch(e){ return false; } };
+
+  // a base ingredient defines the dish type outright
+  if(/rice|brown_rice/.test(id)) return "ricebowl";
+  if(/noodle|bee_hoon|mee|hor_fun|udon|kway|glass_noodles/.test(id)) return "noodles";
+
+  // fish — whole or filleted — belongs on a steamer plate first, even though a fry technically works
+  let whole=false; try{ whole=isWholeFish(id,R); }catch(e){}
+  const filleted=(i.provides||[]).includes("filleted");
+  if((whole||filleted) && i.category==="proteins" && tryM(steamCandidates)) return "steam";
+
+  // prefer stir-fry, then steam — the two methods that spotlight one main
+  if(tryM(wokCandidates))   return "stirfry";
+  if(tryM(steamCandidates)) return "steam";
+
+  // not suited to a quick fry/steam? route by nature: a soup protein → one-pot, a roaster → bake
+  if(i.category==="proteins"){
+    if(!BROTH_BASE[id] || !BROTH_BASE[id].noBroth) return "onepot";  // most proteins make a soup
+    return "stirfry";
+  }
+  if(typeof ROAST_VEG!=="undefined" && ROAST_VEG.has(id)) return "bake";
+  return "stirfry";   // leafy greens etc. — a quick stir-fry is the honest default
+}
+
+/* The floating "now adding ___" banner. Shown only when a new dish is started from a suggested
+   ingredient. It narrates what that ingredient is doing in the current method (leads it, or is set
+   aside with a reason), then gets out of the way — it never blocks the canvas or the toggles, and
+   it clears itself the next time the person composes something else. */
+let __nowAddingId=null;
+function showNowAdding(id, method){
+  __nowAddingId=id;
+  const R=REF, name=((R.byId[id]||{}).name)||id;
+  const methodLabel={stirfry:"stir-fry",steam:"steam",ricebowl:"rice bowl",noodles:"noodles",
+    onepot:"one-pot",bake:"bake"}[method]||method;
+  // does the new ingredient actually lead the dish this method produced, or is it set aside?
+  let sub="", leads=true;
+  try{
+    const fn={stirfry:wokCandidates,steam:steamCandidates,ricebowl:riceCandidates,
+      noodles:noodleCandidates,onepot:potCandidates,bake:bakeCandidates}[method];
+    // judge leadership on the ingredient itself (plus a base if it needs one), not the whole
+    // pantry — otherwise the always-present pantry egg reads as "another protein" and hides the lead.
+    const probe = (method==="ricebowl") ? [id,"rice"]
+                : (method==="noodles")  ? [id,"yellow_noodle"] : [id];
+    const c=(fn?fn(probe,R,DISHES,AFF,{}):[])[0];
+    if(c){
+      const cont=c.contents||[];
+      const otherProt=cont.some(x=>x!==id && x!=="egg" && ((R.byId[x]||{}).category)==="proteins");
+      leads = (cont.includes(id) || c.subject===id || c.leadProtein===id) && !otherProt;
+      sub = leads ? ("It\u2019s the main of your "+methodLabel+" \u2014 toggle anything else as usual.")
+                  : ("Working it into your "+methodLabel+". Switch method or tap ingredients to reshape the dish.");
+    } else {
+      sub="Added to your ingredients \u2014 pick a method and it\u2019ll shape a dish.";
+    }
+  }catch(e){ sub="Added to your ingredients."; }
+
+  let host=document.getElementById("now-adding");
+  if(!host){ host=document.createElement("div"); host.id="now-adding"; document.body.appendChild(host); }
+  host.innerHTML="<div class=\"na-card\">"+
+    "<div class=\"na-body\"><div class=\"na-t\">Adding <b>"+name+"</b></div>"+
+    "<div class=\"na-sub\">"+sub+"</div></div>"+
+    "<button class=\"na-x\" aria-label=\"dismiss\">\u00d7</button></div>";
+  host.querySelector(".na-x").onclick=hideNowAdding;
+  requestAnimationFrame(()=>host.classList.add("in"));
+}
+function hideNowAdding(){
+  __nowAddingId=null;
+  const host=document.getElementById("now-adding");
+  if(host){ host.classList.remove("in"); setTimeout(()=>{ if(!__nowAddingId && host) host.innerHTML=""; },240); }
 }
 function openBasketAddCard(dishIdx){
   const R=REF, d=FLOW.basket[dishIdx]; if(!d) return;
@@ -6143,7 +6278,7 @@ function openBasketAddCard(dishIdx){
     const add=b.getAttribute("data-add2");
     d.contents=(d.contents||[]).concat([add]);
     if(typeof rebuildBasketDish==="function") rebuildBasketDish(dishIdx);
-    TRACK.log("basket_ingredient_added",{dish:d.name, id:add});
+    TRACK.log("basket_ingredient_added",{dish:d.name, id:add, source:"basket_add_card"});
     wrap.remove(); persistSession(); updateBasketPill(); openBasket();
   });
 }
@@ -6366,8 +6501,21 @@ function fillBasketPanel(panel){
     })()+
     (buy.some(b=>b.sourced)?"<div class=\"bk-note\">\u2726 added from a suggestion</div>":"")+
     cookHtml+
-    "<div class=\"bk-btns\"><button class=\"bk-copy\">Copy shopping list</button>"+
-      "<button class=\"bk-clear\">Clear</button></div>";
+    (function(){
+      // mobile: lead with the OS share sheet (WhatsApp, Messages, etc. one tap). desktop: copy.
+      const canShare = typeof navigator!=="undefined" && !!navigator.share;
+      const primary = canShare
+        ? "<button class=\"bk-share\">\u2191 Send list</button>"
+        : "<button class=\"bk-copy\">Copy shopping list</button>";
+      return "<div class=\"bk-btns\">"+primary+
+        "<a class=\"bk-wa\" data-wa=\"1\" target=\"_blank\" rel=\"noopener\">WhatsApp</a>"+
+        "</div>"+
+        "<div class=\"bk-2nd-row\">"+
+          "<button class=\"bk-2nd\" data-dl=\"1\">\u2913 Download</button>"+
+          (canShare?"<button class=\"bk-2nd\" data-copy=\"1\">Copy</button>":"")+
+          "<button class=\"bk-clear bk-2nd\">Clear</button>"+
+        "</div>";
+    })();
   // the cook-together plan IS the dish list now — each row is a dish, expandable to edit.
   // Placed near the top, right after the header, so dishes and their timing are one thing.
   if(plan){
@@ -6417,22 +6565,60 @@ function wireBasketPanel(panel){
     openMealAddCard(b.getAttribute("data-ideate-add"));
   });
   panel.querySelector(".bk-clear").onclick=()=>{ FLOW.basket=[]; persistSession(); updateBasketPill(); closeBasket(); };
-  panel.querySelector(".bk-copy").onclick=()=>{
-    const text=buy.map(b=>"\u2022 "+b.name).join("\n");
-    const done=()=>{
-      const srcd=buy.filter(b=>b.sourced);
-      TRACK.log("list_copied", {items:buy.length, dishes:FLOW.basket.length,
-        sourced:srcd.length, sourced_ids:srcd.map(b=>b.id).join("|"),
-        buy_ids:buy.map(b=>b.id).join("|")});
-      const c=panel.querySelector(".bk-copy"); if(c){ c.textContent="Copied \u2713"; setTimeout(()=>{c.textContent="Copy shopping list";},1600);} };
-    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
+
+  // one shared builder for the list text, and one shared logger so every export path is tracked
+  // the same way — with a `via` field telling us HOW they took it (share / whatsapp / download / copy).
+  const listTitle="\ud83d\uded2 Dinner How \u2014 shopping list";
+  const listText=listTitle+"\n\n"+buy.map(b=>"\u2022 "+b.name).join("\n")+
+    "\n\nFor: "+FLOW.basket.map(d=>d.name).join(", ");
+  const logExport=(via)=>{
+    const srcd=buy.filter(b=>b.sourced);
+    TRACK.log("list_copied", {items:buy.length, dishes:FLOW.basket.length, via:via,
+      sourced:srcd.length, sourced_ids:srcd.map(b=>b.id).join("|"),
+      buy_ids:buy.map(b=>b.id).join("|")});
   };
+  const flash=(sel,msg,revert)=>{ const c=panel.querySelector(sel); if(c){ const o=c.textContent; c.textContent=msg; setTimeout(()=>{c.textContent=revert||o;},1600);} };
+
+  // primary: native share sheet (mobile) — opens WhatsApp / Messages / Notes / mail in one tap
+  const shareBtn=panel.querySelector(".bk-share");
+  if(shareBtn) shareBtn.onclick=()=>{
+    if(navigator.share){
+      navigator.share({title:"Dinner How shopping list", text:listText})
+        .then(()=>logExport("share")).catch(()=>{});
+    }
+  };
+  // WhatsApp direct — a guaranteed option on every platform (app on mobile, web on desktop)
+  const waBtn=panel.querySelector("[data-wa]");
+  if(waBtn){ waBtn.href="https://wa.me/?text="+encodeURIComponent(listText);
+    waBtn.onclick=()=>{ logExport("whatsapp"); }; }
+  // download as a .txt the person can keep / open in Notes
+  const dlBtn=panel.querySelector("[data-dl]");
+  if(dlBtn) dlBtn.onclick=()=>{
+    try{
+      const blob=new Blob([listText],{type:"text/plain"});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a"); a.href=url; a.download="shopping-list.txt";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+      logExport("download"); flash("[data-dl]","Downloaded \u2713","\u2913 Download");
+    }catch(e){ /* fall back to copy if blobs are blocked */ }
+  };
+  // copy — the desktop primary, and a secondary everywhere else
+  const doCopy=(sel,revert)=>{
+    const done=()=>{ logExport("copy"); flash(sel,"Copied \u2713",revert); };
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(listText).then(done,done); else done();
+  };
+  const copyMain=panel.querySelector(".bk-copy"); if(copyMain) copyMain.onclick=()=>doCopy(".bk-copy","Copy shopping list");
+  const copy2nd=panel.querySelector("[data-copy]"); if(copy2nd) copy2nd.onclick=()=>doCopy("[data-copy]","Copy");
 }
 function closeBasket(){ const b=el("basket"); if(b&&b.remove) b.remove(); }
 
 function toggleIng(id){
   const adding=!FLOW.active.has(id);
   FLOW.active.has(id)?FLOW.active.delete(id):FLOW.active.add(id);
+  // the "now adding" banner is about ONE ingredient; touching a different one means attention has
+  // moved on, so let the banner go. (Removing the tracked one obviously clears it too.)
+  if(__nowAddingId && (id!==__nowAddingId || !adding)) hideNowAdding();
   TRACK.log(adding?"ingredient_added":"ingredient_removed", {id:id, basket_size:FLOW.active.size});
   // update just this port in place — rebuilding the list would reset the scroll position
   const dot=document.querySelector('[data-port="'+id+'"]');
@@ -6609,6 +6795,11 @@ function toggleCompose(id){
     TRACK.log("dish_composed", {method:id, basket_size:FLOW.active.size}); }
   clearGrocery();          // the old list belongs to the mode you just left
   renderType(); recompute();
+  // if we're tracking a just-added ingredient, keep it visible: re-narrate for the method they
+  // switched to (so "Adding chicken" follows them, and tells them if chicken now leads or is set
+  // aside here). If they deselected the method entirely, let the banner go.
+  if(__nowAddingId && FLOW.compose) showNowAdding(__nowAddingId, FLOW.compose);
+  else if(!FLOW.compose) hideNowAdding();
 }
 
 function composeInputIds(){

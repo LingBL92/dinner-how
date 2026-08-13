@@ -52,14 +52,16 @@ def summarise(df):
     for _, r in df.iterrows():
         s = r.get("sid","")
         if not s: continue
-        d = sessions.setdefault(s, {"composed":0,"added":0,"copied":0})
+        d = sessions.setdefault(s, {"composed":0,"started":0,"added":0,"copied":0})
         e = r.get("event","")
         if e == "dish_composed": d["composed"] += 1
+        elif e == "new_dish_started": d["started"] += 1   # started a new dish from a suggestion — NO dish in basket yet
         elif e == "dish_added_to_basket": d["added"] += 1
         elif e == "list_copied": d["copied"] += 1
 
     n_sessions = len(sessions)
     n_composed = sum(1 for d in sessions.values() if d["composed"] > 0)
+    n_started  = sum(1 for d in sessions.values() if d["started"]  > 0)
     n_added    = sum(1 for d in sessions.values() if d["added"]    > 0)
     n_copied   = sum(1 for d in sessions.values() if d["copied"]   > 0)
 
@@ -78,8 +80,9 @@ def summarise(df):
     out("  " + "-"*44)
     out(f"  1. sessions ................ {n_sessions:>5}   100%")
     out(f"  2. composed a dish ......... {n_composed:>5}   {pct(n_composed,n_sessions):>4}")
-    out(f"  3. added to basket ......... {n_added:>5}   {pct(n_added,n_sessions):>4}   ← conversion")
-    out(f"  4. copied shopping list .... {n_copied:>5}   {pct(n_copied,n_sessions):>4}   ← intent to shop")
+    out(f"  3. started dish (suggested)  {n_started:>5}   {pct(n_started,n_sessions):>4}   (no dish yet — a lead)")
+    out(f"  4. added to basket ......... {n_added:>5}   {pct(n_added,n_sessions):>4}   ← conversion")
+    out(f"  5. copied shopping list .... {n_copied:>5}   {pct(n_copied,n_sessions):>4}   ← intent to shop")
     out("")
     out("  KEY RATES")
     out("  " + "-"*44)
