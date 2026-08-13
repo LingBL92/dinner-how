@@ -3925,14 +3925,19 @@ function noodleCandidates(ingIds, R, dishes, AFF, opts){
     const hits=(dir.markers||[]).filter(m=>set.has(m)).length;
     if(hits < (dir.need||0)) return;
     const isDefining=(dir.defining||[]).some(m=>set.has(m));   // a defining marker forces this dish
-    const fit=noodleFitOf(dir, base);
+    // If the cook only has the GENERIC "noodles" but this dish has a canonical noodle (laksa is bee
+    // hoon, char kway teow is hor fun), name and picture it with the canonical noodle — the stall
+    // wouldn't serve laksa on nondescript "noodles". A SPECIFIC noodle the cook chose is respected.
+    const dishBase = (base==="noodles" && dir.canonical && dir.canonical[0]) ? dir.canonical[0] : base;
+    const dishBaseName=(R.byId[dishBase]||{}).name||dishBase;
+    const fit=noodleFitOf(dir, dishBase);
     // name it honestly: the proper name when it's the usual noodle, otherwise say which
     // when a style is named after its noodle ("fried bee hoon"), swapping the noodle makes
     // that name contradictory — fall back to a neutral name for the style.
     const styleName = fit==="canonical" ? dir.label : (dir.neutralLabel||dir.label);
-    const label = fit==="canonical" ? dir.label : styleName+" with "+baseName.replace(/ \(.*\)/,"");
+    const label = fit==="canonical" ? dir.label : styleName+" with "+dishBaseName.replace(/ \(.*\)/,"");
     const fitNote = fit==="canonical" ? null
-      : fit==="works" ? baseName.replace(/ \(.*\)/,"")+" is a common swap for this"
+      : fit==="works" ? dishBaseName.replace(/ \(.*\)/,"")+" is a common swap for this"
       : "usually made with "+((dir.canonical||[]).map(n=>(R.byId[n]||{}).name||n).join(" or ").replace(/ \(.*?\)/g,""))+" \u2014 this is your own take";
     // a bowl takes one green and a couple of others — chosen for THIS sauce
     const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[], explicit:(opts&&opts.explicit)||null, benched:(opts&&opts.benched)||null});
@@ -3997,12 +4002,16 @@ function noodleCandidates(ingIds, R, dishes, AFF, opts){
       ? pj.extras.filter(id=>!keepProteins.has(id)).map(id=>({id,
           why:"one main is enough in a bowl \u2014 "+((R.byId[pj.lead]||{}).name||"the first")+" leads this one"}))
       : [];
+    // if we upgraded a generic "noodles" to the dish's canonical noodle, reflect that in the
+    // contents too, so the ingredient chips and the image key show the real noodle (bee hoon),
+    // not the generic placeholder.
+    const dishContents = (dishBase!==base) ? mine.map(id=>id===base?dishBase:id) : mine;
     out.push({
       key:"noodle_"+dir.key,
       label, mode:dir.mode, dirKey:dir.key, direction:dir, isDefining,
-      subject:base, subjectName:baseName,
+      subject:dishBase, subjectName:dishBaseName,
       note:dir.note, fit, fitNote, hits,
-      contents:mine,
+      contents:dishContents,
       leftOut:vpick.leftOut
         .concat(wholeFishAside)
         .concat(droppedProteins)
