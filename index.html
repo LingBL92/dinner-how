@@ -984,7 +984,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.70</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.72</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5008,30 +5008,69 @@ function noodleCandidates(ingIds, R, dishes, AFF, opts){
       : "usually made with "+((dir.canonical||[]).map(n=>(R.byId[n]||{}).name||n).join(" or ").replace(/ \(.*?\)/g,""))+" \u2014 this is your own take";
     // a bowl takes one green and a couple of others — chosen for THIS sauce
     const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[], explicit:(opts&&opts.explicit)||null, benched:(opts&&opts.benched)||null});
-    // one main protein per bowl. A soup can carry a second (sliced meat + a fishball);
-    // a fried noodle should not read as three meats piled on. A WHOLE fish never goes into a
-    // noodle bowl — you don't toss a whole pomfret into mee goreng; it's a dish of its own, so
-    // set it aside (fish for noodles means slices or a fishcake, which aren't whole fish).
+    // ---- THREE-TIER PROTEIN MODEL (mirrors derive.js) ----
+    // base takes proteins per its kind: "composite" bases (paste/broth-defined) accept any mix;
+    // "identity" bases are named for one protein — that protein belongs, others are UNUSUAL (tier 2,
+    // set aside with a "not usual but you can add" note, or kept-and-noted if the cook explicitly
+    // added them). A whole fish is always excluded (tier 3).
+    const NOODLE_PROTEIN_RULE = {
+      fish_soup:    {kind:"identity", belongs:["fish_slices","fish_cake"]},
+      fishball_soup:{kind:"identity", belongs:["fish_cake","fish_ball","fish_slices"]},
+      hokkien_mee:  {kind:"identity", belongs:["prawn","squid","pork_belly"]},
+      sliced_meat:  {kind:"identity", belongs:["beef_slices","pork_loin","chicken_breast","pork_mince","fish_cake"]},
+      char_kway_teow:{kind:"identity", belongs:["cockles","prawn","fish_cake","lap_cheong"]}
+    };
+    const rule = NOODLE_PROTEIN_RULE[dir.key] || {kind:"composite"};
+    const explicitSet = new Set((opts&&opts.explicit)||[]);
+
     const noodleProteinIds=mineAll.filter(id=>!isWholeFish(id,R));
     const wholeFishAside=mineAll.filter(id=>isWholeFish(id,R))
       .map(id=>({id, why:"set aside \u2014 a whole fish is its own dish; noodles take fish slices or a fishcake, not a whole fish"}));
     const pj=pickLeadProtein(noodleProteinIds, R);
     const keepProteins = new Set([pj.lead].filter(Boolean));
-    if(dir.mode==="soup" && pj.extras[0]) keepProteins.add(pj.extras[0]);
+    const unusualAside=[];
+
+    if(rule.kind==="composite"){
+      if(dir.mode==="soup" && pj.extras[0]) keepProteins.add(pj.extras[0]);
+    } else {
+      const belongs=new Set(rule.belongs||[]);
+      noodleProteinIds.forEach(id=>{
+        if(((R.byId[id]||{}).category)!=="proteins") return;
+        if(keepProteins.has(id)) return;
+        if(belongs.has(id)){ keepProteins.add(id); return; }
+        const pName=(R.byId[id]||{}).name||id;
+        const leadName=(R.byId[pj.lead]||{}).name||"the main";
+        if(explicitSet.has(id)){
+          keepProteins.add(id);
+          unusualAside.push({id, kept:true,
+            why:pName+" isn\u2019t usual in "+label.replace(/ with .*/,"")+", but you added it \u2014 in it goes"});
+        } else {
+          unusualAside.push({id, kept:false,
+            why:pName+" isn\u2019t usual in "+label.replace(/ with .*/,"")+" \u2014 "+leadName+" leads it, but you can add "+pName+" if you like"});
+        }
+      });
+    }
     const mine=vpick.used.filter(id=>{
       if(isWholeFish(id,R)) return false;                       // never plate a whole fish in noodles
       if(((R.byId[id]||{}).category)!=="proteins") return true;
       return keepProteins.has(id);
     });
-    const droppedProteins=pj.extras.filter(id=>!keepProteins.has(id));
+    const droppedProteins=(rule.kind==="composite")
+      ? pj.extras.filter(id=>!keepProteins.has(id)).map(id=>({id,
+          why:"one main is enough in a bowl \u2014 "+((R.byId[pj.lead]||{}).name||"the first")+" leads this one"}))
+      : [];
     out.push({
       key:"noodle_"+dir.key,
       label, mode:dir.mode, dirKey:dir.key, direction:dir, isDefining,
       subject:base, subjectName:baseName,
       note:dir.note, fit, fitNote, hits,
       contents:mine,
-      leftOut:vpick.leftOut.concat(wholeFishAside).concat(droppedProteins.map(id=>({id,
-        why:"one main is enough in a bowl \u2014 "+((R.byId[pj.lead]||{}).name||"the first")+" leads this one"})))
+      leftOut:vpick.leftOut
+        .concat(wholeFishAside)
+        .concat(droppedProteins)
+        .concat(unusualAside.filter(u=>!u.kept))
+        .map(x=>({id:x.id, why:x.why})),
+      unusualKept:unusualAside.filter(u=>u.kept).map(u=>({id:u.id, why:u.why}))
     });
   });
   // strongest signal first, then the pairing that suits the noodle best
@@ -6571,7 +6610,6 @@ function wireBasketPanel(panel){
   // The message people send to WhatsApp / Notes. Built to read like something a person shares,
   // not a raw dump: a title banner, the dinner line-up numbered, then the grocery list.
   const dishLines=FLOW.basket.map((d,i)=>(i+1)+". "+d.name).join("\n");
-  const itemLines=buy.map(b=>"\u25AB\uFE0E "+b.name).join("\n");   // ▫︎ a light, widely-rendered bullet
   // a friendly local date + time stamp, e.g. "Thu, 14 Aug \u00b7 7:32 pm"
   const stamp=(function(){
     try{
@@ -6582,12 +6620,30 @@ function wireBasketPanel(panel){
       return day+" \u00b7 "+hh+":"+(mm<10?"0"+mm:mm)+" "+ampm;
     }catch(e){ return ""; }
   })();
+  // split the basket into what you need to buy vs. what you already keep, and group each by type
+  // so the message reads like a real shopping list you walk a store with.
+  const CAT_LABEL={proteins:"Meat & seafood", vegetables:"Vegetables", starches:"Rice & noodles",
+    pastes:"Sauces & pastes", fruits:"Fruit", dairy:"Dairy", condiments:"Condiments"};
+  const CAT_ORDER=["proteins","vegetables","starches","pastes","dairy","fruits","condiments"];
+  const groupByType=(items)=>{
+    const g={};
+    items.forEach(it=>{ const c=((REF.byId[it.id]||{}).category)||"other"; (g[c]=g[c]||[]).push(it.name); });
+    const blocks=[];
+    CAT_ORDER.concat(Object.keys(g).filter(c=>!CAT_ORDER.includes(c))).forEach(c=>{
+      if(!g[c]||!g[c].length) return;
+      blocks.push((CAT_LABEL[c]||"Other")+":\n"+g[c].map(n=>"- "+n).join("\n"));
+    });
+    return blocks.join("\n\n");
+  };
+  const sl=(typeof basketShoppingList==="function")?basketShoppingList():{toBuy:buy,have:[]};
+  const buySection = sl.toBuy.length ? ("NEED TO BUY\n"+groupByType(sl.toBuy)) : "";
+  const haveSection= sl.have.length  ? ("ALREADY SHORTLISTED\n"+sl.have.map(h=>"- "+h.name).join("\n")) : "";
   const listText=
-    "\uD83C\uDF7D\uFE0F  DINNER HOW\n"+                       // 🍽️ plate-and-cutlery — near-universal glyph
+    "DINNER HOW\n"+
     (stamp?stamp+"\n":"")+
     "\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\n"+
     "Dinner today is:\n"+dishLines+"\n\n"+
-    "\uD83D\uDED2  Shopping list\n"+itemLines+
+    [buySection, haveSection].filter(Boolean).join("\n\n")+
     "\n\nMade with Dinner How";
   const logExport=(via)=>{
     const srcd=buy.filter(b=>b.sourced);
@@ -9968,6 +10024,15 @@ function renderNoodle(){
     w.textContent=anyBack ? "tap a set-aside vegetable to bring it back into the bowl" : chosen.leftOut[0].why;
     o.appendChild(w);
     box.appendChild(o);
+  }
+
+  // ---- an unusual protein the cook deliberately added: it rode along, with an honest note ----
+  if(chosen.unusualKept && chosen.unusualKept.length){
+    chosen.unusualKept.forEach(u=>{
+      const n=document.createElement("div"); n.className="bk-note";
+      n.textContent="\u2726 "+u.why;
+      box.appendChild(n);
+    });
   }
 
   // ---- what can't go in the bowl ----

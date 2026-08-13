@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dinner How? — System Architecture</title>
+<style>
+  :root{
+    --paper:#fdfaf5; --panel:#fffdf9; --line:#dccdba; --ink:#1b100b; --muted:#856445;
+    --cool:#327564; --green:#327564; --gold:#a87218; --ember:#b61011;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    line-height:1.55;padding:30px 18px 80px}
+  .wrap{max-width:900px;margin:0 auto}
+  h1{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:29px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:15px;margin:0 0 22px;max-width:640px}
+  h2{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:20px;margin:34px 0 10px}
+  h3{font-size:14px;margin:18px 0 4px;letter-spacing:.02em}
+  p{margin:0 0 12px;font-size:14.5px}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:var(--panel);
+    border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel);margin:16px 0}
+  svg{display:block;min-width:840px}
+  text{font-family:"Inter",sans-serif}
+  .stat{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+  .stat div{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 13px;font-size:13px}
+  .stat b{font-family:"Fraunces",serif;font-size:17px;display:block;color:var(--cool)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:14px 16px;margin:10px 0}
+  .card.gold{border-left:4px solid var(--gold)}
+  .card.green{border-left:4px solid var(--green)}
+  .card b{font-size:14px}
+  ul{margin:6px 0 14px;padding-left:20px}
+  li{margin:4px 0;font-size:14px}
+  .tag{display:inline-block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--gold);font-weight:700;margin-bottom:2px}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+  .foot{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Dinner How? — system architecture</h1>
+  <p class="sub">How the app is actually built: the components, where they run, and how data moves
+  from a tap to a dish to a tracked event. Written to explain the system to an engineer, a co-founder,
+  or a technical reviewer.</p>
+
+  <div class="stat">
+    <div><b>258</b> tagged ingredients</div>
+    <div><b>130</b> dishes</div>
+    <div><b>6</b> method composers</div>
+    <div><b>0</b> backend servers</div>
+    <div><b>0</b> frameworks</div>
+  </div>
+
+  <h2>The one-paragraph version</h2>
+  <p>Dinner How is a <b>static single-page web app</b> — plain HTML, CSS and vanilla JavaScript, no
+  framework, no build step, no server of its own. The culinary <b>engine</b> and the <b>knowledge
+  base</b> (four JSON files) ship to the browser and run entirely on the device. It's hosted as
+  static files on <b>Vercel</b> (auto-deployed from GitHub). The only network calls after load are a
+  fire-and-forget analytics ping to a <b>Google Apps Script</b> that appends rows to a Google Sheet.
+  That's the whole system: everything that matters runs client-side, which makes it fast, cheap
+  (essentially free to host), offline-tolerant, and private.</p>
+
+  <h2>System diagram</h2>
+  <div class="scroll">
+  <svg viewBox="0 0 840 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="system architecture">
+    <defs>
+      <marker id="a" markerWidth="8" markerHeight="8" refX="6.5" refY="3.5" orient="auto">
+        <path d="M0,0 L6.5,3.5 L0,7 Z" fill="#c9b89f"/></marker>
+      <style>
+        .e{stroke:#cbba9f;stroke-width:1.5;fill:none;marker-end:url(#a)}
+        .box{fill:#fffdf9;stroke-width:1.5;rx:10}
+        .t{font-size:12.5px;fill:#1b100b;font-weight:600}
+        .s{font-size:10.5px;fill:#856445}
+        .zone{fill:none;stroke-dasharray:5 4;stroke-width:1.3}
+      </style>
+    </defs>
+
+    <!-- ZONE: browser -->
+    <rect class="zone" x="12" y="30" width="520" height="418" rx="14" stroke="#327564"/>
+    <text class="s" x="24" y="50" fill="#327564" font-weight="700">THE BROWSER (device) — everything runs here</text>
+
+    <!-- build/deploy zone -->
+    <rect class="zone" x="556" y="30" width="272" height="196" rx="14" stroke="#a87218"/>
+    <text class="s" x="568" y="50" fill="#a87218" font-weight="700">HOSTING</text>
+
+    <!-- analytics zone -->
+    <rect class="zone" x="556" y="252" width="272" height="196" rx="14" stroke="#b0603a"/>
+    <text class="s" x="568" y="272" fill="#b0603a" font-weight="700">ANALYTICS (external)</text>
+
+    <!-- boxes: browser -->
+    <g>
+      <rect class="box" x="40" y="70" width="200" height="52" stroke="#327564"/>
+      <text class="t" x="140" y="90" text-anchor="middle">UI layer</text>
+      <text class="s" x="140" y="106" text-anchor="middle">basket, canvas, cards, shopping list</text>
+    </g>
+    <g>
+      <rect class="box" x="40" y="158" width="200" height="60" stroke="#327564"/>
+      <text class="t" x="140" y="180" text-anchor="middle">Engine (derive.js)</text>
+      <text class="s" x="140" y="196" text-anchor="middle">6 composers + reasoning</text>
+      <text class="s" x="140" y="209" text-anchor="middle">inlined into index.html</text>
+    </g>
+    <g>
+      <rect class="box" x="40" y="254" width="200" height="70" stroke="#327564"/>
+      <text class="t" x="140" y="276" text-anchor="middle">Knowledge base</text>
+      <text class="s" x="140" y="292" text-anchor="middle">ingredients · dishes</text>
+      <text class="s" x="140" y="305" text-anchor="middle">methods · appliances (JSON)</text>
+      <text class="s" x="140" y="318" text-anchor="middle">fetched at load</text>
+    </g>
+    <g>
+      <rect class="box" x="40" y="360" width="200" height="60" stroke="#327564"/>
+      <text class="t" x="140" y="382" text-anchor="middle">Session state</text>
+      <text class="s" x="140" y="398" text-anchor="middle">localStorage: basket, sid,</text>
+      <text class="s" x="140" y="411" text-anchor="middle">event log</text>
+    </g>
+
+    <!-- render/output -->
+    <g>
+      <rect class="box" x="300" y="158" width="210" height="60" stroke="#327564"/>
+      <text class="t" x="405" y="180" text-anchor="middle">Render + WhatsApp export</text>
+      <text class="s" x="405" y="196" text-anchor="middle">dish cards, generative art,</text>
+      <text class="s" x="405" y="209" text-anchor="middle">shopping list → share sheet</text>
+    </g>
+    <g>
+      <rect class="box" x="300" y="360" width="210" height="52" stroke="#327564"/>
+      <text class="t" x="405" y="380" text-anchor="middle">Tracking (TRACK.log)</text>
+      <text class="s" x="405" y="396" text-anchor="middle">fire-and-forget POST</text>
+    </g>
+
+    <!-- hosting boxes -->
+    <g>
+      <rect class="box" x="580" y="70" width="220" height="46" stroke="#a87218"/>
+      <text class="t" x="690" y="89" text-anchor="middle">GitHub</text>
+      <text class="s" x="690" y="104" text-anchor="middle">source of truth · push to deploy</text>
+    </g>
+    <g>
+      <rect class="box" x="580" y="150" width="220" height="52" stroke="#a87218"/>
+      <text class="t" x="690" y="170" text-anchor="middle">Vercel (static CDN)</text>
+      <text class="s" x="690" y="186" text-anchor="middle">serves index.html + JSON</text>
+    </g>
+
+    <!-- analytics boxes -->
+    <g>
+      <rect class="box" x="580" y="292" width="220" height="46" stroke="#b0603a"/>
+      <text class="t" x="690" y="311" text-anchor="middle">Google Apps Script</text>
+      <text class="s" x="690" y="326" text-anchor="middle">receives POST, appends row</text>
+    </g>
+    <g>
+      <rect class="box" x="580" y="368" width="220" height="52" stroke="#b0603a"/>
+      <text class="t" x="690" y="388" text-anchor="middle">Google Sheet</text>
+      <text class="s" x="690" y="404" text-anchor="middle">event log · Python summarises</text>
+    </g>
+
+    <!-- edges inside browser -->
+    <path class="e" d="M240,283 L240,215"/>
+    <text class="s" x="250" y="245">tags feed engine</text>
+    <path class="e" d="M240,186 L300,186"/>
+    <path class="e" d="M140,158 L140,122"/>
+    <text class="s" x="150" y="142">decisions → UI</text>
+    <path class="e" d="M405,218 L405,360"/>
+    <text class="s" x="413" y="300">user acts → log</text>
+    <path class="e" d="M240,390 L300,388" />
+
+    <!-- deploy edges -->
+    <path class="e" d="M690,116 L690,150"/>
+    <path class="e" d="M580,176 L510,188" />
+    <text class="s" x="518" y="165">static files</text>
+
+    <!-- analytics edge -->
+    <path class="e" d="M510,386 L580,360" />
+    <text class="s" x="516" y="352">POST</text>
+    <path class="e" d="M690,338 L690,368"/>
+  </svg>
+  </div>
+
+  <h2>Components, one by one</h2>
+
+  <table>
+    <tr><th>Component</th><th>What it is</th><th>Where it runs</th></tr>
+    <tr><td><b>UI layer</b></td><td>The basket, the ingredient canvas, dish cards, the shopping list. Plain DOM, hand-written — no framework.</td><td>Browser</td></tr>
+    <tr><td><b>Engine</b> (<code>derive.js</code>)</td><td>The six method composers and the reasoning that picks a subject, chooses vegetables, and sets things aside. Ships inlined inside <code>index.html</code>.</td><td>Browser</td></tr>
+    <tr><td><b>Knowledge base</b></td><td>Four JSON files — 258 ingredients (each tagged with what it <i>provides</i>), 130 dishes, methods, appliances. Fetched once at load.</td><td>Browser (from CDN)</td></tr>
+    <tr><td><b>Session state</b></td><td>The current basket, an anonymous session id, and the event log — all in <code>localStorage</code>. No accounts, no personal data.</td><td>Browser</td></tr>
+    <tr><td><b>Tracking</b></td><td>Every meaningful action (compose, add-to-basket, copy list) fires a fire-and-forget POST. Never blocks the UI.</td><td>Browser → Apps Script</td></tr>
+    <tr><td><b>Hosting</b></td><td>GitHub holds the source; a push auto-deploys to Vercel, which serves the static files from its CDN. No server code.</td><td>Vercel</td></tr>
+    <tr><td><b>Analytics sink</b></td><td>A Google Apps Script receives the POSTs and appends rows to a Google Sheet. A Python script summarises the sheet into the conversion funnel on demand.</td><td>Google</td></tr>
+  </table>
+
+  <h2>How data flows — one full round trip</h2>
+  <div class="card green">
+    <p style="margin:0"><b>1. Load.</b> Browser fetches <code>index.html</code> (with the engine inlined)
+    and the four JSON files from Vercel's CDN. Everything needed to compose is now on the device.</p>
+  </div>
+  <div class="card green"><p style="margin:0"><b>2. Compose.</b> The cook taps ingredients into the
+    basket. The engine reads their capability tags, runs the six composers, ranks and prunes, and the
+    UI renders the winning dishes with their reasoning — all locally, instantly, offline-tolerant.</p></div>
+  <div class="card green"><p style="margin:0"><b>3. Act.</b> The cook adds a dish to the basket and
+    sends the shopping list to WhatsApp via the device's native share sheet.</p></div>
+  <div class="card green"><p style="margin:0"><b>4. Track.</b> Each of those actions fires a
+    fire-and-forget POST to the Apps Script, which appends a row to the Sheet. If it fails, the app
+    doesn't care — the user experience never depends on it.</p></div>
+  <div class="card green"><p style="margin:0"><b>5. Learn.</b> Later, a Python script reads the Sheet
+    and prints the conversion funnel and the incremental-basket numbers — the evidence for the
+    retailer conversation.</p></div>
+
+  <h2>The deliberate choices worth defending</h2>
+
+  <div class="card gold">
+    <span class="tag">Choice 1</span>
+    <b>No backend, no framework.</b>
+    <p style="margin:6px 0 0">The engine is deterministic and runs on the ingredients in front of it —
+    it doesn't need a server. Shipping it client-side makes the app fast, effectively free to host,
+    resilient (it works even if analytics is down), and private (no basket data leaves the device
+    except anonymous events). Vanilla JS keeps the whole thing inspectable with no build tooling.</p>
+  </div>
+
+  <div class="card gold">
+    <span class="tag">Choice 2</span>
+    <b>Knowledge as data, reasoning as code.</b>
+    <p style="margin:6px 0 0">Ingredients and dishes are JSON; the judgment that reads them is code.
+    This split means adding an ingredient is a data edit, not a code change — and a new ingredient
+    inherits all existing behaviour through its tags. The hand-tagged knowledge base is the moat; the
+    engine is small and stable on top of it.</p>
+  </div>
+
+  <div class="card gold">
+    <span class="tag">Choice 3</span>
+    <b>Tracking is decoupled and honest.</b>
+    <p style="margin:6px 0 0">Analytics is a one-way, fire-and-forget POST to a Sheet — the cheapest
+    possible pipeline, and one that can never slow or break the app. The events mirror the real user
+    decision (a lead vs. a conversion are logged distinctly), so the funnel is trustworthy rather than
+    flattering.</p>
+  </div>
+
+  <h2>Inside the knowledge base</h2>
+  <p>Four JSON files, ~400 hand-authored records. This is the encoded expertise — the part that
+  isn't scraped and can't be quickly copied.</p>
+
+  <h3>ingredients.json — 258 ingredients</h3>
+  <p>Each ingredient is tagged with what it <i>provides</i> (its capabilities), its category, its
+  is-a parent, its shopping aisle, and prep notes. The composers read the tags, never the name.</p>
+  <table>
+    <tr><th>Category</th><th>Count</th><th>Category</th><th>Count</th></tr>
+    <tr><td>Proteins</td><td>57</td><td>Pastes</td><td>15</td></tr>
+    <tr><td>Seasonings</td><td>46</td><td>Dairy</td><td>9</td></tr>
+    <tr><td>Vegetables</td><td>42</td><td>Acids / Fruits</td><td>5 each</td></tr>
+    <tr><td>Starches</td><td>29</td><td>Sweeteners / Leaveners</td><td>4 each</td></tr>
+    <tr><td>Condiments</td><td>26</td><td>Fats / Wrappers</td><td>2 each</td></tr>
+  </table>
+  <p>Capability tags carry the weight — <code>protein</code>, <code>umami</code>, <code>water</code>,
+  <code>fat_solid</code>, <code>holds_shape</code>, <code>collagen_rich</code> (needs slow wet heat),
+  <code>fish_family</code>/<code>filleted</code> (whole vs. sliced fish), <code>leafy</code>,
+  <code>grain_rice</code> — about 30 in all.</p>
+
+  <h3>The meat-cut model</h3>
+  <p>Proteins carry a two-layer cut model so the engine knows <i>how a cut behaves</i>, not just its
+  name — the difference between a stir-fry cut and a braise-only cut.</p>
+  <table>
+    <tr><th>Field</th><th>What it encodes</th><th>Values</th></tr>
+    <tr><td><code>cut</code></td><td>The named cut — the human label</td><td>Chuck, Brisket, Short rib, Steak/Sirloin, Breast, Thigh, Shoulder, Ribs, Belly, Loin/Chop</td></tr>
+    <tr><td><code>cut_role</code></td><td>How it must be cooked — the behaviour</td><td><b>quick</b> (thigh, breast, steak) · <b>braise</b> (chuck, brisket, ribs, belly)</td></tr>
+    <tr><td><code>cut_note</code></td><td>A short human note about the cut</td><td>"steam whole — sweet, delicate white flesh"</td></tr>
+    <tr><td><code>form</code></td><td>Shape modifier that changes handling</td><td>mince</td></tr>
+  </table>
+  <p>The role is backed by a capability tag the engine actually reasons over: every <b>braise</b> cut
+  also carries <code>collagen_rich</code>, which <code>suitsHeat</code> reads to rule out dry-heat
+  baking (it would be leather) and route it to slow wet heat — connecting to the
+  <code>collagen_breakdown</code> reaction in the method science. The full chain:
+  <b>Chuck → braise → collagen_rich → needs collagen_breakdown → slow cooker / pressure cooker / long simmer.</b>
+  Fish, seafood and tofu skip the cut model — it's specifically the red-meat &amp; poultry behaviour layer.</p>
+
+  <h3>The vegetable model</h3>
+  <p>Vegetables carry their own behaviour dimensions, so the engine knows what wilts, what holds up in
+  a bake, and what makes a natural bed under a protein.</p>
+  <table>
+    <tr><th>Field</th><th>What it encodes</th><th>Values</th></tr>
+    <tr><td><code>group</code></td><td>The vegetable type</td><td>leafy, root, fruiting, pods, florets, fungi, aromatic</td></tr>
+    <tr><td><code>bed_commonness</code></td><td>How naturally it forms a green bed under a protein</td><td>1–5 (bok choy 5, mushroom 5; watercress 2)</td></tr>
+    <tr><td><code>cuisine_affinity</code></td><td>How central it is to the cuisine</td><td>1–3</td></tr>
+    <tr><td><code>hue</code></td><td>Its colour — drives the generative dish art</td><td>a hex colour per vegetable</td></tr>
+  </table>
+  <p>As with meat, the <i>cooking</i> decision comes from the capability tags: <code>leafy</code> +
+  <code>water</code> means it wilts fast (a green bed or a quick stir-fry, never a long bake), while
+  <code>holds_shape</code> means it survives roasting and braising. So bok choy (leafy, water) and
+  pumpkin (holds_shape, starchy) are routed to completely different methods without any name-based
+  rules — the tags decide.</p>
+
+  <h3>dishes.json — 130 dishes</h3>
+  <p>Each dish carries its cuisine, role, ingredients, ordered steps (with variants), appliance,
+  serving size, oven temp, and prep detail. Heavily Singaporean by design.</p>
+  <table>
+    <tr><th>By cuisine</th><th></th><th>By role</th><th></th></tr>
+    <tr><td>Singaporean</td><td>74</td><td>Meat mains</td><td>36</td></tr>
+    <tr><td>Japanese</td><td>24</td><td>Bases (rice/noodle)</td><td>25</td></tr>
+    <tr><td>Western</td><td>18</td><td>Vegetable dishes</td><td>23</td></tr>
+    <tr><td>Chinese</td><td>9</td><td>Fish</td><td>22</td></tr>
+    <tr><td>Thai / Korean / Indian</td><td>5</td><td>Soups · Desserts</td><td>16 · 8</td></tr>
+  </table>
+
+  <h3>methods.json — the cooking science</h3>
+  <p>The part most food apps don't have: methods are backed by the actual <b>reactions</b> cooking
+  relies on — <code>maillard</code>, <code>caramelization</code>, <code>collagen_breakdown</code>,
+  <code>starch_gelatinization</code>, <code>protein_coagulation</code>, <code>fat_rendering</code>,
+  <code>reduction</code>, <code>crisping</code> — plus a <b>time model</b> (prep, per-appliance
+  multipliers, passive-time caps). This is what lets the engine reason about <i>why</i> a cut needs
+  a method, not just pattern-match.</p>
+
+  <h3>appliances.json — 7 appliances</h3>
+  <p>Stovetop, oven, steamer, rice cooker, pressure cooker, slow cooker, air fryer — each with its
+  timing behaviour, so the engine only proposes what the cook can actually make.</p>
+
+  <h2>Inside the engine</h2>
+  <p>Small, deterministic, and readable — the intelligence is in the knowledge base; the engine is
+  the judgment that reads it. Three parts:</p>
+
+  <div class="card green">
+    <b>The six composers</b> — one per method, same signature.
+    <p style="margin:6px 0 0"><code>steamCandidates</code> · <code>wokCandidates</code> ·
+    <code>riceCandidates</code> · <code>noodleCandidates</code> · <code>potCandidates</code> ·
+    <code>bakeCandidates</code>. Each takes the basket and proposes dishes, picking a subject, choosing
+    vegetables, and setting the rest aside with reasons.</p>
+  </div>
+  <div class="card green">
+    <b>The reasoning functions</b> — derived properties computed from tags.
+    <p style="margin:6px 0 0"><code>isWholeFish</code> (fish_family and not filleted → steam only),
+    <code>suitsHeat</code> (dry vs. wet), <code>wokBehaviour</code>, <code>steamFormOf</code>,
+    <code>pickLeadProtein</code> (which protein leads), <code>pickDishVeg</code> (which vegetables go),
+    <code>potSpeciesWord</code>. Each is a small rule over tags — so every decision is explainable.</p>
+  </div>
+  <div class="card green">
+    <b>The judgment tables</b> — hand-tuned lookups the composers consult.
+    <p style="margin:6px 0 0"><code>BROTH_BASE</code> (which proteins make soup, and how deep),
+    <code>ROAST_VEG</code> (what holds up in a bake), <code>CHARACTER_SEASONINGS</code> (a sauce that
+    defines a dish), <code>PROTEIN_LEAD_PRIORITY</code> (who wins when two proteins compete),
+    <code>NOODLE_DIRS</code> / <code>STEAM_DIRS</code> (the style directions per method), and the
+    three-tier protein rule that decides belongs / unusual / excluded.</p>
+  </div>
+
+  <h2>What this makes easy later</h2>
+  <ul>
+    <li><b>A native app</b> — the engine is portable JS; it can drop into a mobile shell unchanged.</li>
+    <li><b>Personalisation / ML</b> — the tracking already generates the training data; a small model
+      exported to run client-side fits the no-backend shape.</li>
+    <li><b>A retailer integration</b> — the shopping list already knows exact SKUs (<code>buy_ids</code>),
+      so a "send to cart" handoff is a small addition, not a re-architecture.</li>
+    <li><b>Scale</b> — static files on a CDN scale to any traffic with no server cost curve.</li>
+  </ul>
+
+  <div class="foot">
+    Dinner How? · system architecture · static SPA · vanilla JS engine · JSON knowledge base ·
+    Vercel hosting · Google Sheet analytics. Reflecting the live build (v4.72).
+  </div>
+</div>
+</body>
+</html>

@@ -3936,30 +3936,79 @@ function noodleCandidates(ingIds, R, dishes, AFF, opts){
       : "usually made with "+((dir.canonical||[]).map(n=>(R.byId[n]||{}).name||n).join(" or ").replace(/ \(.*?\)/g,""))+" \u2014 this is your own take";
     // a bowl takes one green and a couple of others — chosen for THIS sauce
     const vpick=pickDishVeg(mineAll, R, {greens:1, others:2, prefer:dir.veg||[], explicit:(opts&&opts.explicit)||null, benched:(opts&&opts.benched)||null});
-    // one main protein per bowl. A soup can carry a second (sliced meat + a fishball);
-    // a fried noodle should not read as three meats piled on. A WHOLE fish never goes into a
-    // noodle bowl — you don't toss a whole pomfret into mee goreng; it's a dish of its own, so
-    // set it aside (fish for noodles means slices or a fishcake, which aren't whole fish).
+    // ---- THREE-TIER PROTEIN MODEL ----
+    // A noodle dish is a BASE (broth/style) + a NOODLE + a protein topping. How freely the base
+    // takes proteins depends on the base:
+    //   "composite" — the base is defined by its paste/broth, not its protein; any mix is fine
+    //                 (laksa, tom yum, dashi, clear soup, the fried plates).
+    //   "identity"  — the base is named for ONE protein; that protein BELONGS, others are UNUSUAL.
+    //                 An unusual protein is set aside with a "not usual, but you can add it" note
+    //                 (tier 2) unless the cook EXPLICITLY put it in the basket (then it rides along,
+    //                 still noted). A WHOLE fish is always excluded outright (tier 3), no override.
+    // "belongs" lists the protein(s) native to an identity base; anything else is tier-2 unusual.
+    const NOODLE_PROTEIN_RULE = {
+      fish_soup:    {kind:"identity", belongs:["fish_slices","fish_cake"]},
+      fishball_soup:{kind:"identity", belongs:["fish_cake","fish_ball","fish_slices"]},
+      hokkien_mee:  {kind:"identity", belongs:["prawn","squid","pork_belly"]},   // the classic mix IS the dish
+      sliced_meat:  {kind:"identity", belongs:["beef_slices","pork_loin","chicken_breast","pork_mince","fish_cake"]}, // + a fishball is authentic
+      char_kway_teow:{kind:"identity", belongs:["cockles","prawn","fish_cake","lap_cheong"]}
+      // everything else defaults to composite (multi-protein OK)
+    };
+    const rule = NOODLE_PROTEIN_RULE[dir.key] || {kind:"composite"};
+    const explicitSet = new Set((opts&&opts.explicit)||[]);
+
     const noodleProteinIds=mineAll.filter(id=>!isWholeFish(id,R));
     const wholeFishAside=mineAll.filter(id=>isWholeFish(id,R))
       .map(id=>({id, why:"set aside \u2014 a whole fish is its own dish; noodles take fish slices or a fishcake, not a whole fish"}));
     const pj=pickLeadProtein(noodleProteinIds, R);
     const keepProteins = new Set([pj.lead].filter(Boolean));
-    if(dir.mode==="soup" && pj.extras[0]) keepProteins.add(pj.extras[0]);
+    const unusualAside=[];   // tier-2: set aside, but overridable / noted
+
+    if(rule.kind==="composite"){
+      // base doesn't care about protein identity — a soup may carry a second topping.
+      if(dir.mode==="soup" && pj.extras[0]) keepProteins.add(pj.extras[0]);
+    } else {
+      // identity base: its own protein belongs; sort every other protein into belongs vs unusual.
+      const belongs=new Set(rule.belongs||[]);
+      noodleProteinIds.forEach(id=>{
+        if(((R.byId[id]||{}).category)!=="proteins") return;   // only proteins get tiered — not the noodle or veg
+        if(keepProteins.has(id)) return;                 // the lead already kept
+        if(belongs.has(id)){ keepProteins.add(id); return; }   // native companion (fishball etc.) — belongs
+        // an UNUSUAL protein: ride along only if the cook explicitly chose it, always with a note
+        const pName=(R.byId[id]||{}).name||id;
+        const leadName=(R.byId[pj.lead]||{}).name||"the main";
+        if(explicitSet.has(id)){
+          keepProteins.add(id);
+          unusualAside.push({id, kept:true,
+            why:pName+" isn\u2019t usual in "+label.replace(/ with .*/,"")+", but you added it \u2014 in it goes"});
+        } else {
+          unusualAside.push({id, kept:false,
+            why:pName+" isn\u2019t usual in "+label.replace(/ with .*/,"")+" \u2014 "+leadName+" leads it, but you can add "+pName+" if you like"});
+        }
+      });
+    }
     const mine=vpick.used.filter(id=>{
       if(isWholeFish(id,R)) return false;
       if(((R.byId[id]||{}).category)!=="proteins") return true;
       return keepProteins.has(id);
     });
-    const droppedProteins=pj.extras.filter(id=>!keepProteins.has(id));
+    // proteins dropped by the composite one-extra rule (not identity) keep the old plain note
+    const droppedProteins=(rule.kind==="composite")
+      ? pj.extras.filter(id=>!keepProteins.has(id)).map(id=>({id,
+          why:"one main is enough in a bowl \u2014 "+((R.byId[pj.lead]||{}).name||"the first")+" leads this one"}))
+      : [];
     out.push({
       key:"noodle_"+dir.key,
       label, mode:dir.mode, dirKey:dir.key, direction:dir, isDefining,
       subject:base, subjectName:baseName,
       note:dir.note, fit, fitNote, hits,
       contents:mine,
-      leftOut:vpick.leftOut.concat(wholeFishAside).concat(droppedProteins.map(id=>({id,
-        why:"one main is enough in a bowl \u2014 "+((R.byId[pj.lead]||{}).name||"the first")+" leads this one"})))
+      leftOut:vpick.leftOut
+        .concat(wholeFishAside)
+        .concat(droppedProteins)
+        .concat(unusualAside.filter(u=>!u.kept))         // only the NOT-kept unusuals show as "left out"
+        .map(x=>({id:x.id, why:x.why})),
+      unusualKept:unusualAside.filter(u=>u.kept).map(u=>({id:u.id, why:u.why}))  // noted, but in the dish
     });
   });
   // strongest signal first, then the pairing that suits the noodle best
