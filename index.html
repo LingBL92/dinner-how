@@ -984,7 +984,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.69</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.70</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -6568,9 +6568,27 @@ function wireBasketPanel(panel){
 
   // one shared builder for the list text, and one shared logger so every export path is tracked
   // the same way — with a `via` field telling us HOW they took it (share / whatsapp / download / copy).
-  const listTitle="\ud83d\uded2 Dinner How \u2014 shopping list";
-  const listText=listTitle+"\n\n"+buy.map(b=>"\u2022 "+b.name).join("\n")+
-    "\n\nFor: "+FLOW.basket.map(d=>d.name).join(", ");
+  // The message people send to WhatsApp / Notes. Built to read like something a person shares,
+  // not a raw dump: a title banner, the dinner line-up numbered, then the grocery list.
+  const dishLines=FLOW.basket.map((d,i)=>(i+1)+". "+d.name).join("\n");
+  const itemLines=buy.map(b=>"\u25AB\uFE0E "+b.name).join("\n");   // ▫︎ a light, widely-rendered bullet
+  // a friendly local date + time stamp, e.g. "Thu, 14 Aug \u00b7 7:32 pm"
+  const stamp=(function(){
+    try{
+      const now=new Date();
+      const day=now.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"});
+      let hh=now.getHours(), mm=now.getMinutes();
+      const ampm=hh<12?"am":"pm"; hh=hh%12||12;
+      return day+" \u00b7 "+hh+":"+(mm<10?"0"+mm:mm)+" "+ampm;
+    }catch(e){ return ""; }
+  })();
+  const listText=
+    "\uD83C\uDF7D\uFE0F  DINNER HOW\n"+                       // 🍽️ plate-and-cutlery — near-universal glyph
+    (stamp?stamp+"\n":"")+
+    "\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\n"+
+    "Dinner today is:\n"+dishLines+"\n\n"+
+    "\uD83D\uDED2  Shopping list\n"+itemLines+
+    "\n\nMade with Dinner How";
   const logExport=(via)=>{
     const srcd=buy.filter(b=>b.sourced);
     TRACK.log("list_copied", {items:buy.length, dishes:FLOW.basket.length, via:via,
