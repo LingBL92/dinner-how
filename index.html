@@ -961,7 +961,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.63</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.64</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5311,15 +5311,58 @@ if(typeof window!=="undefined"){
   };
   window.dhStats=function(){
     const arr=JSON.parse(localStorage.getItem("dh_events")||"[]");
+    if(!arr.length){ console.log("No events logged yet."); return {sessions:0}; }
     const by=e=>arr.filter(r=>r.event===e);
-    const sessions=new Set(arr.map(r=>r.sid)).size;
-    const composed=by("dish_composed").length;
-    const lists=by("list_generated").length;
-    const added=by("item_added").length;
-    const items=by("list_generated").reduce((n,r)=>n+(r.missing_count||0),0);
-    const s={sessions, dishes_composed:composed, lists_generated:lists,
-      avg_items_per_list:lists?(items/lists).toFixed(1):0, items_marked_added:added};
-    console.table(s); return s;
+
+    // ---- group every event by session, so we can measure the funnel per person ----
+    const sids=[...new Set(arr.map(r=>r.sid))];
+    const sess={};
+    sids.forEach(s=>sess[s]={events:new Set(), composed:0, added:0, copied:0, dishes:new Set()});
+    arr.forEach(r=>{
+      const s=sess[r.sid]; if(!s) return;
+      s.events.add(r.event);
+      if(r.event==="dish_composed") s.composed++;
+      if(r.event==="dish_added_to_basket"){ s.added++; if(r.dish) s.dishes.add(r.dish); }
+      if(r.event==="list_copied") s.copied++;
+    });
+    const S=Object.values(sess);
+
+    // ---- the conversion funnel: how far does a session get? ----
+    const nSessions   = S.length;
+    const nComposed   = S.filter(s=>s.composed>0).length;                 // reached a dish
+    const nAdded      = S.filter(s=>s.added>0).length;                    // added to basket  ← the conversion
+    const nCopied     = S.filter(s=>s.copied>0).length;                   // took the shopping list
+    const pct=(a,b)=>b?((100*a/b).toFixed(0)+"%"):"\u2014";
+
+    console.log("%cDinner How \u2014 conversion funnel","font-weight:bold;font-size:13px");
+    console.table({
+      "1. sessions":              {count:nSessions, "of sessions":"100%"},
+      "2. composed a dish":       {count:nComposed, "of sessions":pct(nComposed,nSessions)},
+      "3. added to basket":       {count:nAdded,    "of sessions":pct(nAdded,nSessions)},
+      "4. copied shopping list":  {count:nCopied,   "of sessions":pct(nCopied,nSessions)}
+    });
+    // headline rates people actually quote
+    const headline={
+      compose_to_basket: pct(nAdded, nComposed),      // of those who got a dish, how many committed
+      basket_to_list:    pct(nCopied, nAdded),        // of those who added, how many took the list
+      overall_conversion:pct(nAdded, nSessions)       // of everyone, how many converted
+    };
+    console.log("%cKey rates","font-weight:bold");
+    console.table(headline);
+
+    // ---- what got added most (which dishes actually convert) ----
+    const dishCount={};
+    by("dish_added_to_basket").forEach(r=>{ if(r.dish) dishCount[r.dish]=(dishCount[r.dish]||0)+1; });
+    const topDishes=Object.entries(dishCount).sort((a,b)=>b[1]-a[1]).slice(0,8)
+      .map(([dish,n])=>({dish, added:n}));
+    if(topDishes.length){ console.log("%cMost-added dishes","font-weight:bold"); console.table(topDishes); }
+
+    const summary={sessions:nSessions, composed:nComposed, added_to_basket:nAdded,
+      copied_list:nCopied, ...headline, span_days:(function(){
+        const ts=arr.map(r=>r.t).filter(Boolean); if(ts.length<2) return 0;
+        return (((Math.max(...ts)-Math.min(...ts))/86400000)).toFixed(1);
+      })()};
+    return summary;
   };
   window.dhReset=function(){ localStorage.removeItem("dh_events"); console.log("pilot log cleared"); };
   // dhHardReset() -> wipe ALL saved state (basket, pantry, preferences, pilot log, session id)
