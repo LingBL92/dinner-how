@@ -3640,7 +3640,17 @@ function riceCandidates(ingIds, R, dishes, AFF, opts){
     });
     const dropped=base.filter(id=>((R.byId[id]||{}).category)==="proteins" && !keep.has(id))
       .map(id=>({id, why:"one main is enough \u2014 "+((R.byId[subject]||{}).name||"the first")+" leads this bowl"}));
-    out.push({key,label,mode,subject,note, contents, leftOut:vp.leftOut.concat(dropped)});
+    // the style (claypot/congee/curry/donburi/hainanese/braise...) IS the image direction —
+    // carry it as dirKey so the picture key becomes rice_<subject>_<style> and matches the library,
+    // instead of collapsing every rice dish to rice_<subject>_plain. The raw key is like
+    // "in_chicken_thigh" / "over_prawn" / "fish_cod" — strip the subject to get the bare style.
+    let style=String(key||"");
+    if(subject && style.endsWith("_"+subject)) style=style.slice(0, -(subject.length+1));
+    style=style.replace(/_$/,"");
+    const DIR_MAP={in:"claypot", over:"over_rice", along:"plain", herb:"plain",
+      seafood:"claypot", fish:"plain", roast:"plain"};   // "[fish] rice" is a fillet-on-rice = plain; true congee uses the "congee" key
+    const dirKey=DIR_MAP[style]||style;   // claypot, congee, curry, donburi, hainanese, braise, yam...
+    out.push({key,label,mode,subject,dirKey,note, contents, leftOut:vp.leftOut.concat(dropped)});
   };
 
   // strong claypot / cook-in signals
