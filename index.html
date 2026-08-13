@@ -961,7 +961,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.64</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.65</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -5357,8 +5357,30 @@ if(typeof window!=="undefined"){
       .map(([dish,n])=>({dish, added:n}));
     if(topDishes.length){ console.log("%cMost-added dishes","font-weight:bold"); console.table(topDishes); }
 
+    // ---- INCREMENTAL BASKET: the FairPrice numbers — how much basket, and how much WE drove ----
+    const copies=by("list_copied");
+    const dabs=by("dish_added_to_basket");
+    const totalBuy=copies.reduce((n,r)=>n+(r.items||0),0);
+    const totalSourced=copies.reduce((n,r)=>n+(r.sourced||0),0)
+      + (copies.length?0:dabs.reduce((n,r)=>n+(r.sourced||0),0));  // fall back to per-dish if no list copied
+    if(copies.length || dabs.some(r=>r.sourced)){
+      const basket={
+        "lists taken":              copies.length,
+        "avg items per list":       copies.length?(totalBuy/copies.length).toFixed(1):"\u2014",
+        "app-suggested items total": totalSourced,
+        "avg suggested per list":   copies.length?(totalSourced/copies.length).toFixed(1):"\u2014",
+        "% of basket we drove":     totalBuy?((100*totalSourced/totalBuy).toFixed(0)+"%"):"\u2014"
+      };
+      console.log("%cIncremental basket (for the retailer story)","font-weight:bold;color:#31745f");
+      console.table(basket);
+    }
+
     const summary={sessions:nSessions, composed:nComposed, added_to_basket:nAdded,
-      copied_list:nCopied, ...headline, span_days:(function(){
+      copied_list:nCopied, ...headline,
+      avg_items_per_list:copies.length?(totalBuy/copies.length).toFixed(1):0,
+      app_driven_items:totalSourced,
+      pct_basket_driven:totalBuy?((100*totalSourced/totalBuy).toFixed(0)+"%"):"0%",
+      span_days:(function(){
         const ts=arr.map(r=>r.t).filter(Boolean); if(ts.length<2) return 0;
         return (((Math.max(...ts)-Math.min(...ts))/86400000)).toFixed(1);
       })()};
@@ -5617,7 +5639,9 @@ function addCurrentDishToBasket(name, method, buyList, timing, detail){
     prep, firstStep:steps[0]||"", prepMins:(detail&&detail.prepMins)||0,
     timing: timing||{total:null,handsOn:null,handsOff:null}});
   persistSession();
-  TRACK.log("dish_added_to_basket", {dish:name, method:method, buy_count:(buyList||[]).length, basket_dishes:FLOW.basket.length});
+  const sourcedIds=Object.keys(sourced);
+  TRACK.log("dish_added_to_basket", {dish:name, method:method, buy_count:(buyList||[]).length,
+    basket_dishes:FLOW.basket.length, sourced:sourcedIds.length, sourced_ids:sourcedIds.join("|")});
   updateBasketPill();
 }
 /* build the to-buy list for a composed dish from its contents: the ingredients it needs that
@@ -6395,7 +6419,12 @@ function wireBasketPanel(panel){
   panel.querySelector(".bk-clear").onclick=()=>{ FLOW.basket=[]; persistSession(); updateBasketPill(); closeBasket(); };
   panel.querySelector(".bk-copy").onclick=()=>{
     const text=buy.map(b=>"\u2022 "+b.name).join("\n");
-    const done=()=>{ TRACK.log("list_copied", {items:buy.length, dishes:FLOW.basket.length}); const c=panel.querySelector(".bk-copy"); if(c){ c.textContent="Copied \u2713"; setTimeout(()=>{c.textContent="Copy shopping list";},1600);} };
+    const done=()=>{
+      const srcd=buy.filter(b=>b.sourced);
+      TRACK.log("list_copied", {items:buy.length, dishes:FLOW.basket.length,
+        sourced:srcd.length, sourced_ids:srcd.map(b=>b.id).join("|"),
+        buy_ids:buy.map(b=>b.id).join("|")});
+      const c=panel.querySelector(".bk-copy"); if(c){ c.textContent="Copied \u2713"; setTimeout(()=>{c.textContent="Copy shopping list";},1600);} };
     if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done,done); else done();
   };
 }
