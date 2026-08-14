@@ -984,7 +984,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.75</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.76</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -4337,6 +4337,29 @@ const RICE_DIRS=[
      {t:"Dress the rice", d:"Warm a little soy and sesame oil and spoon it over the hot rice."},
      {t:"Top", d:"Slide the egg on top and break the yolk through."}]}
 ];
+
+// A rice DIRECTION is written around a specific main (roast meat = char siu; lu rou = pork belly;
+// hainanese = whole chicken; donburi = beef/egg). Applying it to a different subject produces
+// "Salmon roast meat over rice" — salmon rendered with char-siu steps. A direction is only offered
+// or kept when the subject it's written for is actually the bowl's subject.
+const RICE_DIR_SUBJECTS={
+  roast:["char_siu"],
+  soy_braise:["pork_belly"],
+  hainanese:["chicken_whole","chicken_thigh","chicken_breast"],
+  donburi:["beef_slices","chicken_thigh","chicken_breast"],
+  claypot:["chicken_thigh","chicken_breast","lap_cheong","prawn","squid","beef_slices"],
+  lap_cheong:["lap_cheong","chicken_thigh"],
+  yam:["yam"], yam_shrimp:["yam"],
+  curry:["chicken_thigh","chicken_breast","beef_slices","pork_belly"],
+  congee:["fish_slices","chicken_thigh","chicken_breast"]
+  // "plain" and "herb" suit any subject — omitted, treated as always-allowed
+};
+function riceDirSuitsSubject(dirKey, subj){
+  if(!dirKey) return true;
+  const allowed=RICE_DIR_SUBJECTS[dirKey];
+  if(!allowed) return true;                 // generic direction (plain / herb) — fits anything
+  return allowed.includes(subj);
+}
 
 // the topping method for an OVER-rice bowl, by style. mins = simmer/braise time (hands-off).
 const RICE_STYLE={
@@ -9636,7 +9659,11 @@ function renderRice(){
     return null;
   }
   let riceDirKey = FLOW.riceDir;
-  if(!riceDirKey){ const dk=riceDefaultDirKey(chosen); if(dk) riceDirKey=dk; }
+  window.__riceChosen=chosen;   // let the direction picker know the current subject to filter options
+  // drop a stale/manual direction that doesn't suit the current subject (prevents salmon-in-a-
+  // roast-meat template when the subject changed under a previously-picked direction)
+  if(riceDirKey && !riceDirSuitsSubject(riceDirKey, chosen.subject)) riceDirKey=null;
+  if(!riceDirKey){ const dk=riceDefaultDirKey(chosen); if(dk && riceDirSuitsSubject(dk, chosen.subject)) riceDirKey=dk; }
   const dir = riceDirKey ? (RICE_DIRS.find(d=>d.key===riceDirKey)||{key:riceDirKey}) : null;
   const rb  = buildRice(chosen.contents, REF, DISHES, AFF, {mode:chosen.mode, subject:chosen.subject, direction:dir});
 
@@ -9927,6 +9954,10 @@ function renderNoodle(){
   const chosen=cands.find(c=>c.key===FLOW.noodlePick)||cands[0];
   stashDishState(chosen);
 
+  // guard against a stale manually-picked direction that the current basket wouldn't actually
+  // produce (same class of bug as salmon-in-roast-meat): only honour FLOW.noodleDir if some
+  // current candidate really has that direction; otherwise fall back to this dish's own direction.
+  if(FLOW.noodleDir && !cands.some(c=>c.dirKey===FLOW.noodleDir)) FLOW.noodleDir=null;
   const dir = FLOW.noodleDir ? NOODLE_DIRS.find(d=>d.key===FLOW.noodleDir) : chosen.direction;
   const nd  = buildNoodle(chosen.contents, REF, DISHES, AFF,
                 {subject:chosen.subject, direction:dir, mode:(dir&&dir.mode)||chosen.mode});
@@ -10188,8 +10219,11 @@ function openNoodleRadial(){
 
 function openRiceRadial(){
   closeRadial();
+  // only offer directions that suit the current bowl's subject — a salmon bowl shouldn't list
+  // "Roast meat over rice" (that would slot salmon into a char-siu recipe).
+  const curSubj=(function(){ try{ const c=(window.__riceChosen||{}); return c.subject||""; }catch(e){ return ""; } })();
   const byRegion={};
-  RICE_DIRS.forEach(o=>{ const r=o.region||"Other"; (byRegion[r]=byRegion[r]||[]).push(o); });
+  RICE_DIRS.forEach(o=>{ if(!riceDirSuitsSubject(o.key, curSubj)) return; const r=o.region||"Other"; (byRegion[r]=byRegion[r]||[]).push(o); });
   const ORDER=["Cantonese","Teochew","Japanese","\u2014"];
   const regions=ORDER.filter(r=>byRegion[r]);
 
