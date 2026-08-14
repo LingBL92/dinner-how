@@ -453,6 +453,8 @@ button.ing-tag:hover{border-color:var(--cool)}
   box-shadow:0 2px 10px rgba(27,16,11,.08);transition:transform .09s ease-out,background .13s,border-color .13s;
   transform-origin:center;user-select:none}
 .rad-btn:hover{border-color:var(--cool);color:var(--cool)}
+.rad-btn.needs-buy{border-style:dashed;color:var(--muted);background:transparent}
+.rad-btn.needs-buy:hover{border-color:var(--gold);color:var(--gold)}
 .rad-clu:hover .rad-lab{color:var(--cool);opacity:1;text-shadow:0 1px 6px rgba(255,255,255,.9)}
 .rad-btn.on{background:var(--cool);border-color:var(--cool);color:#fff}
 @media(max-width:760px){
@@ -984,7 +986,7 @@ button.ps-add.in-basket em{color:var(--muted)}
   .gcell{border:none;padding:0;min-height:0;margin-top:4px}
 }
 </style></head><body>
-<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.77</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
+<header><h1>DINNER&nbsp;HOW? <span style="color:var(--cool)">&middot; flow</span> <span style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;letter-spacing:.05em">v4.78</span></h1><a href="index_old.html">&larr; back to the composer</a></header>
 <div id="minimap">
   <div class="mm-steps">
     <button class="mm-step" data-target="col-pantry"><span class="mm-n">1</span><span class="mm-l">Pantry</span></button>
@@ -10117,7 +10119,27 @@ function openNoodleRadial(){
   closeRadial();
   const base=noodleBaseOf([...FLOW.active].filter(id=>NOODLE_BASE_IDS.has(id)));
   const nameOfN=id=>((REF.byId[id]||{}).name)||id;
+  // what this dish still needs from the cook's basket to actually be makeable. Shows the picker as
+  // discovery: "bee hoon can be laksa — you'll need laksa paste". Empty = ready to cook now.
+  const have=new Set([...FLOW.active, ...FLOW.pantry]);
+  const dirNeeds=o=>{
+    const need=o.need||0;
+    if(!need) return [];                                  // fried / clear soup — always makeable
+    const defining=(o.defining||[]);
+    const markers=(o.markers||[]);
+    // if a defining marker exists, that's THE thing to buy; else the first `need` markers
+    const wants = defining.length ? defining : markers.slice(0, Math.max(1,need));
+    const missing = wants.filter(m=>!have.has(m));
+    // if ANY acceptable marker is already in the basket, the dish is makeable — nothing to buy
+    if(markers.some(m=>have.has(m))) return [];
+    return missing;
+  };
+  const readyNow=o=>dirNeeds(o).length===0;
   const subLabel=o=>{
+    const needs=dirNeeds(o);
+    if(needs.length){
+      return o.note+" \u2014 you'll need "+needs.map(nameOfN).join(" or ").replace(/ \(.*?\)/g,"");
+    }
     if(!o.canonical||!o.canonical.length) return o.note;
     const wants=nameOfN(o.canonical[0]);
     const fit=base?noodleFitOf(o,base):"canonical";
@@ -10148,8 +10170,9 @@ function openNoodleRadial(){
       const row=document.createElement("div"); row.className="rs-row";
       byRegion[rg].forEach(o=>{
         const b=document.createElement("div");
-        b.className="rad-btn"+(FLOW.noodleDir===o.key?" on":"");
-        b.textContent=o.label.replace(/ \(.*\)/,"");
+        const ready=readyNow(o);
+        b.className="rad-btn"+(FLOW.noodleDir===o.key?" on":"")+(ready?"":" needs-buy");
+        b.textContent=o.label.replace(/ \(.*\)/,"")+(ready?"":" \u00b7 shop");
         b.title=subLabel(o);
         b.onclick=(e)=>{ e.stopPropagation(); FLOW.noodleDir=o.key; closeRadial(); renderNoodle(); };
         row.appendChild(b);
@@ -10187,8 +10210,9 @@ function openNoodleRadial(){
     const row=document.createElement("div"); row.className="rad-btns";
     byRegion[rg].forEach(o=>{
       const b=document.createElement("div");
-      b.className="rad-btn"+(FLOW.noodleDir===o.key?" on":"");
-      b.textContent=o.label.replace(/ \(.*\)/,"");
+      const ready=readyNow(o);
+      b.className="rad-btn"+(FLOW.noodleDir===o.key?" on":"")+(ready?"":" needs-buy");
+      b.textContent=o.label.replace(/ \(.*\)/,"")+(ready?"":" \u00b7 shop");
       b.title=subLabel(o);
       b.onclick=(e)=>{ e.stopPropagation(); FLOW.noodleDir=o.key; closeRadial(); renderNoodle(); };
       row.appendChild(b);
